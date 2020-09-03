@@ -1,8 +1,12 @@
 // ==UserScript==
-// @name          Susy Modifier by Syna
-// @version       0.8.27
-// @namespace
+// @name          Susy Modifier
+// @version       0.9.3
+// @namespace     https://github.com/synalocey/SusyModifier
 // @description
+// @author        Syna
+// @icon          https://skday.com/favicon.ico
+// @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.js
+// @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.js
 // @include       *.mdpi.com/*special_issue*
 // @include       https://mailsdb.i.mdpi.com/reversion/search/emails*
 // @include       https://susy.mdpi.com/user/*/process_form*
