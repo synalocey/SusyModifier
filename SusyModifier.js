@@ -1,15 +1,13 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       0.9.3
+// @version       0.9.8
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description
 // @author        Syna
 // @icon          https://skday.com/favicon.ico
 // @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.js
 // @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.js
-// @include       *.mdpi.com/*special_issue*
-// @include       https://mailsdb.i.mdpi.com/reversion/search/emails*
-// @include       https://susy.mdpi.com/user/*/process_form*
+// @match         https://*.mdpi.com/*
 // @require       https://code.jquery.com/jquery-3.5.1.min.js
 // @require       https://gist.github.com/raw/2625891/waitForKeyElements.js
 // ==/UserScript==
@@ -73,7 +71,7 @@
 <input type='text' name='show_all' value='my_journals' style='display:none;'>   <input type='text' name='form[si_name]' id='si-search2'>\
 <input type='submit' class='submit' value='SI Search'></form></div></div>";
             $("body").append(siappend);
-            $("[data-menu='editorial_office'] > li:nth-child(8)").append("<div style='float:right;'><a onclick='document.getElementById(\"si-search\").classList.remove(\"hide\");'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a></div>");
+            $("[data-menu='editorial_office'] > li:nth-child(8)").append("<div style='float:right;'><a onclick='document.getElementById(\"si-search\").classList.remove(\"hide\");'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div>");
         } catch (error){ }
     }
 })();
