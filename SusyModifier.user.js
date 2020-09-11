@@ -5,8 +5,8 @@
 // @description   Susy Modifier
 // @author        Syna
 // @icon          https://skday.com/favicon.ico
-// @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.js
-// @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.js
+// @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
+// @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
 // @match         https://*.mdpi.com/*
 // @require       https://code.jquery.com/jquery-3.5.1.min.js
 // @require       https://gist.github.com/raw/2625891/waitForKeyElements.js
