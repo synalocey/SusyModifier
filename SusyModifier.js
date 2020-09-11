@@ -2,7 +2,7 @@
 // @name          Susy Modifier
 // @version       0.9.8
 // @namespace     https://github.com/synalocey/SusyModifier
-// @description
+// @description   Susy Modifier
 // @author        Syna
 // @icon          https://skday.com/favicon.ico
 // @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.js
