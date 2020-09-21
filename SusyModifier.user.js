@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       0.9.8
+// @version       0.9.18
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -8,6 +8,7 @@
 // @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
 // @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
 // @match         https://*.mdpi.com/*
+// @match         https://*.scopus.com/*
 // @require       https://code.jquery.com/jquery-3.5.1.min.js
 // @require       https://gist.github.com/raw/2625891/waitForKeyElements.js
 // ==/UserScript==
@@ -15,24 +16,28 @@
 (function() {
     'use strict';
 
+    // 添加新建特刊➕符号
     if (window.location.href.indexOf("susy.mdpi.com/special_issue/process") > -1){
         try{
             $('#si-update-emphasized').before('<a href="/user/special_issue/edit/0" title="New special issue">➕</a> ');
         } catch (error){ }
     }
 
+    //特刊主页添加修改符号
     if (window.location.href.indexOf("/special_issues/") > -1){
         try{
             $("h1").append(' <a href="https://susy.mdpi.com/special_issue_pending/list/search?show_all=my_journals&form%5Bsi_name%5D='+$("h1").text().split('"')[1]+'" title="Edit"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a>');
         } catch (error){ }
     }
 
+    //添加文章处理页面Researchgate
     if (window.location.href.indexOf("/process_form/") > -1){
         try{
             $("[title|='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query='+$("[title|='Google']").prev()[0].text+'" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="https://c5.rgstatic.net/m/41542880220916/images/favicon/favicon-16x16.png"></a> ');
         } catch (error){ }
     }
 
+    //特刊列表免翻页
     if (window.location.href=='https://susy.mdpi.com/special_issue_pending/list'){
         try{
             var totalpage = document.getElementsByClassName("pagination margin-0")[0].getElementsByTagName("li").length-1
@@ -52,6 +57,7 @@
         } catch (error){ }
     }
 
+    //mailsdb样式
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/search/emails") > -1){
         try{
             var link = document.createElement("link");
@@ -63,6 +69,7 @@
         } catch (error){ }
     }
 
+    //susy侧边栏的SI按钮
     if (window.location.href.indexOf("susy.mdpi.com/") > -1){
         try{
             var siappend="<div id='si-search' tabindex='-1' role='dialog' style='position: absolute; height: 300px; width: 500px; top: 500px; left: 242.5px; display: block; z-index: 101;' class='hide ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-draggable ui-resizable' aria-describedby='display-user-info'>\
@@ -71,7 +78,22 @@
 <input type='text' name='show_all' value='my_journals' style='display:none;'>   <input type='text' name='form[si_name]' id='si-search2'>\
 <input type='submit' class='submit' value='SI Search'></form></div></div>";
             $("body").append(siappend);
-            $("[data-menu='editorial_office'] > li:nth-child(8)").append("<div style='float:right;'><a onclick='document.getElementById(\"si-search\").classList.remove(\"hide\");'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div>");
+            $("[data-menu='editorial_office'] > li:nth-child(8)").append("<a href='https://susy.mdpi.com/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC'>[O]</a> <a href='https://susy.mdpi.com/special_issue_pending/list/online?form%5Bjournal_id%5D=154&form%5Bsection_id%5D=893&form%5Bcreate_date_from%5D=&form%5Bcreate_date_to%5D=&form%5Bonline_date_from%5D=&form%5Bonline_date_to%5D=&form%5Bdeadline_from%5D=&form%5Bdeadline_to%5D=&form%5Bid%5D=&form%5Bsi_name%5D=&form%5Bname_system%5D=&form%5Bcreator%5D=&form%5Bstatus_id%5D=&form%5Bstatus_type%5D=&form%5B_token%5D=qDrRqObFQB2m01M4T-5iLK4xlOkqp0qBCHTDLm7XUik&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[Fuzzy]</a><div style='float:right;'><a onclick='document.getElementById(\"si-search\").classList.remove(\"hide\");'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div>");
         } catch (error){ }
     }
+
+    //默认新建特刊位于Mathematics
+    if (window.location.href.indexOf("susy.mdpi.com/user/special_issue/edit/0") > -1){
+        try{
+            document.getElementById('form_id_journal').value = "154";
+        } catch (error){ }
+    }
+
+    //Scopus校正
+    if (window.location.href.indexOf("featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:1") > -1){
+        try{
+            $("body").prepend('<iframe frameborder="0" width="100%" height="90%" src="'+document.URL.replace(/FEATURE_AUTHOR_DETAILS_BOTOX:1/, "FEATURE_AUTHOR_DETAILS_BOTOX:0")+'"></iframe>');
+        } catch (error){ }
+    }
+
 })();
