@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       0.9.18
+// @version       0.9.21
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -9,6 +9,8 @@
 // @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
 // @match         https://*.mdpi.com/*
 // @match         https://*.scopus.com/*
+// @match         *://scholar.google.co.uk/*&amp;*
+// @match         *://scholar.google.com/*&amp;*
 // @require       https://code.jquery.com/jquery-3.5.1.min.js
 // @require       https://gist.github.com/raw/2625891/waitForKeyElements.js
 // ==/UserScript==
@@ -96,4 +98,18 @@
         } catch (error){ }
     }
 
+    //Google Scholar校正
+    if (window.location.href.indexOf("&amp;") > -1){
+        function getUrlParam(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+            var r = window.location.search.substr(1).match(reg);
+            if(r != null) {
+                return decodeURI(r[2]);
+            }
+            return null;
+        }
+        try{
+            window.location.href="https://scholar.google.co.uk/citations?hl=en&user="+getUrlParam('amp;user')
+        } catch (error){ }
+    }
 })();
