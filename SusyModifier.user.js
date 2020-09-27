@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       0.9.21
+// @version       0.9.25
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -9,8 +9,10 @@
 // @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
 // @match         https://*.mdpi.com/*
 // @match         https://*.scopus.com/*
-// @match         *://scholar.google.co.uk/*&amp;*
-// @match         *://scholar.google.com/*&amp;*
+// @match         *://scholar.google.co.uk/*&amp;user*
+// @match         *://scholar.google.com/*&amp;user*
+// @match         *://scholar.google.com.hk/*&amp;user*
+// @match         *://scholar.google.com.tw/*&amp;user*
 // @require       https://code.jquery.com/jquery-3.5.1.min.js
 // @require       https://gist.github.com/raw/2625891/waitForKeyElements.js
 // ==/UserScript==
@@ -74,13 +76,10 @@
     //susy侧边栏的SI按钮
     if (window.location.href.indexOf("susy.mdpi.com/") > -1){
         try{
-            var siappend="<div id='si-search' tabindex='-1' role='dialog' style='position: absolute; height: 300px; width: 500px; top: 500px; left: 242.5px; display: block; z-index: 101;' class='hide ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-draggable ui-resizable' aria-describedby='display-user-info'>\
-<div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle'><span class='ui-dialog-title'>Special Issue Search</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close' title='Close' onclick='document.getElementById(\"si-search\").classList.add(\"hide\");'><span class='ui-button-icon ui-icon ui-icon-closethick'></span><span class='ui-button-icon-space'> </span>Close</button></div><div id='display-user-info' data-url='/user/info' class='ui-dialog-content ui-widget-content' style='width: auto; min-height: 0px; max-height: none; height: 512px;'>\
-<form class='insertform' method='get' action='https://susy.mdpi.com/special_issue_pending/list/search' target='_blank'>\
-<input type='text' name='show_all' value='my_journals' style='display:none;'>   <input type='text' name='form[si_name]' id='si-search2'>\
-<input type='submit' class='submit' value='SI Search'></form></div></div>";
+            var siappend="<div id='si-search' tabindex='-1' role='dialog' style='display: none; position: absolute; height: 300px; width: 500px; top: 500px; left: 242.5px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-draggable ui-resizable' aria-describedby='display-user-info'><div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle'><span class='ui-dialog-title'>Special Issue Search</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close' title='Close' onclick='document.getElementById(\"si-search\").style.display=\"none\"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span><span class='ui-button-icon-space'> </span>Close</button></div><div id='display-user-info' data-url='/user/info' class='ui-dialog-content ui-widget-content' style='width: auto; min-height: 0px; max-height: none; height: 512px;'>\
+<form class='insertform' method='get' action='https://susy.mdpi.com/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>   <input type='text' name='form[si_name]' id='si-search2'><input type='submit' class='submit' value='SI Search'></form></div></div>";
             $("body").append(siappend);
-            $("[data-menu='editorial_office'] > li:nth-child(8)").append("<a href='https://susy.mdpi.com/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC'>[O]</a> <a href='https://susy.mdpi.com/special_issue_pending/list/online?form%5Bjournal_id%5D=154&form%5Bsection_id%5D=893&form%5Bcreate_date_from%5D=&form%5Bcreate_date_to%5D=&form%5Bonline_date_from%5D=&form%5Bonline_date_to%5D=&form%5Bdeadline_from%5D=&form%5Bdeadline_to%5D=&form%5Bid%5D=&form%5Bsi_name%5D=&form%5Bname_system%5D=&form%5Bcreator%5D=&form%5Bstatus_id%5D=&form%5Bstatus_type%5D=&form%5B_token%5D=qDrRqObFQB2m01M4T-5iLK4xlOkqp0qBCHTDLm7XUik&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[Fuzzy]</a><div style='float:right;'><a onclick='document.getElementById(\"si-search\").classList.remove(\"hide\");'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div>");
+            $("[data-menu='editorial_office'] > li:nth-child(8)").append("<a href='https://susy.mdpi.com/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC'>[O]</a> <a href='https://susy.mdpi.com/special_issue_pending/list/online?form%5Bjournal_id%5D=154&form%5Bsection_id%5D=893&form%5Bcreate_date_from%5D=&form%5Bcreate_date_to%5D=&form%5Bonline_date_from%5D=&form%5Bonline_date_to%5D=&form%5Bdeadline_from%5D=&form%5Bdeadline_to%5D=&form%5Bid%5D=&form%5Bsi_name%5D=&form%5Bname_system%5D=&form%5Bcreator%5D=&form%5Bstatus_id%5D=&form%5Bstatus_type%5D=&form%5B_token%5D=qDrRqObFQB2m01M4T-5iLK4xlOkqp0qBCHTDLm7XUik&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[Fuzzy]</a><div style='float:right;'><a onclick='document.getElementById(\"si-search\").style.display=\"\"'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div>");
         } catch (error){ }
     }
 
@@ -88,6 +87,16 @@
     if (window.location.href.indexOf("susy.mdpi.com/user/special_issue/edit/0") > -1){
         try{
             document.getElementById('form_id_journal').value = "154";
+            document.evaluate('//*[@id="form_id_journal_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText="Mathematics";
+        } catch (error){ }
+    }
+
+    //默认新建EBM位于Mathematics+TE
+    if (window.location.href.indexOf("susy.mdpi.com/user/ebm/management") > -1){
+        try{
+            document.getElementById('journal_id').value = "154";
+            document.getElementById('role').value = "Topic Editor";
+            document.evaluate('//*[@id="journal_id_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText="Mathematics";
         } catch (error){ }
     }
 
@@ -109,7 +118,7 @@
             return null;
         }
         try{
-            window.location.href="https://scholar.google.co.uk/citations?hl=en&user="+getUrlParam('amp;user')
+            window.location.href="https://scholar.google.com/citations?hl=en&user="+getUrlParam('amp;user')
         } catch (error){ }
     }
 })();
