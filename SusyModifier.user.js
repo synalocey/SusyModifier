@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       0.9.25
+// @version       0.9.28
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -73,6 +73,13 @@
         } catch (error){ }
     }
 
+    //reviewer checking样式
+    if (window.location.href.indexOf("checking/") > -1){
+        try{
+            $("body").append('<iframe frameborder="0" width="100%" hight="160px" src="'+ $(".reviewerNotes").attr("data-load-url") +'"></iframe>');
+        } catch (error){ }
+    }
+
     //susy侧边栏的SI按钮
     if (window.location.href.indexOf("susy.mdpi.com/") > -1){
         try{
@@ -88,6 +95,19 @@
         try{
             document.getElementById('form_id_journal').value = "154";
             document.evaluate('//*[@id="form_id_journal_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText="Mathematics";
+        } catch (error){ }
+    }
+
+    //invite email修改标题
+    if (window.location.href.indexOf("ebm_pending/invite_email") > -1){
+        try{
+            $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390) [Mathematics] (IF=1.747\', \'Rank Q1\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a>')
+        } catch (error){ }
+    }
+    if (window.location.href.indexOf("invite/guest_editor") > -1){
+        try{
+            $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'gladly waive\', \'gladly offer 50% discounts on\');">[50%]</a>')
+            $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390\', \'Rank Q1\'); document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'from the Guest Editor. If\', \'from the Guest Editor, and may offer discounts for papers invited by the Guest Editor. If\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a> ')
         } catch (error){ }
     }
 
