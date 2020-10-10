@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       0.9.30
+// @version       0.10.10
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -36,14 +36,14 @@
     } catch (error){ }}
 
     //特刊列表免翻页
-    if (window.location.href=='https://susy.mdpi.com/special_issue_pending/list'){try{
+    if (window.location.href.indexOf("susy.mdpi.com/special_issue_pending/list") > -1){try{
         var totalpage = document.getElementsByClassName("pagination margin-0")[0].getElementsByTagName("li").length-1
         for (var i = 2; i < totalpage; i++) {
             (function(i){//闭包
                 setTimeout(function(){
                     console.log(i);
                     var IFramename = "iframe"+i;
-                    $("body").append('<iframe id="iframe'+i+'" src="https://susy.mdpi.com/special_issue_pending/list?page=' +i+ '" style="display:none;"></iframe>');
+                    $("body").append('<iframe id="iframe'+i+'" src="' + document.getElementsByClassName("pagination margin-0")[0].getElementsByTagName("li")[i].getElementsByTagName("a")[0].href + '" style="display:none;"></iframe>');
                     document.getElementById("iframe"+i).onload = function () {
                         $('#statustable').after(document.getElementById("iframe"+i).contentWindow.document.getElementById("statustable"))
                         $('#statustable').attr('id','old_statustable');
@@ -56,9 +56,6 @@
     //mailsdb样式
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/login") > -1){try{
         window.location.href="https://mailsdb.i.mdpi.com/login";
-    } catch (error){ }}
-    if (window.location.href.indexOf("mailsdb.i.mdpi.com/login") > -1){try{
-        $(":submit")[0].click()
     } catch (error){ }}
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/search/emails") > -1){try{
         var link = document.createElement("link");
