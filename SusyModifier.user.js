@@ -36,7 +36,7 @@
     } catch (error){ }}
 
     //特刊列表免翻页
-    if (window.location.href.indexOf("susy.mdpi.com/special_issue_pending/list") > -1){try{
+    if (window.location.href.indexOf("susy.mdpi.com/special_issue_pending/list") > -1 && window.location.href.indexOf("page=") == -1){try{
         var totalpage = document.getElementsByClassName("pagination margin-0")[0].getElementsByTagName("li").length-1
         for (var i = 2; i < totalpage; i++) {
             (function(i){//闭包
