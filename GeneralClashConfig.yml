@@ -59,7 +59,6 @@ experimental:
 # 静态的域名 比 通配域名 具有更高的优先级 (foo.example.com 优先于 *.example.com)
 # 注意: hosts 在 fake-ip 模式下不生效
 hosts:
-    'redmine.mdpi.com': 210.51.191.2 
     'doc.mdpi.lab': 210.51.191.2 
     'merrin5.mdpi.lab': 210.51.191.2 
     'feedback.mdpi.lab': 210.51.191.2 
