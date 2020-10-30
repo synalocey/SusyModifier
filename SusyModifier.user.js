@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       0.10.28
+// @version       0.10.30
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -15,6 +15,7 @@
 // @match         *://scholar.google.com.tw/*&amp;user*
 // @require       https://code.jquery.com/jquery-3.5.1.min.js
 // @require       https://gist.github.com/raw/2625891/waitForKeyElements.js
+// @grant         GM_xmlhttpRequest
 // ==/UserScript==
 
 (function() {
@@ -64,6 +65,18 @@
         link.href = "/assets/application-79a8659b0064dad9845d4ec2f290c6e94795079e79a99ab4354776213eb35db0.css";
         document.getElementsByTagName("head")[0].appendChild(link);
         document.body.innerHTML = document.body.innerHTML.replace(new RegExp(' data-url="','g'),' href="');
+        var susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1";
+        if (susycheck.indexOf("@") > -1){
+            $("body").prepend("<p>⬆️⬆️⬆️⬆️⬆️</p>");
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: "https://susy.mdpi.com/user/guest_editor/check?email=chris.cornelis@ugent.be&special_issue_id=1",
+                headers: {'User-agent': 'Mozilla/5.0 (compatible)', 'Accept': 'application/atom+xml,application/xml,text/xml',},
+                onload: function(responseDetails) {
+                    $("body").prepend(responseDetails.responseText);
+                }
+            });
+        }
     } catch (error){ }}
 
     //reviewer checking样式⚙️
