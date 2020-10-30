@@ -70,7 +70,7 @@
             $("body").prepend("<p>⬆️⬆️⬆️⬆️⬆️</p>");
             GM_xmlhttpRequest({
                 method: 'GET',
-                url: "https://susy.mdpi.com/user/guest_editor/check?email=chris.cornelis@ugent.be&special_issue_id=1",
+                url: susycheck,
                 headers: {'User-agent': 'Mozilla/5.0 (compatible)', 'Accept': 'application/atom+xml,application/xml,text/xml',},
                 onload: function(responseDetails) {
                     $("body").prepend(responseDetails.responseText);
