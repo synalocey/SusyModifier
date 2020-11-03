@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       0.10.30
+// @version       0.11.3
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -54,7 +54,7 @@
         };
     } catch (error){ }}
 
-    //mailsdb样式⚙️
+    //mailsdb样式⚙️🔝
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/login") > -1){try{
         window.location.href="https://mailsdb.i.mdpi.com/login";
     } catch (error){ }}
@@ -67,7 +67,7 @@
         document.body.innerHTML = document.body.innerHTML.replace(new RegExp(' data-url="','g'),' href="');
         var susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1";
         if (susycheck.indexOf("@") > -1){
-            $("body").prepend("<p>⬆️⬆️⬆️⬆️⬆️</p>");
+            $("body").prepend("<p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p>");
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: susycheck,
@@ -115,8 +115,8 @@
     } catch (error){ }}
 
     //Scopus校正
-    if (window.location.href.indexOf("featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:1") > -1){try{
-        $("body").prepend('<iframe frameborder="0" width="100%" height="90%" src="'+document.URL.replace(/FEATURE_AUTHOR_DETAILS_BOTOX:1/, "FEATURE_AUTHOR_DETAILS_BOTOX:0")+'"></iframe>');
+    if (window.location.href.indexOf("authid/detail.uri?authorId") > -1 && window.location.href.indexOf("FEATURE_AUTHOR_DETAILS_BOTOX:0") == -1 ){try{
+        $("body").prepend('<iframe frameborder="0" width="100%" height="90%" src="'+document.URL.replace(/featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:1/, "")+'&featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:0"></iframe>');
     } catch (error){ }}
 
     //Google Scholar校正
