@@ -118,7 +118,7 @@ dns:
     ipcidr:
       - 240.0.0.0/4
 cfw-latency-timeout: 1800
-cfw-latency-url: http://www.gstatic.com/generate_204
+cfw-latency-url: https://www.google.com/
 cfw-conn-break-strategy:
   proxy: none
   profile: true
