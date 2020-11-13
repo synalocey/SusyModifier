@@ -1,0 +1,30 @@
+mixed-port: 7890
+allow-lan: false
+log-level: info
+external-controller: '127.0.0.1:9090'
+secret: ''
+ipv6: false
+
+# Will be ignored after profile selection
+proxies:
+  - name: "26F"
+    type: socks5
+    server: 139.9.140.0
+    port: 19970
+  - name: "18F"
+    type: socks5
+    server: 121.36.46.127
+    port: 19970
+  - name: "5-15F"
+    type: socks5
+    server: 119.3.212.188
+    port: 19970
+proxy-groups:
+  - name: Proxy
+    type: select
+    proxies:
+      - 26F
+      - 18F
+      - 5-15F
+rules:
+  - 'MATCH,DIRECT'
