@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       0.11.3
+// @version       0.11.17
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -90,6 +90,7 @@
 <form class='insertform' method='get' action='https://susy.mdpi.com/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>   <input type='text' name='form[si_name]' id='si-search2'><input type='submit' class='submit' value='SI Search'></form></div></div>";
         $("body").append(siappend);
         $("[data-menu='editorial_office'] > li:nth-child(8)").append("<a href='https://susy.mdpi.com/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC'>[O]</a> <a href='https://susy.mdpi.com/special_issue_pending/list/online?form%5Bjournal_id%5D=154&form%5Bsection_id%5D=893&form%5Bcreate_date_from%5D=&form%5Bcreate_date_to%5D=&form%5Bonline_date_from%5D=&form%5Bonline_date_to%5D=&form%5Bdeadline_from%5D=&form%5Bdeadline_to%5D=&form%5Bid%5D=&form%5Bsi_name%5D=&form%5Bname_system%5D=&form%5Bcreator%5D=&form%5Bstatus_id%5D=&form%5Bstatus_type%5D=&form%5B_token%5D=qDrRqObFQB2m01M4T-5iLK4xlOkqp0qBCHTDLm7XUik&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[Fuzzy]</a><div style='float:right;'><a onclick='document.getElementById(\"si-search\").style.display=\"\"'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div>");
+        $("[data-menu='editorial_office'] > li:nth-child(2)").append("https://susy.mdpi.com/user/managing/status/all?form%5Bmanuscript_id%5D=&form%5Bdoi%5D=&form%5Barticle_type_id%5D=&form%5Bjournal_id%5D=154&form%5Bsection_id%5D=893&form%5Bspecial_issue_id%5D=&form%5Bsi_editor_id%5D=&form%5Btitle%5D=&form%5Bauthor%5D=&form%5Bauthor_country_id%5D=&form%5Beditor_id%5D=&form%5Bopen_review%5D=&form%5Bresubmission%5D=&form%5Bpayment_done%5D=&form%5Bready_publish%5D=&form%5Bhas_video_abstract%5D=&form%5Bhas_video_file%5D=&form%5Breview_report_recommendation%5D=&form%5Blast_action_start%5D=&form%5Blast_action_end%5D=&form%5Bsubmission_date_start%5D=&form%5Bsubmission_date_end%5D=&form%5Bdecision_status%5D=&form%5Brejected_status%5D=&form%5Bproceeding_name%5D=&form%5B_token%5D=xnzlLMBbQPsjdT-JG_LKx4hX8YMKVcwInLeDmsOC1Qk&sort_field=submission_manuscript_state.last_action&sort=DESC'>[Fuzzy]</a>");
     } catch (error){ }}
 
     //默认新建特刊位于Mathematics🔢
