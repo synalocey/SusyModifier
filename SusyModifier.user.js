@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       0.11.20
+// @version       0.11.23
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -96,9 +96,10 @@
     } catch (error){ }}
 
     //默认新建特刊位于Mathematics🔢
-    if (window.location.href.indexOf("susy.mdpi.com/user/special_issue/edit/0") > -1){try{
+    if (window.location.href.indexOf("susy.mdpi.com/user/special_issue/edit/") > -1){try{
         document.getElementById('form_id_journal').value = "154";
         document.evaluate('//*[@id="form_id_journal_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText="Mathematics";
+        $("#form_name").after("<a href='#' onclick='function reqListener () {  $(\"#form_name\")[0].value=this.responseText;}var oReq = new XMLHttpRequest();oReq.addEventListener(\"load\", reqListener);oReq.open(\"GET\", \"https://brettterpstra.com/titlecase/?title=\" + $(\"#form_name\")[0].value);oReq.send();' return false;>🔠🔡</a> ");
     } catch (error){ }}
 
     //invite email修改标题✏️
