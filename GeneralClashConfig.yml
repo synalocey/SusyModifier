@@ -205,7 +205,7 @@ dns:
 # Clash for Windows
 # Proxies module latency test settings
 cfw-latency-timeout: 1800
-cfw-latency-url: http://www.gstatic.com/generate_204
+cfw-latency-url: https://www.google.com/images/errors/robot.png
 
 # 混合配置（mixin）
 # 支持向所有配置文件中注入公共属性设置
