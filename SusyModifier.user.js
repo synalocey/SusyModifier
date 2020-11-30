@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       0.11.26
+// @version       0.11.30
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -118,6 +118,7 @@
         document.getElementById('journal_id').value = "154";
         document.getElementById('role').value = "Topic Editor";
         document.evaluate('//*[@id="journal_id_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText="Mathematics";
+        $("#ebm_pending_check_btn").before('<input class="submit" type="submit" value="Proceed"> ');
     } catch (error){ }}
 
     //Scopus校正
