@@ -62,37 +62,104 @@ hosts:
     '*.mdpi.lab': 210.51.191.2 
     'mail.mdpi.com': 212.243.204.39
 
-#dns:
-  #enable: true # 是否启用dns false
-  #ipv6: false
-  #listen: 0.0.0.0:53
-  #enhanced-mode: redir-host # 模式：redir-host或fake-ip
-  #fake-ip-range: 198.18.0.1/16 #
-  #fake-ip-filter: # fake ip 白名单列表，如果你不知道这个参数的作用，请勿修改
-     #- '*.lan'
-     #- localhost.ptlogin2.qq.com
-  #nameserver:
-     #- 223.5.5.5 # 阿里DNS
-     #- 180.76.76.76 # 百度DNS
-     #- 119.29.29.29 # 腾讯DNS
-     #- 117.50.11.11 # ONE DNS拦截版 恶意网站拦截、广告过滤
-     #- 117.50.10.10 # ONE DNS纯净版 直接返回其真实的响应结果
-     #- 114.114.114.114 # 114DNS
-     #- https://dns.alidns.com/dns-query # 阿里 DoH DNS
-     #- https://doh.360.cn/dns-query # 360 DoH DNS
-  #fallback:
-     #- 8.8.8.8 # 谷歌DNS
-     #- 1.1.1.1 # Cloudflare DNS
-     #- tls://dns.rubyfish.cn:853
-     #- tls://1.0.0.1:853
-     #- tls://dns.google:853
-     #- https://dns.rubyfish.cn/dns-query
-     #- https://cloudflare-dns.com/dns-query
-     #- https://dns.google/dns-query
-  #fallback-filter:
-     #geoip: true # 默认
-     #ipcidr: # 在这个网段内的 IP 地址会被考虑为被污染的 IP
-       #- 240.0.0.0/4
+dns:
+  enable: true # 是否启用dns false
+  ipv6: false
+  listen: 0.0.0.0:53
+  enhanced-mode: fake-ip # 模式：redir-host或fake-ip
+  fake-ip-range: 198.18.0.1/16 #
+  fake-ip-filter:
+    - "*.lan"
+    - msftconnecttest.com
+    - msftncsi.com
+    - stun.*.*.*
+    - stun.*.*
+    - time.windows.com
+    - time.nist.gov
+    - time.apple.com
+    - time.asia.apple.com
+    - "*.ntp.org.cn"
+    - "*.openwrt.pool.ntp.org"
+    - time1.cloud.tencent.com
+    - time.ustc.edu.cn
+    - pool.ntp.org
+    - ntp.ubuntu.com
+    - ntp.aliyun.com
+    - ntp1.aliyun.com
+    - ntp2.aliyun.com
+    - ntp3.aliyun.com
+    - ntp4.aliyun.com
+    - ntp5.aliyun.com
+    - ntp6.aliyun.com
+    - ntp7.aliyun.com
+    - time1.aliyun.com
+    - time2.aliyun.com
+    - time3.aliyun.com
+    - time4.aliyun.com
+    - time5.aliyun.com
+    - time6.aliyun.com
+    - time7.aliyun.com
+    - "*.time.edu.cn"
+    - time1.apple.com
+    - time2.apple.com
+    - time3.apple.com
+    - time4.apple.com
+    - time5.apple.com
+    - time6.apple.com
+    - time7.apple.com
+    - time1.google.com
+    - time2.google.com
+    - time3.google.com
+    - time4.google.com
+    - music.163.com
+    - "*.music.163.com"
+    - "*.126.net"
+    - musicapi.taihe.com
+    - music.taihe.com
+    - songsearch.kugou.com
+    - trackercdn.kugou.com
+    - "*.kuwo.cn"
+    - api-jooxtt.sanook.com
+    - api.joox.com
+    - joox.com
+    - y.qq.com
+    - "*.y.qq.com"
+    - streamoc.music.tc.qq.com
+    - mobileoc.music.tc.qq.com
+    - isure.stream.qqmusic.qq.com
+    - dl.stream.qqmusic.qq.com
+    - aqqmusic.tc.qq.com
+    - amobile.music.tc.qq.com
+    - "*.xiami.com"
+    - "*.music.migu.cn"
+    - music.migu.cn
+    - "*.msftconnecttest.com"
+    - "*.msftncsi.com"
+    - localhost.ptlogin2.qq.com
+    - "*.*.*.srv.nintendo.net"
+    - "*.*.stun.playstation.net"
+    - xbox.*.*.microsoft.com
+    - "*.ipv6.microsoft.com"
+    - "*.*.xboxlive.com"
+  nameserver:
+     - 114.114.114.114 # 114DNS
+     - 223.5.5.5 # 阿里DNS
+     - 180.76.76.76 # 百度DNS
+     - 119.29.29.29 # 腾讯DNS
+     - 117.50.10.10 # ONE DNS纯净版 直接返回其真实的响应结果
+  fallback:
+     - 8.8.8.8 # 谷歌DNS
+     - 1.1.1.1 # Cloudflare DNS
+     - tls://dns.rubyfish.cn:853
+     - tls://1.0.0.1:853
+     - tls://dns.google:853
+     - https://dns.rubyfish.cn/dns-query
+     - https://cloudflare-dns.com/dns-query
+     - https://dns.google/dns-query
+  fallback-filter:
+     geoip: true # 默认
+     ipcidr: # 在这个网段内的 IP 地址会被考虑为被污染的 IP
+       - 240.0.0.0/4
 
 # 1. clash DNS 请求逻辑：
 #   (1) 当访问一个域名时， nameserver 与 fallback 列表内的所有服务器并发请求，得到域名对应的 IP 地址。
