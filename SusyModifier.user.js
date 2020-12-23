@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       0.12.9
+// @version       0.12.23
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -67,14 +67,30 @@
         link.href = "/assets/application-79a8659b0064dad9845d4ec2f290c6e94795079e79a99ab4354776213eb35db0.css";
         document.getElementsByTagName("head")[0].appendChild(link);
         document.body.innerHTML = document.body.innerHTML.replace(new RegExp(' data-url="','g'),' href="');
-        var susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1";
+        var susycheck = "https://susy.mdpi.com/user/info?emails="+ window.location.href.match(/search_content=(\S*)/)[1];
         if (susycheck.indexOf("@") > -1){
-            $("body").prepend("<p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p>");
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: susycheck,
                 headers: {'User-agent': 'Mozilla/5.0 (compatible)', 'Accept': 'application/atom+xml,application/xml,text/xml',},
                 onload: function(responseDetails) {
+                    const sty = document.createElement("style");
+                    sty.innerHTML = '#user-info {width: 80%} #user-info .user-info-section{margin-bottom:10px}#user-info span.email{font-weight:400;color:#103247}#user-info span.number{font-weight:400;color:#123}#user-info a{color:#00f}#user-info a:visited{color:#cd7e53}#user-info a:hover{color:#47566d}#user-info table{margin-left:2%;width:98%;background:#99a4b5;margin-bottom:10px;border-right:1px solid #ccc;border-bottom:1px solid #ccc;font-size: 14px;}#user-info table tr th{text-align:left;background:#4f5671;color:#fefefe;font-weight:400;border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem}#user-info table tr td{border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem;background:#fefefe}#user-info table tr td span.msid{color:#4e6c88;font-weight:400}#user-info table tr td.title{width:50%}#user-info table tr td.journal{width:10%;text-align:center}#user-info table tr td.status{width:10%;text-align:center}#user-info table tr td.submission-date{width:10%;text-align:center}#user-info table tr td.invoice-info{width:10%;text-align:center}#user-info table tr td.invoice-payment-info{width:10%;text-align:center}';
+                    sty.id = "sty_add";
+                    document.head.appendChild(sty);
+                    $("body").prepend("<p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p>");
+                    $("body").prepend(responseDetails.responseText);
+                }
+            });
+        }
+        susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1";
+        if (susycheck.indexOf("@") > -1){
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: susycheck,
+                headers: {'User-agent': 'Mozilla/5.0 (compatible)', 'Accept': 'application/atom+xml,application/xml,text/xml',},
+                onload: function(responseDetails) {
+                    $("body").prepend("<p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p>");
                     $("body").prepend(responseDetails.responseText);
                 }
             });
@@ -93,8 +109,9 @@
         var siappend="<div id='si-search' tabindex='-1' role='dialog' style='display: none; position: absolute; height: 300px; width: 500px; top: 500px; left: 242.5px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-draggable ui-resizable' aria-describedby='display-user-info'><div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle'><span class='ui-dialog-title'>Special Issue Search</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close' title='Close' onclick='document.getElementById(\"si-search\").style.display=\"none\"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span><span class='ui-button-icon-space'> </span>Close</button></div><div id='display-user-info' data-url='/user/info' class='ui-dialog-content ui-widget-content' style='width: auto; min-height: 0px; max-height: none; height: 512px;'>\
 <form class='insertform' method='get' action='https://susy.mdpi.com/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>   <input type='text' name='form[si_name]' id='si-search2'><input type='submit' class='submit' value='SI Search'></form></div></div>";
         $("body").append(siappend);
-        $("[data-menu='editorial_office'] > li > [href='/special_issue_pending/list']").after(" <a href='https://susy.mdpi.com/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC'>[O]</a> <a href='https://susy.mdpi.com/special_issue_pending/list/online?form%5Bjournal_id%5D=154&form%5Bsection_id%5D=893&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[Fuzzy]</a><div style='float:right;'><a onclick='document.getElementById(\"si-search\").style.display=\"\"'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div>");
-        $("[data-menu='editorial_office'] > li > [href='/user/managing/status/submitted']").after(" <a href='https://susy.mdpi.com/user/managing/status/all?form%5Bjournal_id%5D=154&form%5Bsection_id%5D=893&sort_field=submission_manuscript_state.last_action&sort=DESC'>[Fuzzy]</a>");
+        $("[data-menu='editorial_office'] > li > [href='/special_issue_pending/list']").after(" <a href='https://susy.mdpi.com/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC'>[O]</a> <a href='https://susy.mdpi.com/special_issue_pending/list/online?form%5Bjournal_id%5D=154&form%5Bsection_id%5D=893&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[Fu]</a><a href='https://susy.mdpi.com/special_issue_pending/list/online?form%5Bjournal_id%5D=154&form%5Bsection_id%5D=895&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[FM]</a><div style='float:right;'><a onclick='document.getElementById(\"si-search\").style.display=\"\"'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div>");
+        $("[data-menu='editorial_office'] > li > [href='/user/managing/status/submitted']").after(" <a href='https://susy.mdpi.com/user/managing/status/all?form%5Bjournal_id%5D=154&form%5Bsection_id%5D=895&sort_field=submission_manuscript_state.last_action&sort=DESC'>[FM]</a>");
+        $("[data-menu='editorial_office'] > li > [href='/user/managing/status/submitted']").after(" <a href='https://susy.mdpi.com/user/managing/status/all?form%5Bjournal_id%5D=154&form%5Bsection_id%5D=893&sort_field=submission_manuscript_state.last_action&sort=DESC'>[Fu]</a>");
     } catch (error){ }}
 
     //默认新建特刊位于Mathematics🔢
@@ -122,9 +139,9 @@
     } catch (error){ }}
 
     //Scopus校正
-    if (window.location.href.indexOf("authid/detail.uri?authorId") > -1 && window.location.href.indexOf("FEATURE_AUTHOR_DETAILS_BOTOX:0") == -1 ){try{
-        if(!document.getElementById("authDetailsNameSection")){$("body").prepend('<iframe frameborder="0" width="100%" height="90%" src="'+document.URL.replace(/featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:1/, "")+'&featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:0"></iframe>');}
-    } catch (error){ }}
+//    if (window.location.href.indexOf("authid/detail.uri?authorId") > -1 && window.location.href.indexOf("FEATURE_AUTHOR_DETAILS_BOTOX:0") == -1 ){try{
+//        if(!document.getElementById("authDetailsNameSection")){$("body").prepend('<iframe frameborder="0" width="100%" height="90%" src="'+document.URL.replace(/featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:1/, "")+'&featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:0"></iframe>');}
+//    } catch (error){ }}
 
     //Google Scholar校正
     if (window.location.href.indexOf("&amp;") > -1){
