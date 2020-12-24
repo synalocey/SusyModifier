@@ -70,8 +70,6 @@ dns:
   fake-ip-range: 198.18.0.1/16 #
   fake-ip-filter:
     - "*.lan"
-    - msftconnecttest.com
-    - msftncsi.com
     - stun.*.*.*
     - stun.*.*
     - time.windows.com
@@ -142,13 +140,13 @@ dns:
     - "*.ipv6.microsoft.com"
     - "*.*.xboxlive.com"
   nameserver:
-     - 114.114.114.114 # 114DNS
-     - 223.5.5.5 # 阿里DNS
-     - 119.29.29.29 # 腾讯DNS
+    - 114.114.114.114
+    - 180.76.76.76
+    - 119.29.29.29
   fallback:
+    - tcp://1.0.0.1
     - tls://dns.google
-    - tcp://1.1.1.1
-    - https://dns.google/dns-query
+    - https://dns.cloudflare.com/dns-query
     - tls://dns.rubyfish.cn:853
   fallback-filter:
      geoip: true # 默认
@@ -191,7 +189,7 @@ dns:
 
 # Clash for Windows
 # Proxies module latency test settings
-cfw-latency-timeout: 1800
+cfw-latency-timeout: 3000
 cfw-latency-url: https://www.google.com/images/errors/robot.png
 
 # 混合配置（mixin）
