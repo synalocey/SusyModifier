@@ -62,6 +62,14 @@ hosts:
     '*.mdpi.lab': 210.51.191.2 
     'mail.mdpi.com': 212.243.204.39
 
+tun:
+  enable: false
+  stack: gvisor
+  dns-hijack:
+    - 198.18.0.2:53
+  macOS-auto-route: true
+  macOS-auto-detect-interface: true 
+
 dns:
   enable: true # 是否启用dns false
   ipv6: true
@@ -296,4 +304,21 @@ cfw-bypass:
   - 172.30.*
   - 172.31.*
   - 192.168.*
+  - 224.*
+  - 225.*
+  - 226.*
+  - 227.*
+  - 228.*
+  - 229.*
+  - 230.*
+  - 231.*
+  - 232.*
+  - 233.*
+  - 234.*
+  - 235.*
+  - 236.*
+  - 237.*
+  - 238.*
+  - 239.*
+  - 255.*
   - <local>
