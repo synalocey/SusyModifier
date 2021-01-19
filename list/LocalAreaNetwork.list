@@ -35,3 +35,10 @@ DOMAIN-SUFFIX,phicomm.me
 DOMAIN-SUFFIX,routerlogin.com
 DOMAIN-SUFFIX,tendawifi.com
 DOMAIN-SUFFIX,zte.home
+
+# MDPI
+DOMAIN-SUFFIX,mail.mdpi.com
+DOMAIN-SUFFIX,mail.mdpi.cn
+DOMAIN-SUFFIX,mail-internal.mdpi.com
+DOMAIN-SUFFIX,mail-internal.mdpi.cn
+IP-CIDR,212.243.204.39/24,no-resolve
