@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.1.21
+// @version       1.1.27
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -98,11 +98,14 @@
     } catch (error){ }}
 
     //reviewer checking样式⚙️
-    if (window.location.href.indexOf("checking/") > -1){try{
-        $("body").append('<iframe frameborder="0" width="100%" hight="160px" src="'+ $(".reviewerNotes").attr("data-load-url") +'"></iframe>');
-        function getUrlParam(name) {var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); var r = window.location.search.substr(1).match(reg); if(r != null) {return decodeURI(r[2]);} return null; }
-        $(".reviewerNotes").after(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' src='/bundles/mdpisusy/img/design/google_logo.png'></a>")
-    } catch (error){ }}
+    if (window.location.href.indexOf("checking/") > -1){
+        try{$("body").append('<iframe frameborder="0" width="100%" hight="160px" src="'+ $(".reviewerNotes").attr("data-load-url") +'"></iframe>');
+            function getUrlParam(name) {var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); var r = window.location.search.substr(1).match(reg); if(r != null) {return decodeURI(r[2]);} return null; }
+            $(".reviewerNotes").after(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' src='/bundles/mdpisusy/img/design/google_logo.png'></a>")}
+        catch (error){ }
+        try{document.getElementsByClassName("see-blocked-info")[0].href="https://susy.mdpi.com/reviewer/blocked/seemore?email="+getUrlParam('email');}
+        catch (error){ }
+    }
 
     //susy侧边栏的SI按钮🔎
     if (window.location.href.indexOf("susy.mdpi.com/") > -1){try{
@@ -142,9 +145,9 @@
     } catch (error){ }}
 
     //Scopus校正
-//    if (window.location.href.indexOf("authid/detail.uri?authorId") > -1 && window.location.href.indexOf("FEATURE_AUTHOR_DETAILS_BOTOX:0") == -1 ){try{
-//        if(!document.getElementById("authDetailsNameSection")){$("body").prepend('<iframe frameborder="0" width="100%" height="90%" src="'+document.URL.replace(/featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:1/, "")+'&featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:0"></iframe>');}
-//    } catch (error){ }}
+    //    if (window.location.href.indexOf("authid/detail.uri?authorId") > -1 && window.location.href.indexOf("FEATURE_AUTHOR_DETAILS_BOTOX:0") == -1 ){try{
+    //        if(!document.getElementById("authDetailsNameSection")){$("body").prepend('<iframe frameborder="0" width="100%" height="90%" src="'+document.URL.replace(/featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:1/, "")+'&featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:0"></iframe>');}
+    //    } catch (error){ }}
 
     //Google Scholar校正
     if (window.location.href.indexOf("&amp;") > -1){
