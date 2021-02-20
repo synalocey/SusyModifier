@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.2.18
+// @version       1.2.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -140,6 +140,11 @@
         document.getElementById('role').value = "Topic Editor";
         document.evaluate('//*[@id="journal_id_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText="Mathematics";
         $("#ebm_pending_check_btn").before('<input class="submit" type="submit" value="Proceed"> ');
+    } catch (error){ }}
+
+    //TE+EBM加入Google Sheet
+    if (window.location.href.indexOf("susy.mdpi.com/user/ebm/edit") > -1){try{
+        $("#edit-ebm-form").append("<a href=\"#\" onclick=\"var syna_append='https://script.google.com/macros/s/AKfycbz9XFh17rVkJgGGZXBi_2ATNluvJW_uOmXtUyrqxdY1QAZ5DrEgX_Cu/exec?c1='+$(`#form_firstname`)[0].value+' '+$(`#form_lastname`)[0].value+'&c2='+$(`#form_email`)[0].value+'&c3='+$(`#form_affiliation`)[0].value+'&c4='+$(`#form_country`)[0].value+'&c5='+$(`#form_interests`)[0].value+'&c8='+$(`#form_website`)[0].value;$(\'#edit-ebm-form\').append('<a href=&quot;'+syna_append+'&quot; target=_blank>'+syna_append+'</a>'); \">Add TE to Google Sheet</a><br>");
     } catch (error){ }}
 
     //Scopus校正
