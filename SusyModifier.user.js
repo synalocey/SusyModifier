@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.3.4
+// @version       1.3.15
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -21,9 +21,10 @@
 (function() {
     'use strict';
 
-    //添加新建特刊➕符号
+    //添加新建特刊➕符号和pp add按钮
     if (window.location.href.indexOf("susy.mdpi.com/special_issue/process") > -1){try{
         $('#si-update-emphasized').before('<a href="/user/special_issue/edit/0" title="New special issue">➕</a> ');
+        $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
     } catch (error){ }}
 
     //特刊主页添加修改✏️符号
