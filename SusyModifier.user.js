@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.3.26
+// @version       1.3.29
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -151,10 +151,68 @@
         $("#edit-ebm-form").append("<a href=\"#\" onclick=\"var syna_append='https://script.google.com/macros/s/AKfycbz9XFh17rVkJgGGZXBi_2ATNluvJW_uOmXtUyrqxdY1QAZ5DrEgX_Cu/exec?c1='+$(`#form_firstname`)[0].value+' '+$(`#form_lastname`)[0].value+'&c2='+$(`#form_email`)[0].value+'&c3='+$(`#form_affiliation`)[0].value+'&c4='+$(`#form_country`)[0].value+'&c5='+$(`#form_interests`)[0].value+'&c8='+$(`#form_website`)[0].value;$(\'#edit-ebm-form\').append('<a href=&quot;'+syna_append+'&quot; target=_blank>'+syna_append+'</a>'); \">Add TE to Google Sheet</a><br>");
     } catch (error){ }}
 
-    //Scopus校正
-    //    if (window.location.href.indexOf("authid/detail.uri?authorId") > -1 && window.location.href.indexOf("FEATURE_AUTHOR_DETAILS_BOTOX:0") == -1 ){try{
-    //        if(!document.getElementById("authDetailsNameSection")){$("body").prepend('<iframe frameborder="0" width="100%" height="90%" src="'+document.URL.replace(/featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:1/, "")+'&featureToggles=FEATURE_AUTHOR_DETAILS_BOTOX:0"></iframe>');}
-    //    } catch (error){ }}
+    //mrs解除限制
+    function embed() {
+        $('.export_data').on('click', function(event) {
+            event.preventDefault();
+            const url = window.location.pathname;
+            const data = getFormJson($(this).closest('form'));
+            $.ajax({
+                url,
+                type: 'post',
+                data: data,
+                beforeSend: function () {
+                    const journalId = data.journal_id;
+                    if (journalId == 0) {
+                        const startDate = data.start;
+                        const endDate = data.end;
+                        const fromDate = new Date(startDate);
+                        const toDate = new Date(endDate);
+                        const diff = toDate.getTime() - fromDate.getTime();
+                        const years = Math.floor(diff / (24 * 3600 * 1000 * 366) * 10) / 10;
+                        if (years >= 10) {
+                            $('#date_error').addClass("error").html("If you select all journals, please do not select more than one year,thanks!");
+                            return false;
+                        }else {
+                            $('#date_error').html('').removeClass("error");
+                            return true;
+                        }
+                    }
+
+                    $("#preparing-file-modal").dialog({modal: true});
+                },
+                success: function(res){
+                    $("#preparing-file-modal").dialog('close');
+                    //'39a6ee9bc0dcbc59e8fa82cfd122cecf'
+                    if (typeof(res)=='string' && res.length == 32) {
+                        exportExcel(res);
+                    }else {
+                        if(typeof(res)=='object' && res.result == 0) {
+                            for (var key in res.data) {
+                                $('.error').remove();
+                                $("#form_"+key).after('<p class="error">'+res.data[key]+'</p>');
+                            }
+                        } else {
+                            $(".export_error").html("<font color='red'>(Export excel failed,please contact IT(Zhihao Jiao OR Xiangyang Yuan))</font>");
+                        }
+                    }
+                },
+                complete: function(){
+                    $("#preparing-file-modal").dialog('close');
+                },
+                error:function(){
+                    $("#error-modal").dialog({ modal: true });
+                }
+            });
+        });
+    }
+
+    if (window.location.href.indexOf("mrs.mdpi.com/data") > -1){try{
+        var script = document.createElement('script');
+        script.type = "text/javascript";
+        script.innerHTML = "(" + embed + ")()";
+        document.getElementsByTagName('head')[0].appendChild(script);
+    } catch (error){ }}
 
     //Google Scholar校正
     if (window.location.href.indexOf("&amp;") > -1){
