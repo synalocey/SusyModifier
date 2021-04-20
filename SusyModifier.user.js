@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.4.16
+// @version       1.4.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -127,9 +127,10 @@
 
     //invite+remind email修改标题✏️
     if (window.location.href.indexOf("ebm_pending/invite_email") > -1){try{
-        $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'with 50% discounts\', \'free of charge\').replace(\'20%\', \'20–100%\');">[100%]</a>')
-        $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'20%\', \'20–50%\');">[50%]</a>')
-        $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390) [Mathematics] (IF=1.747\', \'Rank Q1\').replace(\'ISSN 2227-7390\', \'Rank Q1\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a>')
+        function init() {document.getElementById('mailSubject').value=document.getElementById('mailSubject').value.replace('ISSN 2227-7390) [Mathematics] (IF=1.747', 'Rank Q1').replace('ISSN 2227-7390', 'Rank Q1');}
+        setTimeout(()=>{init()}, 1000)
+        $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'with 50% discounts\', \'free of charge\').replace(\'20%\', \'20–100%\');">[Free]</a>')
+        $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390) [Mathematics] (IF=1.747\', \'Rank Q1\').replace(\'ISSN 2227-7390\', \'Rank Q1\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a>&nbsp;')
     } catch (error){ }}
     if (window.location.href.indexOf("invite/guest_editor") > -1){try{
         $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'gladly waive\', \'gladly offer 50% discounts on\');">[50%]</a>')
