@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.4.20
+// @version       1.5.10
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -26,6 +26,11 @@
         $('#si-update-emphasized').before('<a href="/user/special_issue/edit/0" title="New special issue">➕</a> ');
         $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
         $('#guestNextBtn').after(" <a onclick='$(`#form_article_title_5`)[0].value=$(`#form_article_title_4`)[0].value=$(`#form_article_title_3`)[0].value=$(`#form_article_title_2`)[0].value=$(`#form_article_title_1`)[0].value; $(`#form_article_doi_5`)[0].value=$(`#form_article_doi_4`)[0].value=$(`#form_article_doi_3`)[0].value=$(`#form_article_doi_2`)[0].value=$(`#form_article_doi_1`)[0].value;'>[CpPub]</a>");
+
+        function init() {$("#manuscript-special-issue-notes").css("height","1000px");
+                         $("[aria-describedby|='manuscript-special-issue-notes']").css("width","500px");
+                         $("#special_issue_notesText").css("height","800px");}
+        setTimeout(()=>{init()}, 1000)
     } catch (error){ }}
 
     //添加文章处理页面Researchgate[RG]
@@ -100,8 +105,16 @@
     } catch (error){ }}
 
     //reviewer checking样式⚙️
-    if (window.location.href.indexOf("checking/") > -1){
+    if (window.location.href.indexOf("/checking/") > -1){
         try{$("body").append('<iframe frameborder="0" width="100%" hight="160px" src="'+ $(".reviewerNotes").attr("data-load-url") +'"></iframe>');
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: $(".reviewerNotes").attr("data-load-url").replace(/user\/reviewer_editor_notes/g, 'list/reviewer/invitations-history'),
+                headers: {'User-agent': 'Mozilla/5.0 (compatible)', 'Accept': 'application/atom+xml,application/xml,text/xml',},
+                onload: function(responseDetails) {
+                    $("body").append(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/"));
+                }
+            });
             function getUrlParam(name) {var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); var r = window.location.search.substr(1).match(reg); if(r != null) {return decodeURI(r[2]);} return null; }
             $(".reviewerNotes").after(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' src='/bundles/mdpisusy/img/design/google_logo.png'></a>");
             document.getElementsByClassName("see-blocked-info")[0].href="https://susy.mdpi.com/reviewer/blocked/seemore?email="+getUrlParam('email');
@@ -127,10 +140,11 @@
 
     //invite+remind email修改标题✏️
     if (window.location.href.indexOf("ebm_pending/invite_email") > -1){try{
-        function init() {document.getElementById('mailSubject').value=document.getElementById('mailSubject').value.replace('ISSN 2227-7390) [Mathematics] (IF=1.747', 'Rank Q1').replace('ISSN 2227-7390', 'Rank Q1');}
+        function init() {document.getElementById('mailSubject').value=document.getElementById('mailSubject').value.replace('ISSN 2227-7390) [Mathematics] (IF=1.747', 'Rank Q1').replace('ISSN 2227-7390', 'Rank Q1');
+                         document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace('one paper with 50% discounts per year', 'papers with 50–100% discounts').replace('20%', '20–100%');}
         setTimeout(()=>{init()}, 1000)
-        $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'with 50% discounts\', \'free of charge\').replace(\'20%\', \'20–100%\');">[Free]</a>')
-        $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390) [Mathematics] (IF=1.747\', \'Rank Q1\').replace(\'ISSN 2227-7390\', \'Rank Q1\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a>&nbsp;')
+        $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'papers with 50–100% discounts\', \'papers with 30% discounts\').replace(\'special discounts of 20–100%\', \'some special discounts\');">[CN<20]</a>')
+        $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390) [Mathematics] (IF=1.747\', \'Rank Q1\').replace(\'ISSN 2227-7390\', \'Rank Q1\');document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'one paper with 50% discounts per year\', \'papers with 50–100% discounts\').replace(\'20%\', \'20–100%\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a>&nbsp;')
     } catch (error){ }}
     if (window.location.href.indexOf("invite/guest_editor") > -1){try{
         $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'gladly waive\', \'gladly offer 50% discounts on\');">[50%]</a>')
