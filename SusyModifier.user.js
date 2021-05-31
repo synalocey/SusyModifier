@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.5.10
+// @version       1.5.31
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -24,6 +24,8 @@
     //添加新建特刊➕符号和pp add按钮
     if (window.location.href.indexOf("susy.mdpi.com/special_issue/process") > -1){try{
         $('#si-update-emphasized').before('<a href="/user/special_issue/edit/0" title="New special issue">➕</a> ');
+        $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+'" title="Reset">↩</a> ');
+        $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
         $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
         $('#guestNextBtn').after(" <a onclick='$(`#form_article_title_5`)[0].value=$(`#form_article_title_4`)[0].value=$(`#form_article_title_3`)[0].value=$(`#form_article_title_2`)[0].value=$(`#form_article_title_1`)[0].value; $(`#form_article_doi_5`)[0].value=$(`#form_article_doi_4`)[0].value=$(`#form_article_doi_3`)[0].value=$(`#form_article_doi_2`)[0].value=$(`#form_article_doi_1`)[0].value;'>[CpPub]</a>");
 
@@ -59,9 +61,9 @@
     } catch (error){ }}
 
     //特刊网页重定向
-//    if (window.location.href.indexOf("mdpi.com/journal/mathematics/special_issues/") > -1){try{
-//        window.location.href=window.location.href.replace(/\/journal\/mathematics\/special_issues\//,"/si/mathematics/");
-//    } catch (error){ }}
+    if (window.location.href.indexOf("mdpi.com/journal/mathematics/special_issues/") > -1){try{
+        window.location.href=window.location.href.replace(/\/journal\/mathematics\/special_issues\//,"/si/mathematics/");
+    } catch (error){ }}
 
     //mailsdb样式⚙️🔝
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/login") > -1){try{
@@ -105,8 +107,8 @@
     } catch (error){ }}
 
     //reviewer checking样式⚙️
-    if (window.location.href.indexOf("/checking/") > -1){
-        try{$("body").append('<iframe frameborder="0" width="100%" hight="160px" src="'+ $(".reviewerNotes").attr("data-load-url") +'"></iframe>');
+    if (window.location.href.indexOf("reviewer/checking/") > -1){
+        try{$("body").append('<iframe frameborder="0" width="100%" height="200px" src="'+ $(".reviewerNotes").attr("data-load-url") +'"></iframe>');
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: $(".reviewerNotes").attr("data-load-url").replace(/user\/reviewer_editor_notes/g, 'list/reviewer/invitations-history'),
