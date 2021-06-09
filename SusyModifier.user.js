@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.5.31
+// @version       1.6.9
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -61,7 +61,7 @@
     } catch (error){ }}
 
     //特刊网页重定向
-    if (window.location.href.indexOf("mdpi.com/journal/mathematics/special_issues/") > -1){try{
+    if (window.location.href.indexOf("mdpi.com/journal/mathematics/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 ){try{
         window.location.href=window.location.href.replace(/\/journal\/mathematics\/special_issues\//,"/si/mathematics/");
     } catch (error){ }}
 
@@ -131,6 +131,7 @@
         $("[data-menu='editorial_office'] > li > [href='/user/ebm/management']").after(" <div style='float:right;'><a onclick='document.getElementById(\"si-search\").style.display=\"\"'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div> ");
         $("[data-menu='editorial_office'] > li > [href='/user/managing/status/submitted']").after(" <a href='https://susy.mdpi.com/user/managing/status/all?form%5Bjournal_id%5D=154&form%5Bsection_id%5D=895&sort_field=submission_manuscript_state.last_action&sort=DESC'>[FM]</a>");
         $("[data-menu='editorial_office'] > li > [href='/user/managing/status/submitted']").after(" <a href='https://susy.mdpi.com/user/managing/status/all?form%5Bjournal_id%5D=154&form%5Bsection_id%5D=893&sort_field=submission_manuscript_state.last_action&sort=DESC'>[Fu]</a>");
+        $("[data-menu='editorial_office'] > li > [href='/voucher/application/list']").after(" <a href='https://susy.mdpi.com/voucher/application/list/my_journal?form%5Bjournal_id%5D=154'>[Maths]</a>");
     } catch (error){ }}
 
     //默认新建特刊位于Mathematics🔢
