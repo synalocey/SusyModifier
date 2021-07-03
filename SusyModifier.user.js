@@ -27,7 +27,7 @@
         $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+'" title="Reset">↩</a> ');
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
         $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
-        $('#guestNextBtn').after(" <a onclick='$(`#form_article_title_5`)[0].value=$(`#form_article_title_4`)[0].value+`5`=$(`#form_article_title_3`)[0].value+`24`=$(`#form_article_title_2`)[0].value+`3`=$(`#form_article_title_1`)[0].value+`2`; $(`#form_article_doi_5`)[0].value=$(`#form_article_doi_4`)[0].value+`5`=$(`#form_article_doi_3`)[0].value+`4`=$(`#form_article_doi_2`)[0].value+`3`=$(`#form_article_doi_1`)[0].value+`2`;'>[CpPub]</a>");
+        $('#guestNextBtn').after(" <a onclick='$(`#form_article_title_2`)[0].value=$(`#form_article_title_1`)[0].value+`2`; $(`#form_article_title_3`)[0].value=$(`#form_article_title_1`)[0].value+`3`; $(`#form_article_title_4`)[0].value=$(`#form_article_title_1`)[0].value+`4`; $(`#form_article_title_5`)[0].value=$(`#form_article_title_1`)[0].value+`5`; $(`#form_article_doi_2`)[0].value=$(`#form_article_doi_1`)[0].value+`2`;$(`#form_article_doi_3`)[0].value=$(`#form_article_doi_1`)[0].value+`3`;$(`#form_article_doi_4`)[0].value=$(`#form_article_doi_1`)[0].value+`4`;$(`#form_article_doi_5`)[0].value=$(`#form_article_doi_1`)[0].value+`5`;'>[CpPub]</a>");
 
         function init() {$("#manuscript-special-issue-notes").css("height","1000px");
                          $("[aria-describedby|='manuscript-special-issue-notes']").css("width","500px");
