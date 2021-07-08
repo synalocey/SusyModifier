@@ -41,6 +41,7 @@ DOMAIN-SUFFIX,mail.mdpi.com
 DOMAIN-SUFFIX,mail.mdpi.cn
 DOMAIN-SUFFIX,mail-internal.mdpi.com
 DOMAIN-SUFFIX,mail-internal.mdpi.cn
+DOMAIN-SUFFIX,mailsdb.i.mdpi.com
 IP-CIDR,212.243.204.39/24,no-resolve
 IP-CIDR,47.99.158.165/24,no-resolve
 IP-CIDR,188.188.1.88/24,no-resolve
