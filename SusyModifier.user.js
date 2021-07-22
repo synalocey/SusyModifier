@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.7.15
+// @version       1.7.22
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -220,4 +220,9 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
         try{
             window.location.href="https://scholar.google.com/citations?hl=en&user="+getUrlParam('amp;user')
         } catch (error){ }}
+
+    //Redmine重定向
+    if(window.location.href.indexOf("//redmine.mdpi.com/") > -1){
+        window.location.replace(window.location.href.replace("//redmine.mdpi.com/","//redmine.mdpi.cn/"))
+    }
 })();
