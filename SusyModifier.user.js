@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.7.27
+// @version       1.7.30
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -223,6 +223,6 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
 
     //Redmine重定向
     if(window.location.href.indexOf("//redmine.mdpi.com/") > -1){
-        window.location.replace(decodeURIComponent(window.location.href.split("login?back_url=")[window.location.href.split("login?back_url=").length-1]))
+        window.location.replace(decodeURIComponent(window.location.href.split("login?back_url=")[window.location.href.split("login?back_url=").length-1]).replace("//redmine.mdpi.com/","//redmine.mdpi.cn/"))
     }
 })();
