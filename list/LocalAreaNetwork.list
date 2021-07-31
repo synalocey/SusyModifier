@@ -22,6 +22,7 @@ IP-CIDR6,fc00::/7,no-resolve
 IP-CIDR6,fe80::/10,no-resolve
 IP-CIDR6,fd00::/8,no-resolve
 IP-CIDR6,ff00::/8,no-resolve
+IP-CIDR6,3333::/8,no-resolve #Special
 
 # Router managed 路由器管理域名
 DOMAIN,router.asus.com
