@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.7.30
+// @version       1.9.14
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -225,4 +225,10 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
     if(window.location.href.indexOf("//redmine.mdpi.com/") > -1){
         window.location.replace(decodeURIComponent(window.location.href.split("login?back_url=")[window.location.href.split("login?back_url=").length-1]).replace("//redmine.mdpi.com/","//redmine.mdpi.cn/"))
     }
+
+    //MRS ALL journals
+    if(window.location.href.indexOf("//mrs.mdpi.com/data/role/") > -1){try{
+        $('#demo-form2').before(" <a onclick='$(`#journal > option`)[0].value=`250,77,145,362,13,524,534,341,456,390,90,480,517,491,523,35,118,471,323,47,82,346,67,427,240,103,515,299,305,143,487,531,441,123,26,214,440,467,213,176,416,259,428,385,356,142,151,84,404,306,397,127,449,7,402,5,412,83,509,192,301,42,492,275,395,19,460,53,25,413,409,453,79,474,481,163,50,225,215,148,221,355,203,499,37,51,435,170,290,49,432,199,14,407,231,154,81,92,59,522,465,438,314,457,365,359,360,444,165,419,511,358,436,271,353,16,252,114,162,130,206,246,3,233,265,528,518,414,173,296,466,294,15,376,44,131,417,150,276,133,228,291,269,36,504`;'>[All Journal]</a>");
+    } catch (error){ }}
+
 })();
