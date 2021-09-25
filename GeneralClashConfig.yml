@@ -152,10 +152,9 @@ dns:
     - 180.76.76.76
     - 119.29.29.29
   fallback:
-    - tcp://1.0.0.1
     - tls://dns.google
+    - tcp://1.0.0.1
     - https://dns.cloudflare.com/dns-query
-    - tls://dns.rubyfish.cn:853
   fallback-filter:
      geoip: true # 默认
      ipcidr: # 在这个网段内的 IP 地址会被考虑为被污染的 IP
