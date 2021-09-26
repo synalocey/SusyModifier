@@ -161,7 +161,8 @@ proxies:
     type: socks5
     server: 119.3.212.188
     port: 19970
-proxy-groups:
+  - {name: skday.com:3391, server: skday.com, port: 3391, type: ssr, cipher: dummy, password: fuckgfw!3391, protocol: auth_chain_d, obfs: plain, protocol-param: "", obfs-param: ""}
+  proxy-groups:
   - name: 🚀 节点选择
     type: select
     proxies:
@@ -170,6 +171,7 @@ proxy-groups:
       - 26F
       - 18F
       - 5-15F
+      - skday.com:3391
   - name: 🏫 学术
     type: select
     proxies:
@@ -203,6 +205,7 @@ proxy-groups:
       - 26F
       - 18F
       - 5-15F
+      - skday.com:3391
 rules:
  - DOMAIN-SUFFIX,acl4ssr,🎯 全球直连
  - DOMAIN-SUFFIX,ip6-localhost,🎯 全球直连
