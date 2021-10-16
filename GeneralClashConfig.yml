@@ -148,13 +148,13 @@ dns:
     - "*.ipv6.microsoft.com"
     - "*.*.xboxlive.com"
   nameserver:
-    - 114.114.114.114
-    - 180.76.76.76
-    - 119.29.29.29
+    - https://223.6.6.6/dns-query
+    - https://rubyfish.cn/dns-query
+    - https://dns.pub/dns-query
   fallback:
-    - tls://dns.google
-    - tcp://1.0.0.1
-    - https://dns.cloudflare.com/dns-query
+    - https://dns.rubyfish.cn/dns-query
+    - tls://8.8.4.4
+    - https://public.dns.iij.jp/dns-query
   fallback-filter:
      geoip: true # 默认
      ipcidr: # 在这个网段内的 IP 地址会被考虑为被污染的 IP
