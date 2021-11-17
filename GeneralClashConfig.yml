@@ -61,8 +61,8 @@ experimental:
 hosts:
     '*.mdpi.lab': 210.51.191.2 
     'mail.mdpi.com': 212.243.204.39
-    'mdpi.test': 62.202.7.117
-    'mdpi.intra': 62.202.7.117
+    '*.mdpi.test': 62.202.7.117
+    '*.mdpi.intra': 62.202.7.117
 tun:
   enable: false
   stack: gvisor
