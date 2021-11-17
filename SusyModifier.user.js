@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.10.14
+// @version       1.11.17
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -32,6 +32,17 @@
         function init() {$("#manuscript-special-issue-notes").css("height","1000px");
                          $("[aria-describedby|='manuscript-special-issue-notes']").css("width","500px");
                          $("#special_issue_notesText").css("height","800px");}
+        setTimeout(()=>{init()}, 1000)
+    } catch (error){ }}
+    //添加新建Topic的pp add按钮
+    if (window.location.href.indexOf("susy.mdpi.com/submission/topic/view") > -1){try{
+        $('div.cell.small-12.medium-6.large-2:contains("Created Date")').next().css({"background-color":"yellow"});
+        $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
+        $('#guestNextBtn').after(" <a onclick='$(`#form_article_title_5`)[0].value=$(`#form_article_title_4`)[0].value=$(`#form_article_title_3`)[0].value=$(`#form_article_title_2`)[0].value=$(`#form_article_title_1`)[0].value; $(`#form_article_doi_5`)[0].value=$(`#form_article_doi_4`)[0].value=$(`#form_article_doi_3`)[0].value=$(`#form_article_doi_2`)[0].value=$(`#form_article_doi_1`)[0].value;'>[CpPub]</a>");
+
+        function init() {$("#manuscript-special-issue-notes").css("height","1000px");
+                         $("[aria-describedby|='manuscript-special-issue-notes']").css("width","500px");
+                         $("#topic_notesText").css("height","800px");}
         setTimeout(()=>{init()}, 1000)
     } catch (error){ }}
 
