@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.11.17
+// @version       1.11.18
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -34,6 +34,7 @@
                          $("#special_issue_notesText").css("height","800px");}
         setTimeout(()=>{init()}, 1000)
     } catch (error){ }}
+
     //添加新建Topic的pp add按钮
     if (window.location.href.indexOf("susy.mdpi.com/submission/topic/view") > -1){try{
         $('div.cell.small-12.medium-6.large-2:contains("Created Date")').next().css({"background-color":"yellow"});
@@ -170,8 +171,11 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
         var siappend="<div id='si-search' tabindex='-1' role='dialog' style='display: none; position: absolute; height: 300px; width: 500px; top: 500px; left: 242.5px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-draggable ui-resizable' aria-describedby='display-user-info'><div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle'><span class='ui-dialog-title'>Quick Search</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close' title='Close' onclick='document.getElementById(\"si-search\").style.display=\"none\"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span><span class='ui-button-icon-space'> </span>Close</button></div><div id='display-user-info' data-url='/user/info' class='ui-dialog-content ui-widget-content' style='width: auto; min-height: 0px; max-height: none; height: 512px;'>\
 <form class='insertform' method='get' action='https://susy.mdpi.com/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>SI Title: <input type='text' name='form[si_name]' id='si-search2' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='SI Search'></form><hr> <form class='insertform' method='get' action='https://susy.mdpi.com/user/ebm/management/all/my_journals' target='_blank'>Name: <input type='text' id='form_name2' name='form[name]' style='display:inline-block; width:65%;'><br>Email: <input type='email' id='form_email2' name='form[email]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='EBM Search'></form><hr>";
         $("body").append(siappend);
-        $("[data-menu='editorial_office'] > li > [href='/special_issue_pending/list']").after(" <a href='/user/sme/status/ongoing'>[M]</a> <a href='/special_issue_pending/list/online?form[journal_id]=154&form[section_id]=893&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[Z]</a>");
+        $("[data-menu='editorial_office'] > li > [href='/special_issue_pending/list']").after(" <a href='/user/sme/status/submitted'>[M]</a> <a href='/special_issue_pending/list/online?form[journal_id]=154&form[section_id]=893&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[Z]</a>");
         $("[data-menu='editorial_office'] > li > [href='/special_issue_pending/list']").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC")
+
+        $("[data-menu='editorial_office'] > li > [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[M]</a>");
+        $("[data-menu='editorial_office'] > li > [href='/submission/topic/list']").attr("href","/submission/topic/list/online");
 
         $("[data-menu='editorial_office'] > li > [href='/user/ebm/management']").after(" <div style='float:right;'><a onclick='document.getElementById(\"si-search\").style.display=\"\"'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div> ");
         $("[data-menu='editorial_office'] > li > [href='/user/managing/status/submitted']").after(" <a href='https://susy.mdpi.com/user/managing/status/all?form[journal_id]=154&form[section_id]=893&sort_field=submission_manuscript_state.last_action&sort=DESC'>[Z]</a>");
@@ -180,8 +184,7 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
         $("[data-menu='editorial_office'] > li > [href='/voucher/application/list']").after(" <a href='https://susy.mdpi.com/user/managing/status/ongoing?form[journal_id]=154&form[status_ids][]=-8&form[status_ids][]=9&form[status_ids][]=11&form[status_ids][]=14'>[Adv]</a>");
         $("[data-menu='editorial_office'] > li > [href='/voucher/application/list']").attr("href","/voucher/application/list/my_journal?form[journal_id]=154");
 
-        $("[data-menu='editorial_office'] > li > [href='/user/sme/status/ongoing']").attr("href","/user/sme/status/submitted")
-        $("[data-menu='editorial_office'] > li > [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=154")
+        $("[data-menu='editorial_office'] > li > [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=154");
     } catch (error){ }}
 
     //默认新建特刊位于Mathematics🔢
@@ -241,5 +244,20 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
     if(window.location.href.indexOf("//mrs.mdpi.com/data/role/") > -1){try{
         $('#demo-form2').before(" <a onclick='$(`#journal > option`)[0].value=`250,77,145,362,13,524,534,341,456,390,90,480,517,491,523,35,118,471,323,47,82,346,67,427,240,103,515,299,305,143,487,531,441,123,26,214,440,467,213,176,416,259,428,385,356,142,151,84,404,306,397,127,449,7,402,5,412,83,509,192,301,42,492,275,395,19,460,53,25,413,409,453,79,474,481,163,50,225,215,148,221,355,203,499,37,51,435,170,290,49,432,199,14,407,231,154,81,92,59,522,465,438,314,457,365,359,360,444,165,419,511,358,436,271,353,16,252,114,162,130,206,246,3,233,265,528,518,414,173,296,466,294,15,376,44,131,417,150,276,133,228,291,269,36,504`;'>[All Journal]</a>");
     } catch (error){ }}
+
+    //manuscripts整合
+    if (window.location.href.indexOf("//susy.mdpi.com/user/sme/status/") > -1){
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: window.location.href.replace('sme/status','topic/status'),
+            headers: {'User-agent': 'Mozilla/5.0 (compatible)', 'Accept': 'application/atom+xml,application/xml,text/xml',},
+            onload: function(responseDetails) {
+                var parser      = new DOMParser ();
+                var responseDoc = parser.parseFromString (responseDetails.responseText.replace(/\/user\/topic\/status/g,'/user/sme/status'), "text/html").getElementById('manuscripts-list');
+                $("#manuscripts-list").append(responseDoc);
+            }
+        });
+    }
+
 
 })();
