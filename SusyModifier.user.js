@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.11.30
+// @version       1.12.19
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -170,7 +170,7 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
     //susy侧边栏的SI按钮🔎
     if (window.location.href.indexOf("susy.mdpi.com/") > -1){try{
         var siappend="<div id='si-search' tabindex='-1' role='dialog' style='display: none; position: absolute; height: 300px; width: 500px; top: 500px; left: 242.5px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-draggable ui-resizable' aria-describedby='display-user-info'><div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle'><span class='ui-dialog-title'>Quick Search</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close' title='Close' onclick='document.getElementById(\"si-search\").style.display=\"none\"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span><span class='ui-button-icon-space'> </span>Close</button></div><div id='display-user-info' data-url='/user/info' class='ui-dialog-content ui-widget-content' style='width: auto; min-height: 0px; max-height: none; height: 512px;'>\
-<form class='insertform' method='get' action='https://susy.mdpi.com/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>SI Title: <input type='text' name='form[si_name]' id='si-search2' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='SI Search'></form><hr> <form class='insertform' method='get' action='https://susy.mdpi.com/user/ebm/management/all/my_journals' target='_blank'>Name: <input type='text' id='form_name2' name='form[name]' style='display:inline-block; width:65%;'><br>Email: <input type='email' id='form_email2' name='form[email]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='EBM Search'></form><hr>";
+<form class='insertform' method='get' action='https://susy.mdpi.com/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>SI Title: <input type='text' name='form[si_name]' id='si-search2' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='SI Search'></form><hr> <form class='insertform' method='get' action='https://susy.mdpi.com/user/ebm-new/management/all/my_journals' target='_blank'>Name: <input type='text' id='form_name2' name='form[name]' style='display:inline-block; width:65%;'><br>Email: <input type='email' id='form_email2' name='form[email]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='EBM Search'></form><hr>";
         $("body").append(siappend);
         $("[data-menu='editorial_office'] > li > [href='/special_issue_pending/list']").after(" <a href='/user/sme/status/submitted'>[M]</a> <a href='/special_issue_pending/list/online?form[journal_id]=154&form[section_id]=893&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[Z]</a>");
         $("[data-menu='editorial_office'] > li > [href='/special_issue_pending/list']").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC")
@@ -178,7 +178,7 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
         $("[data-menu='editorial_office'] > li > [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[M]</a>");
         $("[data-menu='editorial_office'] > li > [href='/submission/topic/list']").attr("href","/submission/topic/list/online");
 
-        $("[data-menu='editorial_office'] > li > [href='/user/ebm/management']").after(" <div style='float:right;'><a onclick='document.getElementById(\"si-search\").style.display=\"\"'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div> ");
+        $("[data-menu='editorial_office'] > li > [href='/user/ebm-new/management']").after(" <div style='float:right;'><a onclick='document.getElementById(\"si-search\").style.display=\"\"'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div> ");
         $("[data-menu='editorial_office'] > li > [href='/user/managing/status/submitted']").after(" <a href='https://susy.mdpi.com/user/managing/status/all?form[journal_id]=154&form[section_id]=893&sort_field=submission_manuscript_state.last_action&sort=DESC'>[Z]</a>");
         $("[data-menu='editorial_office'] > li > [href='/user/managing/status/submitted']").after("<a href='https://susy.mdpi.com/user/managing/status/published?form[journal_id]=154&sort_field=submission_manuscript_state.publish_date&sort=DESC'>[P]</a>");
         $("[data-menu='editorial_office'] > li > [href='/user/managing/status/submitted']").after(" <a href='https://susy.mdpi.com/user/managing/status/production?form[journal_id]=154&sort_field=submission_manuscript_state.last_action&sort=DESC'>[F]</a>");
@@ -217,15 +217,15 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
     } catch (error){ }}
 
     //默认新建EBM位于Mathematics+TE🔢
-    if (window.location.href.indexOf("susy.mdpi.com/user/ebm/management") > -1){try{
+    if (window.location.href.indexOf("susy.mdpi.com/user/ebm-new/management") > -1){try{
         document.getElementById('journal_id').value = "154";
-        document.getElementById('role').value = "Topic Editor";
+        document.getElementById('role_id').value = "9";
         document.evaluate('//*[@id="journal_id_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText="Mathematics";
         $("#ebm_pending_check_btn").before('<input class="submit" type="submit" value="Proceed"> ');
     } catch (error){ }}
 
     //TE+EBM加入Google Sheet
-    if (window.location.href.indexOf("susy.mdpi.com/user/ebm/edit") > -1){try{
+    if (window.location.href.indexOf("susy.mdpi.com/user/ebm-new/edit") > -1){try{
         $("#edit-ebm-form").append("<a onclick=\"var syna_append='https://script.google.com/macros/s/AKfycbz9XFh17rVkJgGGZXBi_2ATNluvJW_uOmXtUyrqxdY1QAZ5DrEgX_Cu/exec?c1='+$(`#form_firstname`)[0].value+' '+$(`#form_lastname`)[0].value+'&c2='+$(`#form_email`)[0].value+'&c3='+$(`#form_affiliation`)[0].value+'&c4='+$(`#form_country`)[0].value+'&c5='+$(`#form_interests`)[0].value+'&c8='+$(`#form_website`)[0].value;$(\'#edit-ebm-form\').append('<a href=&quot;'+syna_append+'&quot; target=_blank>'+syna_append+'</a>'); \">Add TE to Google Sheet</a><br>");
     } catch (error){ }}
 
