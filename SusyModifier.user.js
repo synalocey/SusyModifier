@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.12.19
+// @version       1.12.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -13,7 +13,7 @@
 // @match         *://scholar.google.com/*&amp;user*
 // @match         *://scholar.google.com.hk/*&amp;user*
 // @match         *://scholar.google.com.tw/*&amp;user*
-// @require       https://code.jquery.com/jquery-3.5.1.min.js
+// @require       https://code.jquery.com/jquery-3.6.0.min.js
 // @require       https://gist.github.com/raw/2625891/waitForKeyElements.js
 // @grant         GM_xmlhttpRequest
 // ==/UserScript==
@@ -103,6 +103,7 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
                 },500*i)
             })(i);//闭包
         };
+        $("[href='/special_issue_pending/list?show_all=my_journals']").attr('href',"/special_issue_pending/list/online?form[journal_id]=154&show_all=my_journals");
     } catch (error){ }}
 
     //特刊网页重定向
