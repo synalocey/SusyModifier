@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.12.20
+// @version       1.12.21
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -271,5 +271,10 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
         $('[for="form_url"]>span').remove()
         $('[for="form_country"]>span').remove()
         $('[for="form_research_keywords"]>span').remove()
+    } catch (error){ }}
+
+    //Manage Voucher Applications
+    if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/list/") > -1){try{
+        document.getElementById("show-more-budgets").click();
     } catch (error){ }}
 })();
