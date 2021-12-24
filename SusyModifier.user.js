@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.12.21
+// @version       1.12.24
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -276,5 +276,13 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
     //Manage Voucher Applications
     if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/list/") > -1){try{
         document.getElementById("show-more-budgets").click();
+    } catch (error){ }}
+
+    //Topics Management
+    if(window.location.href.indexOf("mdpi.com/topics/") > -1){try{
+        console.log("s");
+        var manage_url=document.getElementById('js-clipboard-text').value.replace("https://www.mdpi.com/topics/","https://susy.mdpi.com/submission/topic/list/online?show_type=my_journals&form[name_system]=");
+        console.log(manage_url);
+        $("[href='/topics/proposal']").after(`<a class="button button--color-inversed button--full-width" href="`+manage_url+`" target="_blank" rel="noopener noreferrer">Manage the Topic</a>`);
     } catch (error){ }}
 })();
