@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.12.29
+// @version       1.12.31
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -50,7 +50,7 @@
     } catch (error){ }}
 
     //添加文章处理页面[RG]和邮件按钮
-    if (window.location.href.indexOf("/process_form/") > -1){try{
+    if (window.location.href.indexOf("/process_form/")+window.location.href.indexOf("/production_form/") > -2){try{
         var corresponding
         for (i=1;i<$("[title|='Google Scholar']").length;i++)
         {
@@ -67,8 +67,8 @@
 Thank you very much for your contribution to /Mathematics/, your manuscript ' + document.getElementById("manuscript_id").parentNode.textContent.trim() + ' is now pending final decision. We will keep you informed about the status of your manuscript.%0A%0AIn addition, you have published a paper in /Mathematics/ in 20XX with the citation of XXXXX times, congratulations on your great work!%0A%0ATo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper to your colleagues, friends and related researchers by forwarding it directly via interactive commenting functionalities on all article webpages (sidebar on the right)?%0A%0A[1. paper link]%0A%0AThank you in advance for your support.\
 "><img src="/bundles/mdpisusy/img/icon/mail.png"></a> ')
         }
-
-        var Promote = ' <a href="https://script.google.com/macros/s/AKfycbx1XtdG27UCL9Q1LdpAC_10ek75MDUr_BDYtdg8Ig/exec?name=' + document.getElementsByClassName("editorName")[0].textContent.trim() + '&phone=' + document.getElementById("manuscript_id").parentNode.textContent.trim() + '" target="_blank"><img style="vertical-align: middle;" src="https://ssl.gstatic.com/docs/common/addon_sheets_promo.svg" height="16" width="16"></a> <a href="https://script.google.com/macros/s/AKfycbxb_kAH3cErvnmKfucepiMzdjvige7NH38JIsXhTheONPP9JWE/exec?name='+ document.getElementById("manuscript_id").parentNode.textContent.trim() +'" target="_blank">[Promote]</a>'
+        var Promote='';
+//        Promote = ' <a href="https://script.google.com/macros/s/AKfycbx1XtdG27UCL9Q1LdpAC_10ek75MDUr_BDYtdg8Ig/exec?name=' + document.getElementsByClassName("editorName")[0].textContent.trim() + '&phone=' + document.getElementById("manuscript_id").parentNode.textContent.trim() + '" target="_blank"><img style="vertical-align: middle;" src="https://ssl.gstatic.com/docs/common/addon_sheets_promo.svg" height="16" width="16"></a> <a href="https://script.google.com/macros/s/AKfycbxb_kAH3cErvnmKfucepiMzdjvige7NH38JIsXhTheONPP9JWE/exec?name='+ document.getElementById("manuscript_id").parentNode.textContent.trim() +'" target="_blank">[Promote]</a>'
         if ($("[title|='Manuscript special issue notes']").length>0 && $("div.cell.small-12.medium-6.large-2:contains('Section')").length>0) { //文章在特刊里且有Section
             Promote += " <form id='s_voucher' class='insertform' method='post' action='https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=6' target='_blank' style='display:inline;'><input type='hidden' name='form[journal_id]' value='154'><input type='hidden' name='form[is_percentage]' value='1'><input type='hidden' id='form_special_issue_id' name='form[special_issue_id]' value='0'><input type='hidden' name='form[emails]' value='"+corresponding+"'><input type='hidden' name='form[valid_months]' value='12'><input type='hidden' id='form_section_id' name='form[section_id]' value=''><input type='hidden' name='form[reason]' value='Feature paper invited by guest editor'><input type='hidden' name='form[manuscript_id]' value='"+document.getElementById("manuscript_id").parentNode.textContent.trim()+"'>"
             Promote += " <a onclick=\"var re = new RegExp('(\\\\d*)[^0-9]:[^0-9]' + $(`[title|='Manuscript special issue notes']`)[0].parentNode.parentNode.textContent.trim(), '');var xhr = new XMLHttpRequest();xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/section/0/all_special_issues', false);xhr.send(null);document.getElementById('form_special_issue_id').value = xhr.responseText.match(re)[1];re=new RegExp('(\\\\d*)[^0-9]:[^0-9]' + $(`div.cell.small-12.medium-6.large-2:contains('Section')`).next().text().trim(), '');xhr=new XMLHttpRequest();xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/sections', false);xhr.send(null);document.getElementById('form_section_id').value = xhr.responseText.match(re)[1];s_voucher.submit();   \">[Voucher]</a> </form>"
@@ -80,12 +80,10 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
             Promote += " <a onclick=\"var re = new RegExp('(\\\\d*)[^0-9]:[^0-9]' + $(`div.cell.small-12.medium-6.large-2:contains('Section')`).next().text().trim(), '');var xhr = new XMLHttpRequest();xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/sections', false);xhr.send(null);document.getElementById('form_section_id').value = xhr.responseText.match(re)[1];s_voucher.submit();   \">[Voucher]</a> </form>"
         } else { //没Section的常规投稿
            Promote += " <form id='s_voucher' class='insertform' method='post' action='https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=5' target='_blank' style='display:inline;'><input type='hidden' name='form[journal_id]' value='154'><input type='hidden' name='form[is_percentage]' value='1'><input type='hidden' name='form[emails]' value='"+corresponding+"'><input type='hidden' name='form[valid_months]' value='12'><input type='hidden' name='form[reason]' value='Paper by editorial board member'><input type='hidden' id='form_section_id' name='form[section_id]' value=''><input type='hidden' name='form[manuscript_id]' value='"+document.getElementById("manuscript_id").parentNode.textContent.trim()+"'>"
-           Promote += " <a onclick=\"s_voucher.submit();   \">[Voucher]</a> </form>"
+           Promote += " <a onclick=\"s_voucher.submit();   \">[Voucher]</a> </form>&nbsp;&nbsp;&nbsp;"
         }
         $("[title|='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query='+$("[title|='Google']").prev()[0].text+'" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="https://c5.rgstatic.net/m/41542880220916/images/favicon/favicon-16x16.png"></a> ');
-        $("[title|='Link pre-manuscript']").after(Promote);
-        $("[title|='Unlink pre-manuscript']").after(Promote);
-
+        $("[class|='margin-horizontal-1']").after(Promote);
     } catch (error){ }}
 
     //特刊列表免翻页⚙️
@@ -288,7 +286,6 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
     //aleksandra.djordjevic@mdpi.com
     if(window.location.href.indexOf("//susy.mdpi.com/user/special_issue/edit/0?") > -1){try{
         $("#form_owner_email").val("aleksandra.djordjevic@mdpi.com");
+//        $('[class="QuickForm2"]').attr("target","_blank");
     } catch (error){ }}
-
-
 })();
