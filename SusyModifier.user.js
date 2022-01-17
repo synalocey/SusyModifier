@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       1.12.31
+// @version       2.1.17
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -204,6 +204,7 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
         $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390) [Mathematics] (IF=1.747\', \'Rank Q1\').replace(\'ISSN 2227-7390\', \'Rank Q1\');document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'one paper with 50% discounts per year\', \'papers with 50–100% discounts\').replace(\'20%\', \'20–100%\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a>&nbsp;')
     } catch (error){ }}
     if (window.location.href.indexOf("invite/guest_editor") > -1){try{
+        $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'We gladly waive the article processing charge for papers from the Guest Editor, and may offer discounts for papers invited by the Guest Editor. \', \'\');">[0%]</a>')
         $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'gladly waive\', \'gladly offer 50% discounts on\');">[50%]</a>')
         $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390\', \'Rank Q1\'); document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'from the Guest Editor. If\', \'from the Guest Editor, and may offer discounts for papers invited by the Guest Editor. If\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a> ')
     } catch (error){ }}
