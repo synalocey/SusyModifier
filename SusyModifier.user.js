@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.1.17
+// @version       2.2.22
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -289,4 +289,14 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
         $("#form_owner_email").val("aleksandra.djordjevic@mdpi.com");
 //        $('[class="QuickForm2"]').attr("target","_blank");
     } catch (error){ }}
+
+    //Manuscript Sidebar Size
+    waitForKeyElements(".section-note-box",SidebarSize)
+    function SidebarSize() {
+        $(".manuscript-note-box").find(".manuscript-note-item-content").height(200)
+        $(".manuscript-note-box").find(".manuscript-note-item-content").css("overflow-y","auto")
+        $(".section-note-box").find(".manuscript-note-item-content").height(200)
+        $(".section-note-box").find(".manuscript-note-item-content").css("overflow-y","auto")
+    }
+
 })();
