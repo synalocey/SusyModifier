@@ -291,12 +291,12 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
     } catch (error){ }}
 
     //Manuscript Sidebar Size
-    waitForKeyElements(".section-note-box",SidebarSize)
+    waitForKeyElements(".manuscript-note-box",SidebarSize)
     function SidebarSize() {
+        $(".apc-container").find(".manuscript-note-item-detail").height(30)
         $(".manuscript-note-box").find(".manuscript-note-item-content").height(200)
         $(".manuscript-note-box").find(".manuscript-note-item-content").css("overflow-y","auto")
         $(".section-note-box").find(".manuscript-note-item-content").height(200)
         $(".section-note-box").find(".manuscript-note-item-content").css("overflow-y","auto")
     }
-
 })();
