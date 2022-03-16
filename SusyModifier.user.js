@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.2.28
+// @version       2.3.16
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
-// @icon          https://skday.com/favicon.ico
+// @icon          https://susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-196x196.png
 // @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
 // @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
 // @match         https://*.mdpi.com/*
@@ -222,7 +222,7 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
     if (window.location.href.indexOf("remind/guest_editor") > -1){try{
         $('#emailTemplates').val("154").change();
         document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-        $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390\', \'Rank Q1\').replace(\'Re: \', \'Awaiting Your Reply: \'); document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'We recently\', \'I am sorry for sending the repeated message as I did not get your reply. We recently\').replace(\'Please let us know whether or not you are interested, and if you have any further questions.\', \'We sincerely hope to cooperate with you. If you need more information, please do not hesitate to contact us. Please click on the following link to either accept or decline our request:\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a> ')
+        $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390\', \'Rank Q1\').replace(\'Reminder: \', \'Awaiting Your Reply: \'); document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'We recently\', \'I am sorry for sending the repeated message as I did not get your reply. We recently\').replace(\'Please let us know whether or not you are interested, and if you have any further questions.\', \'We sincerely hope to cooperate with you. If you need more information, please do not hesitate to contact us. Please click on the following link to either accept or decline our request:\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a> ')
     } catch (error){ }}
 
     //默认新建EBM位于Mathematics🔢
@@ -244,11 +244,6 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
         try{
             window.location.href="https://scholar.google.com/citations?hl=en&user="+getUrlParam('amp;user')
         } catch (error){ }}
-
-    //Redmine重定向
-    if(window.location.href.indexOf("//redmine.mdpi.com/") > -1){
-        window.location.replace(decodeURIComponent(window.location.href.split("login?back_url=")[window.location.href.split("login?back_url=").length-1]).replace("//redmine.mdpi.com/","//redmine.mdpi.cn/"))
-    }
 
     //MRS ALL journals
     if(window.location.href.indexOf("//mrs.mdpi.com/data/role/") > -1){try{
