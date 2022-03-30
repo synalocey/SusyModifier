@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          CfP Checker
-// @version       2.3.16
+// @version       2.3.30
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   CfP Checker
 // @author        Syna
@@ -34,12 +34,14 @@
         else if ($(".subject").text().indexOf("Extended SI") > -1) { //已延期特刊
             if($('a:contains("mailing-list.v3")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v3\n")}
             if($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v2.eml (or pdf)\n")}
-            if($('a:contains("mailing-list.v3")').length*($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length)>0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"✅ Extended SI CfP\n")}
-            $('a:contains("mailing-list.v3")').append('<span></span>');
-            $('a:contains("mailing-list.v1")').append('<span></span>');
-            $('a:contains("mailing-list.v1")').attr('target', '_blank');
-            $('a:contains("mailing-list.v3") span').click();
-            $('a:contains("mailing-list.v1") span').first().click();
+            if($('a:contains("mailing-list.v3")').length*($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length)>0) {
+                $("#issue_pe_note").val($("#issue_pe_note").val()+"✅ Extended SI CfP\n")
+                $('a:contains("mailing-list.v3")').append('<span></span>');
+                $('a:contains("mailing-list.v1")').append('<span></span>');
+                $('a:contains("mailing-list.v1")').attr('target', '_blank');
+                $('a:contains("mailing-list.v3") span').click();
+                $('a:contains("mailing-list.v1") span').first().click();
+            }
         }
         else { //名称不规范
             $("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Subject is Wrong.\n")
@@ -54,6 +56,7 @@
 
     //Redmine重定向
     if(window.location.href.indexOf("//redmine.mdpi.com/") > -1){window.location.replace(decodeURIComponent(window.location.href.split("login?back_url=")[window.location.href.split("login?back_url=").length-1]).replace("//redmine.mdpi.com/","//redmine.mdpi.cn/"));}
+    if(window.location.href.indexOf("//redmine.mdpi.cn//") > -1){window.location.replace(decodeURIComponent(window.location.href.replace(".cn//",".cn/")));}
 
     //排队界面
     if(window.location.href.indexOf("/projects/si-planning/issues?utf8=") > -1){
