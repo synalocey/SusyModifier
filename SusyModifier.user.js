@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.3.16
+// @version       2.4.8
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -86,6 +86,7 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
 
     //特刊列表免翻页⚙️
     if (window.location.href.indexOf("susy.mdpi.com/special_issue_pending/list") > -1 && window.location.href.indexOf("page=") == -1){try{
+        $(".outside_table").css("max-height","none")
         var totalpage = document.getElementsByClassName("pagination margin-0")[0].getElementsByTagName("li").length-1
         for (var i = 2; i < totalpage; i++) {
             (function(i){//闭包
