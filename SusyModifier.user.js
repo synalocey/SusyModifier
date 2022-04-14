@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.4.8
+// @version       2.4.14
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -151,20 +151,20 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
     } catch (error){ }}
 
     //reviewer checking样式⚙️
-    if (window.location.href.indexOf("reviewer/checking/") > -1){
-        try{$("body").append('<iframe frameborder="0" width="100%" height="200px" src="'+ $(".reviewerNotes").attr("data-load-url") +'"></iframe>');
-            GM_xmlhttpRequest({
-                method: 'GET',
-                url: $(".reviewerNotes").attr("data-load-url").replace(/user\/reviewer_editor_notes/g, 'list/reviewer/invitations-history'),
-                headers: {'User-agent': 'Mozilla/5.0 (compatible)', 'Accept': 'application/atom+xml,application/xml,text/xml',},
-                onload: function(responseDetails) {
-                    $("body").append(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/"));
-                }
-            });
-            function getUrlParam(name) {var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); var r = window.location.search.substr(1).match(reg); if(r != null) {return decodeURI(r[2]);} return null; }
-            $(".reviewerNotes").after(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' src='/bundles/mdpisusy/img/design/google_logo.png'></a>");
-            document.getElementsByClassName("see-blocked-info")[0].href="https://susy.mdpi.com/reviewer/blocked/seemore?email="+getUrlParam('email');
-           } catch (error){ } }
+    if (window.location.href.indexOf("reviewer/checking/") > -1){try{
+//        $("body").append('<iframe frameborder="0" width="100%" height="200px" src="'+ $(".morphNotes").attr("data-load-url") +'"></iframe>');
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: $("a:contains('Edit Reviewer')").attr("href").replace(/reivewer\/managment\/edit/g, 'list/reviewer/invitations-history'),
+            headers: {'User-agent': 'Mozilla/5.0 (compatible)', 'Accept': 'application/atom+xml,application/xml,text/xml',},
+            onload: function(responseDetails) {
+                $("body").append(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/"));
+            }
+        });
+        function getUrlParam(name) {var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); var r = window.location.search.substr(1).match(reg); if(r != null) {return decodeURI(r[2]);} return null; }
+        $(".reviewerNotes").after(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' src='/bundles/mdpisusy/img/design/google_logo.png'></a>");
+        document.getElementsByClassName("see-blocked-info")[0].href="https://susy.mdpi.com/reviewer/blocked/seemore?email="+getUrlParam('email');
+    } catch (error){ } }
 
     //susy侧边栏的SI按钮🔎
     if (window.location.href.indexOf("susy.mdpi.com/") > -1){try{
@@ -280,12 +280,6 @@ Thank you very much for your contribution to /Mathematics/, your manuscript ' + 
     //Manage Voucher Applications
     if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/list/") > -1){try{
         document.getElementById("show-more-budgets").click();
-    } catch (error){ }}
-
-    //Topics Management
-    if(window.location.href.indexOf("mdpi.com/topics/") > -1){try{
-        var manage_url=document.getElementById('js-clipboard-text').value.replace("https://www.mdpi.com/topics/","https://susy.mdpi.com/submission/topic/list/online?show_type=my_journals&form[name_system]=");
-        $("[href='/topics/proposal']").after(`<a class="button button--color-inversed button--full-width" href="`+manage_url+`" target="_blank" rel="noopener noreferrer">Manage the Topic</a>`);
     } catch (error){ }}
 
     //aleksandra.djordjevic@mdpi.com
