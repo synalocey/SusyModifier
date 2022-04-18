@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name          CfP Checker
-// @version       2.3.30
+// @version       2.4.18
 // @namespace     https://github.com/synalocey/SusyModifier
-// @description   CfP Checker
+// @description   v2.4.18 新增Deadline检测（3-12 months）
 // @author        Syna
 // @icon          https://www.mdpi.com/img/journals/mathematics-logo-sq.png
 // @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/CfPchecker.user.js
@@ -22,7 +22,11 @@
     function sk_cfpcheck_func (zEvent) {
         var Today=new Date();
         $("#issue_pe_note").val($("#issue_pe_note").val()+"--- Checked on " + Today.getFullYear()+ "-" + (Today.getMonth()+1) + "-" + Today.getDate() + " ---\n");
-        if($(".subject").text().indexOf("[Mathematics]") == -1){$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Mathematics]\n")}
+        if($(".subject").text().indexOf("[Mathematics]") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Mathematics]\n")}
+
+        var DDL = new Date($("th:contains('Special Issue Deadline:')").next().text())
+        if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) < 90) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Deadline is less than 3 months.\n")}
+        if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) > 365) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Deadline is longer than 12 months.\n")}
 
         if($(".subject").text().indexOf("New CFP Request") > -1){ //未延期特刊
             if($('a:contains("mailing-list.v1")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v1\n")}
