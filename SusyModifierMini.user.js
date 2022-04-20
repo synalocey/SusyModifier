@@ -32,9 +32,9 @@
 
     //GE reminder✏️
     if (window.location.href.indexOf("remind/guest_editor") > -1){try{
-        $('#emailTemplates').val("154").change();
+        $('#emailTemplates').val("1618").change();
         document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-        function init() {document.getElementById('mailSubject').value=document.getElementById('mailSubject').value.replace('ISSN 2227-7390', 'Rank Q1');
+        function init() {document.getElementById('mailSubject').value=document.getElementById('mailSubject').value.replace('[Mathematics]', '[Mathematics] (IF: 2.258, ISSN 2227-7390)');
                          document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace('Please let us know whether or not you are interested, and if you have any further questions.', 'Considering you might miss the previous messages, we would like to renew our invitation again.\n\nYou may modify the title to suit your interests and set the submission deadline according to your time schedule. The information in the special issue just includes a short summary (about 200 words) and keywords (3–10). You could invite your colleagues or friends as Co-Guest Editors (but optional). It would be helpful to share the workload among editors and also enable an internal discussion in case any uncertainties arise. \n\nCould you please let us know your decision on our invitation?  If you need more information or more time to make the decision, please never hesitate to contact us. If you are not able to accept the invitation, we will appreciate it if you could tell us. Please let us know whether or not you are interested, and if you have any further questions.');}
         setTimeout(()=>{init()}, 1000)
 
