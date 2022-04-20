@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier Mini
-// @version       2.4.8
+// @version       2.4.20
 // @description   Susy Modifier Mini
 // @author        Syna
 // @icon          https://susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-196x196.png
@@ -57,7 +57,8 @@
             var name=n.textContent.trim() + " " + $("[title|='Google Scholar']")[i].parentNode.textContent.trim().replace(" *", "")
 
             $("[title|='Google Scholar']").eq(i).before('<a href="mailto:' + email + '?subject=[Mathematics] (IF 2.258, ISSN 2227-7390) Promote Your Published Papers&body=Dear ' + name + ',%0A%0A\
-Thank you very much for your contribution to /Mathematics/, your manuscript ' + document.getElementById("manuscript_id").parentNode.textContent.trim() + ' is now pending final decision. We will keep you informed about the status of your manuscript.%0A%0AIn addition, you have published a paper in /Mathematics/ in 20XX with the citation of XXXXX times, congratulations on your great work!%0A%0ATo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper to your colleagues, friends and related researchers by forwarding it directly via interactive commenting functionalities on all article webpages (sidebar on the right)?%0A%0A[1. paper link]%0A%0AThank you in advance for your support.\
+Thank you very much for your contribution to /Mathematics/, your manuscript ' + document.getElementById("manuscript_id").parentNode.textContent.trim() + ' is now under review. We will keep you informed about the status of your manuscript.%0A%0AIn addition, you have published a paper/papers in /Mathematics/ in the past two years with the citation of about XX times. Based on your reputation and research interests, we believe that your results should attract more citations and attention. Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?%0A%0A\
+In addition, you have published a paper/papers in /Mathematics/ in 20XX with the citation of XXXXX times, congratulations on your great work!%0ATo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?%0A%0A1. [paper link]%0A2. [paper link]%0A%0AThank you in advance for your support.\
 "><img src="/bundles/mdpisusy/img/icon/mail.png"></a> ')
         }
         var Promote='';
