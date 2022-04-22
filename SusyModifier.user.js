@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.4.20
+// @version       2.4.22
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -46,23 +46,29 @@
 
     //文章处理页面[Voucher]按钮
     if (window.location.href.indexOf("/process_form/")+window.location.href.indexOf("/production_form/") > -2){try{
-        var corresponding
+        var corresponding, email=[];
+        var m_id = document.getElementById("manuscript_id").parentNode.textContent.trim();
+        var m_section = $(`div.cell.small-12.medium-6.large-2:contains('Section')`).next().text().trim();
         for (i=1;i<$("[title|='Google Scholar']").length;i++)
         {
             var n=$("[title|='Google Scholar']")[i].parentNode.nextSibling
             if (n.nodeType!=1) {n=n.nextSibling}
-            var email=n.textContent.trim()
+            email[i-1]=n.textContent.trim()
 
             n=$("[title|='Google Scholar']")[i].parentNode.previousSibling
             if (n.nodeType!=1) {n=n.previousSibling}
-            if($("[title|='Google Scholar']")[i].parentNode.textContent.indexOf("*") != -1 ) {corresponding=email}
+            if($("[title|='Google Scholar']")[i].parentNode.textContent.indexOf("*") != -1 ) {corresponding=email[i-1]}
             var name=n.textContent.trim() + " " + $("[title|='Google Scholar']")[i].parentNode.textContent.trim().replace(" *", "")
 
-            $("[title|='Google Scholar']").eq(i).before('<a href="mailto:' + email + '?subject=[Mathematics] (IF 2.258, ISSN 2227-7390) Promote Your Published Papers&body=Dear ' + name + ',%0A%0A\
-Thank you very much for your contribution to /Mathematics/, your manuscript ' + document.getElementById("manuscript_id").parentNode.textContent.trim() + ' is now under review. We will keep you informed about the status of your manuscript.%0A%0AIn addition, you have published a paper/papers in /Mathematics/ in the past two years with the citation of about XX times. Based on your reputation and research interests, we believe that your results should attract more citations and attention. Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?%0A%0A\
+            $("[title|='Google Scholar']").eq(i).before('<a href="mailto:' + email[i-1] + '?subject=[Mathematics] (IF 2.258, ISSN 2227-7390) Promote Your Published Papers&body=Dear ' + name + ',%0A%0A\
+Thank you very much for your contribution to /Mathematics/, your manuscript ' + m_id + ' is now under review. We will keep you informed about the status of your manuscript.%0A%0AIn addition, you have published a paper/papers in /Mathematics/ in the past two years with the citation of about XX times. Based on your reputation and research interests, we believe that your results should attract more citations and attention. Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?%0A%0A\
 In addition, you have published a paper/papers in /Mathematics/ in 20XX with the citation of XXXXX times, congratulations on your great work!%0ATo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?%0A%0A1. [paper link]%0A2. [paper link]%0A%0AThank you in advance for your support.\
 "><img src="/bundles/mdpisusy/img/icon/mail.png"></a> ')
         }
+
+        $("[title|='Send email to authors']").before('<a href="mailto:' + email.join(";") + '?subject=[Mathematics] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Mathematics Social Media&body=Dear Authors,%0A%0AHope this email finds you well. Your manuscript ' + m_id + ' is promoted by the Mathematics &quot;' + m_section + '&quot; Section LinkedIn account. Welcome to like, share, send and comment on it.%0A%0A\
+Find us and receive more information in the section &quot;'+ m_section +'&quot; of Mathematics:%0A[Links]%0A%0APlease do not hesitate to let us know if you have questions."><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
+
         var Promote='';
         // Promote = ' <a href="https://script.google.com/macros/s/AKfycbx1XtdG27UCL9Q1LdpAC_10ek75MDUr_BDYtdg8Ig/exec?name=' + document.getElementsByClassName("editorName")[0].textContent.trim() + '&phone=' + document.getElementById("manuscript_id").parentNode.textContent.trim() + '" target="_blank"><img style="vertical-align: middle;" src="https://ssl.gstatic.com/docs/common/addon_sheets_promo.svg" height="16" width="16"></a> <a href="https://script.google.com/macros/s/AKfycbxb_kAH3cErvnmKfucepiMzdjvige7NH38JIsXhTheONPP9JWE/exec?name='+ document.getElementById("manuscript_id").parentNode.textContent.trim() +'" target="_blank">[Promote]</a>'
 
@@ -222,7 +228,7 @@ In addition, you have published a paper/papers in /Mathematics/ in 20XX with the
         // $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390\', \'Rank Q1\'); document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'from the Guest Editor. If\', \'from the Guest Editor, and may offer discounts for papers invited by the Guest Editor. If\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a> ')
     } catch (error){ }}
     if (window.location.href.indexOf("remind/guest_editor") > -1){try{
-        $('#emailTemplates').val("154").change();
+        $('#emailTemplates').val("1618").change();
         document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
         $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390\', \'Rank Q1\').replace(\'Reminder: \', \'Awaiting Your Reply: \'); document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'We recently\', \'I am sorry for sending the repeated message as I did not get your reply. We recently\').replace(\'Please let us know whether or not you are interested, and if you have any further questions.\', \'We sincerely hope to cooperate with you. If you need more information, please do not hesitate to contact us. Please click on the following link to either accept or decline our request:\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a> ')
     } catch (error){ }}
