@@ -15,37 +15,105 @@
 // @match         *://scholar.google.com.tw/*&amp;user*
 // @require       https://code.jquery.com/jquery-3.6.0.min.js
 // @require       https://gist.github.com/raw/2625891/waitForKeyElements.js
+// @require       https://openuserjs.org/src/libs/sizzle/GM_config.js
+// @grant         GM_getValue
+// @grant         GM_setValue
 // @grant         GM_xmlhttpRequest
 // ==/UserScript==
-/* globals jQuery, $, waitForKeyElements */
+/* globals jQuery, $, waitForKeyElements, GM_config */
 
 (function() {
     'use strict';
 
+    GM_config.init({
+        'id': 'SusyModifierConfig',
+        'title': 'Setting of SusyModifier v'+GM_info.script.version,
+        'fields':
+        {
+            'Manuscriptnote': {'label': 'Manuscript Page 侧边栏紧凑', 'type': 'checkbox', 'default': true},
+            'ManuscriptFunc': {'label': '快捷申请优惠券和发送推广信按钮', 'type': 'checkbox', 'default': true},
+            'Template_Linkedin': {'label': 'LinkedIn推广信模板', 'type': 'textarea', 'default': 'Dear Authors,\n\nHope this email finds you well. Your manuscript %m_id% is promoted by the Mathematics "%m_section%" Section LinkedIn account. Welcome to like, share, send and comment on it.\n\nFind us and receive more information in the section "%m_section%" of Mathematics:\n[Links]\n\nPlease do not hesitate to let us know if you have questions.'},
+            'Template_Paper': {'label': '文章推广信模板', 'type': 'textarea', 'default': 'Dear %name%,\n\nThank you very much for your contribution to /Mathematics/, your manuscript %m_id% is now under review. We will keep you informed about the status of your manuscript.\n\nIn addition, you have published a paper/papers in /Mathematics/ in the past two years with the citation of about XX times. Based on your reputation and research interests, we believe that your results should attract more citations and attention. Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\nIn addition, you have published a paper/papers in /Mathematics/ in 20XX with the citation of XXXXX times, congratulations on your great work!\nTo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.'},
+            'SIpages': {'label': '特刊列表显示所有特刊', 'type': 'checkbox', 'default': true},
+            'SInote': {'label': 'Special Issue Note 界面变大', 'type': 'checkbox', 'default': true},
+            'SInoteW': {'label': 'SI Note Width', 'type': 'int', 'default': 500},
+            'SInoteH': {'label': 'SI Note Height', 'type': 'int', 'default': 1000},
+            'Work':
+            {
+                'label': 'Job', // Appears next to field
+                'type': 'select', // Makes this setting a dropdown
+                'options': ['Carpenter', 'Truck Driver', 'Porn Star'], // Possible choices
+                'default': 'Truck Driver' // Default value if user doesn't change it
+            },
+            'Age':
+            {
+                'label': 'Age', // Appears next to field
+                'type': 'int', // Makes this setting a text input
+                'min': 13, // Optional lower range limit
+                'max': 122, // Optional upper range limit
+                'default': 20 // Default value if user doesn't change it
+            },
+            'Income':
+            {
+                'label': 'Income', // Appears next to field
+                'type': 'unsigned float', // Makes this setting a text input
+                'default': 0 // Default value if user doesn't change it
+            },
+            'Status':
+            {
+                'label': 'Married', // Appears next to field
+                'type': 'checkbox', // Makes this setting a checkbox input
+                'default': false // Default value if user doesn't change it
+            },
+            'Gender':
+            {
+                'label': 'Gender', // Appears next to field
+                'type': 'radio', // Makes this setting a series of radio elements
+                'options': ['Male', 'Female'], // Possible choices
+                'default': 'Male' // Default value if user doesn't change it
+            },
+            'Button':
+            {
+                'label': 'Click me!', // Appears on the button
+                'type': 'button', // Makes this setting a button input
+                'size': 100, // Control the size of the button (default is 25)
+                'click': function() { // Function to call when button is clicked
+                    alert('Button clicked!');
+                }
+            }
+        },
+        'css': '.config_var{padding: 15px;display:inline-block;} #SusyModifierConfig_SInote_var{display: block;} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}'
+
+    });
+    $("#topmenu >>> [href='https://www.mdpi.com/about/']").after("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>")
+    $("#susymodifier_config").click(function(e) {GM_config.open()});
+
     //特刊页面➕按钮、Note
     if (window.location.href.indexOf("susy.mdpi.com/submission/topic/view")+window.location.href.indexOf("susy.mdpi.com/special_issue/process") > -2){try{
-        waitForKeyElements("#special_issue_notesText",SINotes);
-        waitForKeyElements("#topic_notesText",TopicNotes);
-        function SINotes() {
-            $("#manuscript-special-issue-notes").css("height","1000px");
-            $("[aria-describedby|='manuscript-special-issue-notes']").css("width","500px");
-            $("#special_issue_notesText").css("height","800px");
-        }
-        function TopicNotes() {
-            $("#manuscript-special-issue-notes").css("height","1000px");
-            $("[aria-describedby|='manuscript-special-issue-notes']").css("width","500px");
-            $("#topic_notesText").css("height","800px");
+        if(GM_config.get('SInote') == true) {
+            waitForKeyElements("#special_issue_notesText",SINotes);
+            waitForKeyElements("#topic_notesText",TopicNotes);
+            function SINotes() {
+                $("#manuscript-special-issue-notes").css("height",GM_config.get('SInoteH')+"px");
+                $("[aria-describedby|='manuscript-special-issue-notes']").css("width",GM_config.get('SInoteW')+"px");
+                $("#special_issue_notesText").css("height",GM_config.get('SInoteH')-200 +"px");
+            }
+            function TopicNotes() {
+                $("#manuscript-special-issue-notes").css("height",GM_config.get('SInoteH')+"px");
+                $("[aria-describedby|='manuscript-special-issue-notes']").css("width",GM_config.get('SInoteW')+"px");
+                $("#topic_notesText").css("height",GM_config.get('SInoteH')-200 +"px");
+            }
         }
         $('#si-update-emphasized').before('<a href="?pagesection=AddGuestEditor" title="New special issue">➕</a> ');
         $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+'" title="Reset">↩</a> ');
         $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+'" title="Close">🆑</a> ');
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
-        $('#guestNextBtn').after(" <a onclick='$(`#form_article_title_5`)[0].value=$(`#form_article_title_4`)[0].value=$(`#form_article_title_3`)[0].value=$(`#form_article_title_2`)[0].value=$(`#form_article_title_1`)[0].value; $(`#form_article_doi_5`)[0].value=$(`#form_article_doi_4`)[0].value=$(`#form_article_doi_3`)[0].value=$(`#form_article_doi_2`)[0].value=$(`#form_article_doi_1`)[0].value;'>[CpPub]</a>");
+        //$('#guestNextBtn').after(" <a onclick='$(`#form_article_title_5`)[0].value=$(`#form_article_title_4`)[0].value=$(`#form_article_title_3`)[0].value=$(`#form_article_title_2`)[0].value=$(`#form_article_title_1`)[0].value; $(`#form_article_doi_5`)[0].value=$(`#form_article_doi_4`)[0].value=$(`#form_article_doi_3`)[0].value=$(`#form_article_doi_2`)[0].value=$(`#form_article_doi_1`)[0].value;'>[CpPub]</a>");
         //$(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
     } catch (error){ }}
 
     //文章处理页面[Voucher]按钮
-    if (window.location.href.indexOf("/process_form/")+window.location.href.indexOf("/production_form/") > -2){try{
+    if (window.location.href.indexOf("/process_form/")+window.location.href.indexOf("/production_form/") > -2 && GM_config.get('ManuscriptFunc')==true){try{
         var corresponding, email=[];
         var m_id = document.getElementById("manuscript_id").parentNode.textContent.trim();
         var m_section = $(`div.cell.small-12.medium-6.large-2:contains('Section')`).next().text().trim();
@@ -60,14 +128,10 @@
             if($("[title|='Google Scholar']")[i].parentNode.textContent.indexOf("*") != -1 ) {corresponding=email[i-1]}
             var name=n.textContent.trim() + " " + $("[title|='Google Scholar']")[i].parentNode.textContent.trim().replace(" *", "")
 
-            $("[title|='Google Scholar']").eq(i).before('<a href="mailto:' + email[i-1] + '?subject=[Mathematics] (IF 2.258, ISSN 2227-7390) Promote Your Published Papers&body=Dear ' + name + ',%0A%0A\
-Thank you very much for your contribution to /Mathematics/, your manuscript ' + m_id + ' is now under review. We will keep you informed about the status of your manuscript.%0A%0AIn addition, you have published a paper/papers in /Mathematics/ in the past two years with the citation of about XX times. Based on your reputation and research interests, we believe that your results should attract more citations and attention. Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?%0A%0A\
-In addition, you have published a paper/papers in /Mathematics/ in 20XX with the citation of XXXXX times, congratulations on your great work!%0ATo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?%0A%0A1. [paper link]%0A2. [paper link]%0A%0AThank you in advance for your support.\
-"><img src="/bundles/mdpisusy/img/icon/mail.png"></a> ')
+            $("[title|='Google Scholar']").eq(i).before('<a href="mailto:' + email[i-1] + '?subject=[Mathematics] (IF 2.258, ISSN 2227-7390) Promote Your Published Papers&body=' + GM_config.get('Template_Paper').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section).replace(/%name%/g,name) + '"><img src="/bundles/mdpisusy/img/icon/mail.png"></a> ')
         }
 
-        $("[title|='Send email to authors']").before('<a href="mailto:' + email.join(";") + '?subject=[Mathematics] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Mathematics Social Media&body=Dear Authors,%0A%0AHope this email finds you well. Your manuscript ' + m_id + ' is promoted by the Mathematics &quot;' + m_section + '&quot; Section LinkedIn account. Welcome to like, share, send and comment on it.%0A%0A\
-Find us and receive more information in the section &quot;'+ m_section +'&quot; of Mathematics:%0A[Links]%0A%0APlease do not hesitate to let us know if you have questions."><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
+        $("[title|='Send email to authors']").before('<a href="mailto:' + email.join(";") + '?subject=[Mathematics] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Mathematics Social Media&body=' + GM_config.get('Template_Linkedin').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
 
         var Promote='';
         // Promote = ' <a href="https://script.google.com/macros/s/AKfycbx1XtdG27UCL9Q1LdpAC_10ek75MDUr_BDYtdg8Ig/exec?name=' + document.getElementsByClassName("editorName")[0].textContent.trim() + '&phone=' + document.getElementById("manuscript_id").parentNode.textContent.trim() + '" target="_blank"><img style="vertical-align: middle;" src="https://ssl.gstatic.com/docs/common/addon_sheets_promo.svg" height="16" width="16"></a> <a href="https://script.google.com/macros/s/AKfycbxb_kAH3cErvnmKfucepiMzdjvige7NH38JIsXhTheONPP9JWE/exec?name='+ document.getElementById("manuscript_id").parentNode.textContent.trim() +'" target="_blank">[Promote]</a>'
@@ -92,7 +156,7 @@ Find us and receive more information in the section &quot;'+ m_section +'&quot; 
     } catch (error){ }}
 
     //特刊列表免翻页⚙️
-    if (window.location.href.indexOf("susy.mdpi.com/special_issue_pending/list") > -1 && window.location.href.indexOf("page=") == -1){try{
+    if (window.location.href.indexOf("susy.mdpi.com/special_issue_pending/list") > -1 && window.location.href.indexOf("page=") == -1  && GM_config.get('SIpages')==true){try{
         $(".outside_table").css("max-height","none")
         var totalpage = document.getElementsByClassName("pagination margin-0")[0].getElementsByTagName("li").length-1
         for (var i = 2; i < totalpage; i++) {
@@ -295,7 +359,7 @@ Find us and receive more information in the section &quot;'+ m_section +'&quot; 
     } catch (error){ }}
 
     //Manuscript Sidebar Size
-    if(window.location.href.indexOf("//susy.mdpi.com/") > -1){try{
+    if(window.location.href.indexOf("//susy.mdpi.com/") > -1 && GM_config.get('Manuscriptnote')==true){try{
         waitForKeyElements(".manuscript-note-box",SidebarSize);
         function SidebarSize() {
             $(".note-list-container").css("padding","0");
