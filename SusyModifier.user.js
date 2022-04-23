@@ -27,24 +27,19 @@
 
     GM_config.init({
         'id': 'SusyModifierConfig',
-        'title': 'Setting of SusyModifier v'+GM_info.script.version,
+        'title': 'Settings of SusyModifier v'+GM_info.script.version,
         'fields':
         {
-            'Manuscriptnote': {'label': 'Manuscript Page 侧边栏紧凑', 'type': 'checkbox', 'default': true},
-            'ManuscriptFunc': {'label': '快捷申请优惠券和发送推广信按钮', 'type': 'checkbox', 'default': true},
+            'Manuscriptnote': {'section': GM_config.create('Manuscripts Options'),'label': 'Manuscript Page 侧边栏紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'ManuscriptFunc': {'label': '快捷申请优惠券和发送推广信按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Template_Linkedin': {'label': 'LinkedIn推广信模板', 'type': 'textarea', 'default': 'Dear Authors,\n\nHope this email finds you well. Your manuscript %m_id% is promoted by the Mathematics "%m_section%" Section LinkedIn account. Welcome to like, share, send and comment on it.\n\nFind us and receive more information in the section "%m_section%" of Mathematics:\n[Links]\n\nPlease do not hesitate to let us know if you have questions.'},
             'Template_Paper': {'label': '文章推广信模板', 'type': 'textarea', 'default': 'Dear %name%,\n\nThank you very much for your contribution to /Mathematics/, your manuscript %m_id% is now under review. We will keep you informed about the status of your manuscript.\n\nIn addition, you have published a paper/papers in /Mathematics/ in the past two years with the citation of about XX times. Based on your reputation and research interests, we believe that your results should attract more citations and attention. Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\nIn addition, you have published a paper/papers in /Mathematics/ in 20XX with the citation of XXXXX times, congratulations on your great work!\nTo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.'},
-            'SIpages': {'label': '特刊列表显示所有特刊', 'type': 'checkbox', 'default': true},
-            'SInote': {'label': 'Special Issue Note 界面变大', 'type': 'checkbox', 'default': true},
-            'SInoteW': {'label': 'SI Note Width', 'type': 'int', 'default': 500},
-            'SInoteH': {'label': 'SI Note Height', 'type': 'int', 'default': 1000},
-            'Work':
-            {
-                'label': 'Job', // Appears next to field
-                'type': 'select', // Makes this setting a dropdown
-                'options': ['Carpenter', 'Truck Driver', 'Porn Star'], // Possible choices
-                'default': 'Truck Driver' // Default value if user doesn't change it
-            },
+            'SIpages': {'section': GM_config.create('Special Issue Options'), 'label': '特刊列表显示所有特刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'SInote': {'label': 'Special Issue Note 界面变大', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'SInoteW': {'label': 'SI Note Width', 'labelPos': 'left', 'type': 'int', 'default': 500},
+            'SInoteH': {'label': 'SI Note Height', 'labelPos': 'left', 'type': 'int', 'default': 1000},
+            'LinkShort': {'section': GM_config.create('Optimization'), 'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+
             'Age':
             {
                 'label': 'Age', // Appears next to field
@@ -82,7 +77,7 @@
                 }
             }
         },
-        'css': '.config_var{padding: 15px;display:inline-block;} #SusyModifierConfig_SInote_var{display: block;} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}'
+        'css': '.config_var{padding: 15px;display:inline-block;} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}'
 
     });
     $("#topmenu >>> [href='https://www.mdpi.com/about/']").after("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>")
@@ -104,7 +99,7 @@
                 $("#topic_notesText").css("height",GM_config.get('SInoteH')-200 +"px");
             }
         }
-        $('#si-update-emphasized').before('<a href="?pagesection=AddGuestEditor" title="New special issue">➕</a> ');
+        $('#si-update-emphasized').before('<a href="?pagesection=AddGuestEditor" title="Add Guest Editor">➕</a> ');
         $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+'" title="Reset">↩</a> ');
         $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+'" title="Close">🆑</a> ');
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
@@ -160,7 +155,7 @@
         $(".outside_table").css("max-height","none")
         var totalpage = document.getElementsByClassName("pagination margin-0")[0].getElementsByTagName("li").length-1
         for (var i = 2; i < totalpage; i++) {
-            (function(i){//闭包
+            (function(i){
                 setTimeout(function(){
                     console.log(i);
                     var IFramename = "iframe"+i;
@@ -170,13 +165,13 @@
                         $('#statustable').attr('id','old_statustable');
                     }
                 },500*i)
-            })(i);//闭包
+            })(i);
         };
         $("[href='/special_issue_pending/list?show_all=my_journals']").attr('href',"/special_issue_pending/list/online?form[journal_id]=154&show_all=my_journals");
     } catch (error){ }}
 
     //特刊网页重定向
-    if (window.location.href.indexOf("mdpi.com/journal/mathematics/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 ){try{
+    if (window.location.href.indexOf("mdpi.com/journal/mathematics/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 && GM_config.get('LinkShort')==true){try{
         window.location.href=window.location.href.replace(/\/journal\/mathematics\/special_issues\//,"/si/mathematics/");
     } catch (error){ }}
 
