@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.4.23
+// @version       2.4.25
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
 // @icon          https://susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-196x196.png
 // @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
 // @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
-// @match         https://*.mdpi.com/*
-// @match         https://*.scopus.com/*
+// @match         *://*.mdpi.com/*
+// @match         *://redmine.mdpi.cn/*
+// @match         *://*.scopus.com/*
 // @match         *://scholar.google.co.uk/*&amp;user*
 // @match         *://scholar.google.com/*&amp;user*
 // @match         *://scholar.google.com.hk/*&amp;user*
@@ -28,43 +29,80 @@
         'id': 'SusyModifierConfig',
         'title': 'Settings of SusyModifier v'+GM_info.script.version,
         'fields':  {
-            'Interface_sidebar': {'section': [],'label': 'Susy侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Interface_sidebar': {'section': [],'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Interface_SME': {'label': 'I am SME of', 'type': 'select', 'labelPos': 'left', 'options': ['','Algebra and Geometry','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation','Fuzzy Set Theory','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics Theory'], 'default': ''},
             'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Mathematics', 'None'], 'default': 'Mathematics'},
             'Interface_combine': {'label': 'Topic Manuscripts整合进SI Manuscripts', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Manuscriptnote': {'section': [],'label': 'Manuscript Page 侧边栏紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Manuscriptnote': {'section': [],'label': 'Manuscript Note 边栏紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'ManuscriptFunc': {'label': '快捷申请优惠券和发送推广信按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Template_Linkedin': {'label': 'LinkedIn推广信模板', 'type': 'textarea', 'default': 'Dear Authors,\n\nHope this email finds you well. Your manuscript %m_id% is promoted by the Mathematics "%m_section%" Section LinkedIn account. Welcome to like, share, send and comment on it.\n\nFind us and receive more information in the section "%m_section%" of Mathematics:\n[Links]\n\nPlease do not hesitate to let us know if you have questions.'},
             'Template_Paper': {'label': '文章推广信模板', 'type': 'textarea', 'default': 'Dear %name%,\n\nThank you very much for your contribution to /Mathematics/, your manuscript %m_id% is now under review. We will keep you informed about the status of your manuscript.\n\nIn addition, you have published a paper/papers in /Mathematics/ in the past two years with the citation of about XX times. Based on your reputation and research interests, we believe that your results should attract more citations and attention. Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\nIn addition, you have published a paper/papers in /Mathematics/ in 20XX with the citation of XXXXX times, congratulations on your great work!\nTo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.'},
             'SIpages': {'section': [], 'label': '特刊列表显示所有特刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SInote': {'label': 'Special Issue Note 界面变大', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SInoteW': {'label': 'SI Note Width', 'labelPos': 'left', 'type': 'int', 'default': 500},
-            'SInoteH': {'label': 'SI Note Height', 'labelPos': 'left', 'type': 'int', 'default': 1000},
-            'LinkShort': {'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'SInoteH': {'label': 'Height', 'labelPos': 'left', 'type': 'int', 'default': 1000},
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)'], default: '!Guest Editor – invite Version 1'},
-            'GE_TemplateS1': {'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "Invitation to Serve as"},
+            'GE_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "Invitation to Serve as"},
             'GE_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.258, Rank Q1) Invitation to Serve as"},
-            'GE_TemplateB1': {'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
+            'GE_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderID': {'section': [], 'label': '默认 GE Reminder Template', 'type': 'select', 'labelPos': 'left', 'options': ['Guest Editor Invitation – 1st Reminder','Guest Editor Invitation – 2nd Reminder','Guest Editor Invitation – 3rd Reminder'], default: 'Guest Editor Invitation – 1st Reminder'},
-            'GE_ReminderS1': {'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
+            'GE_ReminderS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'GE_ReminderB1': {'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
+            'GE_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'EB_TemplateS1': {'section': [], 'label': '[EBM Invitation] Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "Invitation to Join"},
+            'EB_TemplateID': {'section': [], 'label': '默认 EB Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Editorial Board Member – Invite Version 1']},
+            'EB_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "Invitation to Join"},
             'EB_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.258, Rank Q1) Invitation to Join"},
-            'EB_TemplateB1': {'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
+            'EB_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'EB_ReminderS1': {'section': [], 'label': '[EBM Reminder] Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "Invitation to Serve as"},
+            'EB_ReminderID': {'section': [], 'label': '默认 EB Reminder Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Editorial Board Member – Reminder']},
+            'EB_ReminderS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "Invitation to Serve as"},
             'EB_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.258, Rank Q1) Invitation to Serve as"},
-            'EB_ReminderB1': {'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
+            'EB_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'Mailsdb_old': {'section': [],'label': '默认旧版Mailsdb', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Cfp_checker': {'label': '开启Toolkit for CfP Cheker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Hidden': {'section': [], 'label': 'Hidden', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'LinkShort': {'section': [], 'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Cfp_checker': {'label': 'Toolkit for CfP Cheker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Hidden_Func': {'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
         },
-          'events': {'save': function() {location.href = location.href}},
-        'css': '.config_var{padding: 10px;display:inline-block;} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px} #SusyModifierConfig_Hidden_var{display: none !important;}'
+          'events': {
+              'save': function() {location.href = location.href},
+              'open': function(doc) {
+                  GM_config.fields.Hidden_Func.node.addEventListener('change', function(){
+                      if($('#SusyModifierConfig').contents().find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {alert('Dangerous! \n\nDon\'t turn it on unless you are familiar with ALL susy functions. \nOtherwise, it will cause serious problems.')}
+                  });
+                  //隐藏SI Note WH选项
+                  if(!GM_config.get('SInote')){
+                      $('#SusyModifierConfig').contents().find("#SusyModifierConfig_SInoteW_var").css("display","none");
+                      $('#SusyModifierConfig').contents().find("#SusyModifierConfig_SInoteH_var").css("display","none");
+                  }
+                  GM_config.fields.SInote.node.addEventListener('change', function(doc){
+                      if($('#SusyModifierConfig').contents().find("#SusyModifierConfig_field_SInote")[0].checked) {
+                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_SInoteW_var").css("display","inline-block");
+                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_SInoteH_var").css("display","inline-block");
+                      } else {
+                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_SInoteW_var").css("display","none");
+                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_SInoteH_var").css("display","none");
+                      }
+                  });
+                  //隐藏推广信模板
+                  if(!GM_config.get('ManuscriptFunc')){
+                      $('#SusyModifierConfig').contents().find("#SusyModifierConfig_Template_Linkedin_var").css("display","none");
+                      $('#SusyModifierConfig').contents().find("#SusyModifierConfig_Template_Paper_var").css("display","none");
+                  }
+                  GM_config.fields.ManuscriptFunc.node.addEventListener('change', function(doc){
+                      if($('#SusyModifierConfig').contents().find("#SusyModifierConfig_field_ManuscriptFunc")[0].checked) {
+                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_Template_Linkedin_var").css("display","inline-block");
+                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_Template_Paper_var").css("display","inline-block");
+                      } else {
+                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_Template_Linkedin_var").css("display","none");
+                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_Template_Paper_var").css("display","none");
+                      }
+                  });
+              },
+
+          },
+        'css': '.config_var{padding: 5px 10px;display:inline-block;} select{width:200px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SIpages_field_label,#SusyModifierConfig_LinkShort_field_label{width:150px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_Cfp_checker_field_label{width:200px;display:inline-block;} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}'
     });
     $("#topmenu >>> [href='https://www.mdpi.com/about/']").after("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
 
@@ -193,7 +231,7 @@
         var corresponding, Promote='', email=[];
         var m_id = document.getElementById("manuscript_id").parentNode.textContent.trim();
         var m_section = $(`div.cell.small-12.medium-6.large-2:contains('Section')`).next().text().trim();
-        for (i=1;i<$("[title|='Google Scholar']").length;i++) {
+        for (var i=1; i<$("[title|='Google Scholar']").length;i++) {
             var n=$("[title|='Google Scholar']")[i].parentNode.nextSibling
             if (n.nodeType!=1) {n=n.nextSibling}
             email[i-1]=n.textContent.trim()
@@ -228,20 +266,24 @@
 
     //特刊列表免翻页⚙️
     if (window.location.href.indexOf("susy.mdpi.com/special_issue_pending/list") > -1 && window.location.href.indexOf("page=") == -1 && GM_config.get('SIpages')==true){try{
-        $(".outside_table").css("max-height","none")
-        var htmlObj, totalpage = parseInt($('li:contains("Next")').prev().text());
-        for (var i = 2; i <= Math.min(totalpage,20); i++) {
-            (function(i){//闭包
-                setTimeout(function(){
-                    var IFramename = "iframe"+i;
-                    $("body").append('<iframe id="iframe'+i+'" src="' + document.getElementsByClassName("pagination margin-0")[0].getElementsByTagName("li")[2].getElementsByTagName("a")[0].href.replace("page=2","page="+[i]) + '" style="display:none;"></iframe>');
-                    document.getElementById("iframe"+i).onload = function () {
-                        $('#statustable').after(document.getElementById("iframe"+i).contentWindow.document.getElementById("statustable"));
-                        $('#statustable').attr('id','old_statustable');
+        $(".outside_table").css("max-height","none"); $("#statustable").attr('class','statustable');
+        var maxpage = 20, totalpage = Math.min(maxpage,parseInt($('li:contains("Next")').prev().text()));
+        function doXHR(counter) {
+            if (counter < totalpage+1) {
+                GM_xmlhttpRequest({
+                    method: "GET",
+                    url: document.getElementsByClassName("pagination margin-0")[0].getElementsByTagName("li")[2].getElementsByTagName("a")[0].href.replace(/page=2/gi,"page="+counter),
+                    onload: function(response) {
+                        var $jQueryObject = $('#statustable',$.parseHTML(response.responseText));
+                        $($jQueryObject).attr('id','statustable'+counter);
+                        $('#statustable').parent().append($jQueryObject);
+                        doXHR(counter+1);
                     }
-                },500*i)
-            })(i);//闭包
-        };
+                });
+            }
+            if (counter == maxpage+1){$('#statustable').parent().append("<br><br>Only List " + maxpage + " Pages.<br><br>");}
+        }
+        doXHR(2);
         if (S_J>0) {$("[href='/special_issue_pending/list?show_all=my_journals']").attr('href',"/special_issue_pending/list/online?form[journal_id]=" +S_J+ "&show_all=my_journals");}
     } catch (error){ }}
 
@@ -262,13 +304,13 @@
             }
         }
         $('#si-update-emphasized').before('<a href="?pagesection=AddGuestEditor" title="Add Guest Editor">➕</a> ');
-        if(GM_config.get('Hidden')) {
-            $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+'" title="Reset">↩</a> ');
+        if(GM_config.get('Hidden_Func')) {
+            $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+'" title="Reset"><img border="0" src="/bundles/mdpisusy/img/icon/arrow-180.png"></a> ');
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+'" title="Close">🆑</a> ');
+            $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
         }
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
         //$('#guestNextBtn').after(" <a onclick='$(`#form_article_title_5`)[0].value=$(`#form_article_title_4`)[0].value=$(`#form_article_title_3`)[0].value=$(`#form_article_title_2`)[0].value=$(`#form_article_title_1`)[0].value; $(`#form_article_doi_5`)[0].value=$(`#form_article_doi_4`)[0].value=$(`#form_article_doi_3`)[0].value=$(`#form_article_doi_2`)[0].value=$(`#form_article_doi_1`)[0].value;'>[CpPub]</a>");
-        //$(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
     } catch (error){ }}
 
     //默认新建特刊位置和Title Case
@@ -287,7 +329,7 @@
             document.evaluate('//*[@id="journal_id_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText=GM_config.get('Journal');
             $("[href='/user/ebm-new/management/pending_invitation/my_journals").attr("href","/user/ebm-new/management/pending_invitation/my_journals?form[journal_id]=" +S_J);
         }
-        if (GM_config.get('Hidden')){$("#ebm_pending_check_btn").after(' <input class="submit" type="submit" value="Force Proceed"> ');}
+        if (GM_config.get('Hidden_Func')){$("#ebm_pending_check_btn").after(' <input class="submit" type="submit" value="Force Proceed"> ');}
     } catch (error){ }}
 
     //特刊网页短链接
@@ -295,64 +337,92 @@
         window.location.href=window.location.href.replace(/\/journal\/mathematics\/special_issues\//,"/si/mathematics/");
     } catch (error){ }}
 
-    //mailsdb样式⚙️🔝
-    if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/login") > -1){try{
-        window.location.href="https://mailsdb.i.mdpi.com/login";
+    //CfP Checker
+    if (window.location.href.indexOf("//redmine.mdpi.") > -1 && GM_config.get('Cfp_checker')){try{
+        //Always: Redmine重定向
+        if(window.location.href.indexOf("//redmine.mdpi.com/") > -1){window.location.replace(decodeURIComponent(window.location.href.split("login?back_url=")[window.location.href.split("login?back_url=").length-1]).replace("//redmine.mdpi.com/","//redmine.mdpi.cn/"));}
+        if(window.location.href.indexOf("//redmine.mdpi.cn//") > -1){window.location.replace(decodeURIComponent(window.location.href.replace(".cn//",".cn/")));}
+        //排队界面
+        if(window.location.href.indexOf("/projects/si-planning/issues?utf8=") > -1){ $('[href="/users/64"]').css("background-color", "yellow"); $('h2:contains("Issues")').append(" <span style='background-color: yellow;'>(" + $('[href="/users/64"]').length + " pending CfP Team)</span>"); }
+        //CfP filter链接
+        $("#header > h1").append(" <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=Mathematics&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[Maths CfP]</a>")
+        //Checker功能和检测函数
+        $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").click(sk_cfpcheck_func);
+        function sk_cfpcheck_func (zEvent) {
+            var Today=new Date();
+            $("#issue_pe_note").val($("#issue_pe_note").val()+"--- Checked on " + Today.getFullYear()+ "-" + (Today.getMonth()+1) + "-" + Today.getDate() + " ---\n");
+            if($(".subject").text().indexOf("[Mathematics]") == -1){$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Mathematics]\n")}
+
+            if($(".subject").text().indexOf("New CFP Request") > -1){ //未延期特刊
+                if($('a:contains("mailing-list.v1")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v1\n")}
+                if($('a:contains("cfp-approval.v1.pdf")').length+$('a:contains("cfp-approval.v1.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v1.eml (or pdf)\n")}
+                if($('a:contains("mailing-list.v1")').length*($('a:contains("cfp-approval.v1.pdf")').length+$('a:contains("cfp-approval.v1.eml")').length)>0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"✅ First Round CfP\n")}
+                $('a:contains("mailing-list.v1")').append('<span></span>');
+                $('a:contains("mailing-list.v1") span').click();
+            }
+            else if ($(".subject").text().indexOf("Extended SI") > -1) { //已延期特刊
+                if($('a:contains("mailing-list.v3")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v3\n")}
+                if($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v2.eml (or pdf)\n")}
+                if($('a:contains("mailing-list.v3")').length*($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length)>0) {
+                    $("#issue_pe_note").val($("#issue_pe_note").val()+"✅ Extended SI CfP\n")
+                    $('a:contains("mailing-list.v3")').append('<span></span>');
+                    $('a:contains("mailing-list.v1")').append('<span></span>');
+                    $('a:contains("mailing-list.v1")').attr('target', '_blank');
+                    $('a:contains("mailing-list.v3") span').click();
+                    $('a:contains("mailing-list.v1") span').first().click();
+                }
+            }
+            else { //名称不规范
+                $("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Subject is Wrong.\n")
+            }
+            if($(".assigned-to").text().indexOf("CfP") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Assignee is not CfP/MDPI\n")};
+        }
+
     } catch (error){ }}
+
+    //Always: Mailsdb样式⚙️🔝
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/search/emails") > -1){try{
-        var link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.type = "text/css";
-        link.href = "/assets/application-79a8659b0064dad9845d4ec2f290c6e94795079e79a99ab4354776213eb35db0.css";
-        document.getElementsByTagName("head")[0].appendChild(link);
-        document.body.innerHTML = document.body.innerHTML.replace(new RegExp(' data-url="','g'),' href="');
+        $("head").append('<link rel="stylesheet" type="text/css" href="/assets/application-79a8659b0064dad9845d4ec2f290c6e94795079e79a99ab4354776213eb35db0.css">');
+        document.body.innerHTML = document.body.innerHTML.replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=');
+
         var susycheck = "https://susy.mdpi.com/user/info?emails="+ window.location.href.match(/search_content=(\S*)/)[1];
         if (susycheck.indexOf("@") > -1){
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: susycheck,
-                headers: {'User-agent': 'Mozilla/5.0 (compatible)', 'Accept': 'application/atom+xml,application/xml,text/xml',},
                 onload: function(responseDetails) {
-                    const sty = document.createElement("style");
-                    sty.innerHTML = 'table{width: 80%} #user-info {width: 80%} #user-info .user-info-section{margin-bottom:10px}#user-info span.email{font-weight:400;color:#103247}#user-info span.number{font-weight:400;color:#123}#user-info a{color:#00f}#user-info a:visited{color:#cd7e53}#user-info a:hover{color:#47566d}#user-info table{margin-left:2%;width:98%;background:#99a4b5;margin-bottom:10px;border-right:1px solid #ccc;border-bottom:1px solid #ccc;font-size: 14px;}#user-info table tr th{text-align:left;background:#4f5671;color:#fefefe;font-weight:400;border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem}#user-info table tr td{border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem;background:#fefefe}#user-info table tr td span.msid{color:#4e6c88;font-weight:400}#user-info table tr td.title{width:50%}#user-info table tr td.journal{width:10%;text-align:center}#user-info table tr td.status{width:10%;text-align:center}#user-info table tr td.submission-date{width:10%;text-align:center}#user-info table tr td.invoice-info{width:10%;text-align:center}#user-info table tr td.invoice-payment-info{width:10%;text-align:center}';
-                    sty.id = "sty_add";
-                    document.head.appendChild(sty);
+                    $("head").append('<style id="sty_add">table{width: 80%} #user-info {width: 80%} #user-info .user-info-section{margin-bottom:10px}#user-info span.email{font-weight:400;color:#103247}#user-info span.number{font-weight:400;color:#123}#user-info a{color:#00f}#user-info a:visited{color:#cd7e53}#user-info a:hover{color:#47566d}#user-info table{margin-left:2%;width:98%;background:#99a4b5;margin-bottom:10px;border-right:1px solid #ccc;border-bottom:1px solid #ccc;font-size: 14px;}#user-info table tr th{text-align:left;background:#4f5671;color:#fefefe;font-weight:400;border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem}#user-info table tr td{border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem;background:#fefefe}#user-info table tr td span.msid{color:#4e6c88;font-weight:400}#user-info table tr td.title{width:50%}#user-info table tr td.journal{width:10%;text-align:center}#user-info table tr td.status{width:10%;text-align:center}#user-info table tr td.submission-date{width:10%;text-align:center}#user-info table tr td.invoice-info{width:10%;text-align:center}#user-info table tr td.invoice-payment-info{width:10%;text-align:center}</style>');
                     $("body").prepend("<p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p>");
-                    $("body").prepend(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/"));
-                }
-            });
-        }
-        susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1";
-        if (susycheck.indexOf("@") > -1){
+                    $("body").prepend(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href='));
+                } });
+
+            susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1";
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: susycheck,
-                headers: {'User-agent': 'Mozilla/5.0 (compatible)', 'Accept': 'application/atom+xml,application/xml,text/xml',},
                 onload: function(responseDetails) {
                     $("body").prepend("<p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p>");
-                    $("body").prepend(responseDetails.responseText);
-                }
-            });
+                    var $jQueryObject = $($.parseHTML(responseDetails.responseText.replace(/data-load-url="\/user/g,'data-load-url="//susy.mdpi.com/user')));
+                    $("body").prepend($jQueryObject);
+                } });
         }
     } catch (error){ }}
 
-    //reviewer checking样式⚙️
+    //Always: Reviewer checking样式⚙️
     if (window.location.href.indexOf("reviewer/checking/") > -1){try{
         GM_xmlhttpRequest({
             method: 'GET',
             url: $("a:contains('Edit Reviewer')").attr("href").replace(/reivewer\/managment\/edit/g, 'list/reviewer/invitations-history'),
-            headers: {'User-agent': 'Mozilla/5.0 (compatible)', 'Accept': 'application/atom+xml,application/xml,text/xml',},
             onload: function(responseDetails) {
                 $("body").append(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/"));
-            }
-        });
+            } });
         function getUrlParam(name) {var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); var r = window.location.search.substr(1).match(reg); if(r != null) {return decodeURI(r[2]);} return null; }
-        $(".reviewerNotes").after(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' src='/bundles/mdpisusy/img/design/google_logo.png'></a>");
-        document.getElementsByClassName("see-blocked-info")[0].href="https://susy.mdpi.com/reviewer/blocked/seemore?email="+getUrlParam('email');
+        $(".morphNotes:first").before(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' src='/bundles/mdpisusy/img/design/google_logo.png'></a> ");
+        $("a:contains('see more')").attr('href',$("a:contains('see more')").attr('data-uri'));
     } catch (error){ } }
 
-    //Hidden: MRS ALL journals
-    if(window.location.href.indexOf("//mrs.mdpi.com/data/role/") > -1 && GM_config.get('Hidden')){try{ $('#demo-form2').before(" <a onclick='$(`#journal > option`)[0].value=`250,77,145,362,13,524,534,341,456,390,90,480,517,491,523,35,118,471,323,47,82,346,67,427,240,103,515,299,305,143,487,531,441,123,26,214,440,467,213,176,416,259,428,385,356,142,151,84,404,306,397,127,449,7,402,5,412,83,509,192,301,42,492,275,395,19,460,53,25,413,409,453,79,474,481,163,50,225,215,148,221,355,203,499,37,51,435,170,290,49,432,199,14,407,231,154,81,92,59,522,465,438,314,457,365,359,360,444,165,419,511,358,436,271,353,16,252,114,162,130,206,246,3,233,265,528,518,414,173,296,466,294,15,376,44,131,417,150,276,133,228,291,269,36,504`;'>[All Journal]</a>"); } catch (error){ }}
+    //Hidden_Func: MRS ALL journals
+    if(window.location.href.indexOf("//mrs.mdpi.com/data/role/") > -1 && GM_config.get('Hidden_Func')){try{ $('#demo-form2').before(" <a onclick='$(`#journal > option`)[0].value=`250,77,145,362,13,524,534,341,456,390,90,480,517,491,523,35,118,471,323,47,82,346,67,427,240,103,515,299,305,143,487,531,441,123,26,214,440,467,213,176,416,259,428,385,356,142,151,84,404,306,397,127,449,7,402,5,412,83,509,192,301,42,492,275,395,19,460,53,25,413,409,453,79,474,481,163,50,225,215,148,221,355,203,499,37,51,435,170,290,49,432,199,14,407,231,154,81,92,59,522,465,438,314,457,365,359,360,444,165,419,511,358,436,271,353,16,252,114,162,130,206,246,3,233,265,528,518,414,173,296,466,294,15,376,44,131,417,150,276,133,228,291,269,36,504`;'>[All Journal]</a>"); } catch (error){ }}
 
     //Always: Reviewer Information is not required
     if(window.location.href.indexOf("//susy.mdpi.com/reivewer/create") > -1){try{
@@ -365,6 +435,9 @@
         $('[for="form_country"]>span').remove()
         $('[for="form_research_keywords"]>span').remove()
     } catch (error){ }}
+
+    //Always: mailsdb登陆
+    if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/login") > -1){try{ $("[name=p_s]").attr('checked',true); $("#check-rem").attr('checked',true); } catch (error){ }}
 
     //Always: Manage Voucher Applications
     if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/list/") > -1){try{ document.getElementById("show-more-budgets").click();} catch (error){ }}
