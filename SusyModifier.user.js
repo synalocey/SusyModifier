@@ -168,6 +168,7 @@
         waitForKeyElements(".manuscript-note-box",SidebarSize);
         function SidebarSize() {
             $(".note-list-container").css("padding","0");
+            $(".note-box-component").css("margin-bottom","10px");
             if ($('.special-issue-note-box').length > 0) {
                 $(".manuscript-note-box").find(".manuscript-note-item-content").height(200);
                 $(".manuscript-note-box").find(".manuscript-note-item-content").css("overflow-y","auto");
