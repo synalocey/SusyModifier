@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.4.27
+// @version       2.4.28
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -15,13 +15,12 @@
 // @match         *://scholar.google.com.hk/*amp;user*
 // @match         *://scholar.google.com.tw/*amp;user*
 // @require       https://code.jquery.com/jquery-3.6.0.min.js
-// @require       https://gist.github.com/raw/2625891/waitForKeyElements.js
 // @require       https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_xmlhttpRequest
 // ==/UserScript==
-/* globals jQuery, $, waitForKeyElements, GM_config */
+/* globals jQuery, $, GM_config */
 
 (function() {
     'use strict';
@@ -311,6 +310,25 @@
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+'" title="Reset"><img border="0" src="/bundles/mdpisusy/img/icon/arrow-180.png"></a> ');
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+'" title="Close">🆑</a> ');
             $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
+            $("#guestNextBtn").after(' <input type="button" id="endlesstry" value="Experimental" class="submit" style="display: inline-block;"> <input type="button" id="endlesstry_stop" value="Stop" class="submit" style="display: none;"> <input id="endlesstry_stopbox" type="checkbox" style="display: none;">');
+            $("#endlesstry_stop").click(endlesstry_stop); function endlesstry_stop (zEvent) {$("#endlesstry_stopbox").prop('checked',true)};
+            $("#endlesstry").click(sk_endlesstry); function sk_endlesstry (zEvent) {
+                var endlesstry_email = $("#form_email").val();
+                $("#endlesstry_stop").css("display","inline-block"); $("#endlesstry").css("display","none");
+                $("#guestNextBtn").click();
+                waitForKeyElements("#specialBackBtn", sk_endlesstry_check);
+                function sk_endlesstry_check() {
+                    setTimeout(() => {
+                        if (document.getElementById('process-special-issue-guest-editor') !=null) {
+                            document.getElementById("process-special-issue-guest-editor").click()
+                        } else if (document.getElementById("endlesstry_stopbox").checked) {
+                            $("#endlesstry_stop").css("display","none"); $("#endlesstry").css("display","inline-block");
+                        } else {
+                            document.getElementById("specialBackBtn").click(); document.getElementById("form_email").value=endlesstry_email;
+                            sk_endlesstry();
+                        }}, 1500)
+                }
+            }
         }
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
         //$('#guestNextBtn').after(" <a onclick='$(`#form_article_title_5`)[0].value=$(`#form_article_title_4`)[0].value=$(`#form_article_title_3`)[0].value=$(`#form_article_title_2`)[0].value=$(`#form_article_title_1`)[0].value; $(`#form_article_doi_5`)[0].value=$(`#form_article_doi_4`)[0].value=$(`#form_article_doi_3`)[0].value=$(`#form_article_doi_2`)[0].value=$(`#form_article_doi_1`)[0].value;'>[CpPub]</a>");
@@ -351,10 +369,15 @@
         $("#header > h1").append(" <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=Mathematics&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[Maths CfP]</a>")
         //Checker功能和检测函数
         $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").click(sk_cfpcheck_func);
+
         function sk_cfpcheck_func (zEvent) {
-            var Today=new Date();
+            let Today=new Date();
             $("#issue_pe_note").val($("#issue_pe_note").val()+"--- Checked on " + Today.getFullYear()+ "-" + (Today.getMonth()+1) + "-" + Today.getDate() + " ---\n");
-            if($(".subject").text().indexOf("[Mathematics]") == -1){$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Mathematics]\n")}
+            if($(".subject").text().indexOf("[Mathematics]") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Mathematics]\n")}
+
+            let DDL = new Date($("th:contains('Special Issue Deadline:')").next().text())
+            if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) < 90) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Deadline is less than 3 months.\n")}
+            if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) > 365) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Deadline is longer than 12 months.\n")}
 
             if($(".subject").text().indexOf("New CFP Request") > -1){ //未延期特刊
                 if($('a:contains("mailing-list.v1")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v1\n")}
@@ -364,6 +387,9 @@
                 $('a:contains("mailing-list.v1") span').click();
             }
             else if ($(".subject").text().indexOf("Extended SI") > -1) { //已延期特刊
+                let old_request=$("strong:contains('Please change the issue status to ')").parent().parent();
+                let old_DDL = new Date(old_request[old_request.length-1].textContent.match(/Deadline: [0-9,-]*/)[0].replace("Deadline: ",""));
+                if(DDL-old_DDL < 30) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ The deadline between 2nd and 1st CfP is too close.\n")}
                 if($('a:contains("mailing-list.v3")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v3\n")}
                 if($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v2.eml (or pdf)\n")}
                 if($('a:contains("mailing-list.v3")').length*($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length)>0) {
@@ -378,9 +404,10 @@
             else { //名称不规范
                 $("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Subject is Wrong.\n")
             }
-            if($(".assigned-to").text().indexOf("CfP") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Assignee is not CfP/MDPI\n")};
-        }
 
+            if($(".assigned-to").text().indexOf("CfP") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Assignee is not CfP/MDPI\n")};
+
+        }
     } catch (error){ }}
 
     //Always: Mailsdb样式⚙️🔝
@@ -439,11 +466,12 @@
         $('[for="form_research_keywords"]>span').remove()
     } catch (error){ }}
 
-    //Always: mailsdb登陆
+    //Always: Mailsdb登陆
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/login") > -1){try{ $("[name=p_s]").attr('checked',true); $("#check-rem").attr('checked',true); } catch (error){ }}
 
-    //Always: Manage Voucher Applications
+    //Always: Manage Voucher Applications + 页面最底端
     if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/list/") > -1){try{ document.getElementById("show-more-budgets").click();} catch (error){ }}
+    if(window.location.href.indexOf("voucher/application/view/") > -1){try{ waitForKeyElements(".user_box_head", voucher_scroll); function voucher_scroll(){scroll(0,document.body.scrollHeight)}; } catch (error){ }}
 
     //Always: Google Scholar校正
     if (window.location.href.indexOf("&amp;") > -1 && window.location.href.indexOf("google") > -1){try{
@@ -452,9 +480,16 @@
         let searchParams = new URLSearchParams(new_uri)
         if(searchParams.has('user')) {window.location.href="https://scholar.google.com/citations?hl=en&user="+searchParams.get('user')}
     } catch (error){ }}
+
 })();
 
 //     //TE+EBM加入Google Sheet
 //     if (window.location.href.indexOf("susy.mdpi.com/user/ebm-new/edit") > -1){try{
 //         $("#edit-ebm-form").append("<a onclick=\"var syna_append='https://script.google.com/macros/s/AKfycbz9XFh17rVkJgGGZXBi_2ATNluvJW_uOmXtUyrqxdY1QAZ5DrEgX_Cu/exec?c1='+$(`#form_firstname`)[0].value+' '+$(`#form_lastname`)[0].value+'&c2='+$(`#form_email`)[0].value+'&c3='+$(`#form_affiliation`)[0].value+'&c4='+$(`#form_country`)[0].value+'&c5='+$(`#form_interests`)[0].value+'&c8='+$(`#form_website`)[0].value;$(\'#edit-ebm-form\').append('<a href=&quot;'+syna_append+'&quot; target=_blank>'+syna_append+'</a>'); \">Add TE to Google Sheet</a><br>");
 //     } catch (error){ }}
+
+function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector) {var targetNodes,btargetsFound;if(typeof iframeSelector=="undefined")
+{targetNodes=$(selectorTxt);} else targetNodes=$(iframeSelector).contents().find(selectorTxt);if(targetNodes&&targetNodes.length>0){btargetsFound=!0;targetNodes.each(function(){var jThis=$(this);var alreadyFound=jThis.data('alreadyFound')||!1;if(!alreadyFound){var cancelFound=actionFunction(jThis);if(cancelFound)
+{btargetsFound=!1;} else jThis.data('alreadyFound',!0)}})}else{btargetsFound=!1}
+var controlObj=waitForKeyElements.controlObj||{};var controlKey=selectorTxt.replace(/[^\w]/g,"_");var timeControl=controlObj[controlKey];if(btargetsFound&&bWaitOnce&&timeControl){clearInterval(timeControl);delete controlObj[controlKey]}else{if(!timeControl){timeControl=setInterval(function(){waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)},300);controlObj[controlKey]=timeControl}}
+waitForKeyElements.controlObj=controlObj}
