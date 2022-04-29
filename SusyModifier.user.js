@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.4.28
+// @version       2.4.29
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -339,7 +339,21 @@
         $('#form_id_journal').val(S_J).change();
         document.getElementById('form_id_journal').dispatchEvent(new CustomEvent('change'));
         document.evaluate('//*[@id="form_id_journal_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText = GM_config.get('Journal');
-        $("#form_name").after("<a href='#' onclick='function reqListener () {  $(\"#form_name\")[0].value=this.responseText;}var oReq = new XMLHttpRequest();oReq.addEventListener(\"load\", reqListener);oReq.open(\"GET\", \"https://brettterpstra.com/titlecase/?title=\" + $(\"#form_name\")[0].value);oReq.send();' return false;>🔠🔡</a> ");
+        $("#form_name").after("<a id='TitleCaseChicago'>🔡(Chicago)🔠</a> "); //https://brettterpstra.com/titlecase/?title
+        $("#TitleCaseChicago").click(TitleCaseChicago);
+        function TitleCaseChicago (zEvent) {
+            if ($("#form_name").val().length > 1) {
+                (async () => {
+                    $("#form_name").prop("disabled", true);
+                    var result="";
+                    let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($("#form_name").val()) + "&preserveAllCaps=true&styleC=true");
+                    let jsonarray= $.parseJSON(response.responseText);
+                    jsonarray[0].title.forEach(element => {result = result + element.joint + element.word});
+                    $("#form_name").val(result);
+                    $("#form_name").prop("disabled", false);
+                })()
+            }
+        }
     } catch (error){ }}
 
     //默认新建EBM位置
@@ -373,23 +387,31 @@
         function sk_cfpcheck_func (zEvent) {
             let Today=new Date();
             $("#issue_pe_note").val($("#issue_pe_note").val()+"--- Checked on " + Today.getFullYear()+ "-" + (Today.getMonth()+1) + "-" + Today.getDate() + " ---\n");
-            if($(".subject").text().indexOf("[Mathematics]") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Mathematics]\n")}
+            if($(".subject:eq(0)").text().indexOf("[Mathematics]") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Mathematics]\n")}
+
+            (async () => {
+                var result="";
+                let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($(".subject:eq(0)").text().trim()) + "&preserveAllCaps=true&styleC=true");
+                let jsonarray= $.parseJSON(response.responseText);
+                jsonarray[0].title.forEach(element => {result = result + element.joint + element.word});
+                if(result.match(/[a-zA-Z]*/g).join("") != $(".subject:eq(0)").text().match(/[a-zA-Z]*/g).join("")) { $("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ TitleCase Is Inconsistent with Chicago Style: " + result.trim() + "\n") }
+            })()
 
             let DDL = new Date($("th:contains('Special Issue Deadline:')").next().text())
             if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) < 90) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Deadline is less than 3 months.\n")}
             if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) > 365) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Deadline is longer than 12 months.\n")}
 
-            if($(".subject").text().indexOf("New CFP Request") > -1){ //未延期特刊
+            if($(".subject:eq(0)").text().indexOf("New CFP Request") > -1){ //未延期特刊
                 if($('a:contains("mailing-list.v1")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v1\n")}
                 if($('a:contains("cfp-approval.v1.pdf")').length+$('a:contains("cfp-approval.v1.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v1.eml (or pdf)\n")}
                 if($('a:contains("mailing-list.v1")').length*($('a:contains("cfp-approval.v1.pdf")').length+$('a:contains("cfp-approval.v1.eml")').length)>0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"✅ First Round CfP\n")}
                 $('a:contains("mailing-list.v1")').append('<span></span>');
                 $('a:contains("mailing-list.v1") span').click();
             }
-            else if ($(".subject").text().indexOf("Extended SI") > -1) { //已延期特刊
+            else if ($(".subject:eq(0)").text().indexOf("Extended SI") > -1) { //已延期特刊
                 let old_request=$("strong:contains('Please change the issue status to ')").parent().parent();
                 let old_DDL = new Date(old_request[old_request.length-1].textContent.match(/Deadline: [0-9,-]*/)[0].replace("Deadline: ",""));
-                if(DDL-old_DDL < 30) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ The deadline between 2nd and 1st CfP is too close.\n")}
+                if(DDL-old_DDL < 86400000 * 30) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ The deadline between 2nd and 1st CfP is too close.\n")}
                 if($('a:contains("mailing-list.v3")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v3\n")}
                 if($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v2.eml (or pdf)\n")}
                 if($('a:contains("mailing-list.v3")').length*($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length)>0) {
@@ -406,7 +428,6 @@
             }
 
             if($(".assigned-to").text().indexOf("CfP") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Assignee is not CfP/MDPI\n")};
-
         }
     } catch (error){ }}
 
@@ -488,8 +509,12 @@
 //         $("#edit-ebm-form").append("<a onclick=\"var syna_append='https://script.google.com/macros/s/AKfycbz9XFh17rVkJgGGZXBi_2ATNluvJW_uOmXtUyrqxdY1QAZ5DrEgX_Cu/exec?c1='+$(`#form_firstname`)[0].value+' '+$(`#form_lastname`)[0].value+'&c2='+$(`#form_email`)[0].value+'&c3='+$(`#form_affiliation`)[0].value+'&c4='+$(`#form_country`)[0].value+'&c5='+$(`#form_interests`)[0].value+'&c8='+$(`#form_website`)[0].value;$(\'#edit-ebm-form\').append('<a href=&quot;'+syna_append+'&quot; target=_blank>'+syna_append+'</a>'); \">Add TE to Google Sheet</a><br>");
 //     } catch (error){ }}
 
-function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector) {var targetNodes,btargetsFound;if(typeof iframeSelector=="undefined")
-{targetNodes=$(selectorTxt);} else targetNodes=$(iframeSelector).contents().find(selectorTxt);if(targetNodes&&targetNodes.length>0){btargetsFound=!0;targetNodes.each(function(){var jThis=$(this);var alreadyFound=jThis.data('alreadyFound')||!1;if(!alreadyFound){var cancelFound=actionFunction(jThis);if(cancelFound)
-{btargetsFound=!1;} else jThis.data('alreadyFound',!0)}})}else{btargetsFound=!1}
-var controlObj=waitForKeyElements.controlObj||{};var controlKey=selectorTxt.replace(/[^\w]/g,"_");var timeControl=controlObj[controlKey];if(btargetsFound&&bWaitOnce&&timeControl){clearInterval(timeControl);delete controlObj[controlKey]}else{if(!timeControl){timeControl=setInterval(function(){waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)},300);controlObj[controlKey]=timeControl}}
-waitForKeyElements.controlObj=controlObj}
+function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector) {
+    var targetNodes,btargetsFound;if(typeof iframeSelector=="undefined") {targetNodes=$(selectorTxt);} else targetNodes=$(iframeSelector).contents().find(selectorTxt);if(targetNodes&&targetNodes.length>0){btargetsFound=!0;targetNodes.each(function(){var jThis=$(this);var alreadyFound=jThis.data('alreadyFound')||!1;if(!alreadyFound){var cancelFound=actionFunction(jThis);if(cancelFound) {btargetsFound=!1;} else jThis.data('alreadyFound',!0)}})}else{btargetsFound=!1}
+    var controlObj=waitForKeyElements.controlObj||{};var controlKey=selectorTxt.replace(/[^\w]/g,"_");var timeControl=controlObj[controlKey];if(btargetsFound&&bWaitOnce&&timeControl){clearInterval(timeControl);delete controlObj[controlKey]}else{if(!timeControl){timeControl=setInterval(function(){waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)},300);controlObj[controlKey]=timeControl}}; waitForKeyElements.controlObj=controlObj
+}
+
+function p_get(url) { return new Promise(resolve => {
+        GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve });
+    })
+}
