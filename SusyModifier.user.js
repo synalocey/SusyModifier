@@ -482,7 +482,7 @@
                 $("body").append(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/"));
             } });
         function getUrlParam(name) {var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); var r = window.location.search.substr(1).match(reg); if(r != null) {return decodeURI(r[2]);} return null; }
-        $(".morphNotes:first").before(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' src='/bundles/mdpisusy/img/design/google_logo.png'></a> ");
+        $(".morphNotes").first().before(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' src='/bundles/mdpisusy/img/design/google_logo.png'></a> ");
         $("a:contains('see more')").attr('href',$("a:contains('see more')").attr('data-uri'));
     } catch (error){ } }
 
@@ -491,14 +491,9 @@
 
     //Always: Reviewer Information is not required
     if(window.location.href.indexOf("//susy.mdpi.com/reivewer/create") > -1){try{
-        document.getElementById('form_affiliation').removeAttribute("required");
-        document.getElementById('form_country').removeAttribute("required");
-        document.getElementById('form_research_keywords').removeAttribute("required");
-        document.getElementById('form_url').setAttribute("value",".");
-        $('[for="form_affiliation"]>span').remove()
-        $('[for="form_url"]>span').remove()
-        $('[for="form_country"]>span').remove()
-        $('[for="form_research_keywords"]>span').remove()
+        $("#form_affiliation, #form_country, #form_research_keywords").attr("required",false);
+        $("#form_url").val(".");
+        $('[for="form_affiliation"]>span, [for="form_url"]>span, [for="form_country"]>span, [for="form_research_keywords"]>span').remove();
     } catch (error){ }}
 
     //Always: Mailsdb登陆
@@ -506,7 +501,7 @@
 
     //Always: Manage Voucher Applications + 页面最底端
     if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/list/") > -1){try{ document.getElementById("show-more-budgets").click();} catch (error){ }}
-    if(window.location.href.indexOf("voucher/application/view/") > -1){try{ waitForKeyElements(".user_box_head", voucher_scroll); function voucher_scroll(){scroll(0,document.body.scrollHeight)}; } catch (error){ }}
+    if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/view/") > -1){try{ waitForKeyElements(".user_box_head", voucher_scroll); function voucher_scroll(){scroll(0,document.body.scrollHeight)}; } catch (error){ }}
 
     //Always: Google Scholar校正
     if (window.location.href.indexOf("&amp;") > -1 && window.location.href.indexOf("google") > -1){try{
