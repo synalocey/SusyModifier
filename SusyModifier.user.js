@@ -19,6 +19,7 @@
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_xmlhttpRequest
+// @grant         GM_openInTab
 // ==/UserScript==
 /* globals jQuery, $, GM_config */
 
@@ -368,16 +369,14 @@
     //默认新建EBM位置
     if (window.location.href.indexOf("susy.mdpi.com/user/ebm-new/management") > -1){try{
         if (S_J>0){
-            document.getElementById('journal_id').value = S_J;
-            document.getElementById('role_id').value = "9";
-            document.evaluate('//*[@id="journal_id_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText=GM_config.get('Journal');
+            $("#journal_id").val(S_J); $("#role_id").val(9); $("#journal_id_chosen>a>span").text(GM_config.get('Journal'));
             $("[href='/user/ebm-new/management/pending_invitation/my_journals").attr("href","/user/ebm-new/management/pending_invitation/my_journals?form[journal_id]=" +S_J);
         }
         if (GM_config.get('Hidden_Func')){$("#ebm_pending_check_btn").after(' <input class="submit" type="submit" value="Force Proceed"> ');}
     } catch (error){ }}
 
     //特刊网页短链接
-    if (window.location.href.indexOf("mdpi.com/journal/mathematics/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 && GM_config.get('LinkShort')==true){try{
+    if (window.location.href.indexOf("mdpi.com/journal/mathematics/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 && GM_config.get('LinkShort')){try{
         window.location.href=window.location.href.replace(/\/journal\/mathematics\/special_issues\//,"/si/mathematics/");
     } catch (error){ }}
 
@@ -392,32 +391,30 @@
         $("#header > h1").append(" <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=Mathematics&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[Maths CfP]</a>")
         //Checker功能和检测函数
         $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").click(sk_cfpcheck_func);
-
         function sk_cfpcheck_func (zEvent) {
             let Today=new Date();
             $("#issue_pe_note").val($("#issue_pe_note").val()+"--- Checked on " + Today.getFullYear()+ "-" + (Today.getMonth()+1) + "-" + Today.getDate() + " ---\n");
-            if($(".subject:eq(0)").text().indexOf("[Mathematics]") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Mathematics]\n")}
+            if($(".subject").eq(0).text().indexOf("[Mathematics]") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Mathematics]\n")}
 
             (async () => {
                 var result="";
-                let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($(".subject:eq(0)").text().trim()) + "&preserveAllCaps=true&styleC=true");
+                let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($(".subject").eq(0).text().trim()) + "&preserveAllCaps=true&styleC=true");
                 let jsonarray= $.parseJSON(response.responseText);
                 jsonarray[0].title.forEach(element => {result = result + element.joint + element.word});
-                if(result.match(/[a-zA-Z]*/g).join("") != $(".subject:eq(0)").text().match(/[a-zA-Z]*/g).join("")) { $("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ TitleCase Is Inconsistent with Chicago Style: " + result.trim() + "\n") }
+                if(result.match(/[a-zA-Z]*/g).join("") != $(".subject").eq(0).text().match(/[a-zA-Z]*/g).join("")) { $("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ TitleCase Is Inconsistent with Chicago Style: " + result.trim() + "\n") }
             })()
 
             let DDL = new Date($("th:contains('Special Issue Deadline:')").next().text())
             if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) < 90) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Deadline is less than 3 months.\n")}
             if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) > 365) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Deadline is longer than 12 months.\n")}
 
-            if($(".subject:eq(0)").text().indexOf("New CFP Request") > -1){ //未延期特刊
+            if($(".subject").eq(0).text().indexOf("New CFP Request") > -1){ //未延期特刊
                 if($('a:contains("mailing-list.v1")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v1\n")}
                 if($('a:contains("cfp-approval.v1.pdf")').length+$('a:contains("cfp-approval.v1.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v1.eml (or pdf)\n")}
                 if($('a:contains("mailing-list.v1")').length*($('a:contains("cfp-approval.v1.pdf")').length+$('a:contains("cfp-approval.v1.eml")').length)>0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"✅ First Round CfP\n")}
-                $('a:contains("mailing-list.v1")').append('<span></span>');
-                $('a:contains("mailing-list.v1") span').click();
+                GM_openInTab("//" + window.location.host + $('a:contains("mailing-list.v1")').attr('href'), )
             }
-            else if ($(".subject:eq(0)").text().indexOf("Extended SI") > -1) { //已延期特刊
+            else if ($(".subject").eq(0).text().indexOf("Extended SI") > -1) { //已延期特刊
                 let old_request=$("strong:contains('Please change the issue status to ')").parent().parent();
                 let old_DDL = new Date(old_request[old_request.length-1].textContent.match(/Deadline: [0-9,-]*/)[0].replace("Deadline: ",""));
                 if(DDL-old_DDL < 86400000 * 30) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ The deadline between 2nd and 1st CfP is too close.\n")}
@@ -425,11 +422,8 @@
                 if($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v2.eml (or pdf)\n")}
                 if($('a:contains("mailing-list.v3")').length*($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length)>0) {
                     $("#issue_pe_note").val($("#issue_pe_note").val()+"✅ Extended SI CfP\n")
-                    $('a:contains("mailing-list.v3")').append('<span></span>');
-                    $('a:contains("mailing-list.v1")').append('<span></span>');
-                    $('a:contains("mailing-list.v1")').attr('target', '_blank');
-                    $('a:contains("mailing-list.v3") span').click();
-                    $('a:contains("mailing-list.v1") span').first().click();
+                    GM_openInTab("//" + window.location.host + $('a:contains("mailing-list.v1")').attr('href'), )
+                    GM_openInTab("//" + window.location.host + $('a:contains("mailing-list.v3")').attr('href'), )
                 }
             }
             else { //名称不规范
