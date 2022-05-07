@@ -67,43 +67,25 @@
           'events': {
               'save': function() {location.href = location.href},
               'open': function(doc) {
-                  GM_config.fields.Hidden_Func.node.addEventListener('change', function(){
-                      if($('#SusyModifierConfig').contents().find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {alert('Dangerous! \n\nDon\'t turn it on unless you are familiar with ALL susy functions. \nOtherwise, it will cause serious problems.')}
-                  });
+                  //Experimental警告
+                  GM_config.fields.Hidden_Func.node.addEventListener('change', function(){ if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {alert('Dangerous! \n\nDon\'t turn it on unless you are familiar with ALL susy functions. \nOtherwise, it will cause serious problems.')} });
                   //隐藏SI Note WH选项
-                  if(!GM_config.get('SInote')){
-                      $('#SusyModifierConfig').contents().find("#SusyModifierConfig_SInoteW_var").css("display","none");
-                      $('#SusyModifierConfig').contents().find("#SusyModifierConfig_SInoteH_var").css("display","none");
-                  }
+                  if(!GM_config.get('SInote')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").css("display","none") }
                   GM_config.fields.SInote.node.addEventListener('change', function(doc){
-                      if($('#SusyModifierConfig').contents().find("#SusyModifierConfig_field_SInote")[0].checked) {
-                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_SInoteW_var").css("display","inline-block");
-                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_SInoteH_var").css("display","inline-block");
-                      } else {
-                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_SInoteW_var").css("display","none");
-                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_SInoteH_var").css("display","none");
-                      }
+                      if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_SInote")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").css("display","inline-block") }
+                      else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").css("display","none"); }
                   });
                   //隐藏推广信模板
-                  if(!GM_config.get('ManuscriptFunc')){
-                      $('#SusyModifierConfig').contents().find("#SusyModifierConfig_Template_Linkedin_var").css("display","none");
-                      $('#SusyModifierConfig').contents().find("#SusyModifierConfig_Template_Paper_var").css("display","none");
-                  }
+                  if(!GM_config.get('ManuscriptFunc')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").css("display","none") }
                   GM_config.fields.ManuscriptFunc.node.addEventListener('change', function(doc){
-                      if($('#SusyModifierConfig').contents().find("#SusyModifierConfig_field_ManuscriptFunc")[0].checked) {
-                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_Template_Linkedin_var").css("display","inline-block");
-                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_Template_Paper_var").css("display","inline-block");
-                      } else {
-                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_Template_Linkedin_var").css("display","none");
-                          $('#SusyModifierConfig').contents().find("#SusyModifierConfig_Template_Paper_var").css("display","none");
-                      }
+                      if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_ManuscriptFunc")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").css("display","inline-block") }
+                      else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").css("display","none") }
                   });
               },
-
           },
         'css': '.config_var{padding: 5px 10px;display:inline-block;} select{width:200px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SIpages_field_label,#SusyModifierConfig_LinkShort_field_label{width:150px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_Cfp_checker_field_label{width:200px;display:inline-block;} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}'
     });
-    $("#topmenu >>> [href='https://www.mdpi.com/about/']").after("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
+    $("#topmenu [href='https://www.mdpi.com/about/']").after("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
 
     var S_J;
     switch (GM_config.get('Journal')) {
@@ -133,23 +115,23 @@
         }
 
         if (S_S>0 && S_J>0){
-            $(".menu > li > [href='/special_issue_pending/list']").after("<a href='/special_issue_pending/list/online?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[S]</a>");
-            $(".menu > li > [href='/user/managing/status/submitted']").after(" <a href='https://susy.mdpi.com/user/managing/status/all?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "&sort_field=submission_manuscript_state.last_action&sort=DESC'>[S]</a>");
+            $(".menu [href='/special_issue_pending/list']").after("<a href='/special_issue_pending/list/online?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[S]</a>");
+            $(".menu [href='/user/managing/status/submitted']").after(" <a href='https://susy.mdpi.com/user/managing/status/all?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "&sort_field=submission_manuscript_state.last_action&sort=DESC'>[S]</a>");
         }
         if (S_J>0){
-            $(".menu > li > [href='/user/managing/status/submitted']").after("<a href='https://susy.mdpi.com/user/managing/status/published?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.publish_date&sort=DESC'>[P]</a>");
-            $(".menu > li > [href='/user/managing/status/submitted']").after(" <a href='https://susy.mdpi.com/user/managing/status/production?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.last_action&sort=DESC'>[F]</a>");
-            $(".menu > li > [href='/voucher/application/list']").attr("href","/voucher/application/list/my_journal?form[journal_id]=" + S_J);
-            $(".menu > li > [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=" + S_J);
-            $(".menu > li > [href='/user/manage/award_request']").attr("href","/user/manage/award_request?form[journal_id]=" + S_J);
-            $(".menu > li > [href='/user/manage/awards_item']").attr("href","/user/manage/awards_item?form[journal_id]=" + S_J);
-            $(".menu > li > [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
+            $(".menu [href='/user/managing/status/submitted']").after("<a href='https://susy.mdpi.com/user/managing/status/published?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.publish_date&sort=DESC'>[P]</a>");
+            $(".menu [href='/user/managing/status/submitted']").after(" <a href='https://susy.mdpi.com/user/managing/status/production?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.last_action&sort=DESC'>[F]</a>");
+            $(".menu [href='/voucher/application/list']").attr("href","/voucher/application/list/my_journal?form[journal_id]=" + S_J);
+            $(".menu [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=" + S_J);
+            $(".menu [href='/user/manage/award_request']").attr("href","/user/manage/award_request?form[journal_id]=" + S_J);
+            $(".menu [href='/user/manage/awards_item']").attr("href","/user/manage/awards_item?form[journal_id]=" + S_J);
+            $(".menu [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
         }
-        $(".menu > li > [href='/special_issue_pending/list']").after(" <a href='/user/sme/status/submitted'>[M]</a>");
-        $(".menu > li > [href='/special_issue_pending/list']").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC")
-        $(".menu > li > [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[M]</a>");
-        $(".menu > li > [href='/submission/topic/list']").attr("href","/submission/topic/list/online");
-        $(".menu > li > [href='/user/ebm-new/management']").after(" <div style='float:right;'><a onclick='document.getElementById(\"si_search\").style.display=\"\"; $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div> ");
+        $(".menu [href='/special_issue_pending/list']").after(" <a href='/user/sme/status/submitted'>[M]</a>");
+        $(".menu [href='/special_issue_pending/list']").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC")
+        $(".menu [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[M]</a>");
+        $(".menu [href='/submission/topic/list']").attr("href","/submission/topic/list/online");
+        $(".menu [href='/user/ebm-new/management']").after(" <div style='float:right;'><a onclick='document.getElementById(\"si_search\").style.display=\"\"; $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div> ");
     } catch (error){ }}
 
     //SI和Topic Manuscripts整合
@@ -172,10 +154,10 @@
             $(".note-list-container").css("padding","0");
             $(".note-box-component").css("margin-bottom","10px");
             if ($('.special-issue-note-box').length > 0) {
-                $(".manuscript-note-box").find(".manuscript-note-item-content").height(200);
-                $(".manuscript-note-box").find(".manuscript-note-item-content").css("overflow-y","auto");
-                $(".section-note-box").find(".manuscript-note-item-content").height(200);
-                $(".section-note-box").find(".manuscript-note-item-content").css("overflow-y","auto");
+                $(".manuscript-note-box .manuscript-note-item-content").height(200);
+                $(".manuscript-note-box .manuscript-note-item-content").css("overflow-y","auto");
+                $(".section-note-box .manuscript-note-item-content").height(200);
+                $(".section-note-box .manuscript-note-item-content").css("overflow-y","auto");
             }
         }
     } catch (error){ }}
@@ -236,6 +218,7 @@
         $('#emailTemplates').val(77).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
     } catch (error){ }}
 
+    //HERE
     //文章处理页面[Voucher]按钮和发送推广信按钮
     if (window.location.href.indexOf("/process_form/")+window.location.href.indexOf("/production_form/") > -2 && GM_config.get('ManuscriptFunc')){try{
         var corresponding, Promote='', email=[];
@@ -396,28 +379,28 @@
         function sk_cfpcheck_func (zEvent) {
             let Today=new Date();
             $("#issue_pe_note").val($("#issue_pe_note").val()+"--- Checked on " + Today.getFullYear()+ "-" + (Today.getMonth()+1) + "-" + Today.getDate() + " ---\n");
-            if($(".subject:eq(0)").text().indexOf("[Mathematics]") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Mathematics]\n")}
+            if($(".subject").eq(0).text().indexOf("[Mathematics]") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Mathematics]\n")}
 
             (async () => {
                 var result="";
-                let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($(".subject:eq(0)").text().trim()) + "&preserveAllCaps=true&styleC=true");
+                let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($(".subject").eq(0).text().trim()) + "&preserveAllCaps=true&styleC=true");
                 let jsonarray= $.parseJSON(response.responseText);
                 jsonarray[0].title.forEach(element => {result = result + element.joint + element.word});
-                if(result.match(/[a-zA-Z]*/g).join("") != $(".subject:eq(0)").text().match(/[a-zA-Z]*/g).join("")) { $("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ TitleCase Is Inconsistent with Chicago Style: " + result.trim() + "\n") }
+                if(result.match(/[a-zA-Z]*/g).join("") != $(".subject").eq(0).text().match(/[a-zA-Z]*/g).join("")) { $("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ TitleCase Is Inconsistent with Chicago Style: " + result.trim() + "\n") }
             })()
 
             let DDL = new Date($("th:contains('Special Issue Deadline:')").next().text())
             if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) < 90) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Deadline is less than 3 months.\n")}
             if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) > 365) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Deadline is longer than 12 months.\n")}
 
-            if($(".subject:eq(0)").text().indexOf("New CFP Request") > -1){ //未延期特刊
+            if($(".subject").eq(0).text().indexOf("New CFP Request") > -1){ //未延期特刊
                 if($('a:contains("mailing-list.v1")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v1\n")}
                 if($('a:contains("cfp-approval.v1.pdf")').length+$('a:contains("cfp-approval.v1.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v1.eml (or pdf)\n")}
                 if($('a:contains("mailing-list.v1")').length*($('a:contains("cfp-approval.v1.pdf")').length+$('a:contains("cfp-approval.v1.eml")').length)>0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"✅ First Round CfP\n")}
                 $('a:contains("mailing-list.v1")').append('<span></span>');
                 $('a:contains("mailing-list.v1") span').click();
             }
-            else if ($(".subject:eq(0)").text().indexOf("Extended SI") > -1) { //已延期特刊
+            else if ($(".subject").eq(0).text().indexOf("Extended SI") > -1) { //已延期特刊
                 let old_request=$("strong:contains('Please change the issue status to ')").parent().parent();
                 let old_DDL = new Date(old_request[old_request.length-1].textContent.match(/Deadline: [0-9,-]*/)[0].replace("Deadline: ",""));
                 if(DDL-old_DDL < 86400000 * 30) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ The deadline between 2nd and 1st CfP is too close.\n")}
