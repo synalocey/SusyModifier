@@ -19,6 +19,7 @@
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_xmlhttpRequest
+// @grant         GM_openInTab
 // ==/UserScript==
 /* globals jQuery, $, GM_config */
 
@@ -351,16 +352,14 @@
     //默认新建EBM位置
     if (window.location.href.indexOf("susy.mdpi.com/user/ebm-new/management") > -1){try{
         if (S_J>0){
-            document.getElementById('journal_id').value = S_J;
-            document.getElementById('role_id').value = "9";
-            document.evaluate('//*[@id="journal_id_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText=GM_config.get('Journal');
+            $("#journal_id").val(S_J); $("#role_id").val(9); $("#journal_id_chosen>a>span").text(GM_config.get('Journal'));
             $("[href='/user/ebm-new/management/pending_invitation/my_journals").attr("href","/user/ebm-new/management/pending_invitation/my_journals?form[journal_id]=" +S_J);
         }
         if (GM_config.get('Hidden_Func')){$("#ebm_pending_check_btn").after(' <input class="submit" type="submit" value="Force Proceed"> ');}
     } catch (error){ }}
 
     //特刊网页短链接
-    if (window.location.href.indexOf("mdpi.com/journal/mathematics/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 && GM_config.get('LinkShort')==true){try{
+    if (window.location.href.indexOf("mdpi.com/journal/mathematics/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 && GM_config.get('LinkShort')){try{
         window.location.href=window.location.href.replace(/\/journal\/mathematics\/special_issues\//,"/si/mathematics/");
     } catch (error){ }}
 
@@ -375,7 +374,6 @@
         $("#header > h1").append(" <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=Mathematics&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[Maths CfP]</a>")
         //Checker功能和检测函数
         $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").click(sk_cfpcheck_func);
-
         function sk_cfpcheck_func (zEvent) {
             let Today=new Date();
             $("#issue_pe_note").val($("#issue_pe_note").val()+"--- Checked on " + Today.getFullYear()+ "-" + (Today.getMonth()+1) + "-" + Today.getDate() + " ---\n");
@@ -397,8 +395,7 @@
                 if($('a:contains("mailing-list.v1")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v1\n")}
                 if($('a:contains("cfp-approval.v1.pdf")').length+$('a:contains("cfp-approval.v1.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v1.eml (or pdf)\n")}
                 if($('a:contains("mailing-list.v1")').length*($('a:contains("cfp-approval.v1.pdf")').length+$('a:contains("cfp-approval.v1.eml")').length)>0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"✅ First Round CfP\n")}
-                $('a:contains("mailing-list.v1")').append('<span></span>');
-                $('a:contains("mailing-list.v1") span').click();
+                GM_openInTab("//" + window.location.host + $('a:contains("mailing-list.v1")').attr('href'), )
             }
             else if ($(".subject").eq(0).text().indexOf("Extended SI") > -1) { //已延期特刊
                 let old_request=$("strong:contains('Please change the issue status to ')").parent().parent();
@@ -408,11 +405,8 @@
                 if($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v2.eml (or pdf)\n")}
                 if($('a:contains("mailing-list.v3")').length*($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length)>0) {
                     $("#issue_pe_note").val($("#issue_pe_note").val()+"✅ Extended SI CfP\n")
-                    $('a:contains("mailing-list.v3")').append('<span></span>');
-                    $('a:contains("mailing-list.v1")').append('<span></span>');
-                    $('a:contains("mailing-list.v1")').attr('target', '_blank');
-                    $('a:contains("mailing-list.v3") span').click();
-                    $('a:contains("mailing-list.v1") span').first().click();
+                    GM_openInTab("//" + window.location.host + $('a:contains("mailing-list.v1")').attr('href'), )
+                    GM_openInTab("//" + window.location.host + $('a:contains("mailing-list.v3")').attr('href'), )
                 }
             }
             else { //名称不规范
@@ -465,7 +459,7 @@
                 $("body").append(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/"));
             } });
         function getUrlParam(name) {var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); var r = window.location.search.substr(1).match(reg); if(r != null) {return decodeURI(r[2]);} return null; }
-        $(".morphNotes:first").before(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' src='/bundles/mdpisusy/img/design/google_logo.png'></a> ");
+        $(".morphNotes").first().before(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' src='/bundles/mdpisusy/img/design/google_logo.png'></a> ");
         $("a:contains('see more')").attr('href',$("a:contains('see more')").attr('data-uri'));
     } catch (error){ } }
 
@@ -474,14 +468,9 @@
 
     //Always: Reviewer Information is not required
     if(window.location.href.indexOf("//susy.mdpi.com/reivewer/create") > -1){try{
-        document.getElementById('form_affiliation').removeAttribute("required");
-        document.getElementById('form_country').removeAttribute("required");
-        document.getElementById('form_research_keywords').removeAttribute("required");
-        document.getElementById('form_url').setAttribute("value",".");
-        $('[for="form_affiliation"]>span').remove()
-        $('[for="form_url"]>span').remove()
-        $('[for="form_country"]>span').remove()
-        $('[for="form_research_keywords"]>span').remove()
+        $("#form_affiliation, #form_country, #form_research_keywords").attr("required",false);
+        $("#form_url").val(".");
+        $('[for="form_affiliation"]>span, [for="form_url"]>span, [for="form_country"]>span, [for="form_research_keywords"]>span').remove();
     } catch (error){ }}
 
     //Always: Mailsdb登陆
@@ -489,7 +478,7 @@
 
     //Always: Manage Voucher Applications + 页面最底端
     if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/list/") > -1){try{ document.getElementById("show-more-budgets").click();} catch (error){ }}
-    if(window.location.href.indexOf("voucher/application/view/") > -1){try{ waitForKeyElements(".user_box_head", voucher_scroll); function voucher_scroll(){scroll(0,document.body.scrollHeight)}; } catch (error){ }}
+    if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/view/") > -1){try{ waitForKeyElements(".user_box_head", voucher_scroll); function voucher_scroll(){scroll(0,document.body.scrollHeight)}; } catch (error){ }}
 
     //Always: Google Scholar校正
     if (window.location.href.indexOf("&amp;") > -1 && window.location.href.indexOf("google") > -1){try{
