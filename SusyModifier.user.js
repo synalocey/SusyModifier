@@ -65,25 +65,25 @@
             'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Hidden_Func': {'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
         },
-          'events': {
-              'save': function() {location.href = location.href},
-              'open': function(doc) {
-                  //Experimental警告
-                  GM_config.fields.Hidden_Func.node.addEventListener('change', function(){ if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {alert('Dangerous! \n\nDon\'t turn it on unless you are familiar with ALL susy functions. \nOtherwise, it will cause serious problems.')} });
-                  //隐藏SI Note WH选项
-                  if(!GM_config.get('SInote')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").css("display","none") }
-                  GM_config.fields.SInote.node.addEventListener('change', function(doc){
-                      if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_SInote")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").css("display","inline-block") }
-                      else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").css("display","none"); }
-                  });
-                  //隐藏推广信模板
-                  if(!GM_config.get('ManuscriptFunc')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").css("display","none") }
-                  GM_config.fields.ManuscriptFunc.node.addEventListener('change', function(doc){
-                      if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_ManuscriptFunc")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").css("display","inline-block") }
-                      else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").css("display","none") }
-                  });
-              },
-          },
+        'events': {
+            'save': function() {location.href = location.href},
+            'open': function(doc) {
+                //Experimental警告
+                GM_config.fields.Hidden_Func.node.addEventListener('change', function(){ if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {alert('Dangerous! \n\nDon\'t turn it on unless you are familiar with ALL susy functions. \nOtherwise, it will cause serious problems.')} });
+                //隐藏SI Note WH选项
+                if(!GM_config.get('SInote')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").css("display","none") }
+                GM_config.fields.SInote.node.addEventListener('change', function(doc){
+                    if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_SInote")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").css("display","inline-block") }
+                    else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").css("display","none"); }
+                });
+                //隐藏推广信模板
+                if(!GM_config.get('ManuscriptFunc')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").css("display","none") }
+                GM_config.fields.ManuscriptFunc.node.addEventListener('change', function(doc){
+                    if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_ManuscriptFunc")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").css("display","inline-block") }
+                    else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").css("display","none") }
+                });
+            },
+        },
         'css': '.config_var{padding: 5px 10px;display:inline-block;} select{width:200px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SIpages_field_label,#SusyModifierConfig_LinkShort_field_label{width:150px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_Cfp_checker_field_label{width:200px;display:inline-block;} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}'
     });
     $("#topmenu [href='https://www.mdpi.com/about/']").after("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
@@ -226,24 +226,37 @@
 
         $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=[Mathematics] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Mathematics Social Media&body=' + GM_config.get('Template_Linkedin').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
         if (window.location.href.indexOf("?linkedin") > -1) {$("#linkedin")[0].click(); history.back();}
-
-        if (!!m_section && !!m_si) { //文章在特刊里且有Section
-            Promote += " <form id='s_voucher' class='insertform' method='post' action='https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=6' target='_blank' style='display:inline;'><input type='hidden' name='form[journal_id]' value='154'><input type='hidden' name='form[is_percentage]' value='1'><input type='hidden' id='form_special_issue_id' name='form[special_issue_id]' value='0'><input type='hidden' name='form[emails]' value='"+corresponding+"'><input type='hidden' name='form[valid_months]' value='12'><input type='hidden' id='form_section_id' name='form[section_id]' value=''><input type='hidden' name='form[reason]' value='Feature paper invited by guest editor'><input type='hidden' name='form[manuscript_id]' value='"+document.getElementById("manuscript_id").parentNode.textContent.trim()+"'>"
-            Promote += " <a onclick=\"var re = new RegExp('(\\\\d*)[^0-9]:[^0-9]' + $(`div.cell.small-12.medium-6.large-2:contains('Special Issue')`).next().text().trim(), '');var xhr = new XMLHttpRequest();xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/section/0/all_special_issues', false);xhr.send(null);document.getElementById('form_special_issue_id').value = xhr.responseText.match(re)[1];re=new RegExp('(\\\\d*)[^0-9]:[^0-9]' + $(`div.cell.small-12.medium-6.large-2:contains('Section')`).next().text().trim(), '');xhr=new XMLHttpRequest();xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/sections', false);xhr.send(null);document.getElementById('form_section_id').value = xhr.responseText.match(re)[1];s_voucher.submit();   \">[Voucher]</a> </form>"
-        } else if (!!m_si){ //文章在特刊里但没Section
-            Promote += " <form id='s_voucher' class='insertform' method='post' action='https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=6' target='_blank' style='display:inline;'><input type='hidden' name='form[journal_id]' value='154'><input type='hidden' name='form[is_percentage]' value='1'><input type='hidden' id='form_special_issue_id' name='form[special_issue_id]' value=''><input type='hidden' name='form[emails]' value='"+corresponding+"'><input type='hidden' name='form[valid_months]' value='12'><input type='hidden' id='form_section_id' name='form[section_id]' value=''><input type='hidden' name='form[reason]' value='Feature paper invited by guest editor'><input type='hidden' name='form[manuscript_id]' value='"+document.getElementById("manuscript_id").parentNode.textContent.trim()+"'>"
-            Promote += " <a onclick=\"var re = new RegExp('(\\\\d*)[^0-9]:[^0-9]' + $(`div.cell.small-12.medium-6.large-2:contains('Special Issue')`).next().text().trim(), '');var xhr = new XMLHttpRequest();xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/section/0/all_special_issues', false);xhr.send(null);document.getElementById('form_special_issue_id').value = xhr.responseText.match(re)[1];s_voucher.submit();   \">[Voucher]</a> </form>"
-        } else {}
-
-        if (!!m_section){ //Section中的常规投稿
-            Promote += " <form id='s2_voucher' class='insertform' method='post' action='https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=5' target='_blank' style='display:inline;'><input type='hidden' name='form[journal_id]' value='154'><input type='hidden' name='form[is_percentage]' value='1'><input type='hidden' name='form[emails]' value='"+corresponding+"'><input type='hidden' name='form[valid_months]' value='12'><input type='hidden' name='form[reason]' value='Paper by editorial board member'><input type='hidden' id='form_section_id2' name='form[section_id]' value=''><input type='hidden' name='form[manuscript_id]' value='"+document.getElementById("manuscript_id").parentNode.textContent.trim()+"'>"
-            Promote += " <a onclick=\"var re = new RegExp('(\\\\d*)[^0-9]:[^0-9]' + $(`div.cell.small-12.medium-6.large-2:contains('Section')`).next().text().trim(), '');var xhr = new XMLHttpRequest();xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/sections', false);xhr.send(null);document.getElementById('form_section_id2').value = xhr.responseText.match(re)[1];s2_voucher.submit();   \">[V_EBM]</a> </form>"
-        } else { //没Section的常规投稿
-           Promote += " <form id='s2_voucher' class='insertform' method='post' action='https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=5' target='_blank' style='display:inline;'><input type='hidden' name='form[journal_id]' value='154'><input type='hidden' name='form[is_percentage]' value='1'><input type='hidden' name='form[emails]' value='"+corresponding+"'><input type='hidden' name='form[valid_months]' value='12'><input type='hidden' name='form[reason]' value='Paper by editorial board member'><input type='hidden' id='form_section_id2' name='form[section_id]' value=''><input type='hidden' name='form[manuscript_id]' value='"+document.getElementById("manuscript_id").parentNode.textContent.trim()+"'>"
-           Promote += " <a onclick=\"s2_voucher.submit();   \">[V_EBM]</a> </form>&nbsp;&nbsp;&nbsp;"
-        }
         $("[title='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query='+$("[title='Google']").prev().text()+'" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="https://c5.rgstatic.net/m/41542880220916/images/favicon/favicon-16x16.png"></a> ');
-        $("[class|='margin-horizontal-1']").after(Promote);
+        $("[class|='margin-horizontal-1']").after(`<form id='vf' class='insertform' method='post' target='_blank' style='display:none;'><input name='form[journal_id]' value='154'><input name='form[is_percentage]' value='1'><input name='form[special_issue_id]'><input name='form[emails]'><input name='form[valid_months]' value='12'><input name='form[section_id]'><input name='form[reason]'><input name='form[manuscript_id]'> </form>`);
+        $("[class|='margin-horizontal-1']").after(`<div id="voucher" style="display:inline-block;"><a>[Vouchers]</a> <div style="position:absolute;background-color: #f1f1f1;box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);display: none;"><a id="v_si" style="display:block;padding: 8px 12px;text-decoration: none;color:black;">Special Issue</a><a id="v_eb" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">EBM</a><a id="v_ec" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Exception Case</a></div></div> `);
+        $("#voucher").mouseover(function(){ $(this).children("div").show() });
+        $("#voucher").mouseout(function(){ $(this).children("div").hide() });
+        $('head').append('<style>#voucher a:hover {background-color: #ddd;}</style>');
+
+        if (!m_si) {$("#v_si").remove()}; if (!m_section) {$("#v_eb").remove()};
+        $("#voucher>div>a").click(function(){
+            switch ($(this).attr("id")) {
+                case 'v_eb': $("#vf").attr("action","https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=5"); $("[name='form[reason]']").val("Paper by editorial board member"); break;
+                case 'v_si': $("#vf").attr("action","https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=6"); break;
+                case 'v_ec': $("#vf").attr("action","https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=7"); break;
+            }
+            $("[name='form[emails]']").val(corresponding);
+            $("[name='form[manuscript_id]']").val(m_id);
+
+            if (!!m_section) {
+                let xhr = new XMLHttpRequest(), s_search = new RegExp('(\\d*)[^0-9]:[^0-9]' + m_section.replace(/\(/g,"\\\(").replace(/\)/g,"\\\)"), '');
+                xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/sections', false); xhr.send();
+                let s_result = $("<div/>").html(xhr.responseText).text().match(s_search);
+                if (!!s_result) {$("[name='form[section_id]']").val(s_result.pop())};
+            }
+            if (!!m_si) {
+                let xhr = new XMLHttpRequest(), s_search = new RegExp('(\\d*)[^0-9]:[^0-9]' + m_si.replace(/\(/g,"\\\(").replace(/\)/g,"\\\)"), '');
+                xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/section/0/all_special_issues', false); xhr.send();
+                let s_result = $("<div/>").html(xhr.responseText).text().match(s_search);
+                if (!!s_result) {$("[name='form[special_issue_id]']").val(s_result.pop())};
+            }
+            $("#vf").submit();
+        });
     } catch (error){ }}
 
     //特刊列表免翻页⚙️
@@ -310,7 +323,6 @@
             }
         }
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
-        //$('#guestNextBtn').after(" <a onclick='$(`#form_article_title_5`)[0].value=$(`#form_article_title_4`)[0].value=$(`#form_article_title_3`)[0].value=$(`#form_article_title_2`)[0].value=$(`#form_article_title_1`)[0].value; $(`#form_article_doi_5`)[0].value=$(`#form_article_doi_4`)[0].value=$(`#form_article_doi_3`)[0].value=$(`#form_article_doi_2`)[0].value=$(`#form_article_doi_1`)[0].value;'>[CpPub]</a>");
     } catch (error){ }}
 
     //默认新建特刊位置和Title Case
@@ -493,7 +505,8 @@ function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)
     var controlObj=waitForKeyElements.controlObj||{};var controlKey=selectorTxt.replace(/[^\w]/g,"_");var timeControl=controlObj[controlKey];if(btargetsFound&&bWaitOnce&&timeControl){clearInterval(timeControl);delete controlObj[controlKey]}else{if(!timeControl){timeControl=setInterval(function(){waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)},300);controlObj[controlKey]=timeControl}}; waitForKeyElements.controlObj=controlObj
 }
 
-function p_get(url) { return new Promise(resolve => {
+function p_get(url) {
+    return new Promise(resolve => {
         GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve });
     })
 }
