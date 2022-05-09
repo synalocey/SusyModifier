@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.5.7
+// @version       2.5.9
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -10,16 +10,15 @@
 // @match         *://*.mdpi.com/*
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
-// @match         *://scholar.google.co.uk/*amp;user*
-// @match         *://scholar.google.com/*amp;user*
-// @match         *://scholar.google.com.hk/*amp;user*
-// @match         *://scholar.google.com.tw/*amp;user*
+// @match         *://*/*amp;user*
 // @require       https://code.jquery.com/jquery-3.6.0.min.js
 // @require       https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_xmlhttpRequest
 // @grant         GM_openInTab
+// @connect       mdpi.com
+// @connect       titlecaseconverter.com
 // ==/UserScript==
 /* globals jQuery, $, GM_config */
 
@@ -284,17 +283,11 @@
     //特刊页面➕按钮、Note
     if (window.location.href.indexOf("susy.mdpi.com/submission/topic/view")+window.location.href.indexOf("susy.mdpi.com/special_issue/process") > -2){try{
         if(GM_config.get('SInote')) {
-            waitForKeyElements("#special_issue_notesText",SINotes);
-            waitForKeyElements("#topic_notesText",TopicNotes);
+            waitForKeyElements("#special_issue_notesText, #topic_notesText",SINotes);
             function SINotes() {
                 $("#manuscript-special-issue-notes").css("height",GM_config.get('SInoteH')+"px");
                 $("[aria-describedby|='manuscript-special-issue-notes']").css("width",GM_config.get('SInoteW')+"px");
-                $("#special_issue_notesText").css("height",GM_config.get('SInoteH')-200 +"px");
-            }
-            function TopicNotes() {
-                $("#manuscript-special-issue-notes").css("height",GM_config.get('SInoteH')+"px");
-                $("[aria-describedby|='manuscript-special-issue-notes']").css("width",GM_config.get('SInoteW')+"px");
-                $("#topic_notesText").css("height",GM_config.get('SInoteH')-200 +"px");
+                $("#special_issue_notesText, #topic_notesText").css("height",GM_config.get('SInoteH')-200 +"px");
             }
         }
         $('#si-update-emphasized').before('<a href="?pagesection=AddGuestEditor" title="Add Guest Editor">➕</a> ');
@@ -313,7 +306,7 @@
                     setTimeout(() => {
                         if (document.getElementById('process-special-issue-guest-editor') !=null) {
                             document.getElementById("process-special-issue-guest-editor").click()
-                        } else if (document.getElementById("endlesstry_stopbox").checked) {
+                        } else if ($("#endlesstry_stopbox").prop("checked")) {
                             $("#endlesstry_stop").css("display","none"); $("#endlesstry").css("display","inline-block");
                         } else {
                             document.getElementById("specialBackBtn").click(); document.getElementById("form_email").value=endlesstry_email;
@@ -327,12 +320,10 @@
 
     //默认新建特刊位置和Title Case
     if (window.location.href.indexOf("susy.mdpi.com/user/special_issue/edit/0") > -1 && S_J>0){try{
-        $('#form_id_journal').val(S_J).change();
+        $('#form_id_journal').val(S_J).change(); $("#form_id_journal_chosen>a>span").text(GM_config.get('Journal'));
         document.getElementById('form_id_journal').dispatchEvent(new CustomEvent('change'));
-        document.evaluate('//*[@id="form_id_journal_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText = GM_config.get('Journal');
-        $("#form_name").after("<a id='TitleCaseChicago'>🔡(Chicago)🔠</a> "); //https://brettterpstra.com/titlecase/?title
-        $("#TitleCaseChicago").click(TitleCaseChicago);
-        function TitleCaseChicago (zEvent) {
+        $("#form_name").after("<a id='TitleCaseChicago'>🔡(Chicago)🔠</a> "); //brettterpstra.com/titlecase/?title
+        $("#TitleCaseChicago").click(function () {
             if ($("#form_name").val().length > 1) {
                 (async () => {
                     $("#form_name").prop("disabled", true);
@@ -344,7 +335,7 @@
                     $("#form_name").prop("disabled", false);
                 })()
             }
-        }
+        });
     } catch (error){ }}
 
     //默认新建EBM位置
@@ -415,11 +406,6 @@
         }
     } catch (error){ }}
 
-    //Always: Remind Reviewer
-    if (window.location.href.indexOf("assigned/remind_reviewer") > -1){try{
-        $('#emailTemplates').val(21).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-    } catch (error){ }}
-
     //Always: Mailsdb样式⚙️🔝
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/search/emails") > -1){try{
         $("head").append('<link rel="stylesheet" type="text/css" href="/assets/application-79a8659b0064dad9845d4ec2f290c6e94795079e79a99ab4354776213eb35db0.css">');
@@ -467,6 +453,11 @@
     //Hidden_Func: Paper Rejection
     if(window.location.href.indexOf("assigned/reject-manuscript/") > -1 && GM_config.get('Hidden_Func')){try{ $('#emailTemplates').val(77).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); } catch (error){ }}
 
+    //Hidden_Func: Remind 2nd Round Reviewer
+    if (window.location.href.indexOf("assigned/remind_reviewer") > -1 && GM_config.get('Hidden_Func')){try{
+        $('#emailTemplates').val(21).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
+    } catch (error){ }}
+
     //Always: Reviewer Information is not required
     if(window.location.href.indexOf("//susy.mdpi.com/reivewer/create") > -1){try{
         $("#form_affiliation, #form_country, #form_research_keywords").attr("required",false);
@@ -491,7 +482,8 @@
 
     //ManuscriptFunc: 文章页面加[Linkedin]
     if (window.location.href.indexOf("www.mdpi.com/2227-7390/") > -1 && GM_config.get('ManuscriptFunc')){try{
-        $("a:contains('Peer-Reviewed')").parent().after('<a href="' + $("a:contains('Peer-Reviewed')").attr("href") +'?linkedin"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a"></a>')
+        $("a:contains('Peer-Reviewed')").parent().after('<a id="s_linkedin" href="' + $("a:contains('Peer-Reviewed')").attr("href") +'?linkedin"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a"></a>');
+        $("#s_linkedin").click(function() {$("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`)});
     } catch (error){ }}
 })();
 
