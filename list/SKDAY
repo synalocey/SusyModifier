@@ -174,10 +174,17 @@ proxies:
     server: 188.188.10.252
     port: 19970
   - {name: SKDAY, server: v2.skday.com, port: 3389, type: ssr, cipher: dummy, password: fuckgfw!3389, protocol: auth_chain_b, obfs: plain, protocol-param: "", obfs-param: "", udp: true}
+  - {name: 🇰🇷 Korea 4, server: enncpfg.roygxe.xyz, port: 36305, type: ssr, cipher: chacha20-ietf, password: nexitally, protocol: auth_aes128_sha1, obfs: plain, protocol-param: 23171847:4bc1057b2859444b, obfs-param: "", udp: true}
 proxy-groups:
+  - name: "Relay"
+    type: relay
+    proxies:
+      - 🇰🇷 Korea 4
+      - SKDAY
   - name: 🚀 节点选择
     type: select
     proxies:
+      - Relay
       - SKDAY
       - Left
       - Right
