@@ -125,6 +125,11 @@
             $(".menu [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=" + S_J);
             $(".menu [href='/user/manage/award_request']").attr("href","/user/manage/award_request?form[journal_id]=" + S_J);
             $(".menu [href='/user/manage/awards_item']").attr("href","/user/manage/awards_item?form[journal_id]=" + S_J);
+            $(".menu [href='/si/proposal/list']").attr("href","/si/proposal/list?form[journal_id]=" + S_J);
+            $(".menu [href='/list/list_volunteer_reviewers']").attr("href","/list/list_volunteer_reviewers?form[journal_id]=" + S_J);
+            $(".menu [href='/tap/list']").attr("href","/tap/list?form[journal_id]=" + S_J);
+            $(".menu [href='/topic/proposal/list']").attr("href","/topic/proposal/list?form[journal_id]=" + S_J);
+            $(".menu [href='/user/conference/list']").attr("href","/user/conference/list?form[subject_id]=4");
             $(".menu [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
         }
         $(".menu [href='/special_issue_pending/list']").after(" <a href='/user/sme/status/submitted'>[M]</a>");
@@ -463,6 +468,14 @@
         $("#form_affiliation, #form_country, #form_research_keywords").attr("required",false);
         $("#form_url").val(".");
         $('[for="form_affiliation"]>span, [for="form_url"]>span, [for="form_country"]>span, [for="form_research_keywords"]>span').remove();
+    } catch (error){ }}
+
+    //Always: Manuscript Notes in Summary Page
+    if(window.location.href.indexOf("//susy.mdpi.com/manuscript/summary") > -1){try{
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', window.location.href.replace("manuscript/summary/","user/nots_of_manuscript/"), false); xhr.send();
+        console.log(xhr.responseText.replace('{"show_off_canvas":true,"note_html":"',"").replace('\\n"}',""));
+        $("#main").append(xhr.responseText.replace('{"show_off_canvas":true,"note_html":"',"").replace(/\n"/g,""));
     } catch (error){ }}
 
     //Always: Mailsdb登陆
