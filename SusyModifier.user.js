@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.5.6
+// @version       2.5.15
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -10,16 +10,15 @@
 // @match         *://*.mdpi.com/*
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
-// @match         *://scholar.google.co.uk/*amp;user*
-// @match         *://scholar.google.com/*amp;user*
-// @match         *://scholar.google.com.hk/*amp;user*
-// @match         *://scholar.google.com.tw/*amp;user*
+// @match         *://*/*amp;user*
 // @require       https://code.jquery.com/jquery-3.6.0.min.js
 // @require       https://openuserjs.org/src/libs/sizzle/GM_config.js
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_xmlhttpRequest
 // @grant         GM_openInTab
+// @connect       mdpi.com
+// @connect       titlecaseconverter.com
 // ==/UserScript==
 /* globals jQuery, $, GM_config */
 
@@ -30,23 +29,34 @@
         'title': 'Settings of SusyModifier v'+GM_info.script.version,
         'fields':  {
             'Interface_sidebar': {'section': [],'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Interface_SME': {'label': 'I am SME of', 'type': 'select', 'labelPos': 'left', 'options': ['','Algebra and Geometry','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation','Fuzzy Set Theory','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics Theory'], 'default': ''},
+            'Interface_SME': {'label': 'I am SME of', 'type': 'select', 'labelPos': 'left', 'options':
+                              ['','Algebra and Geometry','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
+                               'Fuzzy Set Theory','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics Theory'], 'default': ''},
             'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Mathematics', 'None'], 'default': 'Mathematics'},
             'Interface_combine': {'label': 'Topic Manuscripts整合进SI Manuscripts', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Manuscriptnote': {'section': [],'label': 'Manuscript Note 边栏紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'ManuscriptFunc': {'label': '快捷申请优惠券和发送推广信按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Template_Linkedin': {'label': 'LinkedIn推广信模板', 'type': 'textarea', 'default': 'Dear Authors,\n\nHope this email finds you well. Your manuscript %m_id% is promoted by the Mathematics "%m_section%" Section LinkedIn account. Welcome to like, share, send and comment on it.\n\nFind us and receive more information in the section "%m_section%" of Mathematics:\n[Links]\n\nPlease do not hesitate to let us know if you have questions.'},
-            'Template_Paper': {'label': '文章推广信模板', 'type': 'textarea', 'default': 'Dear %name%,\n\nThank you very much for your contribution to /Mathematics/, your manuscript %m_id% is now under review. We will keep you informed about the status of your manuscript.\n\nIn addition, you have published a paper/papers in /Mathematics/ in the past two years with the citation of about XX times. Based on your reputation and research interests, we believe that your results should attract more citations and attention. Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\nIn addition, you have published a paper/papers in /Mathematics/ in 20XX with the citation of XXXXX times, congratulations on your great work!\nTo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.'},
+            'Template_Linkedin': {'label': 'LinkedIn推广信模板', 'type': 'textarea', 'default':
+                                  `Dear Authors,\n\nHope this email finds you well. Your manuscript %m_id% is promoted by the Mathematics "%m_section%" Section LinkedIn account. Welcome to like, share, send and comment on it.\n\n`
+                                  +`Find us and receive more information in the section "%m_section%" of Mathematics:\n[Links]\n\nPlease do not hesitate to let us know if you have questions.`},
+            'Template_Paper': {'label': '文章推广信模板', 'type': 'textarea', 'default':
+                               `Dear %name%,\n\nThank you very much for your contribution to /Mathematics/, your manuscript %m_id% is now under review. We will keep you informed about the status of your manuscript.\n\n`
+                               +`In addition, you have published a paper/papers in /Mathematics/ in the past two years with the citation of about XX times. Based on your reputation and research interests, we believe that your results should attract more citations and attention. `
+                               +`Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\nIn addition, you have published a paper/papers in /Mathematics/ `
+                               +`in 20XX with the citation of XXXXX times, congratulations on your great work!\nTo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper/papers to your colleagues, friends, or `
+                               +`related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.`},
             'SIpages': {'section': [], 'label': '特刊列表显示所有特刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SInote': {'label': 'Special Issue Note 界面变大', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SInoteW': {'label': 'SI Note Width', 'labelPos': 'left', 'type': 'int', 'default': 500},
             'SInoteH': {'label': 'Height', 'labelPos': 'left', 'type': 'int', 'default': 1000},
-            'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)'], default: '!Guest Editor – invite Version 1'},
+            'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
+                              ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)'], default: '!Guest Editor – invite Version 1'},
             'GE_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "Invitation to Serve as"},
             'GE_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.258, Rank Q1) Invitation to Serve as"},
             'GE_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'GE_ReminderID': {'section': [], 'label': '默认 GE Reminder Template', 'type': 'select', 'labelPos': 'left', 'options': ['Guest Editor Invitation – 1st Reminder','Guest Editor Invitation – 2nd Reminder','Guest Editor Invitation – 3rd Reminder'], default: 'Guest Editor Invitation – 1st Reminder'},
+            'GE_ReminderID': {'section': [], 'label': '默认 GE Reminder Template', 'type': 'select', 'labelPos': 'left', 'options':
+                              ['Guest Editor Invitation – 1st Reminder','Guest Editor Invitation – 2nd Reminder','Guest Editor Invitation – 3rd Reminder'], default: 'Guest Editor Invitation – 1st Reminder'},
             'GE_ReminderS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
@@ -62,33 +72,49 @@
             'EB_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'LinkShort': {'section': [], 'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Con_Template': {'label': 'Contact Conference Template 修改', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Hidden_Func': {'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Con_TemplateS1': {'section': [], 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
+            'Con_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
+            'Con_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
+                               " and within the journal newsletter, to be sent out to our network of authors and subscribers. We would be glad if, in return, you could advertise the journal via the conference website and newsletter."},
+            'Con_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website."},
         },
-          'events': {
-              'save': function() {location.href = location.href},
-              'open': function(doc) {
-                  //Experimental警告
-                  GM_config.fields.Hidden_Func.node.addEventListener('change', function(){ if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {alert('Dangerous! \n\nDon\'t turn it on unless you are familiar with ALL susy functions. \nOtherwise, it will cause serious problems.')} });
-                  //隐藏SI Note WH选项
-                  if(!GM_config.get('SInote')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").css("display","none") }
-                  GM_config.fields.SInote.node.addEventListener('change', function(doc){
-                      if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_SInote")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").css("display","inline-block") }
-                      else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").css("display","none"); }
-                  });
-                  //隐藏推广信模板
-                  if(!GM_config.get('ManuscriptFunc')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").css("display","none") }
-                  GM_config.fields.ManuscriptFunc.node.addEventListener('change', function(doc){
-                      if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_ManuscriptFunc")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").css("display","inline-block") }
-                      else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").css("display","none") }
-                  });
-              },
-          },
-        'css': '.config_var{padding: 5px 10px;display:inline-block;} select{width:200px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SIpages_field_label,#SusyModifierConfig_LinkShort_field_label{width:150px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_Cfp_checker_field_label{width:200px;display:inline-block;} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}'
+        'events': {
+            'save': function() {location.href = location.href},
+            'open': function(doc) {
+                //Experimental警告
+                GM_config.fields.Hidden_Func.node.addEventListener('change', function(){ if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {
+                    alert('Dangerous! \n\nDon\'t turn it on unless you are familiar with ALL susy functions. \nOtherwise, it will cause serious problems.')} });
+                //隐藏SI Note WH选项
+                if(!GM_config.get('SInote')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").hide() }
+                GM_config.fields.SInote.node.addEventListener('change', function(doc){
+                    if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_SInote")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").show(); }
+                    else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").hide(); }
+                });
+                //隐藏推广信模板
+                if(!GM_config.get('ManuscriptFunc')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").hide() }
+                GM_config.fields.ManuscriptFunc.node.addEventListener('change', function(doc){
+                    if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_ManuscriptFunc")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").show(); }
+                    else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").hide() }
+                });
+                //隐藏Conference Template
+                if(!GM_config.get('Con_Template')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_section_8").hide() }
+                GM_config.fields.Con_Template.node.addEventListener('change', function(doc){
+                    if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_Con_Template")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_section_8").show(); }
+                    else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_section_8").hide() }
+                });
+            },
+        },
+        'css': `#SusyModifierConfig{background-color:#EDF8EF;} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:200px} #SusyModifierConfig_section_1{min-height:70px} #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px}
+        #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SIpages_field_label,#SusyModifierConfig_LinkShort_field_label{width:150px;display:inline-block;}
+        #SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_Con_Template_field_label{width:200px;display:inline-block;} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}
+        #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label{display:block;}`
     });
     $("#topmenu [href='https://www.mdpi.com/about/']").after("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
 
-    var S_J;
+    var S_J, S_S;
     switch (GM_config.get('Journal')) {
         case 'Mathematics': S_J=154; break;
         case 'None': S_J=-1; break;
@@ -96,8 +122,15 @@
 
     //susy侧边栏的按钮🔎
     if (window.location.href.indexOf("susy.mdpi.com/") > -1 && GM_config.get('Interface_sidebar')){try{
-        var S_S, siappend="<div id='si_search' role='dialog' style='display: none; position: absolute; height: 300px; width: 500px; top: 500px; left: 242.5px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-draggable ui-resizable'><div id='mover' class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle'><span class='ui-dialog-title'>Quick Search</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close' title='Close' onclick='document.getElementById(\"si_search\").style.display=\"none\"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><form class='insertform' method='get' action='https://susy.mdpi.com/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>SI Title: <input type='text' name='form[si_name]' id='si_search2' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='SI Search'></form><hr> <form class='insertform' method='get' action='https://susy.mdpi.com/user/ebm-new/management/all/my_journals' target='_blank'>Name: <input type='text' id='form_name2' name='form[name]' style='display:inline-block; width:65%;'><br>Email: <input type='email' id='form_email2' name='form[email]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='EBM Search'></form>";
-        $("body").append(siappend);
+        $("body").append( `<div id='si_search' role='dialog' style='display: none; position: absolute; height: 350px; width: 500px; top: 500px; left: 242.5px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front ui-draggable ui-resizable'>
+        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle'><span class='ui-dialog-title'>Quick Search</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
+        onclick='document.getElementById(\"si_search\").style.display=\"none\"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'>
+        <form class='insertform' method='get' action='//susy.mdpi.com/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>
+        SI Title: <input type='text' name='form[si_name]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='SI Search'></form><hr>
+        <form class='insertform' method='get' action='//susy.mdpi.com/user/ebm-new/management/all/my_journals' target='_blank'>Name: <input type='text' id='form_name2' name='form[name]' style='display:inline-block; width:65%;'><br>
+        Email: <input type='email' name='form[email]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='EBM Search'></form><hr>
+        <form class='insertform' method='get' action='//susy.mdpi.com/user/conference/list' target='_blank'>Conference: <input type='text' name='form[conference_name]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='Search'></form>`);
+
         switch (GM_config.get('Interface_SME')) {
             case 'Algebra and Geometry': S_S=915; break;
             case 'Computational and Applied Mathematics': S_S=892; break;
@@ -126,13 +159,19 @@
             $(".menu [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=" + S_J);
             $(".menu [href='/user/manage/award_request']").attr("href","/user/manage/award_request?form[journal_id]=" + S_J);
             $(".menu [href='/user/manage/awards_item']").attr("href","/user/manage/awards_item?form[journal_id]=" + S_J);
+            $(".menu [href='/si/proposal/list']").attr("href","/si/proposal/list?form[journal_id]=" + S_J);
+            $(".menu [href='/list/list_volunteer_reviewers']").attr("href","/list/list_volunteer_reviewers?form[journal_id]=" + S_J);
+            $(".menu [href='/tap/list']").attr("href","/tap/list?form[journal_id]=" + S_J);
+            $(".menu [href='/topic/proposal/list']").attr("href","/topic/proposal/list?form[journal_id]=" + S_J);
+            $(".menu [href='/user/conference/list']").attr("href","/user/conference/list?form[subject_id]=4");
             $(".menu [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
         }
+        $(".menu [href='/user/myprofile']").after(" <a href='/user/settings'>[Settings]</a>");
         $(".menu [href='/special_issue_pending/list']").after(" <a href='/user/sme/status/submitted'>[M]</a>");
         $(".menu [href='/special_issue_pending/list']").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC")
         $(".menu [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[M]</a>");
         $(".menu [href='/submission/topic/list']").attr("href","/submission/topic/list/online");
-        $(".menu [href='/user/ebm-new/management']").after(" <div style='float:right;'><a onclick='document.getElementById(\"si_search\").style.display=\"\"; $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div> ");
+        $(".menu [href='/user/ebm-new/management']").after("<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div> ");
     } catch (error){ }}
 
     //SI和Topic Manuscripts整合
@@ -141,8 +180,8 @@
             method: 'GET',
             url: window.location.href.replace('sme/status','topic/status'),
             onload: function(responseDetails) {
-                var parser = new DOMParser();
-                var responseDoc = parser.parseFromString(responseDetails.responseText.replace(/\/user\/topic\/status/g,'/user/sme/status'), "text/html").getElementById('manuscripts-list');
+                let parser = new DOMParser();
+                let responseDoc = parser.parseFromString(responseDetails.responseText.replace(/\/user\/topic\/status/g,'/user/sme/status'), "text/html").getElementById('manuscripts-list');
                 $("#manuscripts-list").after(responseDoc);
             }
         });
@@ -155,10 +194,8 @@
             $(".note-list-container").css("padding","0");
             $(".note-box-component").css("margin-bottom","10px");
             if ($('.special-issue-note-box').length > 0) {
-                $(".manuscript-note-box .manuscript-note-item-content").height(200);
-                $(".manuscript-note-box .manuscript-note-item-content").css("overflow-y","auto");
-                $(".section-note-box .manuscript-note-item-content").height(200);
-                $(".section-note-box .manuscript-note-item-content").css("overflow-y","auto");
+                $(".manuscript-note-box .manuscript-note-item-content, .section-note-box .manuscript-note-item-content").height(200);
+                $(".manuscript-note-box .manuscript-note-item-content, .section-note-box .manuscript-note-item-content").css("overflow-y","auto");
             }
         }
     } catch (error){ }}
@@ -173,13 +210,11 @@
             case 'Guest Editor - Invite with Discounts': S_GEID=874; break;
             case 'Guest Editor-Invite (Optional)': S_GEID=1151; break;
         }
-        $('#emailTemplates').val(S_GEID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-        $("span:contains('Select')").text(GM_config.get('GE_TemplateID'))
-        function init() {document.getElementById('mailSubject').value=document.getElementById('mailSubject').value.replace(GM_config.get('GE_TemplateS1'), GM_config.get('GE_TemplateS2'));
-                         document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(GM_config.get('GE_TemplateB1'), GM_config.get('GE_TemplateB2'));}
+        $('#emailTemplates').val(S_GEID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_TemplateID'));
+        function init() {$("#mailSubject").val( $("#mailSubject").val().replace(GM_config.get('GE_TemplateS1'), GM_config.get('GE_TemplateS2')) );
+                         $("#mailBody").val( $("#mailBody").val().replace(GM_config.get('GE_TemplateB1'), GM_config.get('GE_TemplateB2')) );}
         setTimeout(()=>{init()}, 1000)
-        if (S_GEID==269) {$('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'We gladly waive the article processing charge for papers from the Guest Editor. \', \'\');">[No Discount]</a>');}
-        // $('#mailSubject').parent().after('<a onclick="document.getElementById(\'mailSubject\').value=document.getElementById(\'mailSubject\').value.replace(\'ISSN 2227-7390\', \'Rank Q1\'); document.getElementById(\'mailBody\').value=document.getElementById(\'mailBody\').value.replace(\'from the Guest Editor. If\', \'from the Guest Editor, and may offer discounts for papers invited by the Guest Editor. If\');"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a> ')
+        if (S_GEID==269) {$('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace('We will gladly waive the article processing charge for papers from the Guest Editor. ', '');">[No Discount]</a>`);}
     } catch (error){ }}
 
     //GE Reminder✏️
@@ -190,84 +225,94 @@
             case 'Guest Editor Invitation – 2nd Reminder': S_GERID=1619; break;
             case 'Guest Editor Invitation – 3rd Reminder': S_GERID=1620; break;
         }
-        $('#emailTemplates').val(S_GERID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-        $("span:contains('Select')").text(GM_config.get('GE_ReminderID'));
+        $('#emailTemplates').val(S_GERID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_ReminderID'));
         $('#mailSubject').parent().after('<a id="Awaiting"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a>');
         $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
     } catch (error){ }}
 
     //EB invitation✏️
     if (window.location.href.indexOf("present_editor_ebm/invite_email") > -1){try{
-        let firstid = $('#emailTemplates :nth-child(2)').val();
-        if (firstid==1607) {$('#emailTemplates').val(firstid).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));}
-        function init() {document.getElementById('mailSubject').value=document.getElementById('mailSubject').value.replace(new RegExp(GM_config.get('EB_TemplateS1'),'g'), GM_config.get('EB_TemplateS2'));
-                         document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(GM_config.get('EB_TemplateB1'), GM_config.get('EB_TemplateB2'));}
+        let firstid = $('#emailTemplates :contains("Editorial")').val();
+        $('#emailTemplates').val(firstid).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
+        function init() {$("#mailSubject").val( $("#mailSubject").val().replace(GM_config.get('EB_TemplateS1'), GM_config.get('EB_TemplateS2')) );
+                         $("#mailBody").val( $("#mailBody").val().replace(GM_config.get('EB_TemplateB1'), GM_config.get('EB_TemplateB2')) );}
         setTimeout(()=>{init()}, 1000)
         $('#mailSubject').parent().after('<a id="No_Discount">[No Discount]</a>');
-        $('#No_Discount').click(function(e) {$('#mailBody').val($('#mailBody').val().replace('you will have the opportunity to publish one paper free of charge in Mathematics per year, and can also publish extra papers with special discounts.\n\n','').replace('Additionally, we would like to invite you to publish one paper per year—this will be free of charge once accepted for publication. ','').replace(/\nPlease click on the following link .*?\nhttp.*?\n/g,''))});
+        $('#No_Discount').click(function(e) {
+            $('#mailBody').val($('#mailBody').val().replace('you will have the opportunity to publish one paper free of charge in Mathematics per year, and can also publish extra papers with special discounts.\n\n','')
+                               .replace('Additionally, we would like to invite you to publish one paper per year—this will be free of charge once accepted for publication. ','').replace(/\nPlease click on the following link .*?\nhttp.*?\n/g,''))});
     } catch (error){ }}
 
     //EB Reminder✏️
     if (window.location.href.indexOf("present_editor_ebm/remind_email") > -1){try{
-        function init() {document.getElementById('mailSubject').value=document.getElementById('mailSubject').value.replace(new RegExp(GM_config.get('EB_ReminderS1'),'g'), GM_config.get('EB_ReminderS2'));
-                         document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(GM_config.get('EB_ReminderB1'), GM_config.get('EB_ReminderB2'));}
+        function init() {$("#mailSubject").val( $("#mailSubject").val().replace(GM_config.get('EB_ReminderS1'), GM_config.get('EB_ReminderS2')) );
+                         $("#mailBody").val( $("#mailBody").val().replace(GM_config.get('EB_ReminderB1'), GM_config.get('EB_ReminderB2')) );}
         setTimeout(()=>{init()}, 1500)
     } catch (error){ }}
 
-    //Paper Rejection
-    if (window.location.href.indexOf("assigned/reject-manuscript/") > -1 && GM_config.get('Hidden_Func')){try{
-        $('#emailTemplates').val(77).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-    } catch (error){ }}
-
-    //HERE
     //文章处理页面[Voucher]按钮和发送推广信按钮
     if (window.location.href.indexOf("/process_form/")+window.location.href.indexOf("/production_form/") > -2 && GM_config.get('ManuscriptFunc')){try{
-        var corresponding, Promote='', email=[];
-        var m_id = document.getElementById("manuscript_id").parentNode.textContent.trim();
-        var m_section = $(`div.cell.small-12.medium-6.large-2:contains('Section')`).next().text().trim();
-        for (var i=1; i<$("[title|='Google Scholar']").length;i++) {
-            var n=$("[title|='Google Scholar']")[i].parentNode.nextSibling
-            if (n.nodeType!=1) {n=n.nextSibling}
-            email[i-1]=n.textContent.trim()
-            n=$("[title|='Google Scholar']")[i].parentNode.previousSibling
-            if (n.nodeType!=1) {n=n.previousSibling}
-            if($("[title|='Google Scholar']")[i].parentNode.textContent.indexOf("*") != -1 ) {corresponding=email[i-1]}
-            var name=n.textContent.trim() + " " + $("[title|='Google Scholar']")[i].parentNode.textContent.trim().replace(" *", "").replace(/\n[\s\S]*/g, "").trim()
+        let Promote='', email=[], name=[];
+        let m_id = $("#manuscript_id").parent().text().trim();
+        let m_section = $("div.cell.small-12.medium-6.large-2:contains('Section') + div").text().trim();
+        let m_si = $("div.cell.small-12.medium-6.large-2:contains('Special Issue') + div").text().trim();
+        let corresponding=$("b:contains('*')").parent("td").next().last().text().trim();
 
-            $("[title|='Google Scholar']").eq(i).before('<a href="mailto:' + email[i-1] + '?subject=[Mathematics] (IF 2.258, ISSN 2227-7390) Promote Your Published Papers&body=' + GM_config.get('Template_Paper').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section).replace(/%name%/g,name) + '"><img src="/bundles/mdpisusy/img/icon/mail.png"></a> ')
-        }
+        $("table [title|='Google Scholar']").each(function( index ) {
+            name[index] = $(this).parent().prev().text().trim() + " " + $(this).parent().children("b").first().text().trim();
+            email[index] = $(this).parent().next().text().trim();
+            $(this).before('<a href="mailto:'+email[index]+'?subject=[Mathematics] (IF 2.258, ISSN 2227-7390) Promote Your Published Papers&body=' +
+                           GM_config.get('Template_Paper').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section).replace(/%name%/g,name[index]) + '"><img src="/bundles/mdpisusy/img/icon/mail.png"></a> ');
+        });
 
-        $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=[Mathematics] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Mathematics Social Media&body=' + GM_config.get('Template_Linkedin').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
+        $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=[Mathematics] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Mathematics Social Media&body=' +
+                                                     GM_config.get('Template_Linkedin').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
         if (window.location.href.indexOf("?linkedin") > -1) {$("#linkedin")[0].click(); history.back();}
+        $("[title='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query='+$("[title='Google']").prev().text()+
+                                     '" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="https://c5.rgstatic.net/m/41542880220916/images/favicon/favicon-16x16.png"></a> ');
+        $("[class|='margin-horizontal-1']").after(`<form id='vf' class='insertform' method='post' target='_blank' style='display:none;'><input name='form[journal_id]' value='154'><input name='form[is_percentage]' value='1'><input name='form[special_issue_id]'>`
+                                                  + `<input name='form[emails]'><input name='form[valid_months]' value='12'><input name='form[section_id]'><input name='form[reason]'><input name='form[manuscript_id]'> </form>`);
+        $("[class|='margin-horizontal-1']").after(`<div id="voucher" style="display:inline-block;"><a style="color:#4b5675;">[Vouchers]</a> <div style="position:absolute;background-color: #f1f1f1;box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);display: none;">`
+                                                  + `<a id="v_si" style="display:block;padding: 8px 12px;text-decoration: none;color:black;">Special Issue</a><a id="v_eb" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">EBM</a>`
+                                                  + `<a id="v_ec" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Exception Case</a></div></div> `);
+        $("#voucher").mouseover(function(){ $(this).children("div").show() });
+        $("#voucher").mouseout(function(){ $(this).children("div").hide() });
+        $('head').append('<style>#voucher a:hover {background-color: #ddd;}</style>');
 
-        if ($("div.cell.small-12.medium-6.large-2:contains('Special Issue')").length>0 && $("div.cell.small-12.medium-6.large-2:contains('Section')").length>0) { //文章在特刊里且有Section
-            Promote += " <form id='s_voucher' class='insertform' method='post' action='https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=6' target='_blank' style='display:inline;'><input type='hidden' name='form[journal_id]' value='154'><input type='hidden' name='form[is_percentage]' value='1'><input type='hidden' id='form_special_issue_id' name='form[special_issue_id]' value='0'><input type='hidden' name='form[emails]' value='"+corresponding+"'><input type='hidden' name='form[valid_months]' value='12'><input type='hidden' id='form_section_id' name='form[section_id]' value=''><input type='hidden' name='form[reason]' value='Feature paper invited by guest editor'><input type='hidden' name='form[manuscript_id]' value='"+document.getElementById("manuscript_id").parentNode.textContent.trim()+"'>"
-            Promote += " <a onclick=\"var re = new RegExp('(\\\\d*)[^0-9]:[^0-9]' + $(`div.cell.small-12.medium-6.large-2:contains('Special Issue')`).next().text().trim(), '');var xhr = new XMLHttpRequest();xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/section/0/all_special_issues', false);xhr.send(null);document.getElementById('form_special_issue_id').value = xhr.responseText.match(re)[1];re=new RegExp('(\\\\d*)[^0-9]:[^0-9]' + $(`div.cell.small-12.medium-6.large-2:contains('Section')`).next().text().trim(), '');xhr=new XMLHttpRequest();xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/sections', false);xhr.send(null);document.getElementById('form_section_id').value = xhr.responseText.match(re)[1];s_voucher.submit();   \">[Voucher]</a> </form>"
-        } else if ($("div.cell.small-12.medium-6.large-2:contains('Special Issue')").length>0){ //文章在特刊里但没Section
-            Promote += " <form id='s_voucher' class='insertform' method='post' action='https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=6' target='_blank' style='display:inline;'><input type='hidden' name='form[journal_id]' value='154'><input type='hidden' name='form[is_percentage]' value='1'><input type='hidden' id='form_special_issue_id' name='form[special_issue_id]' value=''><input type='hidden' name='form[emails]' value='"+corresponding+"'><input type='hidden' name='form[valid_months]' value='12'><input type='hidden' id='form_section_id' name='form[section_id]' value=''><input type='hidden' name='form[reason]' value='Feature paper invited by guest editor'><input type='hidden' name='form[manuscript_id]' value='"+document.getElementById("manuscript_id").parentNode.textContent.trim()+"'>"
-            Promote += " <a onclick=\"var re = new RegExp('(\\\\d*)[^0-9]:[^0-9]' + $(`div.cell.small-12.medium-6.large-2:contains('Special Issue')`).next().text().trim(), '');var xhr = new XMLHttpRequest();xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/section/0/all_special_issues', false);xhr.send(null);document.getElementById('form_special_issue_id').value = xhr.responseText.match(re)[1];s_voucher.submit();   \">[Voucher]</a> </form>"
-        } else {}
+        if (!m_si) {$("#v_si").remove()}; if (!m_section) {$("#v_eb").remove()};
+        $("#voucher>div>a").click(function(){
+            switch ($(this).attr("id")) {
+                case 'v_eb': $("#vf").attr("action","https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=5"); $("[name='form[reason]']").val("Paper by editorial board member"); break;
+                case 'v_si': $("#vf").attr("action","https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=6"); break;
+                case 'v_ec': $("#vf").attr("action","https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=7"); break;
+            }
+            $("[name='form[emails]']").val(corresponding);
+            $("[name='form[manuscript_id]']").val(m_id);
 
-        if ($("div.cell.small-12.medium-6.large-2:contains('Section')").length>0){ //Section中的常规投稿
-            Promote += " <form id='s2_voucher' class='insertform' method='post' action='https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=5' target='_blank' style='display:inline;'><input type='hidden' name='form[journal_id]' value='154'><input type='hidden' name='form[is_percentage]' value='1'><input type='hidden' name='form[emails]' value='"+corresponding+"'><input type='hidden' name='form[valid_months]' value='12'><input type='hidden' name='form[reason]' value='Paper by editorial board member'><input type='hidden' id='form_section_id2' name='form[section_id]' value=''><input type='hidden' name='form[manuscript_id]' value='"+document.getElementById("manuscript_id").parentNode.textContent.trim()+"'>"
-            Promote += " <a onclick=\"var re = new RegExp('(\\\\d*)[^0-9]:[^0-9]' + $(`div.cell.small-12.medium-6.large-2:contains('Section')`).next().text().trim(), '');var xhr = new XMLHttpRequest();xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/sections', false);xhr.send(null);document.getElementById('form_section_id2').value = xhr.responseText.match(re)[1];s2_voucher.submit();   \">[V_EBM]</a> </form>"
-        } else { //没Section的常规投稿
-           Promote += " <form id='s2_voucher' class='insertform' method='post' action='https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=5' target='_blank' style='display:inline;'><input type='hidden' name='form[journal_id]' value='154'><input type='hidden' name='form[is_percentage]' value='1'><input type='hidden' name='form[emails]' value='"+corresponding+"'><input type='hidden' name='form[valid_months]' value='12'><input type='hidden' name='form[reason]' value='Paper by editorial board member'><input type='hidden' id='form_section_id2' name='form[section_id]' value=''><input type='hidden' name='form[manuscript_id]' value='"+document.getElementById("manuscript_id").parentNode.textContent.trim()+"'>"
-           Promote += " <a onclick=\"s2_voucher.submit();   \">[V_EBM]</a> </form>&nbsp;&nbsp;&nbsp;"
-        }
-        $("[title|='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query='+$("[title|='Google']").prev().text()+'" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="https://c5.rgstatic.net/m/41542880220916/images/favicon/favicon-16x16.png"></a> ');
-        $("[class|='margin-horizontal-1']").after(Promote);
+            if (!!m_section) {
+                let xhr = new XMLHttpRequest(), s_search = new RegExp('(\\d*)[^0-9]:[^0-9]' + m_section.replace(/\(/g,"\\\(").replace(/\)/g,"\\\)"), '');
+                xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/sections', false); xhr.send();
+                let s_result = $("<div/>").html(xhr.responseText).text().match(s_search);
+                if (!!s_result) {$("[name='form[section_id]']").val(s_result.pop())};
+            }
+            if (!!m_si) {
+                let xhr = new XMLHttpRequest(), s_search = new RegExp('(\\d*)[^0-9]:[^0-9]' + m_si.replace(/\(/g,"\\\(").replace(/\)/g,"\\\)"), '');
+                xhr.open('GET', 'https://susy.mdpi.com/list/journal/154/section/0/all_special_issues', false); xhr.send();
+                let s_result = $("<div/>").html(xhr.responseText).text().match(s_search);
+                if (!!s_result) {$("[name='form[special_issue_id]']").val(s_result.pop())};
+            }
+            $("#vf").submit();
+        });
     } catch (error){ }}
 
     //特刊列表免翻页⚙️
     if (window.location.href.indexOf("susy.mdpi.com/special_issue_pending/list") > -1 && window.location.href.indexOf("page=") == -1 && GM_config.get('SIpages')==true){try{
-        $(".outside_table").css("max-height","none"); $("#statustable").attr('class','statustable');
-        var maxpage = 20, totalpage = Math.min(maxpage,parseInt($('li:contains("Next")').prev().text()));
+        let maxpage = 20, totalpage = Math.min(maxpage,parseInt($('li:contains("Next")').prev().text()));
         function doXHR(counter) {
             if (counter < totalpage+1) {
                 GM_xmlhttpRequest({
                     method: "GET",
-                    url: document.getElementsByClassName("pagination margin-0")[0].getElementsByTagName("li")[2].getElementsByTagName("a")[0].href.replace(/page=2/gi,"page="+counter),
+                    url: $(".pagination.margin-0 a:contains('2')").attr("href").replace(/page=2/gi,"page="+counter),
                     onload: function(response) {
                         var $jQueryObject = $('#statustable',$.parseHTML(response.responseText));
                         $($jQueryObject).attr('id','statustable'+counter);
@@ -285,17 +330,11 @@
     //特刊页面➕按钮、Note
     if (window.location.href.indexOf("susy.mdpi.com/submission/topic/view")+window.location.href.indexOf("susy.mdpi.com/special_issue/process") > -2){try{
         if(GM_config.get('SInote')) {
-            waitForKeyElements("#special_issue_notesText",SINotes);
-            waitForKeyElements("#topic_notesText",TopicNotes);
+            waitForKeyElements("#special_issue_notesText, #topic_notesText",SINotes);
             function SINotes() {
                 $("#manuscript-special-issue-notes").css("height",GM_config.get('SInoteH')+"px");
                 $("[aria-describedby|='manuscript-special-issue-notes']").css("width",GM_config.get('SInoteW')+"px");
-                $("#special_issue_notesText").css("height",GM_config.get('SInoteH')-200 +"px");
-            }
-            function TopicNotes() {
-                $("#manuscript-special-issue-notes").css("height",GM_config.get('SInoteH')+"px");
-                $("[aria-describedby|='manuscript-special-issue-notes']").css("width",GM_config.get('SInoteW')+"px");
-                $("#topic_notesText").css("height",GM_config.get('SInoteH')-200 +"px");
+                $("#special_issue_notesText, #topic_notesText").css("height",GM_config.get('SInoteH')-200 +"px");
             }
         }
         $('#si-update-emphasized').before('<a href="?pagesection=AddGuestEditor" title="Add Guest Editor">➕</a> ');
@@ -303,38 +342,36 @@
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+'" title="Reset"><img border="0" src="/bundles/mdpisusy/img/icon/arrow-180.png"></a> ');
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+'" title="Close">🆑</a> ');
             $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
-            $("#guestNextBtn").after(' <input type="button" id="endlesstry" value="Experimental" class="submit" style="display: inline-block;"> <input type="button" id="endlesstry_stop" value="Stop" class="submit" style="display: none;"> <input id="endlesstry_stopbox" type="checkbox" style="display: none;">');
-            $("#endlesstry_stop").click(endlesstry_stop); function endlesstry_stop (zEvent) {$("#endlesstry_stopbox").prop('checked',true)};
-            $("#endlesstry").click(sk_endlesstry); function sk_endlesstry (zEvent) {
-                var endlesstry_email = $("#form_email").val();
-                $("#endlesstry_stop").css("display","inline-block"); $("#endlesstry").css("display","none");
+            $("#guestNextBtn").after(' <input id="endltry"style="display: inline-block;"type="button"class="submit"value="Experimental"><input id="endltry_stop"style="display: none;"type="button"class="submit"value="Stop"><input id="endltry_stopbox"style="display: none;"type="checkbox">');
+            $("#endltry_stop").click(endltry_stop); function endltry_stop (zEvent) {$("#endltry_stopbox").prop('checked',true)};
+            $("#endltry").click(sk_endltry); function sk_endltry (zEvent) {
+                var endltry_email = $("#form_email").val();
+                $("#endltry_stop").css("display","inline-block"); $("#endltry").css("display","none");
                 $("#guestNextBtn").click();
-                waitForKeyElements("#specialBackBtn", sk_endlesstry_check);
-                function sk_endlesstry_check() {
+                waitForKeyElements("#specialBackBtn", sk_endltry_check, true);
+                function sk_endltry_check() {
                     setTimeout(() => {
                         if (document.getElementById('process-special-issue-guest-editor') !=null) {
                             document.getElementById("process-special-issue-guest-editor").click()
-                        } else if (document.getElementById("endlesstry_stopbox").checked) {
-                            $("#endlesstry_stop").css("display","none"); $("#endlesstry").css("display","inline-block");
+                        } else if ($("#endltry_stopbox").prop("checked")) {
+                            $("#endltry_stop").css("display","none"); $("#endltry").css("display","inline-block");
                         } else {
-                            document.getElementById("specialBackBtn").click(); document.getElementById("form_email").value=endlesstry_email;
-                            sk_endlesstry();
+                            document.getElementById("specialBackBtn").click(); document.getElementById("form_email").value=endltry_email;
+                            sk_endltry();
                         }}, 1500)
                 }
             }
         }
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
-        //$('#guestNextBtn').after(" <a onclick='$(`#form_article_title_5`)[0].value=$(`#form_article_title_4`)[0].value=$(`#form_article_title_3`)[0].value=$(`#form_article_title_2`)[0].value=$(`#form_article_title_1`)[0].value; $(`#form_article_doi_5`)[0].value=$(`#form_article_doi_4`)[0].value=$(`#form_article_doi_3`)[0].value=$(`#form_article_doi_2`)[0].value=$(`#form_article_doi_1`)[0].value;'>[CpPub]</a>");
+        $("#form_checklist_1").before("<a id='select_all'>[Select All]</a><br>"); $("#select_all").click( function(){$("#si-cfp-form [type=\'checkbox\']").prop("checked",true)} );
     } catch (error){ }}
 
     //默认新建特刊位置和Title Case
     if (window.location.href.indexOf("susy.mdpi.com/user/special_issue/edit/0") > -1 && S_J>0){try{
-        $('#form_id_journal').val(S_J).change();
+        $('#form_id_journal').val(S_J).change(); $("#form_id_journal_chosen>a>span").text(GM_config.get('Journal'));
         document.getElementById('form_id_journal').dispatchEvent(new CustomEvent('change'));
-        document.evaluate('//*[@id="form_id_journal_chosen"]/a/span', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.innerText = GM_config.get('Journal');
-        $("#form_name").after("<a id='TitleCaseChicago'>🔡(Chicago)🔠</a> "); //https://brettterpstra.com/titlecase/?title
-        $("#TitleCaseChicago").click(TitleCaseChicago);
-        function TitleCaseChicago (zEvent) {
+        $("#form_name").after("<a id='TitleCaseChicago'>🔡(Chicago)🔠</a> "); //brettterpstra.com/titlecase/?title
+        $("#TitleCaseChicago").click(function () {
             if ($("#form_name").val().length > 1) {
                 (async () => {
                     $("#form_name").prop("disabled", true);
@@ -346,7 +383,7 @@
                     $("#form_name").prop("disabled", false);
                 })()
             }
-        }
+        });
     } catch (error){ }}
 
     //默认新建EBM位置
@@ -363,6 +400,19 @@
         window.location.href=window.location.href.replace(/\/journal\/mathematics\/special_issues\//,"/si/mathematics/");
     } catch (error){ }}
 
+    //会议相关
+    if (window.location.href.indexOf("mdpi.com/user/conference/") > -1 && window.location.href.indexOf("/view") > -1){try{$("[name=journal_id]").val(S_J);} catch (error){ }}
+    if (window.location.href.indexOf("mdpi.com/user/send/conference_journal/contact_mail") > -1 && GM_config.get('Con_Template')){try{
+        function init() {$("#mailSubject").val( $("#mailSubject").val().replace(GM_config.get('Con_TemplateS1'), GM_config.get('Con_TemplateS2')) );
+                         $("#mailBody").val( $("#mailBody").val().replace(GM_config.get('Con_TemplateB1'), GM_config.get('Con_TemplateB2')) );}
+        setTimeout(()=>{init()}, 700)
+        $('#mailSubject').parent().after('<a id="Del_Proceedings">[Del Proceedings]</a>');
+        $('#Del_Proceedings').click(function(e) {$('#mailBody').val($('#mailBody').val().replace(
+            `\n- Conference proceedings. We are publishing a series of proceedings journals (https://www.mdpi.com/about/proceedings) which we believe can serve as an excellent venue for the conference papers of your event. `
+            +`The journals are dedicated to publishing a range of content from academic conferences, including abstracts, extended abstracts, proceedings papers, meeting reports and posters. If this interests you, we are happy to send you more details.\n`,''
+        )) });
+    } catch (error){ }}
+
     //CfP Checker
     if (window.location.href.indexOf("//redmine.mdpi.") > -1 && GM_config.get('Cfp_checker')){try{
         //Always: Redmine重定向
@@ -371,7 +421,8 @@
         //排队界面
         if(window.location.href.indexOf("/projects/si-planning/issues?utf8=") > -1){ $('[href="/users/64"]').css("background-color", "yellow"); $('h2:contains("Issues")').append(" <span style='background-color: yellow;'>(" + $('[href="/users/64"]').length + " pending CfP Team)</span>"); }
         //CfP filter链接
-        $("#header > h1").append(" <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=Mathematics&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[Maths CfP]</a>")
+        $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=Mathematics`
+                                 + `&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[Maths CfP]</a>`)
         //Checker功能和检测函数
         $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").click(sk_cfpcheck_func);
         function sk_cfpcheck_func (zEvent) {
@@ -417,11 +468,6 @@
         }
     } catch (error){ }}
 
-    //Always: Remind Reviewer
-    if (window.location.href.indexOf("assigned/remind_reviewer") > -1){try{
-        $('#emailTemplates').val(21).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-    } catch (error){ }}
-
     //Always: Mailsdb样式⚙️🔝
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/search/emails") > -1){try{
         $("head").append('<link rel="stylesheet" type="text/css" href="/assets/application-79a8659b0064dad9845d4ec2f290c6e94795079e79a99ab4354776213eb35db0.css">');
@@ -433,7 +479,11 @@
                 method: 'GET',
                 url: susycheck,
                 onload: function(responseDetails) {
-                    $("head").append('<style id="sty_add">table{width: 80%} .colorgray{color:gray!important} .bgcoloref{background:#efefef!important} #user-info .user-info-section{margin-bottom:10px}#user-info span.email{font-weight:400;color:#103247}#user-info span.number{font-weight:400;color:#123}#user-info a{color:#00f}#user-info a:visited{color:#cd7e53}#user-info a:hover{color:#47566d}#user-info table{margin-left:2%;width:98%;background:#99a4b5;margin-bottom:10px;border-right:1px solid #ccc;border-bottom:1px solid #ccc;font-size: 14px;}#user-info table tr th{text-align:left;background:#4f5671;color:#fefefe;font-weight:400;border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem}#user-info table tr td{border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem;background:#fefefe}#user-info table tr td span.msid{color:#4e6c88;font-weight:400}#user-info table tr td.title{width:50%}#user-info table tr td.journal{width:10%;text-align:center}#user-info table tr td.status{width:10%;text-align:center}#user-info table tr td.submission-date{width:10%;text-align:center}#user-info table tr td.invoice-info{width:10%;text-align:center}#user-info table tr td.invoice-payment-info{width:10%;text-align:center}</style>');
+                    $("head").append(`<style>table{width:80%}.colorgray{color:gray!important}.bgcoloref{background:#efefef!important}#user-info .user-info-section{margin-bottom:10px}#user-info span.email{font-weight:400;color:#103247}#user-info span.number{font-weight:400;color:#123}
+                    #user-info a{color:#00f}#user-info a:visited{color:#cd7e53}#user-info a:hover{color:#47566d}#user-info table{margin-left:2%;width:98%;background:#99a4b5;margin-bottom:10px;border-right:1px solid #ccc;border-bottom:1px solid #ccc;font-size:14px}
+                    #user-info table tr th{text-align:left;background:#4f5671;color:#fefefe;font-weight:400;border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem}#user-info table tr td{border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem;background:#fefefe}
+                    #user-info table tr td span.msid{color:#4e6c88;font-weight:400}#user-info table tr td.title{width:50%}#user-info table tr td.journal{width:10%;text-align:center}#user-info table tr td.status{width:10%;text-align:center}
+                    #user-info table tr td.submission-date{width:10%;text-align:center}#user-info table tr td.invoice-info{width:10%;text-align:center}#user-info table tr td.invoice-payment-info{width:10%;text-align:center}</style>`);
                     $("body").prepend("<p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p>");
                     $("body").prepend(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href='));
                 } });
@@ -464,7 +514,19 @@
     } catch (error){ } }
 
     //Hidden_Func: MRS ALL journals
-    if(window.location.href.indexOf("//mrs.mdpi.com/data/role/") > -1 && GM_config.get('Hidden_Func')){try{ $('#demo-form2').before(" <a onclick='$(`#journal > option`)[0].value=`250,77,145,362,13,524,534,341,456,390,90,480,517,491,523,35,118,471,323,47,82,346,67,427,240,103,515,299,305,143,487,531,441,123,26,214,440,467,213,176,416,259,428,385,356,142,151,84,404,306,397,127,449,7,402,5,412,83,509,192,301,42,492,275,395,19,460,53,25,413,409,453,79,474,481,163,50,225,215,148,221,355,203,499,37,51,435,170,290,49,432,199,14,407,231,154,81,92,59,522,465,438,314,457,365,359,360,444,165,419,511,358,436,271,353,16,252,114,162,130,206,246,3,233,265,528,518,414,173,296,466,294,15,376,44,131,417,150,276,133,228,291,269,36,504`;'>[All Journal]</a>"); } catch (error){ }}
+    if(window.location.href.indexOf("//mrs.mdpi.com/data/role/") > -1 && GM_config.get('Hidden_Func')){try{
+        $('#demo-form2').before(` <a onclick='$("#journal > option")[0].value="250,77,145,362,13,524,534,341,456,390,90,480,517,491,523,35,118,471,323,47,82,346,67,427,240,103,515,299,305,143,487,531,441,123,26,214,440,467,213,176,416,259,428,385,356,142,151,`
+                                + `84,404,306,397,127,449,7,402,5,412,83,509,192,301,42,492,275,395,19,460,53,25,413,409,453,79,474,481,163,50,225,215,148,221,355,203,499,37,51,435,170,290,49,432,199,14,407,231,154,81,92,59,522,465,438,314,457,365,359,360,444,`
+                                + `165,419,511,358,436,271,353,16,252,114,162,130,206,246,3,233,265,528,518,414,173,296,466,294,15,376,44,131,417,150,276,133,228,291,269,36,504";'>[All Journal]</a>`);
+    } catch (error){ }}
+
+    //Hidden_Func: Paper Rejection
+    if(window.location.href.indexOf("assigned/reject-manuscript/") > -1 && GM_config.get('Hidden_Func')){try{ $('#emailTemplates').val(77).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); } catch (error){ }}
+
+    //Hidden_Func: Remind 2nd Round Reviewer
+    if (window.location.href.indexOf("assigned/remind_reviewer") > -1 && GM_config.get('Hidden_Func')){try{
+        $('#emailTemplates').val(21).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
+    } catch (error){ }}
 
     //Always: Reviewer Information is not required
     if(window.location.href.indexOf("//susy.mdpi.com/reivewer/create") > -1){try{
@@ -473,12 +535,29 @@
         $('[for="form_affiliation"]>span, [for="form_url"]>span, [for="form_country"]>span, [for="form_research_keywords"]>span').remove();
     } catch (error){ }}
 
+    //Always: Manuscript Notes in Summary Page
+    if(window.location.href.indexOf("//susy.mdpi.com/manuscript/summary") > -1){try{
+        $("#maincol").after('<div id="manuscript_note_offcanvas" class="hide-note-offcanvas"></div>');
+        $.get("https://susy.mdpi.com/user/nots_of_manuscript/"+window.location.href.match("summary/(.*?)(/|$)")[1], function(res) {
+            if (res.show_off_canvas) {
+                $('#manuscript_note_offcanvas').html(res.note_html);
+                $('#manuscript_note_offcanvas').removeClass('hide-note-offcanvas');
+                $('#manuscript_note_offcanvas').find('.manuscript-id').show();
+            }
+        });
+    } catch (error){ }}
+
     //Always: Mailsdb登陆
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/login") > -1){try{ $("[name=p_s]").attr('checked',true); $("#check-rem").attr('checked',true); } catch (error){ }}
 
     //Always: Manage Voucher Applications + 页面最底端
     if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/list/") > -1){try{ document.getElementById("show-more-budgets").click();} catch (error){ }}
-    if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/view/") > -1){try{ waitForKeyElements(".user_box_head", voucher_scroll); function voucher_scroll(){scroll(0,document.body.scrollHeight)}; } catch (error){ }}
+    if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/view/") > -1){try{ waitForKeyElements(".user_box_head", voucher_scroll, true); function voucher_scroll(){scroll(0,document.body.scrollHeight)}; } catch (error){ }}
+
+    //Always: Editor Decision 返回处理界面
+    if (window.location.href.indexOf("decision/process_form/") > -1){try{
+        $("div.cell.small-12.medium-6.large-2:contains('Manuscript ID')").next().append(`<a href="/user/assigned/process_form/`+$("a:contains('Download Manuscript')").attr("href").match("displayFile/(.*?)(/|$)")[1]+`">[Back to Manuscript]</a>`)
+    } catch (error){ }}
 
     //Always: Google Scholar校正
     if (window.location.href.indexOf("&amp;") > -1 && window.location.href.indexOf("google") > -1){try{
@@ -490,21 +569,19 @@
 
     //ManuscriptFunc: 文章页面加[Linkedin]
     if (window.location.href.indexOf("www.mdpi.com/2227-7390/") > -1 && GM_config.get('ManuscriptFunc')){try{
-        $("a:contains('Peer-Reviewed')").parent().after('<a href="' + $("a:contains('Peer-Reviewed')").attr("href") +'?linkedin"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a"></a>')
+        $("a:contains('Peer-Reviewed')").parent().after('<a id="s_linkedin" href="' + $("a:contains('Peer-Reviewed')").attr("href") +'?linkedin"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a"></a>');
+        $("#s_linkedin").click(function() {$("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`)});
     } catch (error){ }}
 })();
 
-//     //TE+EBM加入Google Sheet
-//     if (window.location.href.indexOf("susy.mdpi.com/user/ebm-new/edit") > -1){try{
-//         $("#edit-ebm-form").append("<a onclick=\"var syna_append='https://script.google.com/macros/s/AKfycbz9XFh17rVkJgGGZXBi_2ATNluvJW_uOmXtUyrqxdY1QAZ5DrEgX_Cu/exec?c1='+$(`#form_firstname`)[0].value+' '+$(`#form_lastname`)[0].value+'&c2='+$(`#form_email`)[0].value+'&c3='+$(`#form_affiliation`)[0].value+'&c4='+$(`#form_country`)[0].value+'&c5='+$(`#form_interests`)[0].value+'&c8='+$(`#form_website`)[0].value;$(\'#edit-ebm-form\').append('<a href=&quot;'+syna_append+'&quot; target=_blank>'+syna_append+'</a>'); \">Add TE to Google Sheet</a><br>");
-//     } catch (error){ }}
-
 function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector) {
-    var targetNodes,btargetsFound;if(typeof iframeSelector=="undefined") {targetNodes=$(selectorTxt);} else targetNodes=$(iframeSelector).contents().find(selectorTxt);if(targetNodes&&targetNodes.length>0){btargetsFound=!0;targetNodes.each(function(){var jThis=$(this);var alreadyFound=jThis.data('alreadyFound')||!1;if(!alreadyFound){var cancelFound=actionFunction(jThis);if(cancelFound) {btargetsFound=!1;} else jThis.data('alreadyFound',!0)}})}else{btargetsFound=!1}
-    var controlObj=waitForKeyElements.controlObj||{};var controlKey=selectorTxt.replace(/[^\w]/g,"_");var timeControl=controlObj[controlKey];if(btargetsFound&&bWaitOnce&&timeControl){clearInterval(timeControl);delete controlObj[controlKey]}else{if(!timeControl){timeControl=setInterval(function(){waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)},300);controlObj[controlKey]=timeControl}}; waitForKeyElements.controlObj=controlObj
-}
+    var targetNodes,btargetsFound;if(typeof iframeSelector=="undefined") {targetNodes=$(selectorTxt);} else targetNodes=$(iframeSelector).contents().find(selectorTxt);if(targetNodes&&targetNodes.length>0){btargetsFound=!0;targetNodes.each(function(){var jThis=$(this);
+    var alreadyFound=jThis.data('alreadyFound')||!1;if(!alreadyFound){var cancelFound=actionFunction(jThis);if(cancelFound) {btargetsFound=!1;} else jThis.data('alreadyFound',!0)}})}else{btargetsFound=!1} var controlObj=waitForKeyElements.controlObj||{};
+    var controlKey=selectorTxt.replace(/[^\w]/g,"_");var timeControl=controlObj[controlKey];if(btargetsFound&&bWaitOnce&&timeControl){clearInterval(timeControl);delete controlObj[controlKey]}else{if(!timeControl){timeControl=setInterval(function()
+    {waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)},300);controlObj[controlKey]=timeControl}}; waitForKeyElements.controlObj=controlObj }
 
-function p_get(url) { return new Promise(resolve => {
+function p_get(url) {
+    return new Promise(resolve => {
         GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve });
     })
 }
