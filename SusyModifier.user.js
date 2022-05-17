@@ -410,11 +410,8 @@
                          $("#mailBody").val( $("#mailBody").val().replace(GM_config.get('Con_TemplateB1'), GM_config.get('Con_TemplateB2')) );}
         setTimeout(()=>{init()}, 700)
         $('#mailSubject').parent().after('<div><a id="Opening_Line">[Opening Line]</a><br><br><a id="Del_Proceedings">[Del Proceedings]</a></div>');
-        $('#Opening_Line').click(function() {$('#mailBody').val("Dear Conference Committee,\nTo Whom It May Concern,\n"+$('#mailBody').val())})
-        $('#Del_Proceedings').click(function() {$('#mailBody').val($('#mailBody').val().replace(
-            `\n- Conference proceedings. We are publishing a series of proceedings journals (https://www.mdpi.com/about/proceedings) which we believe can serve as an excellent venue for the conference papers of your event. `
-            +`The journals are dedicated to publishing a range of content from academic conferences, including abstracts, extended abstracts, proceedings papers, meeting reports and posters. If this interests you, we are happy to send you more details.\n`,''
-        )) });
+        $('#Opening_Line').click(function() {$('#mailBody').val("Dear Conference Committee,\nTo Whom It May Concern,\n"+$('#mailBody').val()) });
+        $('#Del_Proceedings').click(function() {$('#mailBody').val($('#mailBody').val().replace(/\n(.*?)https:\/\/www.mdpi.com\/about\/proceedings(.*?)\n/g,'')) });
     } catch (error){ }}
 
     //CfP Checker
