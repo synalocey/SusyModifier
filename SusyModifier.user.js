@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.5.16
+// @version       2.5.17
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -41,10 +41,10 @@
                                   +`Find us and receive more information in the section "%m_section%" of Mathematics:\n[Links]\n\nPlease do not hesitate to let us know if you have questions.`},
             'Template_Paper': {'label': '文章推广信模板', 'type': 'textarea', 'default':
                                `Dear %name%,\n\nThank you very much for your contribution to /Mathematics/, your manuscript %m_id% is now under review. We will keep you informed about the status of your manuscript.\n\n`
-                               +`In addition, you have published a paper/papers in /Mathematics/ in the past two years with the citation of about XX times. Based on your reputation and research interests, we believe that your results should attract more citations and attention. `
-                               +`Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\nIn addition, you have published a paper/papers in /Mathematics/ `
-                               +`in 20XX with the citation of XXXXX times, congratulations on your great work!\nTo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper/papers to your colleagues, friends, or `
-                               +`related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.`},
+                               +`In addition, you have published a paper/papers in /Mathematics/ in the past two years with the citation of about XX times. Based on your reputation and research interests, we believe that your results should attract more citations and `
+                               +`attention. Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\nIn addition, you have published a paper/`
+                               +`papers in /Mathematics/ in 20XX with the citation of XXXXX times, congratulations on your great work!\nTo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper/papers to `
+                               +`your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.`},
             'SIpages': {'section': [], 'label': '特刊列表显示所有特刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SInote': {'label': 'Special Issue Note 界面变大', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SInoteW': {'label': 'SI Note Width', 'labelPos': 'left', 'type': 'int', 'default': 500},
@@ -107,9 +107,10 @@
                 });
             },
         },
-        'css': `#SusyModifierConfig{background-color:#EDF8EF} textarea{font-size:12px;width:180px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:200px} #SusyModifierConfig_section_1{min-height:70px} #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px}
+        'css': `#SusyModifierConfig{background-color:#EDF8EF} textarea{font-size:12px;width:180px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:200px} #SusyModifierConfig_section_1{min-height:70px}
+        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}
         #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SIpages_field_label,#SusyModifierConfig_LinkShort_field_label{width:150px;display:inline-block;}
-        #SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_Con_Template_field_label{width:200px;display:inline-block;} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}
+        #SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_Con_Template_field_label{width:200px;display:inline-block;}
         #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label{display:block;}`
     });
     $("#topmenu [href='https://www.mdpi.com/about/']").after("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
@@ -214,7 +215,9 @@
         function init() {$("#mailSubject").val( $("#mailSubject").val().replace(GM_config.get('GE_TemplateS1'), GM_config.get('GE_TemplateS2')) );
                          $("#mailBody").val( $("#mailBody").val().replace(GM_config.get('GE_TemplateB1'), GM_config.get('GE_TemplateB2')) );}
         setTimeout(()=>{init()}, 1000)
-        if (S_GEID==269) {$('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace('We will gladly waive the article processing charge for papers from the Guest Editor. ', '');">[No Discount]</a>`);}
+        if (S_GEID==269) {
+            $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace('We will gladly waive the article processing charge for papers from the Guest Editor. ', '');">[No Discount]</a>`);
+        }
     } catch (error){ }}
 
     //GE Reminder✏️
@@ -265,8 +268,8 @@
                            GM_config.get('Template_Paper').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section).replace(/%name%/g,name[index]) + '"><img src="/bundles/mdpisusy/img/icon/mail.png"></a> ');
         });
 
-        $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=[Mathematics] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Mathematics Social Media&body=' +
-                                                     GM_config.get('Template_Linkedin').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
+        $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=[Mathematics] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Mathematics Social Media&body=' + GM_config.get('Template_Linkedin')
+                                                     .replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
         if (window.location.href.indexOf("?linkedin") > -1) {$("#linkedin")[0].click(); history.back();}
         $("[title='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query='+$("[title='Google']").prev().text()+
                                      '" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="https://c5.rgstatic.net/m/41542880220916/images/favicon/favicon-16x16.png"></a> ');
@@ -342,22 +345,22 @@
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+'" title="Reset"><img border="0" src="/bundles/mdpisusy/img/icon/arrow-180.png"></a> ');
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+'" title="Close">🆑</a> ');
             $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
-            $("#guestNextBtn").after(' <input id="endltry"style="display: inline-block;"type="button"class="submit"value="Experimental"><input id="endltry_stop"style="display: none;"type="button"class="submit"value="Stop"><input id="endltry_stopbox"style="display: none;"type="checkbox">');
-            $("#endltry_stop").click(endltry_stop); function endltry_stop (zEvent) {$("#endltry_stopbox").prop('checked',true)};
-            $("#endltry").click(sk_endltry); function sk_endltry (zEvent) {
-                var endltry_email = $("#form_email").val();
-                $("#endltry_stop").css("display","inline-block"); $("#endltry").css("display","none");
+            $("#guestNextBtn").after(' <input id=eltry style=display:inline-block type=button class=submit value=Experimental><input id=eltry_stop style=display:none type=button class=submit value=Stop><input id=eltry_stopbox style=display:none type=checkbox>');
+            $("#eltry_stop").click(eltry_stop); function eltry_stop (zEvent) {$("#eltry_stopbox").prop('checked',true)};
+            $("#eltry").click(sk_eltry); function sk_eltry (zEvent) {
+                var eltry_email = $("#form_email").val();
+                $("#eltry_stop").css("display","inline-block"); $("#eltry").css("display","none");
                 $("#guestNextBtn").click();
-                waitForKeyElements("#specialBackBtn", sk_endltry_check, true);
-                function sk_endltry_check() {
+                waitForKeyElements("#specialBackBtn", sk_eltry_check, true);
+                function sk_eltry_check() {
                     setTimeout(() => {
                         if (document.getElementById('process-special-issue-guest-editor') !=null) {
                             document.getElementById("process-special-issue-guest-editor").click()
-                        } else if ($("#endltry_stopbox").prop("checked")) {
-                            $("#endltry_stop").css("display","none"); $("#endltry").css("display","inline-block");
+                        } else if ($("#eltry_stopbox").prop("checked")) {
+                            $("#eltry_stop").css("display","none"); $("#eltry").css("display","inline-block");
                         } else {
-                            document.getElementById("specialBackBtn").click(); document.getElementById("form_email").value=endltry_email;
-                            sk_endltry();
+                            document.getElementById("specialBackBtn").click(); document.getElementById("form_email").value=eltry_email;
+                            sk_eltry();
                         }}, 1500)
                 }
             }
@@ -406,8 +409,9 @@
         function init() {$("#mailSubject").val( $("#mailSubject").val().replace(GM_config.get('Con_TemplateS1'), GM_config.get('Con_TemplateS2')) );
                          $("#mailBody").val( $("#mailBody").val().replace(GM_config.get('Con_TemplateB1'), GM_config.get('Con_TemplateB2')) );}
         setTimeout(()=>{init()}, 700)
-        $('#mailSubject').parent().after('<a id="Del_Proceedings">[Del Proceedings]</a>');
-        $('#Del_Proceedings').click(function(e) {$('#mailBody').val($('#mailBody').val().replace(
+        $('#mailSubject').parent().after('<div><a id="Opening_Line">[Opening Line]</a><br><br><a id="Del_Proceedings">[Del Proceedings]</a></div>');
+        $('#Opening_Line').click(function() {$('#mailBody').val("Dear Conference Committee,\nTo Whom It May Concern,\n"+$('#mailBody').val())})
+        $('#Del_Proceedings').click(function() {$('#mailBody').val($('#mailBody').val().replace(
             `\n- Conference proceedings. We are publishing a series of proceedings journals (https://www.mdpi.com/about/proceedings) which we believe can serve as an excellent venue for the conference papers of your event. `
             +`The journals are dedicated to publishing a range of content from academic conferences, including abstracts, extended abstracts, proceedings papers, meeting reports and posters. If this interests you, we are happy to send you more details.\n`,''
         )) });
@@ -419,7 +423,7 @@
         if(window.location.href.indexOf("//redmine.mdpi.com/") > -1){window.location.replace(decodeURIComponent(window.location.href.split("login?back_url=")[window.location.href.split("login?back_url=").length-1]).replace("//redmine.mdpi.com/","//redmine.mdpi.cn/"));}
         if(window.location.href.indexOf("//redmine.mdpi.cn//") > -1){window.location.replace(decodeURIComponent(window.location.href.replace(".cn//",".cn/")));}
         //排队界面
-        if(window.location.href.indexOf("/projects/si-planning/issues?utf8=") > -1){ $('[href="/users/64"]').css("background-color", "yellow"); $('h2:contains("Issues")').append(" <span style='background-color: yellow;'>(" + $('[href="/users/64"]').length + " pending CfP Team)</span>"); }
+        if(window.location.href.indexOf("/projects/si-planning/issues?utf8=")>-1){$('[href="/users/64"]').css("background-color","yellow"); $('h2:contains("Issues")').append(" <span style=background-color:#ff0>("+$('[href="/users/64"]').length+" pending CfP Team)</span>");}
         //CfP filter链接
         $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=Mathematics`
                                  + `&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[Maths CfP]</a>`)
@@ -471,6 +475,11 @@
     //Always: Mailsdb样式⚙️🔝
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/search/emails") > -1){try{
         $("head").append('<link rel="stylesheet" type="text/css" href="/assets/application-79a8659b0064dad9845d4ec2f290c6e94795079e79a99ab4354776213eb35db0.css">');
+        $("head").append(`<style>table{width:80%}.colorgray{color:gray!important}.bgcoloref{background:#efefef!important}#user-info .user-info-section{margin-bottom:10px}#user-info span.email{font-weight:400;color:#103247}#user-info span.number{font-weight:400;color:#123}
+                    #user-info a{color:#00f}#user-info a:visited{color:#cd7e53}#user-info a:hover{color:#47566d}#user-info table{margin-left:2%;width:98%;background:#99a4b5;margin-bottom:10px;border-right:1px solid #ccc;border-bottom:1px solid #ccc;font-size:14px}
+                    #user-info table tr th{text-align:left;background:#4f5671;color:#fefefe;font-weight:400;border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem}#user-info table tr td{border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem;
+                    background:#fefefe} #user-info table tr td span.msid{color:#4e6c88;font-weight:400}#user-info table tr td.title{width:50%}#user-info table tr td.journal{width:10%;text-align:center}#user-info table tr td.status{width:10%;text-align:center}
+                    #user-info table tr td.submission-date{width:10%;text-align:center}#user-info table tr td.invoice-info{width:10%;text-align:center}#user-info table tr td.invoice-payment-info{width:10%;text-align:center}</style>`);
         document.body.innerHTML = document.body.innerHTML.replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=');
 
         var susycheck = "https://susy.mdpi.com/user/info?emails="+ window.location.href.match(/search_content=(\S*)/)[1];
@@ -479,11 +488,6 @@
                 method: 'GET',
                 url: susycheck,
                 onload: function(responseDetails) {
-                    $("head").append(`<style>table{width:80%}.colorgray{color:gray!important}.bgcoloref{background:#efefef!important}#user-info .user-info-section{margin-bottom:10px}#user-info span.email{font-weight:400;color:#103247}#user-info span.number{font-weight:400;color:#123}
-                    #user-info a{color:#00f}#user-info a:visited{color:#cd7e53}#user-info a:hover{color:#47566d}#user-info table{margin-left:2%;width:98%;background:#99a4b5;margin-bottom:10px;border-right:1px solid #ccc;border-bottom:1px solid #ccc;font-size:14px}
-                    #user-info table tr th{text-align:left;background:#4f5671;color:#fefefe;font-weight:400;border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem}#user-info table tr td{border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem;background:#fefefe}
-                    #user-info table tr td span.msid{color:#4e6c88;font-weight:400}#user-info table tr td.title{width:50%}#user-info table tr td.journal{width:10%;text-align:center}#user-info table tr td.status{width:10%;text-align:center}
-                    #user-info table tr td.submission-date{width:10%;text-align:center}#user-info table tr td.invoice-info{width:10%;text-align:center}#user-info table tr td.invoice-payment-info{width:10%;text-align:center}</style>`);
                     $("body").prepend("<p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p>");
                     $("body").prepend(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href='));
                 } });
@@ -552,7 +556,7 @@
 
     //Always: Manage Voucher Applications + 页面最底端
     if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/list/") > -1){try{ document.getElementById("show-more-budgets").click();} catch (error){ }}
-    if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/view/") > -1){try{ waitForKeyElements(".user_box_head", voucher_scroll, true); function voucher_scroll(){scroll(0,document.body.scrollHeight)}; } catch (error){ }}
+    if(window.location.href.indexOf("//susy.mdpi.com/voucher/application/view/") > -1){try{ waitForKeyElements(".user_box_head", voucher_scroll, false); function voucher_scroll(){scroll(0,document.body.scrollHeight)}; } catch (error){ }}
 
     //Always: Editor Decision 返回处理界面
     if (window.location.href.indexOf("decision/process_form/") > -1){try{
