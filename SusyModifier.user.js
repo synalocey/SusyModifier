@@ -211,12 +211,11 @@
             case 'Guest Editor-Invite (Optional)': S_GEID=1151; break;
         }
         $('#emailTemplates').val(S_GEID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_TemplateID'));
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
         function init() {let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('GE_TemplateS2')) );
                          let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('GE_TemplateB2')) );}
-        setTimeout(()=>{init()}, 1000)
-        if (S_GEID==269) {
-            $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/We will gladly waive .+? from the Guest Editor. /, '');">[No Discount]</a>`);
-        }
+
+        if (S_GEID==269) { $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/We will gladly waive .+? from the Guest Editor. /, '');">[No Discount]</a>`); }
     } catch (error){ }}
 
     //GE Reminder✏️
@@ -232,7 +231,7 @@
         $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
         function init() {let t1 = RegExptest(GM_config.get('GE_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('GE_ReminderS2')) );
                          let t2 = RegExptest(GM_config.get('GE_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('GE_ReminderB2')) );}
-        setTimeout(()=>{init()}, 1500)
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
     } catch (error){ }}
 
     //EB invitation✏️
@@ -241,7 +240,7 @@
         $('#emailTemplates').val(firstid).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
         function init() {let t1 = RegExptest(GM_config.get('EB_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('EB_TemplateS2')) );
                          let t2 = RegExptest(GM_config.get('EB_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('EB_TemplateB2')) );}
-        setTimeout(()=>{init()}, 1000)
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
         $('#mailSubject').parent().after('<a id="No_Discount">[No Discount]</a>');
         $('#No_Discount').click(function(e) {
             $('#mailBody').val($('#mailBody').val().replace('you will have the opportunity to publish one paper free of charge in Mathematics per year, and can also publish extra papers with special discounts.\n\n','')
@@ -252,7 +251,7 @@
     if (window.location.href.indexOf("present_editor_ebm/remind_email") > -1){try{
         function init() {let t1 = RegExptest(GM_config.get('EB_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('EB_ReminderS2')) );
                          let t2 = RegExptest(GM_config.get('EB_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('EB_ReminderB2')) );}
-        setTimeout(()=>{init()}, 1500)
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
     } catch (error){ }}
 
     //文章处理页面[Voucher]按钮和发送推广信按钮
@@ -372,9 +371,7 @@
     } catch (error){ }}
 
     //默认新建特刊位置和Title Case
-    if (window.location.href.indexOf("susy.mdpi.com/user/special_issue/edit/0") > -1 && S_J>0){try{
-        $('#form_id_journal').val(S_J).change(); $("#form_id_journal_chosen>a>span").text(GM_config.get('Journal'));
-        document.getElementById('form_id_journal').dispatchEvent(new CustomEvent('change'));
+    if (window.location.href.indexOf("susy.mdpi.com/user/special_issue/edit/") > -1){try{
         $("#form_name").after("<a id='TitleCaseChicago'>🔡(Chicago)🔠</a> "); //brettterpstra.com/titlecase/?title
         $("#TitleCaseChicago").click(function () {
             if ($("#form_name").val().length > 1) {
@@ -389,6 +386,7 @@
                 })()
             }
         });
+        if (window.location.href.indexOf("/edit/0") > -1 && S_J>0) { $('#form_id_journal').val(S_J).change(); $("#form_id_journal_chosen>a>span").text(GM_config.get('Journal')); document.getElementById('form_id_journal').dispatchEvent(new CustomEvent('change'));}
     } catch (error){ }}
 
     //默认新建EBM位置
@@ -416,7 +414,7 @@
     if (window.location.href.indexOf("mdpi.com/user/send/conference_journal/contact_mail") > -1 && GM_config.get('Con_Template')){try{
         function init() {let t1 = RegExptest(GM_config.get('Con_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('Con_TemplateS2')) );
                          let t2 = RegExptest(GM_config.get('Con_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('Con_TemplateB2')) );}
-        setTimeout(()=>{init()}, 700)
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
         $('#mailSubject').parent().after('<div><a id="First_Line">[First Line]</a><br><br><a id="Del_Proceedings">[Del Proceedings]</a></div>');
         $('#First_Line').click(function() {$('#mailBody').val("Dear Conference Committee,\nTo Whom It May Concern,\n"+$('#mailBody').val()) });
         $('#Del_Proceedings').click(function() {$('#mailBody').val($('#mailBody').val().replace(/\n(.*?)https:\/\/www.mdpi.com\/about\/proceedings(.*?)\n/g,'')) });
@@ -588,6 +586,15 @@ function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)
     var alreadyFound=jThis.data('alreadyFound')||!1;if(!alreadyFound){var cancelFound=actionFunction(jThis);if(cancelFound) {btargetsFound=!1;} else jThis.data('alreadyFound',!0)}})}else{btargetsFound=!1} var controlObj=waitForKeyElements.controlObj||{};
     var controlKey=selectorTxt.replace(/[^\w]/g,"_");var timeControl=controlObj[controlKey];if(btargetsFound&&bWaitOnce&&timeControl){clearInterval(timeControl);delete controlObj[controlKey]}else{if(!timeControl){timeControl=setInterval(function()
     {waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)},300);controlObj[controlKey]=timeControl}}; waitForKeyElements.controlObj=controlObj }
+
+function waitForText(element, text, callback, freq) {
+    let interval = window.setInterval(test, freq || 200);
+    if (!element || !callback || typeof text !== 'string') {throw new TypeError('Bad value');}
+    function test() {
+        if (!element.parentNode) {window.clearInterval(interval);}
+        if (element.value.indexOf(text) > -1) { window.clearInterval(interval); callback.call(element);}
+    }
+}
 
 function p_get(url) { return new Promise(resolve => { GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve }); }) }
 
