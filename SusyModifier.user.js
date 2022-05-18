@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.5.17
+// @version       2.5.18
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -51,8 +51,8 @@
             'SInoteH': {'label': 'Height', 'labelPos': 'left', 'type': 'int', 'default': 1000},
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
                               ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)'], default: '!Guest Editor – invite Version 1'},
-            'GE_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "Invitation to Serve as"},
-            'GE_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.258, Rank Q1) Invitation to Serve as"},
+            'GE_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.* Guest Editor"},
+            'GE_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.258, Rank Q1) Invitation to Serve as the Guest Editor"},
             'GE_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderID': {'section': [], 'label': '默认 GE Reminder Template', 'type': 'select', 'labelPos': 'left', 'options':
@@ -62,23 +62,22 @@
             'GE_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_TemplateID': {'section': [], 'label': '默认 EB Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Editorial Board Member – Invite Version 1']},
-            'EB_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "Invitation to"},
-            'EB_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.258, Rank Q1) Invitation to"},
+            'EB_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation"},
+            'EB_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.258, Rank Q1) Invitation"},
             'EB_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_ReminderID': {'section': [], 'label': '默认 EB Reminder Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Editorial Board Member – Reminder']},
-            'EB_ReminderS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "Invitation to Serve as"},
-            'EB_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.258, Rank Q1) Invitation to Serve as"},
+            'EB_ReminderS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation"},
+            'EB_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.258, Rank Q1) Invitation"},
             'EB_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'LinkShort': {'section': [], 'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Con_Template': {'label': 'Contact Conference Template 修改', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Hidden_Func': {'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Con_TemplateS1': {'section': [], 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'Con_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'Con_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
-                               " and within the journal newsletter, to be sent out to our network of authors and subscribers. We would be glad if, in return, you could advertise the journal via the conference website and newsletter."},
+            'Con_TemplateS1': {'section': [], 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
+            'Con_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390, IF 2.258)"},
+            'Con_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex] and within the journal newsletter.* website and newsletter."},
             'Con_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website."},
         },
         'events': {
@@ -212,11 +211,11 @@
             case 'Guest Editor-Invite (Optional)': S_GEID=1151; break;
         }
         $('#emailTemplates').val(S_GEID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_TemplateID'));
-        function init() {$("#mailSubject").val( $("#mailSubject").val().replace(GM_config.get('GE_TemplateS1'), GM_config.get('GE_TemplateS2')) );
-                         $("#mailBody").val( $("#mailBody").val().replace(GM_config.get('GE_TemplateB1'), GM_config.get('GE_TemplateB2')) );}
+        function init() {let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('GE_TemplateS2')) );
+                         let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('GE_TemplateB2')) );}
         setTimeout(()=>{init()}, 1000)
         if (S_GEID==269) {
-            $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace('We will gladly waive the article processing charge for papers from the Guest Editor. ', '');">[No Discount]</a>`);
+            $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/We will gladly waive .+? from the Guest Editor. /, '');">[No Discount]</a>`);
         }
     } catch (error){ }}
 
@@ -231,14 +230,17 @@
         $('#emailTemplates').val(S_GERID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_ReminderID'));
         $('#mailSubject').parent().after('<a id="Awaiting"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a>');
         $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
+        function init() {let t1 = RegExptest(GM_config.get('GE_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('GE_ReminderS2')) );
+                         let t2 = RegExptest(GM_config.get('GE_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('GE_ReminderB2')) );}
+        setTimeout(()=>{init()}, 1500)
     } catch (error){ }}
 
     //EB invitation✏️
     if (window.location.href.indexOf("present_editor_ebm/invite_email") > -1){try{
         let firstid = $('#emailTemplates :contains("Editorial")').val();
         $('#emailTemplates').val(firstid).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-        function init() {$("#mailSubject").val( $("#mailSubject").val().replace(GM_config.get('EB_TemplateS1'), GM_config.get('EB_TemplateS2')) );
-                         $("#mailBody").val( $("#mailBody").val().replace(GM_config.get('EB_TemplateB1'), GM_config.get('EB_TemplateB2')) );}
+        function init() {let t1 = RegExptest(GM_config.get('EB_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('EB_TemplateS2')) );
+                         let t2 = RegExptest(GM_config.get('EB_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('EB_TemplateB2')) );}
         setTimeout(()=>{init()}, 1000)
         $('#mailSubject').parent().after('<a id="No_Discount">[No Discount]</a>');
         $('#No_Discount').click(function(e) {
@@ -248,8 +250,8 @@
 
     //EB Reminder✏️
     if (window.location.href.indexOf("present_editor_ebm/remind_email") > -1){try{
-        function init() {$("#mailSubject").val( $("#mailSubject").val().replace(GM_config.get('EB_ReminderS1'), GM_config.get('EB_ReminderS2')) );
-                         $("#mailBody").val( $("#mailBody").val().replace(GM_config.get('EB_ReminderB1'), GM_config.get('EB_ReminderB2')) );}
+        function init() {let t1 = RegExptest(GM_config.get('EB_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('EB_ReminderS2')) );
+                         let t2 = RegExptest(GM_config.get('EB_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('EB_ReminderB2')) );}
         setTimeout(()=>{init()}, 1500)
     } catch (error){ }}
 
@@ -405,12 +407,18 @@
 
     //会议相关
     if (window.location.href.indexOf("mdpi.com/user/conference/") > -1 && window.location.href.indexOf("/view") > -1){try{$("[name=journal_id]").val(S_J);} catch (error){ }}
+    if (window.location.href.indexOf("susy.mdpi.com/user/conference/add") > -1) {
+        if (S_J = 154) {
+            $("#form_subject_id").val(4); $("#form_subject_id_chosen span").text("Computer Science & Mathematics");
+            $("[id^=form_checklist],[id^=form_commercial_checklist]").change( function(){$("[id^=form_checklist],[id^=form_commercial_checklist]").prop("checked",true)} );
+        }
+    }
     if (window.location.href.indexOf("mdpi.com/user/send/conference_journal/contact_mail") > -1 && GM_config.get('Con_Template')){try{
-        function init() {$("#mailSubject").val( $("#mailSubject").val().replace(GM_config.get('Con_TemplateS1'), GM_config.get('Con_TemplateS2')) );
-                         $("#mailBody").val( $("#mailBody").val().replace(GM_config.get('Con_TemplateB1'), GM_config.get('Con_TemplateB2')) );}
+        function init() {let t1 = RegExptest(GM_config.get('Con_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('Con_TemplateS2')) );
+                         let t2 = RegExptest(GM_config.get('Con_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('Con_TemplateB2')) );}
         setTimeout(()=>{init()}, 700)
-        $('#mailSubject').parent().after('<div><a id="Opening_Line">[Opening Line]</a><br><br><a id="Del_Proceedings">[Del Proceedings]</a></div>');
-        $('#Opening_Line').click(function() {$('#mailBody').val("Dear Conference Committee,\nTo Whom It May Concern,\n"+$('#mailBody').val()) });
+        $('#mailSubject').parent().after('<div><a id="First_Line">[First Line]</a><br><br><a id="Del_Proceedings">[Del Proceedings]</a></div>');
+        $('#First_Line').click(function() {$('#mailBody').val("Dear Conference Committee,\nTo Whom It May Concern,\n"+$('#mailBody').val()) });
         $('#Del_Proceedings').click(function() {$('#mailBody').val($('#mailBody').val().replace(/\n(.*?)https:\/\/www.mdpi.com\/about\/proceedings(.*?)\n/g,'')) });
     } catch (error){ }}
 
@@ -581,8 +589,6 @@ function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)
     var controlKey=selectorTxt.replace(/[^\w]/g,"_");var timeControl=controlObj[controlKey];if(btargetsFound&&bWaitOnce&&timeControl){clearInterval(timeControl);delete controlObj[controlKey]}else{if(!timeControl){timeControl=setInterval(function()
     {waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)},300);controlObj[controlKey]=timeControl}}; waitForKeyElements.controlObj=controlObj }
 
-function p_get(url) {
-    return new Promise(resolve => {
-        GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve });
-    })
-}
+function p_get(url) { return new Promise(resolve => { GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve }); }) }
+
+function RegExptest(str) {if (str.indexOf("[Regex]")==0) {return RegExp(str.substring(7), "g");} else {return str} };
