@@ -71,45 +71,49 @@
             'EB_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.258, Rank Q1) Invitation"},
             'EB_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'LinkShort': {'section': [], 'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Con_Template': {'label': 'Contact Conference Template 修改', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Hidden_Func': {'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Con_TemplateS1': {'section': [], 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
+            'Con_Template': {'section': [], 'label': '修改 Conference Template', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Con_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
             'Con_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390, IF 2.258)"},
             'Con_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex] and within the journal newsletter.* website and newsletter."},
             'Con_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website."},
+            'LinkShort': {'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Hidden_Func': {'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
         },
         'events': {
             'save': function() {location.href = location.href},
             'open': function(doc) {
+                var f_settings = $("#SusyModifierConfig").contents();
                 //Experimental警告
-                GM_config.fields.Hidden_Func.node.addEventListener('change', function(){ if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {
+                GM_config.fields.Hidden_Func.node.addEventListener('change', function(){ if(f_settings.find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {
                     alert('Dangerous! \n\nDon\'t turn it on unless you are familiar with ALL susy functions. \nOtherwise, it will cause serious problems.')} });
                 //隐藏SI Note WH选项
-                if(!GM_config.get('SInote')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").hide() }
+                if(!GM_config.get('SInote')){ f_settings.find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").hide() }
                 GM_config.fields.SInote.node.addEventListener('change', function(doc){
-                    if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_SInote")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").show(); }
-                    else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").hide(); }
+                    if(f_settings.find("#SusyModifierConfig_field_SInote")[0].checked) { f_settings.find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").show(); }
+                    else { f_settings.find("#SusyModifierConfig_SInoteW_var, #SusyModifierConfig_SInoteH_var").hide(); }
                 });
                 //隐藏推广信模板
-                if(!GM_config.get('ManuscriptFunc')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").hide() }
+                if(!GM_config.get('ManuscriptFunc')){ f_settings.find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").hide() }
                 GM_config.fields.ManuscriptFunc.node.addEventListener('change', function(doc){
-                    if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_ManuscriptFunc")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").show(); }
-                    else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").hide() }
+                    if(f_settings.find("#SusyModifierConfig_field_ManuscriptFunc")[0].checked) { f_settings.find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").show(); }
+                    else { f_settings.find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").hide() }
                 });
                 //隐藏Conference Template
-                if(!GM_config.get('Con_Template')){ $("#SusyModifierConfig").contents().find("#SusyModifierConfig_section_8").hide() }
+                f_settings.find("#SusyModifierConfig_Con_TemplateB2_var").after('<div id="c_br"></div>')
+                if(!GM_config.get('Con_Template')) { f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").hide() }
                 GM_config.fields.Con_Template.node.addEventListener('change', function(doc){
-                    if($("#SusyModifierConfig").contents().find("#SusyModifierConfig_field_Con_Template")[0].checked) { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_section_8").show(); }
-                    else { $("#SusyModifierConfig").contents().find("#SusyModifierConfig_section_8").hide() }
+                    if(f_settings.find("#SusyModifierConfig_field_Con_Template")[0].checked) {
+                        f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").show()
+                    }
+                    else { f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").hide() }
                 });
             },
         },
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:180px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:200px} #SusyModifierConfig_section_1{min-height:70px}
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}
         #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SIpages_field_label,#SusyModifierConfig_LinkShort_field_label{width:150px;display:inline-block;}
-        #SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_Con_Template_field_label{width:200px;display:inline-block;}
+        #SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_SInote_field_label{width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label{width:175px;display:inline-block;}
         #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label{display:block;}`
     });
     $("#topmenu [href='https://www.mdpi.com/about/']").after("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
