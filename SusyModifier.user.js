@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.5.18
+// @version       2.5.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -106,7 +106,7 @@
                 });
             },
         },
-        'css': `#SusyModifierConfig{background-color:#EDF8EF} textarea{font-size:12px;width:180px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:200px} #SusyModifierConfig_section_1{min-height:70px}
+        'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:180px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:200px} #SusyModifierConfig_section_1{min-height:70px}
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}
         #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SIpages_field_label,#SusyModifierConfig_LinkShort_field_label{width:150px;display:inline-block;}
         #SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_Con_Template_field_label{width:200px;display:inline-block;}
@@ -211,12 +211,11 @@
             case 'Guest Editor-Invite (Optional)': S_GEID=1151; break;
         }
         $('#emailTemplates').val(S_GEID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_TemplateID'));
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
         function init() {let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('GE_TemplateS2')) );
                          let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('GE_TemplateB2')) );}
-        setTimeout(()=>{init()}, 1000)
-        if (S_GEID==269) {
-            $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/We will gladly waive .+? from the Guest Editor. /, '');">[No Discount]</a>`);
-        }
+
+        if (S_GEID==269) { $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/We will gladly waive .+? from the Guest Editor. /, '');">[No Discount]</a>`); }
     } catch (error){ }}
 
     //GE Reminder✏️
@@ -232,7 +231,7 @@
         $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
         function init() {let t1 = RegExptest(GM_config.get('GE_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('GE_ReminderS2')) );
                          let t2 = RegExptest(GM_config.get('GE_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('GE_ReminderB2')) );}
-        setTimeout(()=>{init()}, 1500)
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
     } catch (error){ }}
 
     //EB invitation✏️
@@ -241,7 +240,7 @@
         $('#emailTemplates').val(firstid).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
         function init() {let t1 = RegExptest(GM_config.get('EB_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('EB_TemplateS2')) );
                          let t2 = RegExptest(GM_config.get('EB_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('EB_TemplateB2')) );}
-        setTimeout(()=>{init()}, 1000)
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
         $('#mailSubject').parent().after('<a id="No_Discount">[No Discount]</a>');
         $('#No_Discount').click(function(e) {
             $('#mailBody').val($('#mailBody').val().replace('you will have the opportunity to publish one paper free of charge in Mathematics per year, and can also publish extra papers with special discounts.\n\n','')
@@ -252,7 +251,7 @@
     if (window.location.href.indexOf("present_editor_ebm/remind_email") > -1){try{
         function init() {let t1 = RegExptest(GM_config.get('EB_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('EB_ReminderS2')) );
                          let t2 = RegExptest(GM_config.get('EB_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('EB_ReminderB2')) );}
-        setTimeout(()=>{init()}, 1500)
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
     } catch (error){ }}
 
     //文章处理页面[Voucher]按钮和发送推广信按钮
@@ -372,9 +371,7 @@
     } catch (error){ }}
 
     //默认新建特刊位置和Title Case
-    if (window.location.href.indexOf("susy.mdpi.com/user/special_issue/edit/0") > -1 && S_J>0){try{
-        $('#form_id_journal').val(S_J).change(); $("#form_id_journal_chosen>a>span").text(GM_config.get('Journal'));
-        document.getElementById('form_id_journal').dispatchEvent(new CustomEvent('change'));
+    if (window.location.href.indexOf("susy.mdpi.com/user/special_issue/edit/") > -1){try{
         $("#form_name").after("<a id='TitleCaseChicago'>🔡(Chicago)🔠</a> "); //brettterpstra.com/titlecase/?title
         $("#TitleCaseChicago").click(function () {
             if ($("#form_name").val().length > 1) {
@@ -389,6 +386,7 @@
                 })()
             }
         });
+        if (window.location.href.indexOf("/edit/0") > -1 && S_J>0) { $('#form_id_journal').val(S_J).change(); $("#form_id_journal_chosen>a>span").text(GM_config.get('Journal')); document.getElementById('form_id_journal').dispatchEvent(new CustomEvent('change'));}
     } catch (error){ }}
 
     //默认新建EBM位置
@@ -408,15 +406,14 @@
     //会议相关
     if (window.location.href.indexOf("mdpi.com/user/conference/") > -1 && window.location.href.indexOf("/view") > -1){try{$("[name=journal_id]").val(S_J);} catch (error){ }}
     if (window.location.href.indexOf("susy.mdpi.com/user/conference/add") > -1) {
-        if (S_J = 154) {
-            $("#form_subject_id").val(4); $("#form_subject_id_chosen span").text("Computer Science & Mathematics");
-            $("[id^=form_checklist],[id^=form_commercial_checklist]").change( function(){$("[id^=form_checklist],[id^=form_commercial_checklist]").prop("checked",true)} );
-        }
+        $("#form_conference_organization").val(2).trigger("change"); $("#form_conference_organization_chosen span").text("Societies, Universities or University professors");
+        $("[id^=form_checklist]").parent().parent().show(); $("[id^=form_commercial],[id^=form_conference_commercial]").parent().parent().hide(); $("[id^=form_checklist],[id^=form_commercial_checklist]").prop("checked",true);
+        if (S_J = 154) { $("#form_subject_id").val(4); $("#form_subject_id_chosen span").text("Computer Science & Mathematics") }
     }
     if (window.location.href.indexOf("mdpi.com/user/send/conference_journal/contact_mail") > -1 && GM_config.get('Con_Template')){try{
         function init() {let t1 = RegExptest(GM_config.get('Con_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('Con_TemplateS2')) );
                          let t2 = RegExptest(GM_config.get('Con_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('Con_TemplateB2')) );}
-        setTimeout(()=>{init()}, 700)
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
         $('#mailSubject').parent().after('<div><a id="First_Line">[First Line]</a><br><br><a id="Del_Proceedings">[Del Proceedings]</a></div>');
         $('#First_Line').click(function() {$('#mailBody').val("Dear Conference Committee,\nTo Whom It May Concern,\n"+$('#mailBody').val()) });
         $('#Del_Proceedings').click(function() {$('#mailBody').val($('#mailBody').val().replace(/\n(.*?)https:\/\/www.mdpi.com\/about\/proceedings(.*?)\n/g,'')) });
@@ -588,6 +585,14 @@ function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)
     var alreadyFound=jThis.data('alreadyFound')||!1;if(!alreadyFound){var cancelFound=actionFunction(jThis);if(cancelFound) {btargetsFound=!1;} else jThis.data('alreadyFound',!0)}})}else{btargetsFound=!1} var controlObj=waitForKeyElements.controlObj||{};
     var controlKey=selectorTxt.replace(/[^\w]/g,"_");var timeControl=controlObj[controlKey];if(btargetsFound&&bWaitOnce&&timeControl){clearInterval(timeControl);delete controlObj[controlKey]}else{if(!timeControl){timeControl=setInterval(function()
     {waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)},300);controlObj[controlKey]=timeControl}}; waitForKeyElements.controlObj=controlObj }
+
+function waitForText(element, text, callback, freq) {
+    let interval = window.setInterval(test, freq || 200); if (!element || !callback || typeof text !== 'string') {throw new TypeError('Bad value');}
+    function test() {
+        if (!element.parentNode) {window.clearInterval(interval);}
+        if (element.value.indexOf(text) > -1) { window.clearInterval(interval); callback.call(element);}
+    }
+}
 
 function p_get(url) { return new Promise(resolve => { GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve }); }) }
 
