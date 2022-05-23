@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.5.20
+// @version       2.5.23
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -205,7 +205,7 @@
     } catch (error){ }}
 
     //GE Invitation✏️
-    if (window.location.href.indexOf("invite/guest_editor") > -1){try{
+    if (window.location.href.indexOf("/invite/guest_editor") > -1){try{
         var S_GEID;
         switch (GM_config.get('GE_TemplateID')) {
             case '!Guest Editor – invite Version 1': S_GEID=1518; break;
@@ -220,6 +220,22 @@
                          let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('GE_TemplateB2')) );}
 
         if (S_GEID==269) { $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/We will gladly waive .+? from the Guest Editor. /, '');">[No Discount]</a>`); }
+    } catch (error){ }}
+
+
+    //GE Invitation✏️
+    if (window.location.href.indexOf("/uninvite/guest_editor") > -1){try{
+        $('#emailTemplates').val(207).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
+        function init() {
+            $("#mailBody").val($("#mailBody").val().replace(/On.*/g,`We hope you are well. We recently invited you to lead the Special Issue “Mathematical Optimization in Pattern Recognition, Machine Learning and Data Mining” for Mathematics but have not yet heard a response. Fortunately, we find another Guest Editor (Dr. Valsamis Ntouskos) who would like to lead this Special Issue.
+
+You could find the Special Issue webpage at:
+https://www.mdpi.com/si/mathematics/Math_Opt_Pattern_Rec
+
+If you are interested in guest-editing a Special Issue on another topic, please feel free to let me know. We also encourage you to contribute a paper to this Special Issue if you have related works recently.
+
+If you have any questions or queries, please do not hesitate to contact us.`));}
     } catch (error){ }}
 
     //GE Reminder✏️
