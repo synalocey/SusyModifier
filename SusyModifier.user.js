@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.5.20
+// @version       2.5.25
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -48,7 +48,7 @@
             'SIpages': {'section': [], 'label': '特刊列表显示所有特刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SInote': {'label': 'Special Issue Note 界面变大', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SInoteW': {'label': 'SI Note Width', 'labelPos': 'left', 'type': 'int', 'default': 500},
-            'SInoteH': {'label': 'Height', 'labelPos': 'left', 'type': 'int', 'default': 1000},
+            'SInoteH': {'label': 'Height', 'labelPos': 'left', 'type': 'int', 'default': 500},
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
                               ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)'], default: '!Guest Editor – invite Version 1'},
             'GE_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.* Guest Editor"},
@@ -171,8 +171,8 @@
             $(".menu [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
         }
         $(".menu [href='/user/myprofile']").after(" <a href='/user/settings'>[Settings]</a>");
-        $(".menu [href='/special_issue_pending/list']").after(" <a href='/user/sme/status/submitted'>[M]</a>");
-        $(".menu [href='/special_issue_pending/list']").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC")
+        $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
+        $(".menu [href='/special_issue_pending/list']").text("Manage").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC")
         $(".menu [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[M]</a>");
         $(".menu [href='/submission/topic/list']").attr("href","/submission/topic/list/online");
         $(".menu [href='/user/ebm-new/management']").after("<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/magnifier.png'></a> </div> ");
@@ -205,7 +205,7 @@
     } catch (error){ }}
 
     //GE Invitation✏️
-    if (window.location.href.indexOf("invite/guest_editor") > -1){try{
+    if (window.location.href.indexOf("/invite/guest_editor") > -1){try{
         var S_GEID;
         switch (GM_config.get('GE_TemplateID')) {
             case '!Guest Editor – invite Version 1': S_GEID=1518; break;
@@ -218,12 +218,12 @@
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         function init() {let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('GE_TemplateS2')) );
                          let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('GE_TemplateB2')) );}
-
+        document.getElementById("emailTemplates_chosen").scrollIntoView();
         if (S_GEID==269) { $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/We will gladly waive .+? from the Guest Editor. /, '');">[No Discount]</a>`); }
     } catch (error){ }}
 
     //GE Reminder✏️
-    if (window.location.href.indexOf("remind/guest_editor") > -1){try{
+    if (window.location.href.indexOf("/remind/guest_editor") > -1){try{
         var S_GERID;
         switch (GM_config.get('GE_ReminderID')) {
             case 'Guest Editor Invitation – 1st Reminder': S_GERID=1618; break;
@@ -236,6 +236,7 @@
         function init() {let t1 = RegExptest(GM_config.get('GE_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('GE_ReminderS2')) );
                          let t2 = RegExptest(GM_config.get('GE_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('GE_ReminderB2')) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
+        document.getElementById("emailTemplates_chosen").scrollIntoView();
     } catch (error){ }}
 
     //EB invitation✏️
@@ -245,6 +246,7 @@
         function init() {let t1 = RegExptest(GM_config.get('EB_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('EB_TemplateS2')) );
                          let t2 = RegExptest(GM_config.get('EB_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('EB_TemplateB2')) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
+        document.getElementById("emailTemplates").scrollIntoView();
         $('#mailSubject').parent().after('<a id="No_Discount">[No Discount]</a>');
         $('#No_Discount').click(function(e) {
             $('#mailBody').val($('#mailBody').val().replace('you will have the opportunity to publish one paper free of charge in Mathematics per year, and can also publish extra papers with special discounts.\n\n','')
@@ -256,6 +258,7 @@
         function init() {let t1 = RegExptest(GM_config.get('EB_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('EB_ReminderS2')) );
                          let t2 = RegExptest(GM_config.get('EB_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('EB_ReminderB2')) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
+        document.getElementById("emailTemplates").scrollIntoView();
     } catch (error){ }}
 
     //文章处理页面[Voucher]按钮和发送推广信按钮
@@ -342,7 +345,7 @@
             function SINotes() {
                 $("#manuscript-special-issue-notes").css("height",GM_config.get('SInoteH')+"px");
                 $("[aria-describedby|='manuscript-special-issue-notes']").css("width",GM_config.get('SInoteW')+"px");
-                $("#special_issue_notesText, #topic_notesText").css("height",GM_config.get('SInoteH')-200 +"px");
+                $("#special_issue_notesText, #topic_notesText").css("height",GM_config.get('SInoteH')-100 +"px");
             }
         }
         $('#si-update-emphasized').before('<a href="?pagesection=AddGuestEditor" title="Add Guest Editor">➕</a> ');
