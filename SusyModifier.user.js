@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.6.29
+// @version       2.7.1
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -214,6 +214,7 @@
             case 'Guest Editor - Invite with Discounts': S_GEID=874; break;
             case 'Guest Editor-Invite (Optional)': S_GEID=1151; break;
         }
+        $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/, entitled.*?, in our/g, 'in our').replace(/Please click [\\s\\S]*?https.*\\n\\n/g, '');">🖇️</a>`);
         $('#emailTemplates').val(S_GEID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_TemplateID'));
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         function init() {let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('GE_TemplateS2')) );
@@ -589,6 +590,19 @@
         $("a:contains('Peer-Reviewed')").parent().after('<a id="s_linkedin" href="' + $("a:contains('Peer-Reviewed')").attr("href") +'?linkedin"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a"></a>');
         $("#s_linkedin").click(function() {$("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`)});
     } catch (error){ }}
+
+
+
+    if (window.location.href.indexOf("/special_issue/email/planned_paper") > -1){try{
+        $('#emailTemplates').val(263).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
+        function init() {$("#mailSubject").val( $("#mailSubject").val().replace("[Mathematics] Reminder and submission guide", "[Mathematics] New Impact Factor (2.592)") );
+                         $("#mailBody").val( $("#mailBody").val().replace("You previously accepted our invitation to contribute a paper to our Special Issue:", "Firstly, we are glad to share with you that the 2021 Impact Factor of Mathematics has increased from 2.258 to 2.592 in the recent release of the Journal Citation Reports®, ranking JCR Q1.\n\nYou previously showed interest in the following Special Issue, We hope to receive your submission by the deadline.\n")
+                                            .replace("\nThe deadline is approaching, so I’m writing to kindly ask you the status of your planned paper for the Special Issue.\n","") );}
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
+        document.getElementById("emailTemplates_chosen").scrollIntoView();
+    } catch (error){ }}
+
+
 })();
 
 function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector) {
