@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.7.2
+// @version       2.7.4
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -609,7 +609,7 @@
 
     //Always: iThenticate AUTO
     if (window.location.href.indexOf("managing/status/submitted") + window.location.href.indexOf("sme/status/submitted") > -2){try{
-        $("#show_title").parent().append("<input type='button' id='send_ith' value='Send iThenticate in Bulk'>")
+        $("#show_title").parent().append("<input type='button' id='send_ith' value='Send iThenticate in OneClick'>")
         $("#send_ith").click(function() {
             $("a[href*='/process_form/']").each(function() {chk_ith($(this).attr('href'),$(this).text())});
             $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
