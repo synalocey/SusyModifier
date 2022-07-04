@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.7.4
+// @version       2.7.5
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -29,10 +29,10 @@
         'title': 'Settings of SusyModifier v'+GM_info.script.version,
         'fields':  {
             'Interface_sidebar': {'section': [],'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Interface_SME': {'label': 'I am SME of', 'type': 'select', 'labelPos': 'left', 'options':
+            'Interface_SME': {'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
                               ['','Algebra and Geometry','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
                                'Fuzzy Set Theory','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics Theory'], 'default': ''},
-            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Mathematics', 'None'], 'default': 'Mathematics'},
+            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Children','Games','Mathematics','None'], 'default': 'Mathematics'},
             'Interface_combine': {'label': 'Topic Manuscripts整合到SI', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Manuscriptnote': {'section': [],'label': 'Manuscript Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'ManuscriptFunc': {'label': '快捷申请优惠券和发送推广信按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
@@ -117,9 +117,17 @@
                 });
                 GM_config.fields.PP_Template.node.addEventListener('change', function(doc){
                     if(f_settings.find("#SusyModifierConfig_field_PP_Template")[0].checked) {
-                        f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").show()
+                        f_settings.find("#Sus~yModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").show()
                     }
                     else { f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").hide() }
+                });
+                //隐藏Section
+                if(GM_config.get('Journal') != "Mathematics"){ f_settings.find("#SusyModifierConfig_field_Interface_SME").hide(); }
+                GM_config.fields.Journal.node.addEventListener('change', function(doc){
+                    if(f_settings.find("#SusyModifierConfig_field_Journal").val() == "Mathematics") {
+                        f_settings.find("#SusyModifierConfig_field_Interface_SME").show()
+                    }
+                    else { f_settings.find("#SusyModifierConfig_field_Interface_SME").hide() }
                 });
             },
         },
@@ -134,6 +142,9 @@
     var S_J, S_S;
     switch (GM_config.get('Journal')) {
         case 'Mathematics': S_J=154; break;
+        case 'Children': S_J=159; break;
+        case 'AppliedMath': S_J=517; break;
+        case 'Games': S_J=25; break;
         case 'None': S_J=-1; break;
     }
 
@@ -148,7 +159,8 @@
         Email: <input type='email' name='form[email]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='EBM Search'></form><hr>
         <form class='insertform' method='get' action='//susy.mdpi.com/user/conference/list' target='_blank'>Conference: <input type='text' name='form[conference_name]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='Search'></form>`);
 
-        switch (GM_config.get('Interface_SME')) {
+        S_S=-1;
+        if (S_J==154) {switch (GM_config.get('Interface_SME')) {
             case 'Algebra and Geometry': S_S=915; break;
             case 'Computational and Applied Mathematics': S_S=892; break;
             case 'Difference and Differential Equations': S_S=894; break;
@@ -162,8 +174,7 @@
             case 'Mathematics and Computer Science': S_S=555; break;
             case 'Network Science': S_S=557; break;
             case 'Probability and Statistics Theory': S_S=916; break;
-            case '':S_S=-1;break;
-        }
+        }}
 
         if (S_S>0 && S_J>0){
             $(".menu [href='/special_issue_pending/list']").after("<a href='/special_issue_pending/list/online?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[S]</a>");
@@ -263,7 +274,7 @@
         document.getElementById("emailTemplates").scrollIntoView();
         $('#mailSubject').parent().after('<a id="No_Discount">[No Discount]</a>');
         $('#No_Discount').click(function(e) {
-            $('#mailBody').val($('#mailBody').val().replace('you will have the opportunity to publish one paper free of charge in Mathematics per year, and can also publish extra papers with special discounts.\n\n','')
+            $('#mailBody').val($('#mailBody').val().replace(/you will have the opportunity to publish one paper free of charge in .* per year, and can also publish extra papers with special discounts.\n\n/,'')
                                .replace('Additionally, we would like to invite you to publish one paper per year—this will be free of charge once accepted for publication. ','').replace(/\nPlease click on the following link .*?\nhttp.*?\n/g,''))});
     } catch (error){ }}
 
@@ -282,15 +293,16 @@
         let m_section = $("div.cell.small-12.medium-6.large-2:contains('Section') + div").text().trim();
         let m_si = $("div.cell.small-12.medium-6.large-2:contains('Special Issue') + div").text().trim();
         let corresponding=$("b:contains('*')").parent("td").next().last().text().trim();
+        let m_journal=$("div .cell.small-12.medium-6.large-2:contains('Journal')").next().text().trim();
 
         $("table [title|='Google Scholar']").each(function( index ) {
             name[index] = $(this).parent().prev().text().trim() + " " + $(this).parent().children("b").first().text().trim();
             email[index] = $(this).parent().next().text().trim();
-            $(this).before('<a href="mailto:'+email[index]+'?subject=[Mathematics] (IF 2.592, ISSN 2227-7390) Promote Your Published Papers&body=' +
+            $(this).before('<a href="mailto:'+email[index]+'?subject=['+ m_journal +'] (IF 2.592, ISSN 2227-7390) Promote Your Published Papers&body=' +
                            GM_config.get('Template_Paper').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section).replace(/%name%/g,name[index]) + '"><img src="/bundles/mdpisusy/img/icon/mail.png"></a> ');
         });
 
-        $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=[Mathematics] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Mathematics Social Media&body=' + GM_config.get('Template_Linkedin')
+        $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=['+ m_journal +'] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Social Media&body=' + GM_config.get('Template_Linkedin')
                                                      .replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
         if (window.location.href.indexOf("?linkedin") > -1) {$("#linkedin")[0].click(); history.back();}
         $("[title='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query='+$("[title='Google']").prev().text()+
@@ -421,8 +433,8 @@
     } catch (error){ }}
 
     //特刊网页短链接
-    if (window.location.href.indexOf("mdpi.com/journal/mathematics/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 && GM_config.get('LinkShort')){try{
-        window.location.href=window.location.href.replace(/\/journal\/mathematics\/special_issues\//,"/si/mathematics/");
+    if (window.location.href.indexOf("mdpi.com/journal/") > -1 && window.location.href.indexOf("/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 && GM_config.get('LinkShort')){try{
+        window.location.href=window.location.href.replace(/\/journal\/(.*)\/special_issues\//,"/si/$1/");
     } catch (error){ }}
 
     //会议相关
@@ -458,14 +470,14 @@
         //排队界面
         if(window.location.href.indexOf("/projects/si-planning/issues?utf8=")>-1){$('[href="/users/64"]').css("background-color","yellow"); $('h2:contains("Issues")').append(" <span style=background-color:#ff0>("+$('[href="/users/64"]').length+" pending CfP Team)</span>");}
         //CfP filter链接
-        $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=Mathematics`
-                                 + `&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[Maths CfP]</a>`)
+        $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=` + GM_config.get('Journal')
+                                 + `&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[`+GM_config.get('Journal')+` CfP]</a>`)
         //Checker功能和检测函数
         $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").click(sk_cfpcheck_func);
         function sk_cfpcheck_func (zEvent) {
             let Today=new Date();
             $("#issue_pe_note").val($("#issue_pe_note").val()+"--- Checked on " + Today.getFullYear()+ "-" + (Today.getMonth()+1) + "-" + Today.getDate() + " ---\n");
-            if($(".subject").eq(0).text().indexOf("[Mathematics]") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Mathematics]\n")}
+            if($(".subject").eq(0).text().indexOf(GM_config.get('Journal')) == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Journal Name]\n")}
 
             (async () => {
                 var result="";
