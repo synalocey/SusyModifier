@@ -174,7 +174,7 @@ proxies:
     server: 188.188.10.252
     port: 19970
   - name: SKDAY
-    server: v2.skday.com
+    server: v2.xxxxxxx
     port: 3389
     type: ssr
     cipher: dummy
@@ -184,33 +184,35 @@ proxies:
     protocol-param: ""
     obfs-param: ""
     udp: true
-  - name: 🇰🇷 Korea 4
-    server: enncpfg.roygxe.xyz
-    port: 36305
-    type: ssr
-    cipher: chacha20-ietf
-    password: nexitally
-    protocol: auth_aes128_sha1
-    obfs: plain
-    protocol-param: 23171847:4bc1057b2859444b
-    obfs-param: ""
+  - name: 🇰🇷 Korea 04
+    type: trojan
+    server: xyz.xyz
+    port: 21956
+    password: fd
+    sni: v1-dy.ixigua.com
+    skip-cert-verify: true
     udp: true
-  - name: 🇭🇰 Hong Kong LB
-    server: zgcalos.qbbzwi.xyz
-    port: 34686
-    type: ssr
-    cipher: chacha20-ietf
-    password: nexitally
-    protocol: auth_aes128_sha1
-    obfs: plain
-    protocol-param: 23171847:4bc1057b2859444b
-    obfs-param: ""
+  - name: 🇭🇰 Hong Kong 18
+    server: xyz.xyz
+    port: 43407
+    type: ss
+    cipher: aes-128-gcm
+    password: 02
+    udp: true
+  - name: 🇭🇰 Hong Kong 19
+    server: xyz.xyz
+    port: 42662
+    type: ss
+    cipher: aes-128-gcm
+    password: 02
     udp: true
 proxy-groups:
   - name: 🚀 节点选择
     type: select
     proxies:
-      - 🇭🇰 Hong Kong LB
+      - 🇰🇷 Korea 04
+      - 🇭🇰 Hong Kong 18
+      - 🇭🇰 Hong Kong 19
       - Relay
       - SKDAY
       - Left
@@ -237,9 +239,10 @@ proxy-groups:
   - name: Relay
     type: relay
     proxies:
-      - 🇰🇷 Korea 4
+      - 🇰🇷 Korea 04
       - SKDAY
 rules:
+  - DST-PORT,465,📧 Mails
   - DOMAIN-KEYWORD,hotmail,📧 Mails
   - DOMAIN-KEYWORD,gmail,📧 Mails
   - DOMAIN-SUFFIX,acl4ssr,DIRECT
