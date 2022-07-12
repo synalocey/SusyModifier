@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.7.6
+// @version       2.7.12
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -79,11 +79,12 @@
             'LinkShort': {'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Hidden_Func': {'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Con_Template': {'section': [], 'label': '修改 Conference 模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Con_Template': {'section': [], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Con_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
             'Con_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390, IF 2.592)"},
             'Con_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex] and within the journal newsletter.* website and newsletter."},
             'Con_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website."},
+            'Assign_Assistant': {'label': '派稿助手', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
         },
         'events': {
             'save': function() {location.href = location.href},
@@ -117,7 +118,7 @@
                 });
                 GM_config.fields.PP_Template.node.addEventListener('change', function(doc){
                     if(f_settings.find("#SusyModifierConfig_field_PP_Template")[0].checked) {
-                        f_settings.find("#Sus~yModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").show()
+                        f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").show()
                     }
                     else { f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").hide() }
                 });
@@ -572,8 +573,8 @@
                                 + `165,419,511,358,436,271,353,16,252,114,162,130,206,246,3,233,265,528,518,414,173,296,466,294,15,376,44,131,417,150,276,133,228,291,269,36,504";'>[All Journal]</a>`);
     } catch (error){ }}
 
-    //Hidden_Func: Paper Rejection
-    if(window.location.href.indexOf("assigned/reject-manuscript/") > -1 && GM_config.get('Hidden_Func')){try{ $('#emailTemplates').val(77).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); } catch (error){ }}
+    //Hidden_Func: Paper ID to page
+    if(window.location.href.indexOf("susy.mdpi.com/ajax/submission_get_manuscripts") > -1 && GM_config.get('Hidden_Func')){try{$.get(window.location.href, function(res) {window.location.href=res[0].url})} catch (error){ }}
 
     //Hidden_Func: Remind 2nd Round Reviewer
     if (window.location.href.indexOf("assigned/remind_reviewer") > -1 && GM_config.get('Hidden_Func')){try{
@@ -622,8 +623,8 @@
         if(searchParams.has('user')) {window.location.href="https://scholar.google.com/citations?hl=en&user="+searchParams.get('user')}
     } catch (error){ }}
 
-    //Always: iThenticate AUTO
-    if (window.location.href.indexOf("managing/status/submitted") + window.location.href.indexOf("sme/status/submitted") > -2){try{
+    //派稿助手: iThenticate AUTO
+    if (window.location.href.indexOf("managing/status/submitted") + window.location.href.indexOf("sme/status/submitted") > -2 && GM_config.get('Assign_Assistant')){try{
         $("#show_title").parent().append("<input type='button' id='send_ith' value='Send iThenticate in OneClick'>")
         $("#send_ith").click(function() {
             $("a[href*='/process_form/']").each(function() {chk_ith($(this).attr('href'),$(this).text())});
@@ -648,6 +649,24 @@
                     } });
             }
         });
+
+        $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align","center").bind("contextmenu",function(e){return false;}).each(function() {
+            $(this).append("<a class='sk_reject' style='font-style:italic' href='//susy.mdpi.com/user/assigned/reject-manuscript/"+$(this).parents("tr").find("td:nth-child(4) >> a").attr("href").split("/").pop()+"'>[Reject]</a>");} );
+
+        $(".sk_reject").on('mouseup', function (e){switch (e.which) {
+            case 3: // Right click.
+                if(confirm('The paper will be rejected immediately using "without Peer Review Template"')) {GM_openInTab($(this).attr("href")+"?quickreject", 1);$(this).parent().html("[Rejected]");}
+                return;
+        }; return true;});
+    } catch (error){ }}
+
+    //派稿助手: Paper Rejection
+    if(window.location.href.indexOf("assigned/reject-manuscript/") > -1 && GM_config.get('Assign_Assistant')){try{
+        $('#emailTemplates').val(77).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); window.scrollTo(0, document.body.scrollHeight);
+        if(window.location.search == "?quickreject"){
+            waitForText(document.querySelector('#mailSubject'), ' ', init);
+            function init() {$("#sendingEmail").click();}
+        }
     } catch (error){ }}
 
     //ManuscriptFunc: 文章页面加[Linkedin]
