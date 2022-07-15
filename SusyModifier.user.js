@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.7.12
+// @version       2.7.15
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -575,6 +575,9 @@
 
     //Hidden_Func: Paper ID to page
     if(window.location.href.indexOf("susy.mdpi.com/ajax/submission_get_manuscripts") > -1 && GM_config.get('Hidden_Func')){try{$.get(window.location.href, function(res) {window.location.href=res[0].url})} catch (error){ }}
+
+    //Hidden_Func: PSAN Redirect
+    if(window.location.href=='https://admin.mdpi.com/' && GM_config.get('Hidden_Func')) {try{window.location.href='https://admin.mdpi.com/tools/email-purger/email-list'} catch (error){ }}
 
     //Hidden_Func: Remind 2nd Round Reviewer
     if (window.location.href.indexOf("assigned/remind_reviewer") > -1 && GM_config.get('Hidden_Func')){try{
