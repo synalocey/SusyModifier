@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.7.15
+// @version       2.7.18
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -355,9 +355,9 @@
                     method: "GET",
                     url: $(".pagination.margin-0 a:contains('2')").attr("href").replace(/page=2/gi,"page="+counter),
                     onload: function(response) {
-                        var $jQueryObject = $('#statustable',$.parseHTML(response.responseText));
+                        var $jQueryObject = $('#maincol >>> table',$.parseHTML(response.responseText));
                         $($jQueryObject).attr('id','statustable'+counter);
-                        $('#statustable').parent().append($jQueryObject);
+                        $('#maincol >>> table').parent().append($jQueryObject);
                         doXHR(counter+1);
                     }
                 });
