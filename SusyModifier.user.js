@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.7.28
+// @version       2.7.30
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -78,13 +78,13 @@
             'PP_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'LinkShort': {'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Assign_Assistant': {'label': '派稿助手', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Hidden_Func': {'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Con_Template': {'section': [], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Con_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
             'Con_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390, IF 2.592)"},
             'Con_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex] and within the journal newsletter.* website and newsletter."},
             'Con_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website."},
-            'Assign_Assistant': {'label': '派稿助手', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
         },
         'events': {
             'save': function() {location.href = location.href},
@@ -133,12 +133,14 @@
             },
         },
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
-        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px}
+        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_field_SInoteW,#SusyModifierConfig_field_SInoteH{width:50px} #SusyModifierConfig_Hidden_Func_var{display:none}
         #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SIpages_field_label,#SusyModifierConfig_LinkShort_field_label{width:140px;display:inline-block;}
         #SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_SInote_field_label{width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label{width:145px;display:inline-block;}
         #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label{display:block;}`
     });
-    $("#topmenu > ul").append("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
+    const date_v= new Date('202'+GM_info.script.version);
+    if ((Date.now() - date_v)/86400000 > 180) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
+    else {$("#topmenu > ul").append("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});}
 
     var S_J, S_S;
     switch (GM_config.get('Journal')) {
@@ -568,7 +570,7 @@
                 url: susycheck,
                 onload: function(responseDetails) {
                     $("body").prepend("<p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p>");
-                    $("body").prepend(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href='));
+                    $("body").prepend(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=').replace(/<h1>[\s\S]*<\/h1>/g,''));
                 } });
 
             susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1";
