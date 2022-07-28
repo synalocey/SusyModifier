@@ -367,8 +367,8 @@
                 } catch (error){ }
 
             if ($("strong.margin-horizontal-1").text().indexOf("decision") > -1) {
-                $.get("/redmine/layout/form/" + window.location.href.match("process_form/(\\w*)")[1], function(res) {
-                    if (res.indexOf(" ...") > -1) {$("legend:contains('Academic Editor Decision')").append(" [Layout Sent]")} else {$("legend:contains('Academic Editor Decision')").append(" <span style='color:yellow'>[Layout NOT Sent]</span>")}
+                $.get("/user/assigned/production_form/" + window.location.href.match("process_form/(\\w*)")[1], function(res) {
+                    if (res.indexOf("see more at redmine issue ") > -1) {$("legend:contains('Academic Editor Decision')").append(" [Layout Sent]")} else {$("legend:contains('Academic Editor Decision')").append(" <span style='color:yellow'>[Layout NOT Sent]</span>")}
                 });
 
 
