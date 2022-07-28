@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.7.21
+// @version       2.7.28
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -204,7 +204,7 @@
 
         if (GM_config.get('Assign_Assistant')) {
             $("body").append( `<div id='add_r' role='dialog' style='display: none; position: absolute; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
-        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle'><span class='ui-dialog-title'>Add Reviewers</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
+        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [for GL]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
         onclick='document.getElementById("add_r").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_r_t" class="manuscript-add-note-form"
         placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu\nmathematics-yyyyyy\nccc@ccc.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_r_b" class="submit">Submit</button></div></div>`);
             $(".menu [href='/user/assigned/status/ongoing']").after(`<div style='float:right;'><a onclick='$("#add_r").show(); $("#add_r").draggable({handle: "#mover"});'><img src='https://susy.mdpi.com/bundles/mdpisusy/img/icon/users.png'></a></div>`);
@@ -362,10 +362,17 @@
             });
         }
         if (GM_config.get('Assign_Assistant')) {
-            let params = new window.URLSearchParams(window.location.search);
-            let reviewer = params.get('r');
-            if (reviewer.indexOf("@") > -1) {$("#form_email").val(reviewer); $("#nextBtn").click(); waitForKeyElements('#specialBackBtn', scrolldown, true);
-                                             function scrolldown() {document.getElementById("form_email").scrollIntoView()}; }
+            try {let params = new window.URLSearchParams(window.location.search); let reviewer = params.get('r');
+                 if (reviewer.indexOf("@") > -1) {$("#form_email").val(reviewer); $("#nextBtn").click(); waitForKeyElements('#specialBackBtn', scrolldown, true); function scrolldown() {document.getElementById("form_email").scrollIntoView()}; }
+                } catch (error){ }
+
+            if ($("strong.margin-horizontal-1").text().indexOf("decision") > -1) {
+                $.get("/redmine/layout/form/" + window.location.href.match("process_form/(\\w*)")[1], function(res) {
+                    if (res.indexOf(" ...") > -1) {$("legend:contains('Academic Editor Decision')").append(" [Layout Sent]")} else {$("legend:contains('Academic Editor Decision')").append(" <span style='color:yellow'>[Layout NOT Sent]</span>")}
+                });
+
+
+            }
         }
     } catch (error){ }}
 
@@ -572,6 +579,8 @@
                     $("body").prepend("<p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p>");
                     var $jQueryObject = $($.parseHTML(responseDetails.responseText.replace(/data-load-url="\/user/g,'data-load-url="//susy.mdpi.com/user')));
                     $("body").prepend($jQueryObject);
+                    $(".morphNotes").attr("href", "//scholar.google.com/scholar?hl=en&q=" + window.location.href.match(/search_content=(\S*)/)[1]).attr("target","_blank").text("").append('<img src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png">')
+                    $("[title='show GE info']").attr("href","//scholar.google.com/scholar?hl=en&q="+/Name: (.*)/.exec($("[title='show GE info']").parent().text())[1]).attr("target","_blank").prepend('<img src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png">')
                 } });
         }
     } catch (error){ }}
@@ -589,15 +598,18 @@
         $("a:contains('see more')").attr('href',$("a:contains('see more')").attr('data-uri'));
     } catch (error){ } }
 
+    //Always: Paper ID to page
+    if(window.location.href.indexOf("susy.mdpi.com/ajax/submission_get_manuscripts") > -1){try{$.get(window.location.href, function(res) {window.location.href=res[0].url.replace('/production_form/','/process_form/')+window.location.search})} catch (error){ }}
+
+    //Always: Unsubscribe link to page
+    if(window.location.href.indexOf("susy.mdpi.com/user/get/unsubscribe_manage_link") > -1){try{$.get(window.location.href, function(res) {window.location.href=res.link})} catch (error){ }}
+
     //Hidden_Func: MRS ALL journals
     if(window.location.href.indexOf("//mrs.mdpi.com/data/role/") > -1 && GM_config.get('Hidden_Func')){try{
         $('#demo-form2').before(` <a onclick='$("#journal > option")[0].value="250,77,145,362,13,524,534,341,456,390,90,480,517,491,523,35,118,471,323,47,82,346,67,427,240,103,515,299,305,143,487,531,441,123,26,214,440,467,213,176,416,259,428,385,356,142,151,`
                                 + `84,404,306,397,127,449,7,402,5,412,83,509,192,301,42,492,275,395,19,460,53,25,413,409,453,79,474,481,163,50,225,215,148,221,355,203,499,37,51,435,170,290,49,432,199,14,407,231,154,81,92,59,522,465,438,314,457,365,359,360,444,`
                                 + `165,419,511,358,436,271,353,16,252,114,162,130,206,246,3,233,265,528,518,414,173,296,466,294,15,376,44,131,417,150,276,133,228,291,269,36,504";'>[All Journal]</a>`);
     } catch (error){ }}
-
-    //Hidden_Func: Paper ID to page
-    if(window.location.href.indexOf("susy.mdpi.com/ajax/submission_get_manuscripts") > -1){try{$.get(window.location.href, function(res) {window.location.href=res[0].url.replace('/production_form/','/process_form/')+window.location.search})} catch (error){ }}
 
     //Hidden_Func: PSAN Redirect
     if(window.location.href=='https://admin.mdpi.com/' && GM_config.get('Hidden_Func')) {try{window.location.href='https://admin.mdpi.com/tools/email-purger/email-list'} catch (error){ }}
