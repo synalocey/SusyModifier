@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.7.30
+// @version       2.8.3
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -196,6 +196,8 @@
             $(".menu [href='/topic/proposal/list']").attr("href","/topic/proposal/list?form[journal_id]=" + S_J);
             $(".menu [href='/user/conference/list']").attr("href","/user/conference/list?form[subject_id]=4");
             $(".menu [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
+            $(".menu [href='/user/manuscript/list/owner']").attr("href",'/user/manuscript/list/owner/my_journal');
+            $(".menu [href='/user/manuscript/special_approval_list']").attr("href",'/user/manuscript/special_approval_list/my_journal');
         }
         $(".menu [href='/user/myprofile']").after(" <a href='/user/settings'>[Settings]</a>");
         $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
@@ -562,15 +564,20 @@
                     background:#fefefe} #user-info table tr td span.msid{color:#4e6c88;font-weight:400}#user-info table tr td.title{width:50%}#user-info table tr td.journal{width:10%;text-align:center}#user-info table tr td.status{width:10%;text-align:center}
                     #user-info table tr td.submission-date{width:10%;text-align:center}#user-info table tr td.invoice-info{width:10%;text-align:center}#user-info table tr td.invoice-payment-info{width:10%;text-align:center}</style>`);
         document.body.innerHTML = document.body.innerHTML.replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=');
-
         var susycheck = "https://susy.mdpi.com/user/info?emails="+ window.location.href.match(/search_content=(\S*)/)[1];
+
+        $("body").prepend("<div style='margin:10px;'><div id='d1'>Loading Overview...</div><p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p><div id='d2'>Loading Invitation Record...</div><p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p><div>");
+
         if (susycheck.indexOf("@") > -1){
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: susycheck,
                 onload: function(responseDetails) {
-                    $("body").prepend("<p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p>");
-                    $("body").prepend(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=').replace(/<h1>[\s\S]*<\/h1>/g,''));
+                    $("#d2").html(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=').replace(/<h1>[\s\S]*<\/h1>/g,''));
+                    $("[title='Generate unsubscribe link']").attr("href", "//scholar.google.com/scholar?hl=en&q=" + $("[title='Generate unsubscribe link']").attr('data-email')).attr("target","_blank").text("")
+                        .append('<img width="20px" height="20px" src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png">');
+                    $("a:contains('Edit Reviewer')").after('&nbsp;&nbsp; <a href="//scholar.google.com/scholar?hl=en&q=' + $("a:contains('Edit Reviewer')").prev("b").text() + '" target=_blank><img src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png"></a>');
+                    $("a:contains('Edit Reviewer')").after(' <a href="//susy.mdpi.com/user/reviewer/checking/a5ce29b8b4917729fc1dc44abf2fc686?email=' + $("[title='Generate unsubscribe link']").attr('data-email') + '" target="_blank">[Check Reviewer]</a>');
                 } });
 
             susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1";
@@ -578,11 +585,8 @@
                 method: 'GET',
                 url: susycheck,
                 onload: function(responseDetails) {
-                    $("body").prepend("<p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p>");
                     var $jQueryObject = $($.parseHTML(responseDetails.responseText.replace(/data-load-url="\/user/g,'data-load-url="//susy.mdpi.com/user')));
-                    $("body").prepend($jQueryObject);
-                    $(".morphNotes").attr("href", "//scholar.google.com/scholar?hl=en&q=" + window.location.href.match(/search_content=(\S*)/)[1]).attr("target","_blank").text("").append('<img src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png">')
-                    $("[title='show GE info']").attr("href","//scholar.google.com/scholar?hl=en&q="+/Name: (.*)/.exec($("[title='show GE info']").parent().text())[1]).attr("target","_blank").prepend('<img src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png">')
+                    $("#d1").html($jQueryObject);
                 } });
         }
     } catch (error){ }}
