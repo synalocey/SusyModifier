@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.8.3
+// @version       2.8.9
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -434,7 +434,7 @@
                         } else {
                             document.getElementById("specialBackBtn").click(); document.getElementById("form_email").value=eltry_email;
                             sk_eltry();
-                        }}, 1500)
+                        }}, 500)
                 }
             }
         }
@@ -566,7 +566,7 @@
         document.body.innerHTML = document.body.innerHTML.replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=');
         var susycheck = "https://susy.mdpi.com/user/info?emails="+ window.location.href.match(/search_content=(\S*)/)[1];
 
-        $("body").prepend("<div style='margin:10px;'><div id='d1'>Loading Overview...</div><p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p><div id='d2'>Loading Invitation Record...</div><p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p><div>");
+        $("body").prepend("<div style='margin:10px;'><div id='d1'>Loading Invitation Record...</div><p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p><div id='d2'>Loading Overview...</div><p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p><div>");
 
         if (susycheck.indexOf("@") > -1){
             GM_xmlhttpRequest({
@@ -574,10 +574,13 @@
                 url: susycheck,
                 onload: function(responseDetails) {
                     $("#d2").html(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=').replace(/<h1>[\s\S]*<\/h1>/g,''));
-                    $("[title='Generate unsubscribe link']").attr("href", "//scholar.google.com/scholar?hl=en&q=" + $("[title='Generate unsubscribe link']").attr('data-email')).attr("target","_blank").text("")
-                        .append('<img width="20px" height="20px" src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png">');
-                    $("a:contains('Edit Reviewer')").after('&nbsp;&nbsp; <a href="//scholar.google.com/scholar?hl=en&q=' + $("a:contains('Edit Reviewer')").prev("b").text() + '" target=_blank><img src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png"></a>');
-                    $("a:contains('Edit Reviewer')").after(' <a href="//susy.mdpi.com/user/reviewer/checking/a5ce29b8b4917729fc1dc44abf2fc686?email=' + $("[title='Generate unsubscribe link']").attr('data-email') + '" target="_blank">[Check Reviewer]</a>');
+                    $("[title='Generate unsubscribe link']").each(function(e) {
+                        $(this).attr("href", "//scholar.google.com/scholar?hl=en&q=" + $(this).attr('data-email')).attr("target","_blank").text("").append('<img width="20px" height="20px" src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png">')
+                    });
+                    $("a:contains('Edit Reviewer')").each(function(e) {
+                        $(this).after('&nbsp;&nbsp; <a href="//scholar.google.com/scholar?hl=en&q=' + $(this).prev("b").text() + '" target=_blank><img src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png"></a>');
+                        $(this).after(' <a href="//susy.mdpi.com/user/reviewer/checking/a5ce29b8b4917729fc1dc44abf2fc686?email=' + $("[title='Generate unsubscribe link']").attr('data-email') + '" target="_blank">[Check Reviewer]</a>');
+                    });
                 } });
 
             susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1";
@@ -587,6 +590,7 @@
                 onload: function(responseDetails) {
                     var $jQueryObject = $($.parseHTML(responseDetails.responseText.replace(/data-load-url="\/user/g,'data-load-url="//susy.mdpi.com/user')));
                     $("#d1").html($jQueryObject);
+                    $("[data-title='Blocked Info']").attr("href","//susy.mdpi.com" + $("[data-title='Blocked Info']").attr("data-uri"))
                 } });
         }
     } catch (error){ }}
@@ -671,26 +675,28 @@
     if (window.location.href.indexOf("managing/status/submitted") + window.location.href.indexOf("sme/status/submitted") > -2 && GM_config.get('Assign_Assistant')){try{
         $("#show_title").parent().append("<input type='button' id='send_ith' value='Send iThenticate in OneClick'>")
         $("#send_ith").click(function() {
-            $("a[href*='/process_form/']").each(function() {chk_ith($(this).attr('href'),$(this).text())});
-            $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
+            if (confirm("I will send ALL manuscripts in this page to iThenticate!") == true) {
+                $("a[href*='/process_form/']").each(function() {chk_ith($(this).attr('href'),$(this).text())});
+                $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
             <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:5%;height:90%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
             <input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><p id=ith_prompt></p>
             <input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
-            function chk_ith(url, mid) {
-                let ith_chkurl="https://susy.mdpi.com/ajax/manuscript_get_ithenticate_status/"+url.split("/").pop();
-                GM_xmlhttpRequest({
-                    method: 'GET',
-                    url: ith_chkurl,
-                    onload: function(responseDetails) {
-                        if(responseDetails.responseText.indexOf("log can not be found") != -1) {
-                            GM_xmlhttpRequest({method: 'GET',url: "https://susy.mdpi.com/ajax/upload_manuscript_file_to_ithenticate/"+url.split("/").pop(),
-                                               onload: function(responseDetails) {
-                                                   if(responseDetails.responseText.indexOf("success") != -1) {$("#ith_prompt").html($("#ith_prompt").html() + mid + " is sending to iThenticate... Done<br/>")}
-                                                   else {$("#ith_prompt").html($("#ith_prompt").html() + mid + " sent failed! Maybe wrong file extension<br/>")}
-                                               } })
-                        }
-                        else {$("#ith_prompt").html($("#ith_prompt").html() + mid + " already has iThenticate report<br/>")}
-                    } });
+                function chk_ith(url, mid) {
+                    let ith_chkurl="https://susy.mdpi.com/ajax/manuscript_get_ithenticate_status/"+url.split("/").pop();
+                    GM_xmlhttpRequest({
+                        method: 'GET',
+                        url: ith_chkurl,
+                        onload: function(responseDetails) {
+                            if(responseDetails.responseText.indexOf("log can not be found") != -1) {
+                                GM_xmlhttpRequest({method: 'GET',url: "https://susy.mdpi.com/ajax/upload_manuscript_file_to_ithenticate/"+url.split("/").pop(),
+                                                   onload: function(responseDetails) {
+                                                       if(responseDetails.responseText.indexOf("success") != -1) {$("#ith_prompt").html($("#ith_prompt").html() + mid + " is sending to iThenticate... Done<br/>")}
+                                                       else {$("#ith_prompt").html($("#ith_prompt").html() + mid + " sent failed! Maybe wrong file extension<br/>")}
+                                                   } })
+                            }
+                            else {$("#ith_prompt").html($("#ith_prompt").html() + mid + " already has iThenticate report<br/>")}
+                        } });
+                }
             }
         });
 
