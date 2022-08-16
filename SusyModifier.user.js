@@ -464,7 +464,10 @@
                 method: 'GET',
                 url: url1,
                 onload: function(responseDetails) {
-                    if (responseDetails.finalUrl.indexOf("finder.susy.mdpi.com/login")>-1) {alert("Please first login to [Finder] and try again."); GM_openInTab(url1, false); return;}
+                    if (responseDetails.finalUrl.indexOf("finder.susy.mdpi.com/login")>-1) {
+                        alert("Please first login to [Finder] and try again.");
+                        $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); GM_openInTab(url1, false); return;
+                    }
                     let $res = $($.parseHTML(responseDetails.responseText));
                     n_closed = $res.find("#filter_fields_si_statuses_Closed").parent().text().match(/\d+/).pop();
                     n_open = $res.find("#filter_fields_si_statuses_Open").parent().text().match(/\d+/).pop();
@@ -495,6 +498,9 @@
                 else if (j_open<4) {
                     conclusion="After evaluation, I found that there are only "+j_open+" similar open Special Issues in our journal. The Publication record indicates that there are about "+n_gs+
                         " papers published in this field in the past 5 years. I suggest creating this Special Issue. Hope you may approve."
+                }
+                else if (j_open>9) {
+                    conclusion=""; alert("相似特刊真的太多了，您还是考虑换换吧。")
                 }
                 else {
                     conclusion="Although there are "+j_open+" similar open Special Issues in our journal, this topic is very wide. The Publication record indicates that there are about "+n_gs+
