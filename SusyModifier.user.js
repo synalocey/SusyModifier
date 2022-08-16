@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.8.15
+// @version       2.8.16
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -19,6 +19,7 @@
 // @grant         GM_openInTab
 // @connect       mdpi.com
 // @connect       titlecaseconverter.com
+// @connect       google.com
 // ==/UserScript==
 /* globals jQuery, $, GM_config */
 
@@ -329,7 +330,7 @@
             $("[title='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query='+$("[title='Google']").prev().text()+
                                          '" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="https://c5.rgstatic.net/m/41542880220916/images/favicon/favicon-16x16.png"></a> ');
             $("[class|='margin-horizontal-1']").after(`<form id='vf' class='insertform' method='post' target='_blank' style='display:none;'><input name='form[journal_id]'><input name='form[is_percentage]' value='1'><input name='form[special_issue_id]'>`
-                                                      + `<input name='form[emails]'><input name='form[valid_months]' value='12'><input name='form[section_id]'><input name='form[reason]'><input name='form[manuscript_id]'> </form>`);
+                                                      + `<input name='form[emails]'><input name='form[valid_months]' value='12'><input name='form[section_id]'><input name='form[reason]'><input name='form[manuscript_id]'><textarea name='form[note]'></form>`);
             $("[class|='margin-horizontal-1']").after(`<div id="voucher" style="display:inline-block;"><a style="color:#4b5675;">[Vouchers]</a> <div style="position:absolute;background-color: #f1f1f1;box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);display: none;">`
                                                       + `<a id="v_si" style="display:block;padding: 8px 12px;text-decoration: none;color:black;">Special Issue</a><a id="v_eb" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">EBM</a>`
                                                       + `<a id="v_ec" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Exception Case</a></div></div> `);
@@ -339,8 +340,10 @@
 
             if (!m_si) {$("#v_si").remove()}; if (!m_section) {$("#v_eb").remove()};
             $("#voucher>div>a").click(function(){
+                let d_reason = "Dear ME and Publisher,\n\nThe paper invited by the Guest Editors is now submitted. I would like to apply for a XXX% discount on this paper as we promised before. Hope you may approve.\n\n"
+                + "P.S. No need to send a promotion letter. / Promotion letter has been sent.\n\nThank you very much for your assistance."
                 switch ($(this).attr("id")) {
-                    case 'v_eb': $("#vf").attr("action","https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=5"); $("[name='form[reason]']").val("Paper by editorial board member"); break;
+                    case 'v_eb': $("#vf").attr("action","https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=5"); $("[name='form[reason]']").val("Paper by editorial board member"); d_reason=d_reason.replace("invited by the Guest Editors","by EBM"); break;
                     case 'v_si': $("#vf").attr("action","https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=6"); break;
                     case 'v_ec': $("#vf").attr("action","https://susy.mdpi.com/voucher/application/create?waiverApplyForm[types]=7"); break;
                 }
@@ -349,6 +352,7 @@
                 $("[name='form[journal_id]']").val(j_id);
                 $("[name='form[emails]']").val(corresponding);
                 $("[name='form[manuscript_id]']").val(m_id);
+                $("[name='form[note]']").val(d_reason);
 
                 if (!!m_section) {
                     let xhr = new XMLHttpRequest(), s_search = new RegExp('(\\d*)[^0-9]:[^0-9]' + m_section.replace(/\(/g,"\\\(").replace(/\)/g,"\\\)"), '');
@@ -439,8 +443,74 @@
                 }
             }
         }
+        $('a[data-title="Extend Deadline"]').click(function(e){waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly(){$("#form_deadline").attr("readonly",false)};})
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
         $("#form_checklist_1").before("<a id='select_all'>[Select All]</a><br>"); $("#select_all").click( function(){$("#si-cfp-form [type=\'checkbox\']").prop("checked",true)} );
+    } catch (error){ }}
+
+    //SI可行性报告
+    if (window.location.href.indexOf("susy.mdpi.com/si/evaluation_checklist_hash/") > -1){try{
+        $("#sp_100").children("div").first().prepend(`<div style="padding:10px;background:lightyellow">Enter keywords separated by commas, semicolons or linebreaks:<textarea id=s_key></textarea>
+                                                      <button id=s_key_submit class=submit progress=zero style=margin:0>Generate Feasibility Report</button></div>`)
+        $("#s_key").val($("#sq_101i").val().replace(" and ","\n")); $("#s_key_submit").click(fc_fill);
+        function fc_fill(){
+            let keywords=$("#s_key").val().split(/[.:;,|\n/\\]+/), keyword_num = keywords.length, url1 = "https://finder.susy.mdpi.com/topic/special_issue?",n_closed,n_open,n_pending,j_open,n_gs,conclusion;
+            let fc_journal_name=$("h4:contains('Journal:')").find("i").text(); let fc_j_id = get_jid(fc_journal_name.toLowerCase());
+            for (let i=0; i<keyword_num; i++){ url1 = url1 + "fields[keywords]["+ i +"]="+ keywords[i] +"&" }
+            url1 = encodeURI(url1.slice(0,-1));
+            $("#s_key_submit").attr('disabled', true).text("Progessing");
+
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: url1,
+                onload: function(responseDetails) {
+                    if (responseDetails.finalUrl.indexOf("finder.susy.mdpi.com/login")>-1) {alert("Please first login to [Finder] and try again."); GM_openInTab(url1, false); return;}
+                    let $res = $($.parseHTML(responseDetails.responseText));
+                    n_closed = $res.find("#filter_fields_si_statuses_Closed").parent().text().match(/\d+/).pop();
+                    n_open = $res.find("#filter_fields_si_statuses_Open").parent().text().match(/\d+/).pop();
+                    n_pending = $res.find("#filter_fields_si_statuses_Pending").parent().text().match(/\d+/).pop();
+                    GM_xmlhttpRequest({url: url1+"&fields[journals][]="+fc_j_id, onload: function(responseDetails) {
+                        let $resj = $($.parseHTML(responseDetails.responseText));
+                        j_open = $resj.find("#filter_fields_si_statuses_Open").parent().text().match(/\d+/).pop();
+                        $("div[title='Rich Text Editor, editor1']").html("<p>Title: "+keywords.join(' and ')+"</p><p>The number of open SIs in your journal:"+j_open+"</p><p>The number of open SIs in MDPI:"+n_open+"</p><p>The number of pending online SIs in MDPI:"
+                                                                         + n_pending +"</p><p>The number of closed SIs in MDPI:"+n_closed+"</p><p>Link: "+url1+"</p>")
+                        if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
+                    } });
+                } });
+
+            let date = new Date(), year5=date.getFullYear()-5, url2="https://scholar.google.com/scholar?hl=en&as_ylo="+ year5 +"&q="+keywords.join(' OR '); url2=encodeURI(url2);
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: url2,
+                onload: function(responseDetails) {
+                    n_gs = responseDetails.responseText.match(/About (.*?) results/).pop().replace(",","");
+                    $("div[title='Rich Text Editor, editor2']").html("<p>Total Results: "+n_gs+"</p><p>Topic: "+keywords.join(' or ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: Google Scholar</p><p>Link: "+url2+"</p>")
+                    if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
+                } });
+
+            function write_conclusion(){
+                if(j_open==0) {
+                    conclusion="I found that there is no similar open Special Issues in our journal, so I suggest creating this Special Issue. Hope you may approve."
+                }
+                else if (j_open<4) {
+                    conclusion="After evaluation, I found that there are only "+j_open+" similar open Special Issues in our journal. The Publication record indicates that there are about "+n_gs+
+                        " papers published in this field in the past 5 years. I suggest creating this Special Issue. Hope you may approve."
+                }
+                else {
+                    conclusion="Although there are "+j_open+" similar open Special Issues in our journal, this topic is very wide. The Publication record indicates that there are about "+n_gs+
+                        " papers published in this field in the past 5 years. we could focus on other aspects of the topic to make a full cover of the research field. Hope you may approve."
+                }
+                $("div[title='Rich Text Editor, editor3']").html("<p>"+conclusion+"</p");
+                $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Generate Feasibility Report");
+                $('html, body').animate({
+                    scrollTop: $("div[title='Rich Text Editor, editor1']").parent().parent().prev().offset().top
+                }, 500);
+            }
+        }
+    } catch (error){ }}
+    if (window.location.href.indexOf("/email/invite/eic_decision/") > -1){try{
+        $('#emailTemplates').val(993).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
+        $("span:contains('Select')").text("Special Issue - Feasibility Check");
     } catch (error){ }}
 
     //默认新建特刊位置和Title Case
@@ -449,13 +519,13 @@
         $("#TitleCaseChicago").click(function () {
             if ($("#form_name").val().length > 1) {
                 (async () => {
-                    $("#form_name").prop("disabled", true);
+                    $("#form_name").prop("disabled", true); $('input[value="Edit"]').prop("disabled", true); $('input[value="Add"]').prop("disabled", true);
                     var result="";
                     let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($("#form_name").val()) + "&preserveAllCaps=true&styleC=true");
                     let jsonarray= $.parseJSON(response.responseText);
                     jsonarray[0].title.forEach(element => {result = result + element.joint + element.word});
                     $("#form_name").val(result);
-                    $("#form_name").prop("disabled", false);
+                    $("#form_name").prop("disabled", false); $('input[value="Edit"]').prop("disabled", false); $('input[value="Add"]').prop("disabled", false);
                 })()
             }
         });
@@ -579,12 +649,14 @@
                         $(this).attr("href", "//scholar.google.com/scholar?hl=en&q=" + $(this).attr('data-email')).attr("target","_blank").text("").append('<img width="20px" height="20px" src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png">')
                     });
                     $("a:contains('Edit Reviewer')").each(function(e) {
-                        $(this).after('&nbsp;&nbsp; <a href="//scholar.google.com/scholar?hl=en&q=' + $(this).prev("b").text() + '" target=_blank><img src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png"></a>');
-                        $(this).after(' <a href="//susy.mdpi.com/user/reviewer/checking/a5ce29b8b4917729fc1dc44abf2fc686?email=' + $("[title='Generate unsubscribe link']").attr('data-email') + '" target="_blank">[Check Reviewer]</a>');
+                        let full_name = $(this).prev("b").text(), first_name = full_name.split(" ")[0], last_name = full_name.split(" ").pop();
+                        $(this).after(` <a href="//susy.mdpi.com/user/reviewer/checking/a5ce29b8b4917729fc1dc44abf2fc686?email=` + $("[title='Generate unsubscribe link']").attr('data-email') + `" target="_blank">
+                        <img src="//susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-16x16.png"></a> <a href="//scholar.google.com/scholar?hl=en&q=` + full_name + `" target=_blank><img src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png"></a>
+                                       <a href="//www.scopus.com/results/authorNamesList.uri?st2=` + first_name + `&st1=` + last_name + `" target=_blank><img src="//www.scopus.com/static/proteus-images/favicon.ico" width=16px height=16px></a>`);
                     });
                 } });
 
-            susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1";
+            susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1000000";
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: susycheck,
