@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.8.16
+// @version       2.8.18
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -454,7 +454,7 @@
                                                       <button id=s_key_submit class=submit progress=zero style=margin:0>Generate Feasibility Report</button></div>`)
         $("#s_key").val($("#sq_101i").val().replace(" and ","\n")); $("#s_key_submit").click(fc_fill);
         function fc_fill(){
-            let keywords=$("#s_key").val().split(/[.:;,|\n/\\]+/), keyword_num = keywords.length, url1 = "https://finder.susy.mdpi.com/topic/special_issue?",n_closed,n_open,n_pending,j_open,n_gs,conclusion;
+            let keywords=$("#s_key").val().split(/[.:;,|\n/\\]+/), keyword_num = keywords.length, url1 = "https://finder.susy.mdpi.com/topic/special_issue?",n_closed=0,n_open=0,n_pending=0,j_open=0,n_gs=0,conclusion;
             let fc_journal_name=$("h4:contains('Journal:')").find("i").text(); let fc_j_id = get_jid(fc_journal_name.toLowerCase());
             for (let i=0; i<keyword_num; i++){ url1 = url1 + "fields[keywords]["+ i +"]="+ keywords[i] +"&" }
             url1 = encodeURI(url1.slice(0,-1));
@@ -486,8 +486,10 @@
                 method: 'GET',
                 url: url2,
                 onload: function(responseDetails) {
-                    n_gs = responseDetails.responseText.match(/About (.*?) results/).pop().replace(",","");
-                    $("div[title='Rich Text Editor, editor2']").html("<p>Total Results: "+n_gs+"</p><p>Topic: "+keywords.join(' or ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: Google Scholar</p><p>Link: "+url2+"</p>")
+                    //n_gs = responseDetails.responseText.match(/About (.*?) results/).pop().replace(",","");
+                    n_gs="XXX";
+                    url2="请自行输入WoS链接 https://www.webofscience.com/wos/woscc/basic-search";
+                    $("div[title='Rich Text Editor, editor2']").html("<p>Total Results: "+n_gs+"</p><p>Topic: "+keywords.join(' or ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: SCIE</p><p>Link: "+url2+"</p>")
                     if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
                 } });
 
