@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.8.18
+// @version       2.8.19
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -20,6 +20,7 @@
 // @connect       mdpi.com
 // @connect       titlecaseconverter.com
 // @connect       google.com
+// @connect       webofknowledge.com
 // ==/UserScript==
 /* globals jQuery, $, GM_config */
 
@@ -454,11 +455,12 @@
                                                       <button id=s_key_submit class=submit progress=zero style=margin:0>Generate Feasibility Report</button></div>`)
         $("#s_key").val($("#sq_101i").val().replace(" and ","\n")); $("#s_key_submit").click(fc_fill);
         function fc_fill(){
-            let keywords=$("#s_key").val().split(/[.:;,|\n/\\]+/), keyword_num = keywords.length, url1 = "https://finder.susy.mdpi.com/topic/special_issue?",n_closed=0,n_open=0,n_pending=0,j_open=0,n_gs=0,conclusion;
+            let keywords=$("#s_key").val().split(/[.:;,|\n/\\]+/), keyword_num = keywords.length, url1 = "https://finder.susy.mdpi.com/topic/special_issue?", n_closed,n_open,n_pending,j_open,n_wos,n_wos_m,wss_fin,conclusion=0;
             let fc_journal_name=$("h4:contains('Journal:')").find("i").text(); let fc_j_id = get_jid(fc_journal_name.toLowerCase());
+            let WOS_Category="";
             for (let i=0; i<keyword_num; i++){ url1 = url1 + "fields[keywords]["+ i +"]="+ keywords[i] +"&" }
             url1 = encodeURI(url1.slice(0,-1));
-            $("#s_key_submit").attr('disabled', true).text("Progessing");
+            $("#s_key_submit").attr('disabled', true).text("Progessing"); $('input[value="Complete"]').attr('disabled', true);
 
             GM_xmlhttpRequest({
                 method: 'GET',
@@ -466,7 +468,8 @@
                 onload: function(responseDetails) {
                     if (responseDetails.finalUrl.indexOf("finder.susy.mdpi.com/login")>-1) {
                         alert("Please first login to [Finder] and try again.");
-                        $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); GM_openInTab(url1, false); return;
+                        $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
+                        GM_openInTab(url1, false); return;
                     }
                     let $res = $($.parseHTML(responseDetails.responseText));
                     n_closed = $res.find("#filter_fields_si_statuses_Closed").parent().text().match(/\d+/).pop();
@@ -481,16 +484,53 @@
                     } });
                 } });
 
-            let date = new Date(), year5=date.getFullYear()-5, url2="https://scholar.google.com/scholar?hl=en&as_ylo="+ year5 +"&q="+keywords.join(' OR '); url2=encodeURI(url2);
+            let date = new Date(), year5=date.getFullYear()-5, year1=date.getFullYear()+1, url2="https://scholar.google.com/scholar?hl=en&as_ylo="+ year5 +"&q="+keywords.join(' OR '); url2=encodeURI(url2);
             GM_xmlhttpRequest({
-                method: 'GET',
-                url: url2,
+                method: 'POST',
+                url: 'https://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl',
+                data: '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:auth="http://auth.cxf.wokmws.thomsonreuters.com"><soapenv:Header/><soapenv:Body><auth:authenticate/></soapenv:Body></soapenv:Envelope>',
                 onload: function(responseDetails) {
-                    //n_gs = responseDetails.responseText.match(/About (.*?) results/).pop().replace(",","");
-                    n_gs="XXX";
-                    url2="请自行输入WoS链接 https://www.webofscience.com/wos/woscc/basic-search";
-                    $("div[title='Rich Text Editor, editor2']").html("<p>Total Results: "+n_gs+"</p><p>Topic: "+keywords.join(' or ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: SCIE</p><p>Link: "+url2+"</p>")
-                    if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
+                    var SID = responseDetails.responseText.match(/<return>(.*?)<\/return>/), QID=0;
+                    if (SID == null) {
+                        alert("Something wrong with WoS. Please ensure that you can access to WoS and try again 3 minutes later.");
+                        $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
+                        return;
+                    } else {SID=SID.pop();}
+                    var ws = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
+                    let param = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=(" + keywords.join(' or ') +
+                    ") and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6","EARLY ACCESS.Value.6","OA.Value.6","PY.Field_D.6",
+                    "TASCA.Value.6","OG.Value.6","DT.Value.6","AU.Value.6","SO.Value.6","PUBL.Value.6","ECR.Value.6","DX2NG.Value.6"]},"eventMode":null},"id":1};
+                    let param2 = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=(" + keywords.join(' or ') +
+                    ") and WC=mathematics and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6","EARLY ACCESS.Value.6",
+                    "OA.Value.6","PY.Field_D.6","TASCA.Value.6","OG.Value.6","DT.Value.6","AU.Value.6","SO.Value.6","PUBL.Value.6","ECR.Value.6","DX2NG.Value.6"]},"eventMode":null},"id":2};
+
+                    ws.onopen = function () { ws.send(JSON.stringify(param)); }
+                    ws.onmessage = function (evt) {
+                        let data = evt.data;
+                        if (data.indexOf('"key":"COMPLETE"')>-1) { ws.close(); }
+                        if (data.indexOf('{"QueryID":')>-1) { QID=data.match(/"QueryID":"(.*?)",/).pop(); n_wos=data.match(/"RecordsFound":(.*?),"/).pop(); }
+                        if (data.indexOf('"Key":"TASCA')>-1) {
+                            $.each( $.parseJSON(data).payload['TASCA.Value.6'].Values, function( index, item ) { WOS_Category = WOS_Category+ "• "+item.Key+": "+item.Value+"; " });
+                            WOS_Category = WOS_Category.replace(/TASCA./g,"").toLowerCase().replace(/(?:^|\s)\w/g, function(match) { return match.toUpperCase();});
+                        }
+                    }
+                    ws.onclose = function () {
+                        console.log("WSS is closed......");
+                        url2="https://www.webofscience.com/wos/woscc/summary/"+QID+"/relevance/1";
+                        $("div[title='Rich Text Editor, editor2']").html("<p>Total Results: "+n_wos+"</p><p>Topic: "+keywords.join(' or ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: SCI-EXPANDED</p><p>Top Categories: "+WOS_Category+"</p><p>Link: "+url2+"</p>")
+                        let ws_m = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
+                        ws_m.onopen = function () { ws_m.send(JSON.stringify(param2)); }
+                        ws_m.onmessage = function (evt) {
+                            let data = evt.data;
+                            if (data.indexOf('"key":"COMPLETE"')>-1) { ws_m.close(); }
+                            if (data.indexOf('{"QueryID":')>-1) { n_wos_m=data.match(/"RecordsFound":(.*?),"/).pop(); }
+                        }
+                        ws_m.onclose = function () {
+                            $("p:contains('Total Results:')").append(" (Category related to Mathematics: "+n_wos_m+")");
+                            if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
+                        }
+                    };
+
                 } });
 
             function write_conclusion(){
@@ -498,18 +538,19 @@
                     conclusion="I found that there is no similar open Special Issues in our journal, so I suggest creating this Special Issue. Hope you may approve."
                 }
                 else if (j_open<4) {
-                    conclusion="After evaluation, I found that there are only "+j_open+" similar open Special Issues in our journal. The Publication record indicates that there are about "+n_gs+
+                    conclusion="After evaluation, I found that there are only "+j_open+" similar open Special Issues in our journal. The Publication record indicates that there are about "+n_wos+
                         " papers published in this field in the past 5 years. I suggest creating this Special Issue. Hope you may approve."
                 }
                 else if (j_open>9) {
                     conclusion=""; alert("相似特刊真的太多了，您还是考虑换换吧。")
                 }
                 else {
-                    conclusion="Although there are "+j_open+" similar open Special Issues in our journal, this topic is very wide. The Publication record indicates that there are about "+n_gs+
+                    conclusion="Although there are "+j_open+" similar open Special Issues in our journal, this topic is very wide. The Publication record indicates that there are about "+n_wos+
                         " papers published in this field in the past 5 years. we could focus on other aspects of the topic to make a full cover of the research field. Hope you may approve."
                 }
                 $("div[title='Rich Text Editor, editor3']").html("<p>"+conclusion+"</p");
                 $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Generate Feasibility Report");
+                $('input[value="Complete"]').attr('disabled', false);
                 $('html, body').animate({
                     scrollTop: $("div[title='Rich Text Editor, editor1']").parent().parent().prev().offset().top
                 }, 500);
