@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.8.19
+// @version       2.8.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -451,14 +451,16 @@
 
     //SI可行性报告
     if (window.location.href.indexOf("susy.mdpi.com/si/evaluation_checklist_hash/") > -1){try{
-        $("#sp_100").children("div").first().prepend(`<div style="padding:10px;background:lightyellow">Enter keywords separated by commas, semicolons or linebreaks:<textarea id=s_key></textarea>
-                                                      <button id=s_key_submit class=submit progress=zero style=margin:0>Generate Feasibility Report</button></div>`)
+        $("#sp_100").children("div").first().prepend(`<div style="padding:10px;background:lightyellow;font-size:12px;">Enter keywords separated by commas, semicolons or linebreaks:<textarea id=s_key></textarea>Operators: [Finder]
+        <select id="finder_o" style="display:inline-block; width:auto"><option value="and" selected="selected">And</option><option value="or">Or</option></select> [WoS] <select id="wos_o" style="display:inline-block; width:auto"><option value="AND">And</option>
+        <option value="OR" selected="selected">Or</option></select> <button id=s_key_submit class=submit progress=zero style=margin:0>Generate Feasibility Report</button></div>`)
+
         $("#s_key").val($("#sq_101i").val().replace(" and ","\n")); $("#s_key_submit").click(fc_fill);
         function fc_fill(){
             let keywords=$("#s_key").val().split(/[.:;,|\n/\\]+/), keyword_num = keywords.length, url1 = "https://finder.susy.mdpi.com/topic/special_issue?", n_closed,n_open,n_pending,j_open,n_wos,n_wos_m,wss_fin,conclusion=0;
             let fc_journal_name=$("h4:contains('Journal:')").find("i").text(); let fc_j_id = get_jid(fc_journal_name.toLowerCase());
             let WOS_Category="";
-            for (let i=0; i<keyword_num; i++){ url1 = url1 + "fields[keywords]["+ i +"]="+ keywords[i] +"&" }
+            for (let i=0; i<keyword_num; i++){ url1 = url1 + "fields[keywords]["+ i +"]="+ keywords[i] +"&fields[operators]["+ i +"]="+$("#finder_o").val()+"&" }
             url1 = encodeURI(url1.slice(0,-1));
             $("#s_key_submit").attr('disabled', true).text("Progessing"); $('input[value="Complete"]').attr('disabled', true);
 
@@ -478,13 +480,13 @@
                     GM_xmlhttpRequest({url: url1+"&fields[journals][]="+fc_j_id, onload: function(responseDetails) {
                         let $resj = $($.parseHTML(responseDetails.responseText));
                         j_open = $resj.find("#filter_fields_si_statuses_Open").parent().text().match(/\d+/).pop();
-                        $("div[title='Rich Text Editor, editor1']").html("<p>Title: "+keywords.join(' and ')+"</p><p>The number of open SIs in your journal:"+j_open+"</p><p>The number of open SIs in MDPI:"+n_open+"</p><p>The number of pending online SIs in MDPI:"
-                                                                         + n_pending +"</p><p>The number of closed SIs in MDPI:"+n_closed+"</p><p>Link: "+url1+"</p>")
+                        $("div[title='Rich Text Editor, editor1']").html("<p>Title: "+keywords.join(' '+$("#finder_o").val()+' ')+"</p><p>The number of open SIs in your journal:"+j_open+"</p><p>The number of open SIs in MDPI:"+n_open+
+                                                                         "</p><p>The number of pending online SIs in MDPI:" + n_pending +"</p><p>The number of closed SIs in MDPI:"+n_closed+"</p><p>Link: "+url1+"</p>")
                         if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
                     } });
                 } });
 
-            let date = new Date(), year5=date.getFullYear()-5, year1=date.getFullYear()+1, url2="https://scholar.google.com/scholar?hl=en&as_ylo="+ year5 +"&q="+keywords.join(' OR '); url2=encodeURI(url2);
+            let date = new Date(), year5=date.getFullYear()-5, year1=date.getFullYear()+1, url2;
             GM_xmlhttpRequest({
                 method: 'POST',
                 url: 'https://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl',
@@ -497,11 +499,11 @@
                         return;
                     } else {SID=SID.pop();}
                     var ws = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
-                    let param = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=(" + keywords.join(' or ') +
-                    ") and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6","EARLY ACCESS.Value.6","OA.Value.6","PY.Field_D.6",
+                    let param = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=("+keywords.join(' '+$("#wos_o").val()+' ')
+                    + ") and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6","EARLY ACCESS.Value.6","OA.Value.6","PY.Field_D.6",
                     "TASCA.Value.6","OG.Value.6","DT.Value.6","AU.Value.6","SO.Value.6","PUBL.Value.6","ECR.Value.6","DX2NG.Value.6"]},"eventMode":null},"id":1};
-                    let param2 = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=(" + keywords.join(' or ') +
-                    ") and WC=mathematics and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6","EARLY ACCESS.Value.6",
+                    let param2 = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=("+keywords.join(' '+$("#wos_o").val()+' ')
+                    + ") and WC=mathematics and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6","EARLY ACCESS.Value.6",
                     "OA.Value.6","PY.Field_D.6","TASCA.Value.6","OG.Value.6","DT.Value.6","AU.Value.6","SO.Value.6","PUBL.Value.6","ECR.Value.6","DX2NG.Value.6"]},"eventMode":null},"id":2};
 
                     ws.onopen = function () { ws.send(JSON.stringify(param)); }
@@ -517,7 +519,8 @@
                     ws.onclose = function () {
                         console.log("WSS is closed......");
                         url2="https://www.webofscience.com/wos/woscc/summary/"+QID+"/relevance/1";
-                        $("div[title='Rich Text Editor, editor2']").html("<p>Total Results: "+n_wos+"</p><p>Topic: "+keywords.join(' or ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: SCI-EXPANDED</p><p>Top Categories: "+WOS_Category+"</p><p>Link: "+url2+"</p>")
+                        $("div[title='Rich Text Editor, editor2']")
+                            .html("<p>Total Results: "+n_wos+"</p><p>Topic: "+keywords.join(' '+$("#wos_o").val()+' ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: SCI-EXPANDED</p><p>Top Categories: "+WOS_Category+"</p><p>Link: "+url2+"</p>")
                         let ws_m = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
                         ws_m.onopen = function () { ws_m.send(JSON.stringify(param2)); }
                         ws_m.onmessage = function (evt) {
@@ -542,7 +545,7 @@
                         " papers published in this field in the past 5 years. I suggest creating this Special Issue. Hope you may approve."
                 }
                 else if (j_open>9) {
-                    conclusion=""; alert("相似特刊真的太多了，您还是考虑换换吧。")
+                    conclusion=""; alert("相似特刊太多了，您要不考虑换换吧？")
                 }
                 else {
                     conclusion="Although there are "+j_open+" similar open Special Issues in our journal, this topic is very wide. The Publication record indicates that there are about "+n_wos+
