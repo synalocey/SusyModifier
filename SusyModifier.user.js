@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.8.20
+// @version       2.8.24
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -252,19 +252,13 @@
 
     //GE Invitation✏️
     if (window.location.href.indexOf("/invite/guest_editor") > -1){try{
-        var S_GEID;
-        switch (GM_config.get('GE_TemplateID')) {
-            case '!Guest Editor – invite Version 1': S_GEID=1518; break;
-            case 'Guest Editor - Invite with Benefits and Planned Papers': S_GEID=269; break;
-            case 'Guest Editor - Invite Free': S_GEID=873; break;
-            case 'Guest Editor - Invite with Discounts': S_GEID=874; break;
-            case 'Guest Editor-Invite (Optional)': S_GEID=1151; break;
-        }
+        var S_GEID = $("#emailTemplates > option:contains('"+GM_config.get('GE_TemplateID')+"')").val();
+
         $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/, entitled.*?, in our/g, ' in our').replace(/Please click [\\s\\S]*?https.*\\n\\n/g, '');">🖇️</a>`);
         $('#emailTemplates').val(S_GEID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_TemplateID'));
         waitForText(document.querySelector('#mailSubject'), ' ', init);
-        function init() {let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('GE_TemplateS2')) );
-                         let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('GE_TemplateB2')) );}
+        function init() {let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_TemplateS2'))) );
+                         let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_TemplateB2'))) );}
         document.getElementById("emailTemplates_chosen").scrollIntoView();
         if (S_GEID==269) { $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/We will gladly waive .+? from the Guest Editor. /, '');">[No Discount]</a>`); }
     } catch (error){ }}
@@ -280,8 +274,8 @@
         $('#emailTemplates').val(S_GERID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_ReminderID'));
         $('#mailSubject').parent().after('<a id="Awaiting"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a>');
         $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
-        function init() {let t1 = RegExptest(GM_config.get('GE_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('GE_ReminderS2')) );
-                         let t2 = RegExptest(GM_config.get('GE_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('GE_ReminderB2')) );}
+        function init() {let t1 = RegExptest(GM_config.get('GE_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_ReminderS2'))) );
+                         let t2 = RegExptest(GM_config.get('GE_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_ReminderB2'))) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         document.getElementById("emailTemplates_chosen").scrollIntoView();
     } catch (error){ }}
@@ -290,8 +284,8 @@
     if (window.location.href.indexOf("present_editor_ebm/invite_email") > -1){try{
         let firstid = $('#emailTemplates :contains("Editorial")').val();
         $('#emailTemplates').val(firstid).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-        function init() {let t1 = RegExptest(GM_config.get('EB_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('EB_TemplateS2')) );
-                         let t2 = RegExptest(GM_config.get('EB_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('EB_TemplateB2')) );}
+        function init() {let t1 = RegExptest(GM_config.get('EB_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('EB_TemplateS2'))) );
+                         let t2 = RegExptest(GM_config.get('EB_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_TemplateB2'))) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         document.getElementById("emailTemplates").scrollIntoView();
         $('#mailSubject').parent().after('<a id="No_Discount">[No Discount]</a>');
@@ -302,8 +296,8 @@
 
     //EB Reminder✏️
     if (window.location.href.indexOf("present_editor_ebm/remind_email") > -1){try{
-        function init() {let t1 = RegExptest(GM_config.get('EB_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('EB_ReminderS2')) );
-                         let t2 = RegExptest(GM_config.get('EB_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('EB_ReminderB2')) );}
+        function init() {let t1 = RegExptest(GM_config.get('EB_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('EB_ReminderS2'))) );
+                         let t2 = RegExptest(GM_config.get('EB_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_ReminderB2'))) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         document.getElementById("emailTemplates").scrollIntoView();
     } catch (error){ }}
@@ -424,11 +418,11 @@
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+'" title="Close">🆑</a> ');
             $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
             $("#checkMailsdb").before('<input id=eltry_stop style=display:none type=button class=submit value=Stop><input id=eltry_stopbox style=display:none type=checkbox> ');
-            $("#guestNextBtn").after(' <input id=eltry style=display:inline-block type=button class=submit value=Experimental>');
+            $("#guestNextBtn").after(' <input id=eltry style=display:inline-block type=button class=submit value="! AutoRetry"> <input id=add6th style=display:inline-block type=button class=submit value="! Add6th">');
             $("#eltry_stop").click(eltry_stop); function eltry_stop (zEvent) {$("#eltry_stopbox").prop('checked',true)};
             $("#eltry").click(sk_eltry); function sk_eltry (zEvent) {
                 var eltry_email = $("#form_email").val();
-                $("#eltry_stop").css("display","inline-block"); $("#eltry").css("display","none");
+                $("#eltry_stop").css("display","inline-block"); $("#eltry").css("display","none"); $("#add6th").css("display","none");
                 $("#guestNextBtn").click();
                 waitForKeyElements("#specialBackBtn", sk_eltry_check, true);
                 function sk_eltry_check() {
@@ -436,11 +430,19 @@
                         if (document.getElementById('process-special-issue-guest-editor') !=null) {
                             document.getElementById("process-special-issue-guest-editor").click()
                         } else if ($("#eltry_stopbox").prop("checked")) {
-                            $("#eltry_stop").css("display","none"); $("#eltry").css("display","inline-block");
+                            $("#eltry_stop").css("display","none"); $("#eltry").css("display","inline-block"); $("#add6th").css("display","inline-block");
                         } else {
                             document.getElementById("specialBackBtn").click(); document.getElementById("form_email").value=eltry_email;
                             sk_eltry();
                         }}, 500)
+                }
+            }
+            $("#add6th").click(sk_add6th); function sk_add6th (zEvent) {
+                $("#eltry").css("display","none"); $("#add6th").css("display","none");
+                $("#guestNextBtn").click();
+                waitForKeyElements("#specialBackBtn", sk_add6th_check, true);
+                function sk_add6th_check() {
+                    $("#specialBackBtn").after(` <input id="process-special-issue-guest-editor" type="submit" value="Force Add" class="submit is-psme-assessment">`);
                 }
             }
         }
@@ -881,8 +883,9 @@ function waitForText(element, text, callback, freq) {
     }
 }
 
-function p_get(url) { return new Promise(resolve => { GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve }); }) }
+function p_get(url) { return new Promise(resolve => { GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve }); }) };
 function RegExptest(str) {if (str.indexOf("[Regex]")==0) {return RegExp(str.substring(7), "g");} else {return str} };
+function Functiontest(str) {if (str.indexOf("function ")==0) {let funcTest = new Function('return '+str); return funcTest();} else {return str} };
 
 function get_jid(sysname) {return[
     {id:"250",j:"acoustics"},{id:"77",j:"actuators"},{id:"88",j:"admsci"},{id:"437",j:"adolescents"},{id:"573",j:"arm"},{id:"145",j:"aerospace"},{id:"95",j:"agriculture"},{id:"336",j:"agriengineering"},{id:"554",j:"agrochemicals"},{id:"34",j:"agronomy"},{id:"362",j:"ai"},
