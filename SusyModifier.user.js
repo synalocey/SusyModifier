@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.8.24
+// @version       2.8.25
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -265,12 +265,8 @@
 
     //GE Reminder✏️
     if (window.location.href.indexOf("/remind/guest_editor") > -1){try{
-        var S_GERID;
-        switch (GM_config.get('GE_ReminderID')) {
-            case 'Guest Editor Invitation – 1st Reminder': S_GERID=1618; break;
-            case 'Guest Editor Invitation – 2nd Reminder': S_GERID=1619; break;
-            case 'Guest Editor Invitation – 3rd Reminder': S_GERID=1620; break;
-        }
+        var S_GERID = $("#emailTemplates > option:contains('"+GM_config.get('GE_ReminderID')+"')").val();
+
         $('#emailTemplates').val(S_GERID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_ReminderID'));
         $('#mailSubject').parent().after('<a id="Awaiting"><img src="https://susy.mdpi.com/bundles/mdpisusy/img/icon/pencil.png"></a>');
         $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
@@ -282,7 +278,7 @@
 
     //EB invitation✏️
     if (window.location.href.indexOf("present_editor_ebm/invite_email") > -1){try{
-        let firstid = $('#emailTemplates :contains("Editorial")').val();
+        let firstid = $('#emailTemplates :contains("Invite")').first().val();
         $('#emailTemplates').val(firstid).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
         function init() {let t1 = RegExptest(GM_config.get('EB_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('EB_TemplateS2'))) );
                          let t2 = RegExptest(GM_config.get('EB_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_TemplateB2'))) );}
@@ -563,8 +559,8 @@
         }
     } catch (error){ }}
     if (window.location.href.indexOf("/email/invite/eic_decision/") > -1){try{
-        $('#emailTemplates').val(993).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-        $("span:contains('Select')").text("Special Issue - Feasibility Check");
+        $('#emailTemplates').val( $('#emailTemplates').children().last().val() ).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
+        $("span:contains('Select')").text( $('#emailTemplates').children().last().text() );
     } catch (error){ }}
 
     //默认新建特刊位置和Title Case
@@ -928,5 +924,5 @@ function get_jid(sysname) {return[
     {id:"403",j:"uro"},{id:"76",j:"vaccines"},{id:"291",j:"vehicles"},{id:"490",j:"venereology"},{id:"178",j:"vetsci"},{id:"269",j:"vibration"},{id:"553",j:"virtualworlds"},{id:"8",j:"viruses"},{id:"223",j:"vision"},{id:"530",j:"waste"},{id:"36",j:"water"},
     {id:"504",j:"wind"},{id:"349",j:"women"},{id:"377",j:"world"},{id:"354",j:"wevj"},{id:"519",j:"youth"},{id:"541",j:"zoonoticdis"}].find(function(b){return b.j===sysname}).id}
 
-//[Regex], entitled ".*", ([\s\S]*)Please click [\s\S]*?https.*\n\n
-//$1
+//[Regex][\S\s]*
+//function match(str) {if(str.indexOf("Games")>-1) {return `[Games] Invitation to Serve as the Guest Editor for Games`}; if(str.indexOf("Mathematics")>-1) {return `[Mathematics] Invitation to be the Guest Editor of a Special Issue in Mathematics (Rank Q1)`}; return ""}
