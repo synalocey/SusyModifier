@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.8.25
+// @version       2.8.29
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -200,6 +200,7 @@
             $(".menu [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
             $(".menu [href='/user/manuscript/list/owner']").attr("href",'/user/manuscript/list/owner/my_journal');
             $(".menu [href='/user/manuscript/special_approval_list']").attr("href",'/user/manuscript/special_approval_list/my_journal');
+            $(".menu [href='/user/list/editors']").after(" <a href='/user/ebm/contract?form[journal_id]=" + S_J + "'>[R]</a>");
         }
         $(".menu [href='/user/myprofile']").after(" <a href='/user/settings'>[Settings]</a>");
         $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
@@ -589,6 +590,14 @@
             $("[href='/user/ebm-new/management/pending_invitation/my_journals").attr("href","/user/ebm-new/management/pending_invitation/my_journals?form[journal_id]=" +S_J);
         }
         if (GM_config.get('Hidden_Func')){$("#ebm_pending_check_btn").after(' <input class="submit" type="submit" value="Force Proceed"> ');}
+    } catch (error){ }}
+
+    //默认Renew EBM期刊
+    if (window.location.href.indexOf("susy.mdpi.com/user/list/editors") + window.location.href.indexOf("/user/ebm/contract") + window.location.href.indexOf("/user/eic/contract") > -3){try{
+        if (S_J>0){
+            $('a:contains("Renew EBM")').attr('href','/user/ebm/contract?form%5Bjournal_id%5D='+S_J);
+            $('a:contains("Renew EIC")').attr('href','/user/eic/contract?form%5Bjournal_id%5D='+S_J);
+        }
     } catch (error){ }}
 
     //特刊网页短链接
