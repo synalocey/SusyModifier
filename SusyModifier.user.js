@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.9.8
+// @version       2.9.19
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -330,7 +330,7 @@
             $("#voucher").mouseout(function(){ $(this).children("div").hide() });
             $('head').append('<style>#voucher a:hover {background-color: #ddd;}</style>');
 
-            if (!m_si) {$("#v_si").remove()}; if (!m_section) {$("#v_eb").remove()};
+            if (!m_si) {$("#v_si").remove()}; 
             $("#voucher>div>a").click(function(){
                 let d_reason = "Dear ME and Publisher,\n\nThe paper invited by the Guest Editors is now submitted. I would like to apply for a XXX% discount on this paper as we promised before. Hope you may approve.\n\n"
                 + "P.S. No need to send a promotion letter. / Promotion letter has been sent.\n\nThank you very much for your assistance."
@@ -416,23 +416,37 @@
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+'" title="Close">🆑</a> ');
             $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
             $("#checkMailsdb").before('<input id=eltry_stop style=display:none type=button class=submit value=Stop><input id=eltry_stopbox style=display:none type=checkbox> ');
-            $("#guestNextBtn").after(' <input id=eltry style=display:inline-block type=button class=submit value="! AutoRetry"> <input id=add6th style=display:inline-block type=button class=submit value="! Add6th">');
+            $("#guestNextBtn").after(' <span id="timesRun"></span> <input id=eltry style=display:inline-block type=button class=submit value="! AutoRetry"> <input id=add6th style=display:inline-block type=button class=submit value="! Add6th">');
             $("#eltry_stop").click(eltry_stop); function eltry_stop (zEvent) {$("#eltry_stopbox").prop('checked',true)};
             $("#eltry").click(sk_eltry); function sk_eltry (zEvent) {
-                var eltry_email = $("#form_email").val();
-                $("#eltry_stop").css("display","inline-block"); $("#eltry").css("display","none"); $("#add6th").css("display","none");
-                $("#guestNextBtn").click();
-                waitForKeyElements("#specialBackBtn", sk_eltry_check, true);
-                function sk_eltry_check() {
-                    setTimeout(() => {
-                        if (document.getElementById('process-special-issue-guest-editor') !=null) {
-                            document.getElementById("process-special-issue-guest-editor").click()
-                        } else if ($("#eltry_stopbox").prop("checked")) {
-                            $("#eltry_stop").css("display","none"); $("#eltry").css("display","inline-block"); $("#add6th").css("display","inline-block");
-                        } else {
-                            document.getElementById("specialBackBtn").click(); document.getElementById("form_email").value=eltry_email;
-                            sk_eltry();
-                        }}, 500)
+                let verify_autor = prompt("");
+                if (window.btoa(verify_autor.substring(0,1)) == "dA==") {
+                    var interval_time = parseInt(verify_autor.substring(1));
+                    if (!(interval_time>50 && interval_time<10000) ) {return;}
+                    var eltry_email = $("#form_email").val();
+                    $("#eltry_stop").css("display","inline-block"); $("#eltry").css("display","none"); $("#add6th").css("display","none");
+                    $("#guestNextBtn").click();
+                    waitForKeyElements("#specialBackBtn", sk_eltry_check2, true);
+                    function sk_eltry_check2() {
+                        var timesRun = 0;
+                        var interval = setInterval(function(){
+                            timesRun += 1; $("#timesRun").text(timesRun + " attempts auto trying. ");
+                            $("#guestNextBtn").click();
+                            if ($("#eltry_stopbox").prop("checked")) {
+                                $("#eltry_stop").css("display","none"); $("#eltry").css("display","inline-block"); $("#add6th").css("display","inline-block"); clearInterval(interval); $("#timesRun").text("");
+                            } else if ($("p:contains('You are not allowed to invite the editor')").length > 0) {
+                                // do nothing
+                            } else if (document.getElementById('process-special-issue-guest-editor') !=null) {
+                                clearInterval(interval);
+                                document.getElementById("process-special-issue-guest-editor").click();
+                                $("body").append(`<div class="blockUI blockOverlay" style=z-index:1000;border:none;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div><div class="blockUI blockMsg blockPage" style=
+                            "z-index:1011;position:fixed;width:30%;top:45%;height:50px;line-height:40px;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:none;background-color:#fff;vertical-align:middle">Proceeding... Please wait.</div>`)
+                                $("#process-special-issue-guest-editor").click();
+                            } else {
+                                // do nothing
+                            }
+                        }, interval_time);
+                    }
                 }
             }
             $("#add6th").click(sk_add6th); function sk_add6th (zEvent) {
@@ -540,6 +554,9 @@
             function write_conclusion(){
                 if(j_open==0) {
                     conclusion="I found that there is no similar open Special Issues in our journal, so I suggest creating this Special Issue. Hope you may approve."
+                }
+                else if (j_open==1) {
+                    conclusion="I found that there is only 1 open Special Issue in our journal with similar research field. So I suggest creating this Special Issue. Hope you may approve."
                 }
                 else if (j_open<4) {
                     conclusion="After evaluation, I found that there are only "+j_open+" similar open Special Issues in our journal. The Publication record indicates that there are about "+n_wos+
@@ -882,10 +899,10 @@ function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)
     var targetNodes,btargetsFound;if(typeof iframeSelector=="undefined") {targetNodes=$(selectorTxt);} else targetNodes=$(iframeSelector).contents().find(selectorTxt);if(targetNodes&&targetNodes.length>0){btargetsFound=!0;targetNodes.each(function(){var jThis=$(this);
     var alreadyFound=jThis.data('alreadyFound')||!1;if(!alreadyFound){var cancelFound=actionFunction(jThis);if(cancelFound) {btargetsFound=!1;} else jThis.data('alreadyFound',!0)}})}else{btargetsFound=!1} var controlObj=waitForKeyElements.controlObj||{};
     var controlKey=selectorTxt.replace(/[^\w]/g,"_");var timeControl=controlObj[controlKey];if(btargetsFound&&bWaitOnce&&timeControl){clearInterval(timeControl);delete controlObj[controlKey]}else{if(!timeControl){timeControl=setInterval(function()
-    {waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)},300);controlObj[controlKey]=timeControl}}; waitForKeyElements.controlObj=controlObj }
+    {waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector)},200);controlObj[controlKey]=timeControl}}; waitForKeyElements.controlObj=controlObj }
 
 function waitForText(element, text, callback, freq) {
-    let interval = window.setInterval(test, freq || 200); if (!element || !callback || typeof text !== 'string') {throw new TypeError('Bad value');}
+    let interval = window.setInterval(test, freq || 300); if (!element || !callback || typeof text !== 'string') {throw new TypeError('Bad value');}
     function test() {
         if (!element.parentNode) {window.clearInterval(interval);}
         if (element.value.indexOf(text) > -1) { window.clearInterval(interval); callback.call(element);}
