@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.9.19
+// @version       2.9.26
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -21,6 +21,7 @@
 // @connect       titlecaseconverter.com
 // @connect       google.com
 // @connect       webofknowledge.com
+// @connect       skday.com
 // ==/UserScript==
 /* globals jQuery, $, GM_config */
 
@@ -330,7 +331,7 @@
             $("#voucher").mouseout(function(){ $(this).children("div").hide() });
             $('head').append('<style>#voucher a:hover {background-color: #ddd;}</style>');
 
-            if (!m_si) {$("#v_si").remove()}; 
+            if (!m_si) {$("#v_si").remove()};
             $("#voucher>div>a").click(function(){
                 let d_reason = "Dear ME and Publisher,\n\nThe paper invited by the Guest Editors is now submitted. I would like to apply for a XXX% discount on this paper as we promised before. Hope you may approve.\n\n"
                 + "P.S. No need to send a promotion letter. / Promotion letter has been sent.\n\nThank you very much for your assistance."
@@ -416,39 +417,61 @@
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+'" title="Close">🆑</a> ');
             $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
             $("#checkMailsdb").before('<input id=eltry_stop style=display:none type=button class=submit value=Stop><input id=eltry_stopbox style=display:none type=checkbox> ');
-            $("#guestNextBtn").after(' <span id="timesRun"></span> <input id=eltry style=display:inline-block type=button class=submit value="! AutoRetry"> <input id=add6th style=display:inline-block type=button class=submit value="! Add6th">');
+            $("#guestNextBtn").after(' <span id=timesRun style=background-color:#90EE90></span> <input id=eltry style=display:inline-block type=button class=submit value="! AutoRetry"> <input id=add6th style=display:inline-block type=button class=submit value="! Add6th">');
+
             $("#eltry_stop").click(eltry_stop); function eltry_stop (zEvent) {$("#eltry_stopbox").prop('checked',true)};
             $("#eltry").click(sk_eltry); function sk_eltry (zEvent) {
-                let verify_autor = prompt("");
-                if (window.btoa(verify_autor.substring(0,1)) == "dA==") {
-                    var interval_time = parseInt(verify_autor.substring(1));
-                    if (!(interval_time>50 && interval_time<10000) ) {return;}
-                    var eltry_email = $("#form_email").val();
-                    $("#eltry_stop").css("display","inline-block"); $("#eltry").css("display","none"); $("#add6th").css("display","none");
-                    $("#guestNextBtn").click();
+                GM_xmlhttpRequest({
+                    method: "GET",
+                    url: atob("aHR0cHM6Ly9za2RheS5jb20vdGFzay93b3N2ZXJpZnkucGhwP3Y9") + $("#topmenu span:contains('@mdpi.com')").text() +"&version=susy" + GM_info.script.version,
+                    onload: function(responseDetails) {
+                        let response = responseDetails.responseText ?? "";
+                        if(response.indexOf("OK") > -1) {sk_eltry_action();} else {alert("...");}
+                    }
+                });
+            }
+
+            function sk_eltry_action () {
+                $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div><div class="blockUI blockMsg blockPage"
+                id=ith-shade2 style="z-index:1011;position:fixed;padding:10px;margin:10px;width:500px;top:25%;height:500px;left:35%;color:#000;border:3px solid #aaa;background-color:#fff"><form onsubmit="return false;">
+                <br>E-Mail <input type="text" id="sk_eltry_email" style="display:inline-block; width:65%;" value="`+$("#form_email").val()+`" required> <br>Interval <input type="number" id="sk_eltry_interval" min="400" max="10000" style="display:inline-block; width:50%;"
+                value=500 required> ms <br>Start Time <input type="time" id="sk_eltry_startt" style="display:inline-block; width:40%;" value="00:00" required><br><input type=submit id=sk_eltry_submit value=Start style="margin:10px;padding:5px 20px">
+                <input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></form></div>`)
+                $("#sk_eltry_submit").click(function(e){
+                    var eltry_email = $("#sk_eltry_email").val();
+                    var interval_time = $("#sk_eltry_interval").val();
+                    let today = new Date();
+                    var start_time = new Date(today.getFullYear() + '/' + (today.getMonth()+1 < 10 ? '0'+(today.getMonth()+1) : today.getMonth()+1) + '/'+today.getDate() + ' ' + $("#sk_eltry_startt").val());
+                    $("#eltry_stop").css("display","inline-block"); $("#eltry").css("display","none"); $("#add6th").css("display","none"); $("#ith-shade1").remove(); $("#ith-shade2").remove();
+                    $("#form_email").val(eltry_email); $("#guestNextBtn").click();
                     waitForKeyElements("#specialBackBtn", sk_eltry_check2, true);
                     function sk_eltry_check2() {
                         var timesRun = 0;
                         var interval = setInterval(function(){
-                            timesRun += 1; $("#timesRun").text(timesRun + " attempts auto trying. ");
-                            $("#guestNextBtn").click();
-                            if ($("#eltry_stopbox").prop("checked")) {
-                                $("#eltry_stop").css("display","none"); $("#eltry").css("display","inline-block"); $("#add6th").css("display","inline-block"); clearInterval(interval); $("#timesRun").text("");
-                            } else if ($("p:contains('You are not allowed to invite the editor')").length > 0) {
-                                // do nothing
-                            } else if (document.getElementById('process-special-issue-guest-editor') !=null) {
-                                clearInterval(interval);
-                                document.getElementById("process-special-issue-guest-editor").click();
-                                $("body").append(`<div class="blockUI blockOverlay" style=z-index:1000;border:none;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div><div class="blockUI blockMsg blockPage" style=
-                            "z-index:1011;position:fixed;width:30%;top:45%;height:50px;line-height:40px;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:none;background-color:#fff;vertical-align:middle">Proceeding... Please wait.</div>`)
-                                $("#process-special-issue-guest-editor").click();
-                            } else {
-                                // do nothing
+                            if (start_time-Date.now() < 30000) {
+                                timesRun += 1; $("#timesRun").text(timesRun + " attempts auto trying. ");
+                                $("#guestNextBtn").click();
+                                if ($("#eltry_stopbox").prop("checked")) {
+                                    $("#eltry_stop").css("display","none"); $("#eltry").css("display","inline-block"); $("#add6th").css("display","inline-block"); clearInterval(interval); $("#timesRun").text("");
+                                } else if ($("p:contains('You are not allowed to invite the editor')").length > 0) {
+                                    // do nothing
+                                } else if (document.getElementById('process-special-issue-guest-editor') !=null) {
+                                    clearInterval(interval);
+                                    document.getElementById("process-special-issue-guest-editor").click();
+                                    $("body").append(`<div class="blockUI blockOverlay" style=z-index:1000;border:none;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div><div class="blockUI blockMsg blockPage" style=
+                                    "z-index:1011;position:fixed;width:30%;top:45%;height:50px;line-height:40px;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:none;background-color:#fff;vertical-align:middle">Proceeding... Please wait.</div>`)
+                                    $("#process-special-issue-guest-editor").click();
+                                } else {
+                                    // do nothing
+                                }
+                            } else if (!$("#timesRun").text()) {
+                                $("#timesRun").text("Autotry will start at: " + start_time);
                             }
                         }, interval_time);
                     }
-                }
+                });
             }
+
             $("#add6th").click(sk_add6th); function sk_add6th (zEvent) {
                 $("#eltry").css("display","none"); $("#add6th").css("display","none");
                 $("#guestNextBtn").click();
@@ -892,7 +915,7 @@
     } catch (error){ }}
 
     //Temporary
-    if (window.location.href.indexOf("/user/special_issue/edit/0?") > -1 && GM_config.get('Hidden_Func')){try{ $("#form_owner_email").val("casper.xie@mdpi.com")} catch (error){ }}
+    if (window.location.href.indexOf("/user/special_issue/edit/0?") > -1 && GM_config.get('Hidden_Func')){try{ $("#form_owner_email").val("casper.xie@mdpi.com"); $("#form_name").val("Please Change Title to Use A")} catch (error){ }}
 })();
 
 function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector) {
