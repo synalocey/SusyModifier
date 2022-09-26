@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.9.26
+// @version       2.9.27
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -421,22 +421,22 @@
 
             $("#eltry_stop").click(eltry_stop); function eltry_stop (zEvent) {$("#eltry_stopbox").prop('checked',true)};
             $("#eltry").click(sk_eltry); function sk_eltry (zEvent) {
+                $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>`);
                 GM_xmlhttpRequest({
                     method: "GET",
                     url: atob("aHR0cHM6Ly9za2RheS5jb20vdGFzay93b3N2ZXJpZnkucGhwP3Y9") + $("#topmenu span:contains('@mdpi.com')").text() +"&version=susy" + GM_info.script.version,
                     onload: function(responseDetails) {
                         let response = responseDetails.responseText ?? "";
-                        if(response.indexOf("OK") > -1) {sk_eltry_action();} else {alert("...");}
+                        if(response.indexOf("OK ") > -1) {sk_eltry_action(response.split("OK ").pop());} else {$("#ith-shade1").remove(); alert("...");}
                     }
                 });
             }
 
-            function sk_eltry_action () {
-                $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div><div class="blockUI blockMsg blockPage"
-                id=ith-shade2 style="z-index:1011;position:fixed;padding:10px;margin:10px;width:500px;top:25%;height:500px;left:35%;color:#000;border:3px solid #aaa;background-color:#fff"><form onsubmit="return false;">
-                <br>E-Mail <input type="text" id="sk_eltry_email" style="display:inline-block; width:65%;" value="`+$("#form_email").val()+`" required> <br>Interval <input type="number" id="sk_eltry_interval" min="400" max="10000" style="display:inline-block; width:50%;"
-                value=500 required> ms <br>Start Time <input type="time" id="sk_eltry_startt" style="display:inline-block; width:40%;" value="00:00" required><br><input type=submit id=sk_eltry_submit value=Start style="margin:10px;padding:5px 20px">
-                <input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></form></div>`)
+            function sk_eltry_action (p1) {
+                $("body").append(`<div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:10px;margin:10px;width:500px;top:25%;height:500px;left:35%;color:#000;border:3px solid #aaa;background-color:#fff">
+                <form onsubmit="return false;"><br>E-Mail <input type="text" id="sk_eltry_email" style="display:inline-block; width:65%;" value="`+$("#form_email").val()+`" required> <br>Interval <input type="number" id="sk_eltry_interval" min=`+p1+` max=10000 step=50
+                style="display:inline-block; width:7em;" value=`+p1+` onkeydown="return false;" required> ms <br>Start Time <input type="time" id="sk_eltry_startt" style="display:inline-block; width:10em;" required><br><input type=submit id=sk_eltry_submit
+                value=Start style="margin:10px;padding:5px 20px"><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></form></div>`)
                 $("#sk_eltry_submit").click(function(e){
                     var eltry_email = $("#sk_eltry_email").val();
                     var interval_time = $("#sk_eltry_interval").val();
