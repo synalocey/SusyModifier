@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.10.4
+// @version       2.10.10
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -466,6 +466,9 @@
                                 }
                             } else if (!$("#timesRun").text()) {
                                 $("#timesRun").text("Autotry will start at: " + start_time);
+                            } else if (Math.round((start_time-Date.now())/1000) % 120 == 0) {
+                                $("#guestNextBtn").click();
+                                $("#timesRun").text("Autotry will start in [" + Math.round((start_time-Date.now())/1000/60) + " min]: " + start_time );
                             }
                         }, interval_time);
                     }
@@ -484,7 +487,7 @@
         $('a[data-title="Extend Deadline"]').click(function(e){waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly(){$("#form_deadline").attr("readonly",false)};})
         $('a[data-title="Change special issue deadline"]').click(function(e){waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2(){$("#form_date").attr("readonly",false)};})
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
-        $("#form_checklist_1").before("<a id='select_all'>[Select All]</a><br>"); $("#select_all").click( function(){$("#si-cfp-form [type=\'checkbox\']").prop("checked",true)} );
+        $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").click( function(){$("#si-cfp-form [type=\'checkbox\']").prop("checked",true)} );
     } catch (error){ }}
 
     //SI可行性报告
