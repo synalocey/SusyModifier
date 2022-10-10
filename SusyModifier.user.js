@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.10.10
+// @version       2.10.11
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -442,6 +442,7 @@
                     var interval_time = $("#sk_eltry_interval").val();
                     let today = new Date();
                     var start_time = new Date(today.getFullYear() + '/' + (today.getMonth()+1 < 10 ? '0'+(today.getMonth()+1) : today.getMonth()+1) + '/'+today.getDate() + ' ' + $("#sk_eltry_startt").val());
+                    var today_string = today.getFullYear() + '-' + (today.getMonth()+1 < 10 ? '0'+(today.getMonth()+1) : today.getMonth()+1) + '-'+today.getDate() + ' ';
                     $("#eltry_stop").css("display","inline-block"); $("#eltry").css("display","none"); $("#add6th").css("display","none"); $("#ith-shade1").remove(); $("#ith-shade2").remove();
                     $("#form_email").val(eltry_email); $("#guestNextBtn").click();
                     waitForKeyElements("#specialBackBtn", sk_eltry_check2, true);
@@ -451,7 +452,9 @@
                             if (start_time-Date.now() < 30000) {
                                 timesRun += 1; $("#timesRun").text(timesRun + " attempts auto trying. ");
                                 $("#guestNextBtn").click();
-                                if ($("#eltry_stopbox").prop("checked")) {
+                                if ($("td:contains('"+today_string+"')").length) {
+                                    clearInterval(interval); $("#timesRun").text("The GE is already invited by others. Stopped.");
+                                } else if ($("#eltry_stopbox").prop("checked")) {
                                     $("#eltry_stop").css("display","none"); $("#eltry").css("display","inline-block"); $("#add6th").css("display","inline-block"); clearInterval(interval); $("#timesRun").text("");
                                 } else if ($("p:contains('You are not allowed to invite the editor')").length > 0) {
                                     // do nothing
