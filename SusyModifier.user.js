@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.10.11
+// @version       2.10.12
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -452,11 +452,11 @@
                             if (start_time-Date.now() < 30000) {
                                 timesRun += 1; $("#timesRun").text(timesRun + " attempts auto trying. ");
                                 $("#guestNextBtn").click();
-                                if ($("td:contains('"+today_string+"')").length) {
+                                if ($("p:contains('on "+today_string+"')").length) {
                                     clearInterval(interval); $("#timesRun").text("The GE is already invited by others. Stopped.");
                                 } else if ($("#eltry_stopbox").prop("checked")) {
                                     $("#eltry_stop").css("display","none"); $("#eltry").css("display","inline-block"); $("#add6th").css("display","inline-block"); clearInterval(interval); $("#timesRun").text("");
-                                } else if ($("p:contains('You are not allowed to invite the editor')").length > 0) {
+                                } else if ($("p:contains('You are not allowed to invite the editor')").length) {
                                     // do nothing
                                 } else if (document.getElementById('process-special-issue-guest-editor') !=null) {
                                     clearInterval(interval);
