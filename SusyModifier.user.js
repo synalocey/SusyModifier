@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.10.12
+// @version       2.10.18
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -252,7 +252,7 @@
         }
     } catch (error){ }}
 
-    //GE Invitation✏️
+    //GE Invitation✏️ + Quick
     if (window.location.href.indexOf("/invite/guest_editor") > -1){try{
         var S_GEID = $("#emailTemplates > option:contains('"+GM_config.get('GE_TemplateID')+"')").val();
 
@@ -260,12 +260,14 @@
         $('#emailTemplates').val(S_GEID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_TemplateID'));
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         function init() {let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_TemplateS2'))) );
-                         let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_TemplateB2'))) );}
+                         let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_TemplateB2'))) );
+                         if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").click()},500);}
+                        }
         document.getElementById("emailTemplates_chosen").scrollIntoView();
         if (S_GEID==269) { $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/We will gladly waive .+? from the Guest Editor. /, '');">[No Discount]</a>`); }
     } catch (error){ }}
 
-    //GE Reminder✏️
+    //GE Reminder✏️ + Quick
     if (window.location.href.indexOf("/remind/guest_editor") > -1){try{
         var S_GERID = $("#emailTemplates > option:contains('"+GM_config.get('GE_ReminderID')+"')").val();
 
@@ -273,7 +275,9 @@
         $('#mailSubject').parent().after('<a id="Awaiting"><img src="/bundles/mdpisusy/img/icon/pencil.png"></a>');
         $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
         function init() {let t1 = RegExptest(GM_config.get('GE_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_ReminderS2'))) );
-                         let t2 = RegExptest(GM_config.get('GE_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_ReminderB2'))) );}
+                         let t2 = RegExptest(GM_config.get('GE_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_ReminderB2'))) );
+                         if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").click()},500);}
+                        }
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         document.getElementById("emailTemplates_chosen").scrollIntoView();
     } catch (error){ }}
@@ -445,11 +449,24 @@
                     var today_string = today.getFullYear() + '-' + (today.getMonth()+1 < 10 ? '0'+(today.getMonth()+1) : today.getMonth()+1) + '-'+today.getDate() + ' ';
                     $("#eltry_stop").css("display","inline-block"); $("#eltry").css("display","none"); $("#add6th").css("display","none"); $("#ith-shade1").remove(); $("#ith-shade2").remove();
                     $("#form_email").val(eltry_email); $("#guestNextBtn").click();
+                    let notify_init = {dir: "auto", body: eltry_email+" will be invited on "+start_time+". Please don't close the tab.", requireInteraction: false, icon: "https://susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-196x196.png"};
+                    notifyMe('Starting', notify_init);
+
                     waitForKeyElements("#specialBackBtn", sk_eltry_check2, true);
                     function sk_eltry_check2() {
+                        $("#timesRun").text("Autotry will start at: " + start_time);
                         var timesRun = 0;
+                        var notify_options = {
+                            dir: "auto", //Text Direction
+                            body: "GE can be invited soon, please watch the webpage.",
+                            requireInteraction: true, //Autohide or not
+                            icon: "https://susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-196x196.png"
+                        };
                         var interval = setInterval(function(){
-                            if (start_time-Date.now() < 30000) {
+                            if (start_time-Date.now() < 40000) {
+                                if (timesRun == 0) {
+                                    notifyMe('Starting', notify_options);
+                                }
                                 timesRun += 1; $("#timesRun").text(timesRun + " attempts auto trying. ");
                                 $("#guestNextBtn").click();
                                 if ($("p:contains('on "+today_string+"')").length) {
@@ -467,13 +484,32 @@
                                 } else {
                                     // do nothing
                                 }
-                            } else if (!$("#timesRun").text()) {
-                                $("#timesRun").text("Autotry will start at: " + start_time);
                             } else if (Math.round((start_time-Date.now())/1000) % 120 == 0) {
                                 $("#guestNextBtn").click();
                                 $("#timesRun").text("Autotry will start in [" + Math.round((start_time-Date.now())/1000/60) + " min]: " + start_time );
                             }
                         }, interval_time);
+                    }
+
+                    function notifyMe(title, options) {
+                        if (!window.Notification) { console.log('Notification is not supported by Broswer!'); }
+                        else {
+                            if (Notification.permission === 'granted') {
+                                var notification = new Notification(title, options); notification.onclick = e => {};
+                            } else if (Notification.permission === 'default') {
+                                Notification.requestPermission().then(permission => {
+                                    if (permission === 'granted') {
+                                        console.log('Notification is granted by User!');
+                                        var notification = new Notification(title, options); notification.onclick = e => {};
+                                    } else if (permission === 'default') {
+                                        console.warn('Notification is not granted or denied. Let us try again!');
+                                    } else {
+                                        console.log('Notification is denied by User!');
+                                    }
+                                });
+                            } else { console.log('Notification is denied by User in the past!'); }
+                        }
+                        return notification;
                     }
                 });
             }
@@ -487,6 +523,9 @@
                 }
             }
         }
+        Quick_InviteRemind($("a[href^='/email/invite/guest_editor/']")); Quick_InviteRemind($("a[href^='/email/remind/guest_editor/']"));
+        function Quick_InviteRemind(param) {param.each(function(){$(this).after(" (<a href='" + $(this).attr("href") + "?Q'>Quick</a>)")})}
+
         $('a[data-title="Extend Deadline"]').click(function(e){waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly(){$("#form_deadline").attr("readonly",false)};})
         $('a[data-title="Change special issue deadline"]').click(function(e){waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2(){$("#form_date").attr("readonly",false)};})
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
