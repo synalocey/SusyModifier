@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.10.18
+// @version       2.10.28
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -26,7 +26,7 @@
 /* globals jQuery, $, GM_config */
 
 (function() {
-    'use strict';
+    'use strict'; //console.time("test");
     GM_config.init({
         'id': 'SusyModifierConfig',
         'title': 'Settings of SusyModifier v'+GM_info.script.version,
@@ -141,7 +141,7 @@
         #SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_SInote_field_label{width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label{width:145px;display:inline-block;}
         #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label{display:block;}`
     });
-    const date_v= new Date('202'+GM_info.script.version);
+    const date_v = new Date('202'+GM_info.script.version);
     if ((Date.now() - date_v)/86400000 > 180) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
     else {$("#topmenu > ul").append("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});}
 
@@ -449,13 +449,12 @@
                     var today_string = today.getFullYear() + '-' + (today.getMonth()+1 < 10 ? '0'+(today.getMonth()+1) : today.getMonth()+1) + '-'+today.getDate() + ' ';
                     $("#eltry_stop").css("display","inline-block"); $("#eltry").css("display","none"); $("#add6th").css("display","none"); $("#ith-shade1").remove(); $("#ith-shade2").remove();
                     $("#form_email").val(eltry_email); $("#guestNextBtn").click();
-                    let notify_init = {dir: "auto", body: eltry_email+" will be invited on "+start_time+". Please don't close the tab.", requireInteraction: false, icon: "https://susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-196x196.png"};
-                    notifyMe('Starting', notify_init);
 
                     waitForKeyElements("#specialBackBtn", sk_eltry_check2, true);
                     function sk_eltry_check2() {
-                        $("#timesRun").text("Autotry will start at: " + start_time);
-                        var timesRun = 0;
+                        var timesRun = 1; $("#timesRun").text("Autotry will start at: " + start_time);
+                        let notify_init = {dir: "auto", body: eltry_email+" will be invited on "+start_time+". Please don't close the tab.", requireInteraction: false, icon: "https://susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-196x196.png"};
+                        if (start_time > Date.now()) {notifyMe('Starting', notify_init); timesRun = 0;}
                         var notify_options = {
                             dir: "auto", //Text Direction
                             body: "GE can be invited soon, please watch the webpage.",
@@ -653,7 +652,7 @@
 
     //默认新建特刊位置和Title Case
     if (window.location.href.indexOf(".mdpi.com/user/special_issue/edit/") > -1){try{
-        $("#form_name").after("<a id='TitleCaseChicago'>🔡(Chicago)🔠</a> "); //brettterpstra.com/titlecase/?title
+        $("#form_name").after("<a id='TitleCaseChicago'>🔡(Chicago)🔠</a> ");
         $("#TitleCaseChicago").click(function () {
             if ($("#form_name").val().length > 1) {
                 (async () => {
@@ -694,7 +693,7 @@
 
     //会议相关
     if (window.location.href.indexOf("mdpi.com/user/conference/") > -1 && window.location.href.indexOf("/view") > -1){try{$("[name=journal_id]").val(S_J);} catch (error){ }}
-    if (window.location.href.indexOf(".mdpi.com/user/conference/add") > -1) {
+    if (window.location.href.indexOf("mdpi.com/user/conference/add") > -1) {
         $("#form_conference_organization").val(2).trigger("change"); $("#form_conference_organization_chosen span").text("Societies, Universities or University professors");
         $("[id^=form_checklist]").parent().parent().show(); $("[id^=form_commercial],[id^=form_conference_commercial]").parent().parent().hide(); $("[id^=form_checklist],[id^=form_commercial_checklist]").prop("checked",true);
         if (S_J = 154) { $("#form_subject_id").val(4); $("#form_subject_id_chosen span").text("Computer Science & Mathematics") }
@@ -716,6 +715,10 @@
         document.getElementById("emailTemplates_chosen").scrollIntoView();
     } catch (error){ }}
 
+    //新增PP修改邮箱
+    if (window.location.href.indexOf("mdpi.com/si/planned_paper") > -1) {
+        $("[for='form_email']").append(` <a onclick="$('#form_email').prop('readonly', false)">[Edit]</a>`)
+    }
 
     //CfP Checker
     if (window.location.href.indexOf("//redmine.mdpi.") > -1 && GM_config.get('Cfp_checker')){try{
@@ -845,10 +848,10 @@
     //Hidden_Func: PSAN Redirect
     if(window.location.href=='https://admin.mdpi.com/' && GM_config.get('Hidden_Func')) {try{window.location.href='https://admin.mdpi.com/tools/email-purger/email-list'} catch (error){ }}
 
-    //Hidden_Func: Remind 2nd Round Reviewer
-    if (window.location.href.indexOf("assigned/remind_reviewer") > -1 && GM_config.get('Hidden_Func')){try{
-        $('#emailTemplates').val(21).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-    } catch (error){ }}
+//     //Hidden_Func: Remind 2nd Round Reviewer
+//     if (window.location.href.indexOf("assigned/remind_reviewer") > -1 && GM_config.get('Hidden_Func')){try{
+//         $('#emailTemplates').val(21).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
+//     } catch (error){ }}
 
     //Hidden_Func: Volunteer Reviewer
     if (window.location.href.indexOf("/volunteer_reviewer_info/view/") > -1 && GM_config.get('Hidden_Func')){try{
@@ -961,6 +964,8 @@
 
     //Temporary
     if (window.location.href.indexOf("/user/special_issue/edit/0?") > -1 && GM_config.get('Hidden_Func')){try{ $("#form_owner_email").val("casper.xie@mdpi.com"); $("#form_name").val("Fuzzy Mathematics and Type-I Fuzzy Sets")} catch (error){ }}
+
+    //console.timeEnd("test")
 })();
 
 function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector) {
