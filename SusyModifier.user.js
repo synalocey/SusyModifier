@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.11.30
+// @version       2.12.01
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -12,7 +12,7 @@
 // @match         *://*.scopus.com/*
 // @match         *://*/*amp;user*
 // @require       https://code.jquery.com/jquery-3.6.0.min.js
-// @require       https://openuserjs.org/src/libs/sizzle/GM_config.js
+// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/gm_config.js
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_xmlhttpRequest
@@ -1092,3 +1092,4 @@ function get_univ(aff) {
 
 //[Regex][\S\s]*
 //function match(str) {if(str.indexOf("Games")>-1) {return `[Games] Invitation to Serve as the Guest Editor for Games`}; if(str.indexOf("Mathematics")>-1) {return `[Mathematics] Invitation to be the Guest Editor of a Special Issue in Mathematics (Rank Q1)`}; return ""}
+
