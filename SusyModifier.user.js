@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.11.09
+// @version       2.11.30
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -721,6 +721,10 @@
         //CfP filter链接
         $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=` + GM_config.get('Journal')
                                  + `&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[`+GM_config.get('Journal')+` CfP]</a>`)
+        $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/special-issue-prints/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]=o&f[]=cf_10&op[cf_10]=%3D&v[cf_10][]=` + GM_config.get('Journal')
+                                 + `&f[]=&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[Books]</a>`)
+        $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/feature-paper-invitation/issues?utf8=%E2%9C%93&set_filter=1&f[]=op[status_id]=o&f[]=subject&op[subject]=~&v[subject][]=[` + GM_config.get('Journal')
+                                 + `]&f[]=&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on%3Adesc&per_page=100'>[FP]</a>`)
         //Checker功能和检测函数
         $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").click(sk_cfpcheck_func);
         function sk_cfpcheck_func (zEvent) {
@@ -1059,10 +1063,10 @@ function get_univ(aff) {
                "Shanghai International Studies University","Anhui University","Zhongnan University of Economics and Law","Southwest Jiaotong University","Tibet University","Xinjiang University","Beijing Forestry University","Communication University of China",
                "Taiyuan University of Technology","Northeast Forestry University","China Pharmaceutical University","Guangxi University","Northwest University","Changan University","Shihezi University","Zhejiang Normal University","Chongqing Normal University",
                "Capital Normal University","Xiangtan University","Qufu Normal University","Jiangsu Normal University","GuangZhou University","Shandong Normal University","Soochow University"];
-    var u_2 = ["king abdulaziz university","king abdul aziz university","de são paulo","of são paulo","de sao paulo","of sao paulo","de buenos aires","universidad nacional autónoma de méxico","national autonomous university of mexico",
+    var u_2 = ["king abdulaziz","king abdul aziz","king abdul-aziz","de são paulo","of são paulo","de sao paulo","of sao paulo","de buenos aires","universidad nacional autónoma de méxico","national autonomous university of mexico",
                "indian institute of technology bombay","universidade estadual de campinas","state university of campinas","indian institute of technology delhi","indian institute of technology kanpur","universidad de chile","university of chile",
                "indian institute of science","universiti malaya","university of malaya","indian institute of technology madras"];
-    var u_2r =["65 King Abdulaziz University (KAU)","65 King Abdulaziz University (KAU)","95 Universidade de São Paulo","95 Universidade de São Paulo","95 Universidade de São Paulo","95 Universidade de São Paulo","104 Universidad de Buenos Aires (UBA)",
+    var u_2r =["65 King Abdulaziz University (KAU)","65 King Abdulaziz University (KAU)","65 King Abdulaziz University (KAU)","95 Universidade de São Paulo","95 Universidade de São Paulo","95 Universidade de São Paulo","95 Universidade de São Paulo","104 Universidad de Buenos Aires (UBA)",
                "107 Universidad Nacional Autónoma de México  (UNAM)","107 Universidad Nacional Autónoma de México  (UNAM)","117 Indian Institute of Technology Bombay (IITB)","124 Universidade Estadual de Campinas (UNICAMP)","124 Universidade Estadual de Campinas (UNICAMP)",
                "128 Indian Institute of Technology Delhi (IITD)","132 Indian Institute of Technology Kanpur (IITK)","132 Universidad de Chile","132 Universidad de Chile","142 Indian Institute of Science","144 Universiti Malaya (UM)","144 Universiti Malaya (UM)",
                "148 Indian Institute of Technology Madras (IITM)"];
