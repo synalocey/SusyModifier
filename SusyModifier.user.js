@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.12.01
+// @version       2.12.22
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -11,7 +11,7 @@
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
 // @match         *://*/*amp;user*
-// @require       https://code.jquery.com/jquery-3.6.0.min.js
+// @require       https://code.jquery.com/jquery-3.6.1.min.js
 // @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/gm_config.js
 // @grant         GM_getValue
 // @grant         GM_setValue
@@ -22,6 +22,7 @@
 // @connect       google.com
 // @connect       webofknowledge.com
 // @connect       skday.com
+// @connect       pubpeer.com
 // ==/UserScript==
 /* globals jQuery, $, GM_config */
 
@@ -128,7 +129,7 @@
             },
         },
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
-        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Hidden_Func_var{display:none}
+        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px}
         #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_LinkShort_field_label{width:140px;display:inline-block;}
         #SusyModifierConfig_ManuscriptFunc_field_label{width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label{width:145px;display:inline-block;}
         #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label{display:block;}`
@@ -348,6 +349,19 @@
                 }
                 $("#vf").submit();
             });
+
+            $("[title='PubPeer']").each(function() {
+                let $link = $(this);
+                GM_xmlhttpRequest({
+                    method: "GET",
+                    url: $link.attr("href").replace("pubpeer.com","pubpeer.com/api"),
+                    onload: function(response) {
+                        let pub_num = $.parseJSON(response.responseText).meta.total;
+                        $link.append("["+pub_num+"]");
+                        if(pub_num > 0) {$link.css('background-color', 'gold');}
+                    }
+                });
+            });
         }
 
         if (GM_config.get('Assign_Assistant')) { //派稿助手
@@ -422,7 +436,7 @@
                     url: atob("aHR0cHM6Ly9za2RheS5jb20vdGFzay93b3N2ZXJpZnkucGhwP3Y9") + $("#topmenu span:contains('@mdpi.com')").text() +"&version=susy" + GM_info.script.version,
                     onload: function(responseDetails) {
                         let response = responseDetails.responseText ?? "";
-                        if(response.indexOf("OK ") > -1) {sk_eltry_action(response.split("OK ").pop());} else {$("#ith-shade1").remove(); alert("...");}
+                        if(response.indexOf("OK ") > -1) {sk_eltry_action(response.split("OK ").pop());} else {$("#ith-shade1").remove(); alert("Not developed yet...");}
                     }
                 });
             }
@@ -621,7 +635,8 @@
                         " papers published in this field in the past 5 years. I suggest creating this Special Issue. Hope you may approve."
                 }
                 else if (j_open>9) {
-                    conclusion=""; alert("相似特刊太多了，您要不考虑换换吧？")
+                    conclusion="Although there are "+j_open+" similar open Special Issues in our journal, this topic is very wide. The Publication record indicates that there are about "+n_wos+
+                        " papers published in this field in the past 5 years. we could focus on other aspects of the topic to make a full cover of the research field. Hope you may approve."; alert("相似特刊太多了，您要不考虑换换吧？")
                 }
                 else {
                     conclusion="Although there are "+j_open+" similar open Special Issues in our journal, this topic is very wide. The Publication record indicates that there are about "+n_wos+
@@ -1066,10 +1081,10 @@ function get_univ(aff) {
     var u_2 = ["king abdulaziz","king abdul aziz","king abdul-aziz","de são paulo","of são paulo","de sao paulo","of sao paulo","de buenos aires","universidad nacional autónoma de méxico","national autonomous university of mexico",
                "indian institute of technology bombay","universidade estadual de campinas","state university of campinas","indian institute of technology delhi","indian institute of technology kanpur","universidad de chile","university of chile",
                "indian institute of science","universiti malaya","university of malaya","indian institute of technology madras"];
-    var u_2r =["65 King Abdulaziz University (KAU)","65 King Abdulaziz University (KAU)","65 King Abdulaziz University (KAU)","95 Universidade de São Paulo","95 Universidade de São Paulo","95 Universidade de São Paulo","95 Universidade de São Paulo","104 Universidad de Buenos Aires (UBA)",
-               "107 Universidad Nacional Autónoma de México  (UNAM)","107 Universidad Nacional Autónoma de México  (UNAM)","117 Indian Institute of Technology Bombay (IITB)","124 Universidade Estadual de Campinas (UNICAMP)","124 Universidade Estadual de Campinas (UNICAMP)",
-               "128 Indian Institute of Technology Delhi (IITD)","132 Indian Institute of Technology Kanpur (IITK)","132 Universidad de Chile","132 Universidad de Chile","142 Indian Institute of Science","144 Universiti Malaya (UM)","144 Universiti Malaya (UM)",
-               "148 Indian Institute of Technology Madras (IITM)"];
+    var u_2r =["65 King Abdulaziz University (KAU)","65 King Abdulaziz University (KAU)","65 King Abdulaziz University (KAU)","95 Universidade de São Paulo","95 Universidade de São Paulo","95 Universidade de São Paulo","95 Universidade de São Paulo",
+               "104 Universidad de Buenos Aires (UBA)","107 Universidad Nacional Autónoma de México  (UNAM)","107 Universidad Nacional Autónoma de México  (UNAM)","117 Indian Institute of Technology Bombay (IITB)","124 Universidade Estadual de Campinas (UNICAMP)",
+               "124 Universidade Estadual de Campinas (UNICAMP)","128 Indian Institute of Technology Delhi (IITD)","132 Indian Institute of Technology Kanpur (IITK)","132 Universidad de Chile","132 Universidad de Chile","142 Indian Institute of Science",
+               "144 Universiti Malaya (UM)","144 Universiti Malaya (UM)","148 Indian Institute of Technology Madras (IITM)"];
     var u_Abbr = ["BUAA","NUDT","CAS","KAU","UBA","UNAM","IITB","UNICAMP","Unicamp","IITD","IITK","UM","IITM"];
     var u_Abbrr =["Rank B 201+ Beihang University","Rank B National University of Defense Technology","Chinese Academy of Sciences<br>(Please further check its institute and decide)","65 King Abdulaziz University","104 Universidad de Buenos Aires",
                   "107 Universidad Nacional Autónoma de México","117 Indian Institute of Technology Bombay","124 Universidade Estadual de Campinas","124 Universidade Estadual de Campinas","128 Indian Institute of Technology Delhi",
