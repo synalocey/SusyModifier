@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.12.22
+// @version       2.12.28
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -13,6 +13,7 @@
 // @match         *://*/*amp;user*
 // @require       https://code.jquery.com/jquery-3.6.1.min.js
 // @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/gm_config.js
+// @require       https://harvesthq.github.io/chosen/chosen.jquery.js
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_xmlhttpRequest
@@ -52,7 +53,8 @@
             'SInote': {'section': [], 'label': 'Special Issue Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SIpages': {'label': '特刊列表免翻页', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
-                              ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)'], default: '!Guest Editor – invite Version 1'},
+                              ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)','Guest Editor Invitation-Why a Special Issue',
+                               '*Guest Editor - SI Mentor Program'], default: 'Guest Editor - Invite Free'},
             'GE_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.* Guest Editor"},
             'GE_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.592, Rank Q1) Invitation to Serve as the Guest Editor"},
             'GE_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
@@ -177,7 +179,7 @@
 
         if (S_S>0 && S_J>0){
             $(".menu [href='/special_issue_pending/list']").after("<a href='/special_issue_pending/list/online?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[S]</a>");
-            $(".menu [href='/user/managing/status/submitted']").after(" <a href='/user/managing/status/submitted?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "&sort_field=submission_manuscript_state.last_action&sort=DESC'>[S]</a>");
+            $(".menu [href='/user/managing/status/submitted']").after(" <a href='/user/managing/status/submitted?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "'>[S]</a>");
         }
         if (S_J>0){
             $(".menu [href='/user/managing/status/submitted']").after("<a href='/user/managing/status/published?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.publish_date&sort=DESC'>[P]</a>");
@@ -239,17 +241,50 @@
 
     //GE Invitation✏️ + Quick
     if (window.location.href.indexOf("/invite/guest_editor") > -1){try{
-        var S_GEID = $("#emailTemplates > option:contains('"+GM_config.get('GE_TemplateID')+"')").val();
+        //Custom Email Templates
+        let emailTemplatesElement = document.getElementById('emailTemplates');
+        if (emailTemplatesElement) {
+            $(emailTemplatesElement).append('<option value>*Guest Editor - SI Mentor Program</option>');
+            unsafeWindow.$(emailTemplatesElement).trigger("chosen:updated");
+            unsafeWindow.$(emailTemplatesElement).change(function(){
+                if($("#emailTemplates option:selected").text() == "*Guest Editor - SI Mentor Program") {
+                    $.ajax({
+                        url:$("#emailTemplates").attr("data-url"), dataType:"json", type:"post", async:"true", data:{id:"269",placeholders:$("#placeholders").val()}, success:function(data){
+                            let SI_mentor_body = data.body.replace(
+                                /(Dear .*,)[\s\S]*(https:\/\/susy.mdpi.com\/guest_editor\/invitation\/process.*)[\s\S]*egards,/, "$1\n\nWe are pleased to invite you to participate in the Special Issue Mentor Program offered by the open access journal Mathematics "
+                                + "(ISSN 2227-7390). This program provides early career researchers, such as postdocs and new faculty, the opportunity to propose innovative ideas for new Special Issues, with the guidance of experienced professors from your institution. "
+                                + "We believe this is a valuable opportunity for you to demonstrate your expertise in your field and make a meaningful contribution to the scientific community.\n\nhttps://www.mdpi.com/journal/mathematics/announcements/5184\n\nAs a guest "
+                                + "editor, you will be responsible for:\n• Preparing the Special Issue's title, aim and scope, summary, and keywords;\n• Assisting in the invitation of feature papers;\n• Making pre-check and final decisions on the manuscripts.\n\nAs a "
+                                + "guest editor, you will also enjoy the following benefits:\n• Invitations for up to 10 leading specialists or senior experts from your university or other institutes in your country to submit papers with fee waivers or discounts (subject "
+                                + "to approval from the editorial office);\n• Promotion of your expertise in your field;\n• Promotion of your latest research outputs through our marketing channels;\n• The possibility of receiving a travel grant to attend relevant "
+                                + "conferences;\n• Certificates for mentors and early career researchers.\n\nIf more than 10 papers are published in the Special Issue, the entire issue may be published in book format and sent to you. Other editorial duties will be fully "
+                                + "handled by the editorial office.\n\nWe believe that this is a truly exciting opportunity for you to engage in editorial services and make scientific contributions at the highest level. If you are interested in participating in this "
+                                + "program, please click the following link to accept or decline our request:\n\n$2\n\nIf you have any questions or would like further details, please do not hesitate to contact us. We look forward to your response and hope that you will "
+                                + "join us in this opportunity.\n\nKind regards,");
+                            let SI_mentor_subject = data.subject.replace("be the Guest Editor of the Special Issue", "Participate in the Special Issue Mentor Program");
+                            $("#mailBody").val(SI_mentor_body);$("#mailSubject").val(SI_mentor_subject);
+                        },
+                    });
+                }
+            })
+        }
 
-        $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/, entitled.*?, in our/g, ' in our').replace(/Please click [\\s\\S]*?https.*\\n\\n/g, '');">🖇️</a>`);
-        $('#emailTemplates').val(S_GEID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_TemplateID'));
+        //Others
+        $('#mailSubject').parent().after(`&nbsp;<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/, entitled.*?, in our/g, ' in our').replace(/Please click [\\s\\S]*?https.*\\n\\n/g, '');">🖇️</a>`);
+        $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/• A waiver and discount.*?\\n/g, '').replace('benefit from:\\n• Promoting', 'benefit from:\\n`
+                                         + `• Invitation for up to 10 leading specialists or senior experts from the United States to submit papers with fee waivers or discounts. These benefits are subject to approval from the editorial office.\\n• Promoting');">🇺🇸</a>`);
+        if (GM_config.get('GE_TemplateID')=="Guest Editor - Invite with Benefits and Planned Papers"){
+            $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/We will gladly waive .+? from the Guest Editor. /, '');">[No Discount]</a>&nbsp;`);
+        }
+
+        $("#emailTemplates > option:contains('"+GM_config.get('GE_TemplateID')+"')").prop('selected', true);
+        unsafeWindow.$(emailTemplatesElement).trigger("chosen:updated"); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         function init() {let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_TemplateS2'))) );
                          let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_TemplateB2'))) );
                          if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").click()},500);}
                         }
         document.getElementById("emailTemplates_chosen").scrollIntoView();
-        if (S_GEID==269) { $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/We will gladly waive .+? from the Guest Editor. /, '');">[No Discount]</a>`); }
     } catch (error){ }}
 
     //GE Reminder✏️ + Quick
