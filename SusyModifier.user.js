@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.12.28
+// @version       2.12.29
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -12,8 +12,6 @@
 // @match         *://*.scopus.com/*
 // @match         *://*/*amp;user*
 // @require       https://code.jquery.com/jquery-3.6.1.min.js
-// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/gm_config.js
-// @require       https://harvesthq.github.io/chosen/chosen.jquery.js
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_xmlhttpRequest
@@ -25,7 +23,80 @@
 // @connect       skday.com
 // @connect       pubpeer.com
 // ==/UserScript==
-/* globals jQuery, $, GM_config */
+/* globals jQuery, $ */
+
+function GM_configStruct(){arguments.length&&(GM_configInit(this,arguments),this.onInit())}
+function GM_configInit(config,args){
+    if(void 0===config.fields&&(config.fields={},config.onInit=config.onInit||function(){},config.onOpen=config.onOpen||function(){},config.onSave=config.onSave||function(){},config.onClose=config.onClose||function(){},
+                                config.onReset=config.onReset||function(){},config.isOpen=!1,config.title='User Script Settings',config.css={basic:[
+        "#GM_config * { font-family: arial,tahoma,myriad pro,sans-serif; }","#GM_config { background: #FFF; }","#GM_config input[type='radio'] { margin-right: 8px; }","#GM_config .indent40 { margin-left: 40%; }",
+        "#GM_config .field_label { font-size: 12px; font-weight: bold; margin-right: 6px; }","#GM_config .radio_label { font-size: 12px; }","#GM_config .block { display: block; }","#GM_config .saveclose_buttons { margin: 16px 10px 10px; padding: 2px 12px; }",
+        "#GM_config .reset, #GM_config .reset a, #GM_config_buttons_holder { color: #000; text-align: right; }","#GM_config .config_header { font-size: 20pt; margin: 0; }","#GM_config .config_desc, #GM_config .section_desc, #GM_config .reset { font-size: 9pt; }",
+        "#GM_config .center { text-align: center; }","#GM_config .section_header_holder { margin-top: 8px; }","#GM_config .config_var { margin: 0 0 4px; }","#GM_config .section_header { background: #414141; border: 1px solid #000; color: #FFF;",
+        " font-size: 13pt; margin: 0; }","#GM_config .section_desc { background: #EFEFEF; border: 1px solid #CCC; color: #575757; font-size: 9pt; margin: 0 0 6px; }"].join('\n')+'\n',basicPrefix:"GM_config",stylish:""}),
+       1==args.length&&"string"==typeof args[0].id&&"function"!=typeof args[0].appendChild)var settings=args[0];else {settings={}; for(var arg,i=0,l=args.length;i<l;++i) if("function"!=typeof(arg=args[i]).appendChild)
+        switch(typeof arg){case'object':for(var j in arg){ if("function"!=typeof arg[j]){settings.fields=arg;break;} settings.events||(settings.events={}),settings.events[j]=arg[j]}break;case'function':settings.events={onOpen:arg};break;
+            case'string':/\w+\s*\{\s*\w+\s*:\s*\w+[\s|\S]*\}/.test(arg)?settings.css=arg:settings.title=arg}else settings.frame=arg}
+    if(settings.id?config.id=settings.id:void 0===config.id&&(config.id='GM_config'),settings.title&&(config.title=settings.title),settings.css&&(config.css.stylish=settings.css),settings.frame&&(config.frame=settings.frame),
+       settings.events){var events=settings.events;for(var e in events)config["on"+e.charAt(0).toUpperCase()+e.slice(1)]=events[e]}
+    if(settings.fields){var stored=config.read(),fields=settings.fields,customTypes=settings.types||{},configId=config.id;for(var id in fields){var field=fields[id];field?config.fields[id]=new GM_configField(field,stored[id],id,customTypes[field.type],
+        configId):config.fields[id]&&delete config.fields[id]}} config.id!=config.css.basicPrefix&&(config.css.basic=config.css.basic.replace(new RegExp('#'+config.css.basicPrefix,'gm'),'#'+config.id),config.css.basicPrefix=config.id)}
+function GM_configDefaultValue(type,options){var value;switch(0==type.indexOf('unsigned ')&&(type=type.substring(9)),type){
+    case'radio':case'select':value=options[0];break;case'checkbox':value=!1;break;case'int':case'integer':case'float':case'number':value=0;break;default:value=''}return value}
+function GM_configField(settings,stored,id,customType,configId){
+    this.settings=settings,this.id=id,this.configId=configId,this.node=null,this.wrapper=null,this.save=void 0===settings.save||settings.save,"button"==settings.type&&(this.save=!1),
+        this.default=void 0===settings.default?customType?customType.default:GM_configDefaultValue(settings.type,settings.options):settings.default,this.value=void 0===stored?this.default:stored,
+        customType&&(this.toNode=customType.toNode,this.toValue=customType.toValue,this.reset=customType.reset)}GM_configStruct.prototype={init:function(){GM_configInit(this,arguments),this.onInit()},open:function(){var match=document.getElementById(this.id);
+            if(!match||!("IFRAME"==match.tagName||match.childNodes.length>0)){
+                var config=this,defaultStyle="bottom: auto; border: 1px solid #000; display: none; height: 75%; left: 0; margin: 0; max-height: 95%; max-width: 95%; opacity: 0; overflow: auto; padding: 0; position: fixed; right: auto; top: 0; width: 75%; z-index: 9999;";
+                if(this.frame)this.frame.id=this.id,this.frame.setAttribute('style',defaultStyle),buildConfigWin(this.frame,this.frame.ownerDocument.getElementsByTagName('head')[0]);else{
+                    document.body.appendChild(this.frame=this.create('iframe',{id:this.id,style:defaultStyle})),this.frame.src='about:blank';var that=this;this.frame.addEventListener('load',(function(e){var frame=config.frame;frame.src&&!frame.contentDocument?
+                        frame.src="":frame.contentDocument||that.log("GM_config failed to initialize default settings dialog node!");var body=frame.contentDocument.getElementsByTagName('body')[0];body.id=config.id,
+                        buildConfigWin(body,frame.contentDocument.getElementsByTagName('head')[0])}),!1)}
+            } function buildConfigWin(body,head){var create=config.create,fields=config.fields,configId=config.id,bodyWrapper=create('div',{id:configId+'_wrapper'});head.appendChild(create('style',{type:'text/css',textContent:config.css.basic+config.css.stylish})),
+                bodyWrapper.appendChild(create('div',{id:configId+'_header',className:'config_header block center'},config.title));var section=bodyWrapper,secNum=0;for(var id in fields){var field=fields[id],settings=field.settings;settings.section&&(
+                section=bodyWrapper.appendChild(create('div',{className:'section_header_holder',id:configId+'_section_'+secNum})),'[object Array]'!==Object.prototype.toString.call(settings.section)&&(settings.section=[settings.section]),
+                settings.section[0]&&section.appendChild(create('div',{className:'section_header center',id:configId+'_section_header_'+secNum},settings.section[0])),settings.section[1]&&section.appendChild(create('p',{className:'section_desc center',
+                id:configId+'_section_desc_'+secNum},settings.section[1])),++secNum),section.appendChild(field.wrapper=field.toNode())} bodyWrapper.appendChild(create('div',{id:configId+'_buttons_holder'},create('button',{id:configId+'_saveBtn',textContent:'Save',
+                title:'Save settings',className:'saveclose_buttons',onclick:function(){config.save()}}),create('button',{id:configId+'_closeBtn',textContent:'Close',title:'Close window',className:'saveclose_buttons',onclick:function(){config.close()}}),create('div',
+                {className:'reset_holder block'},create('a',{id:configId+'_resetLink',textContent:'Reset to defaults',href:'#',title:'Reset fields to default values',className:'reset',onclick:function(e){e.preventDefault(),config.reset()}})))),body.appendChild(bodyWrapper),
+                config.center(),window.addEventListener('resize',config.center,!1),config.onOpen(config.frame.contentDocument||config.frame.ownerDocument,config.frame.contentWindow||window,config.frame),window.addEventListener('beforeunload',(function(){config.close()}),!1)
+                ,config.frame.style.display="block",config.isOpen=!0}},save:function(){var forgotten=this.write();this.onSave(forgotten)},close:function(){this.frame.contentDocument?(this.remove(this.frame),this.frame=null):
+                (this.frame.innerHTML="",this.frame.style.display="none");var fields=this.fields;for(var id in fields){var field=fields[id];field.wrapper=null,field.node=null}this.onClose(),this.isOpen=!1},set:function(name,val){this.fields[name].value=val,
+                    this.fields[name].node&&this.fields[name].reload()},get:function(name,getLive){var field=this.fields[name],fieldVal=null;return getLive&&field.node&&(fieldVal=field.toValue()),null!=fieldVal?fieldVal:field.value},write:function(store,obj){if(!obj)
+                {var values={},forgotten={},fields=this.fields;for(var id in fields){var field=fields[id],value=field.toValue();field.save?null!=value?(values[id]=value,field.value=value):values[id]=field.value:forgotten[id]=value}}
+                try{this.setValue(store||this.id,this.stringify(obj||values))}catch(e){this.log("GM_config failed to save settings!")}return forgotten},read:function(store){try{var rval=this.parser(this.getValue(store||this.id,'{}'))}
+                catch(e){this.log("GM_config failed to read saved settings!");rval={}}return rval},reset:function(){var fields=this.fields;for(var id in fields)fields[id].reset();this.onReset()},create:function(){switch(arguments.length){
+                    case 1:var A=document.createTextNode(arguments[0]);break;default:A=document.createElement(arguments[0]);var B=arguments[1];for(var b in B)0==b.indexOf("on")?A.addEventListener(b.substring(2),B[b],!1):-1!=",style,accesskey,id,name,src,href,which,for"
+                        .indexOf(","+b.toLowerCase())?A.setAttribute(b,B[b]):A[b]=B[b];if("string"==typeof arguments[2])A.innerHTML=arguments[2];else for(var i=2,len=arguments.length;i<len;++i)A.appendChild(arguments[i])}return A},center:function(){var node=this.frame;
+                        if(node){var style=node.style;style.opacity;'none'==style.display&&(style.opacity='0'),style.display='',style.top=Math.floor(window.innerHeight/2-node.offsetHeight/2)+'px',style.left=Math.floor(window.innerWidth/2-node.offsetWidth/2)+'px',
+                            style.opacity='1'}},remove:function(el){el&&el.parentNode&&el.parentNode.removeChild(el)}},
+        function(){var setValue,getValue,stringify,parser,isGM='undefined'!=typeof GM_getValue&&void 0!==GM_getValue('a','b');
+                   isGM?(setValue=GM_setValue,getValue=GM_getValue,stringify="undefined"==typeof JSON?function(obj){return obj.toSource()}:JSON.stringify,parser="undefined"==typeof JSON?function(jsonData){return new Function('return '+jsonData+';')()}:JSON.parse)
+                   :(setValue=function(name,value){return localStorage.setItem(name,value)},getValue=function(name,def){var s=localStorage.getItem(name);return null==s?def:s},stringify=JSON.stringify,parser=JSON.parse),GM_configStruct.prototype.isGM=isGM,
+                       GM_configStruct.prototype.setValue=setValue,GM_configStruct.prototype.getValue=getValue,GM_configStruct.prototype.stringify=stringify,GM_configStruct.prototype.parser=parser,
+                       GM_configStruct.prototype.log=window.console?console.log:isGM&&'undefined'!=typeof GM_log?GM_log:window.opera?opera.postError:function(){/* no logging */}}(),GM_configField.prototype={create:GM_configStruct.prototype.create,toNode:function()
+                           {var field=this.settings,value=this.value,options=field.options,type=field.type,id=this.id,configId=this.configId,labelPos=field.labelPos,create=this.create;function addLabel(pos,labelEl,parentNode,beforeEl){
+                               switch(beforeEl||(beforeEl=parentNode.firstChild),pos){case'right':case'below':'below'==pos&&parentNode.appendChild(create('br',{})),parentNode.appendChild(labelEl);break;default:'above'==pos&&parentNode.insertBefore(create('br',{}),beforeEl),
+                                   parentNode.insertBefore(labelEl,beforeEl)}}var firstProp,retNode=create('div',{className:'config_var',id:configId+'_'+id+'_var',title:field.title||''});for(var i in field){firstProp=i;break}
+                            var label=field.label&&"button"!=type?create('label',{id:configId+'_'+id+'_field_label',for:configId+'_field_'+id,className:'field_label'},field.label):null;switch(type){case'textarea':retNode.appendChild(this.node=create('textarea',
+                            {innerHTML:value,id:configId+'_field_'+id,className:'block',cols:field.cols?field.cols:20,rows:field.rows?field.rows:2}));break;case'radio':var wrap=create('div',{id:configId+'_field_'+id});this.node=wrap;i=0;for(var len=options.length;i<len;++i)
+                            {var radLabel=create('label',{className:'radio_label'},options[i]),rad=wrap.appendChild(create('input',{value:options[i],type:'radio',name:id,checked:options[i]==value}));
+                             addLabel(!labelPos||'left'!=labelPos&&'right'!=labelPos?'options'==firstProp?'left':'right':labelPos,radLabel,wrap,rad)}retNode.appendChild(wrap);break;case'select':wrap=create('select',{id:configId+'_field_'+id});this.node=wrap;
+                                    for(i=0,len=options.length;i<len;++i){var option=options[i];wrap.appendChild(create('option',{value:option,selected:option==value},option))}retNode.appendChild(wrap);break;default:
+                                    var props={id:configId+'_field_'+id,type:type,value:'button'==type?field.label:value};switch(type){case'checkbox':props.checked=value;break;case'button':props.size=field.size?field.size:25,field.script&&(field.click=field.script),
+                                        field.click&&(props.onclick=field.click);break;case'hidden':break;default:props.type='text',props.size=field.size?field.size:25}retNode.appendChild(this.node=create('input',props))}
+                            return label&&(labelPos||(labelPos="label"==firstProp||"radio"==type?"left":"right"),addLabel(labelPos,label,retNode)),retNode},toValue:function(){var node=this.node,field=this.settings,type=field.type,unsigned=!1,rval=null;if(!node)
+                                return rval;switch(0==type.indexOf('unsigned ')&&(type=type.substring(9),unsigned=!0),type){case'checkbox':rval=node.checked;break;case'select':rval=node[node.selectedIndex].value;break;case'radio':
+                                        for(var radios=node.getElementsByTagName('input'),i=0,len=radios.length;i<len;++i)radios[i].checked&&(rval=radios[i].value);break;case'button':break;case'int':case'integer':case'float':case'number':var num=Number(node.value),
+                                            warn='Field labeled "'+field.label+'" expects a'+(unsigned?' positive ':'n ')+'integer value';if(isNaN(num)||'int'==type.substr(0,3)&&Math.ceil(num)!=Math.floor(num)||unsigned&&num<0)return alert(warn+'.'),null;
+                                        if(!this._checkNumberRange(num,warn))return null;rval=num;break;default:rval=node.value}return rval;},reset:function(){var node=this.node,type=this.settings.type;if(node)switch(type){case'checkbox':node.checked=this.default;break;
+                                            case'select':for(var i=0,len=node.options.length;i<len;++i)node.options[i].textContent==this.default&&(node.selectedIndex=i);break;case'radio':var radios=node.getElementsByTagName('input');
+                                                for(i=0,len=radios.length;i<len;++i)radios[i].value==this.default&&(radios[i].checked=!0);break;case'button':break;default:node.value=this.default}},remove:function(el){GM_configStruct.prototype.remove(el||this.wrapper),
+                                                    this.wrapper=null,this.node=null},reload:function(){var wrapper=this.wrapper;wrapper&&(wrapper.parentNode.insertBefore(this.wrapper=this.toNode(),wrapper),this.remove(wrapper))},_checkNumberRange:function(num,warn)
+                                                    {var field=this.settings;return"number"==typeof field.min&&num<field.min?(alert(warn+' greater than or equal to '+field.min+'.'),null):!("number"==typeof field.max&&num>field.max)||(alert(
+                                                        warn+' less than or equal to '+field.max+'.'),null)}};
+var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_config/blob/master/gm_config.js
 
 (function() {
     'use strict'; console.time("test");
@@ -251,15 +322,15 @@
                     $.ajax({
                         url:$("#emailTemplates").attr("data-url"), dataType:"json", type:"post", async:"true", data:{id:"269",placeholders:$("#placeholders").val()}, success:function(data){
                             let SI_mentor_body = data.body.replace(
-                                /(Dear .*,)[\s\S]*(https:\/\/susy.mdpi.com\/guest_editor\/invitation\/process.*)[\s\S]*egards,/, "$1\n\nWe are pleased to invite you to participate in the Special Issue Mentor Program offered by the open access journal Mathematics "
-                                + "(ISSN 2227-7390). This program provides early career researchers, such as postdocs and new faculty, the opportunity to propose innovative ideas for new Special Issues, with the guidance of experienced professors from your institution. "
-                                + "We believe this is a valuable opportunity for you to demonstrate your expertise in your field and make a meaningful contribution to the scientific community.\n\nhttps://www.mdpi.com/journal/mathematics/announcements/5184\n\nAs a guest "
+                                /(Dear .*,)[\s\S]*tentative title of (.*) for the journal (.*), (.*)\)[\s\S]*(https:\/\/susy.mdpi.com\/guest_editor\/invitation\/process.*)[\s\S]*egards,/, "$1\n\nWe are pleased to invite you to participate in the Special Issue Mentor "
+                                + "Program on $2, offered by the open access journal $3).\n$4/announcements/5184\n\nThis program provides early career researchers, such as postdocs and new faculty, the opportunity to propose innovative ideas for new Special Issues, with "
+                                + "the guidance of experienced professors from your institution. We believe this is a valuable opportunity for you to demonstrate your expertise in your field and make a meaningful contribution to the scientific community.\n\nAs a guest "
                                 + "editor, you will be responsible for:\n• Preparing the Special Issue's title, aim and scope, summary, and keywords;\n• Assisting in the invitation of feature papers;\n• Making pre-check and final decisions on the manuscripts.\n\nAs a "
                                 + "guest editor, you will also enjoy the following benefits:\n• Invitations for up to 10 leading specialists or senior experts from your university or other institutes in your country to submit papers with fee waivers or discounts (subject "
                                 + "to approval from the editorial office);\n• Promotion of your expertise in your field;\n• Promotion of your latest research outputs through our marketing channels;\n• The possibility of receiving a travel grant to attend relevant "
                                 + "conferences;\n• Certificates for mentors and early career researchers.\n\nIf more than 10 papers are published in the Special Issue, the entire issue may be published in book format and sent to you. Other editorial duties will be fully "
                                 + "handled by the editorial office.\n\nWe believe that this is a truly exciting opportunity for you to engage in editorial services and make scientific contributions at the highest level. If you are interested in participating in this "
-                                + "program, please click the following link to accept or decline our request:\n\n$2\n\nIf you have any questions or would like further details, please do not hesitate to contact us. We look forward to your response and hope that you will "
+                                + "program, please click the following link to accept or decline our request:\n$5\n\nIf you have any questions or would like further details, please do not hesitate to contact us. We look forward to your response and hope that you will "
                                 + "join us in this opportunity.\n\nKind regards,");
                             let SI_mentor_subject = data.subject.replace("be the Guest Editor of the Special Issue", "Participate in the Special Issue Mentor Program");
                             $("#mailBody").val(SI_mentor_body);$("#mailSubject").val(SI_mentor_subject);
@@ -1142,4 +1213,3 @@ function get_univ(aff) {
 
 //[Regex][\S\s]*
 //function match(str) {if(str.indexOf("Games")>-1) {return `[Games] Invitation to Serve as the Guest Editor for Games`}; if(str.indexOf("Mathematics")>-1) {return `[Mathematics] Invitation to be the Guest Editor of a Special Issue in Mathematics (Rank Q1)`}; return ""}
-
