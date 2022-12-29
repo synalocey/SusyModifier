@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       2.12.29
+// @version       2.12.30
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -48,7 +48,7 @@ function GM_configField(settings,stored,id,customType,configId){
         this.default=void 0===settings.default?customType?customType.default:GM_configDefaultValue(settings.type,settings.options):settings.default,this.value=void 0===stored?this.default:stored,
         customType&&(this.toNode=customType.toNode,this.toValue=customType.toValue,this.reset=customType.reset)}GM_configStruct.prototype={init:function(){GM_configInit(this,arguments),this.onInit()},open:function(){var match=document.getElementById(this.id);
             if(!match||!("IFRAME"==match.tagName||match.childNodes.length>0)){
-                var config=this,defaultStyle="bottom: auto; border: 1px solid #000; display: none; height: 75%; left: 0; margin: 0; max-height: 95%; max-width: 95%; opacity: 0; overflow: auto; padding: 0; position: fixed; right: auto; top: 0; width: 75%; z-index: 9999;";
+                var config=this,defaultStyle="bottom: auto; border: 1px solid #000; display: none; height: 80%; left: 0; margin: 0; max-height: 95%; max-width: 95%; opacity: 0; overflow: auto; padding: 0; position: fixed; right: auto; top: 0; width: 80%; z-index: 9999;";
                 if(this.frame)this.frame.id=this.id,this.frame.setAttribute('style',defaultStyle),buildConfigWin(this.frame,this.frame.ownerDocument.getElementsByTagName('head')[0]);else{
                     document.body.appendChild(this.frame=this.create('iframe',{id:this.id,style:defaultStyle})),this.frame.src='about:blank';var that=this;this.frame.addEventListener('load',(function(e){var frame=config.frame;frame.src&&!frame.contentDocument?
                         frame.src="":frame.contentDocument||that.log("GM_config failed to initialize default settings dialog node!");var body=frame.contentDocument.getElementsByTagName('body')[0];body.id=config.id,
@@ -202,10 +202,9 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             },
         },
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
-        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px}
-        #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_LinkShort_field_label{width:140px;display:inline-block;}
-        #SusyModifierConfig_ManuscriptFunc_field_label{width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label{width:145px;display:inline-block;}
-        #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label{display:block;}`
+        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,
+        #SusyModifierConfig_LinkShort_field_label{width:140px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label{width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label
+        {width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label{display:block;}`
     });
     const date_v = new Date('202'+GM_info.script.version);
     if ((Date.now() - date_v)/86400000 > 180) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
@@ -221,14 +220,13 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
     }
 
     //susy侧边栏的按钮🔎
-    if (window.location.href.indexOf(".mdpi.com/")>-1 && window.location.href.indexOf("susy")>-1 && GM_config.get('Interface_sidebar')){try{
+    if (window.location.href.indexOf("susy.mdpi.com/")>-1 && GM_config.get('Interface_sidebar') && $('#leftcol').length){try{
         $("body").append( `<div id='si_search' role='dialog' style='display: none; position: absolute; height: 350px; width: 500px; top: 500px; left: 242.5px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
         <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle'><span class='ui-dialog-title'>Quick Search</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
-        onclick='document.getElementById(\"si_search\").style.display=\"none\"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'>
-        <form class='insertform' method='get' action='/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>
-        SI Title: <input type='text' name='form[si_name]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='SI Search'></form><hr>
-        <form class='insertform' method='get' action='/user/ebm-new/management/all/my_journals' target='_blank'>Name: <input type='text' id='form_name2' name='form[name]' style='display:inline-block; width:65%;'><br>
-        Email: <input type='email' name='form[email]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='EBM Search'></form><hr>
+        onclick='document.getElementById(\"si_search\").style.display=\"none\"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'> <form class='insertform' method='get'
+        action='/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>SI Title: <input type='text' name='form[si_name]' style='display:inline-block; width:65%;'>
+        <input type='submit' class='submit' value='SI Search'></form><hr><form class='insertform' method='get' action='/user/ebm-new/management/all/my_journals' target='_blank'>Name: <input type='text' id='form_name2' name='form[name]'
+        style='display:inline-block; width:65%;'><br>Email: <input type='email' name='form[email]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='EBM Search'></form><hr>
         <form class='insertform' method='get' action='/user/conference/list' target='_blank'>Conference: <input type='text' name='form[conference_name]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='Search'></form>`);
 
         S_S=-1;
@@ -312,35 +310,26 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
     //GE Invitation✏️ + Quick
     if (window.location.href.indexOf("/invite/guest_editor") > -1){try{
-        //Custom Email Templates
-        let emailTemplatesElement = document.getElementById('emailTemplates');
-        if (emailTemplatesElement) {
-            $(emailTemplatesElement).append('<option value>*Guest Editor - SI Mentor Program</option>');
-            unsafeWindow.$(emailTemplatesElement).trigger("chosen:updated");
-            unsafeWindow.$(emailTemplatesElement).change(function(){
-                if($("#emailTemplates option:selected").text() == "*Guest Editor - SI Mentor Program") {
-                    $.ajax({
-                        url:$("#emailTemplates").attr("data-url"), dataType:"json", type:"post", async:"true", data:{id:"269",placeholders:$("#placeholders").val()}, success:function(data){
-                            let SI_mentor_body = data.body.replace(
-                                /(Dear .*,)[\s\S]*tentative title of (.*) for the journal (.*), (.*)\)[\s\S]*(https:\/\/susy.mdpi.com\/guest_editor\/invitation\/process.*)[\s\S]*egards,/, "$1\n\nWe are pleased to invite you to participate in the Special Issue Mentor "
-                                + "Program on $2, offered by the open access journal $3).\n$4/announcements/5184\n\nThis program provides early career researchers, such as postdocs and new faculty, the opportunity to propose innovative ideas for new Special Issues, with "
-                                + "the guidance of experienced professors from your institution. We believe this is a valuable opportunity for you to demonstrate your expertise in your field and make a meaningful contribution to the scientific community.\n\nAs a guest "
-                                + "editor, you will be responsible for:\n• Preparing the Special Issue's title, aim and scope, summary, and keywords;\n• Assisting in the invitation of feature papers;\n• Making pre-check and final decisions on the manuscripts.\n\nAs a "
-                                + "guest editor, you will also enjoy the following benefits:\n• Invitations for up to 10 leading specialists or senior experts from your university or other institutes in your country to submit papers with fee waivers or discounts (subject "
-                                + "to approval from the editorial office);\n• Promotion of your expertise in your field;\n• Promotion of your latest research outputs through our marketing channels;\n• The possibility of receiving a travel grant to attend relevant "
-                                + "conferences;\n• Certificates for mentors and early career researchers.\n\nIf more than 10 papers are published in the Special Issue, the entire issue may be published in book format and sent to you. Other editorial duties will be fully "
-                                + "handled by the editorial office.\n\nWe believe that this is a truly exciting opportunity for you to engage in editorial services and make scientific contributions at the highest level. If you are interested in participating in this "
-                                + "program, please click the following link to accept or decline our request:\n$5\n\nIf you have any questions or would like further details, please do not hesitate to contact us. We look forward to your response and hope that you will "
-                                + "join us in this opportunity.\n\nKind regards,");
-                            let SI_mentor_subject = data.subject.replace("be the Guest Editor of the Special Issue", "Participate in the Special Issue Mentor Program");
-                            $("#mailBody").val(SI_mentor_body);$("#mailSubject").val(SI_mentor_subject);
-                        },
-                    });
-                }
-            })
-        }
+        unsafeWindow.$(document.getElementById('emailTemplates')).append('<option value>*Guest Editor - SI Mentor Program</option>').trigger("chosen:updated").change(function(){
+            if($("#emailTemplates option:selected").text() == "*Guest Editor - SI Mentor Program") {
+                $.ajax({url:$("#emailTemplates").attr("data-url"), dataType:"json", type:"post", async:"true", data:{id:"269",placeholders:$("#placeholders").val()}, success:function(data){
+                    let SI_mentor_body = data.body.replace(
+                        /(Dear .*,)[\s\S]*tentative title of (.*) for the journal (.*), (.*)\)[\s\S]*(https:\/\/susy.mdpi.com\/guest_editor\/invitation\/process.*)[\s\S]*egards,/, "$1\n\nWe are pleased to invite you to participate in the Special Issue Mentor "
+                        + "Program on $2, offered by the open access journal $3).\n$4/announcements/5184\n\nThis program provides early career researchers, such as postdocs and new faculty, the opportunity to propose innovative ideas for new Special Issues, with "
+                        + "the guidance of experienced professors from your institution. We believe this is a valuable opportunity for you to demonstrate your expertise in your field and make a meaningful contribution to the scientific community.\n\nAs a guest "
+                        + "editor, you will be responsible for:\n• Preparing the Special Issue's title, aim and scope, summary, and keywords;\n• Assisting in the invitation of feature papers;\n• Making pre-check and final decisions on the manuscripts.\n\nAs a "
+                        + "guest editor, you will also enjoy the following benefits:\n• Invitations for up to 10 leading specialists or senior experts from your university or other institutes in your country to submit papers with fee waivers or discounts (subject "
+                        + "to approval from the editorial office);\n• Promotion of your expertise in your field;\n• Promotion of your latest research outputs through our marketing channels;\n• The possibility of receiving a travel grant to attend relevant "
+                        + "conferences;\n• Certificates for mentors and early career researchers.\n\nIf more than 10 papers are published in the Special Issue, the entire issue may be published in book format and sent to you. Other editorial duties will be fully "
+                        + "handled by the editorial office.\n\nWe believe that this is a truly exciting opportunity for you to engage in editorial services and make scientific contributions at the highest level. If you are interested in participating in this "
+                        + "program, please click the following link to accept or decline our request:\n$5\n\nIf you have any questions or would like further details, please do not hesitate to contact us. We look forward to your response and hope that you will "
+                        + "join us in this opportunity.\n\nKind regards,");
+                    let SI_mentor_subject = data.subject.replace("be the Guest Editor of the Special Issue", "Participate in the Special Issue Mentor Program");
+                    $("#mailBody").val(SI_mentor_body);$("#mailSubject").val(SI_mentor_subject);
+                }});
+            }
+        })
 
-        //Others
         $('#mailSubject').parent().after(`&nbsp;<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/, entitled.*?, in our/g, ' in our').replace(/Please click [\\s\\S]*?https.*\\n\\n/g, '');">🖇️</a>`);
         $('#mailSubject').parent().after(`<a onclick="document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/• A waiver and discount.*?\\n/g, '').replace('benefit from:\\n• Promoting', 'benefit from:\\n`
                                          + `• Invitation for up to 10 leading specialists or senior experts from the United States to submit papers with fee waivers or discounts. These benefits are subject to approval from the editorial office.\\n• Promoting');">🇺🇸</a>`);
@@ -349,42 +338,40 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         }
 
         $("#emailTemplates > option:contains('"+GM_config.get('GE_TemplateID')+"')").prop('selected', true);
-        unsafeWindow.$(emailTemplatesElement).trigger("chosen:updated"); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-        waitForText(document.querySelector('#mailSubject'), ' ', init);
+        unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
         function init() {let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_TemplateS2'))) );
                          let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_TemplateB2'))) );
                          if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").click()},500);}
                         }
-        document.getElementById("emailTemplates_chosen").scrollIntoView();
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
+        $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
     } catch (error){ }}
 
     //GE Reminder✏️ + Quick
     if (window.location.href.indexOf("/remind/guest_editor") > -1){try{
-        var S_GERID = $("#emailTemplates > option:contains('"+GM_config.get('GE_ReminderID')+"')").val();
-
-        $('#emailTemplates').val(S_GERID).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); $("span:contains('Select')").text(GM_config.get('GE_ReminderID'));
-        $('#mailSubject').parent().after('<a id="Awaiting"><img src="/bundles/mdpisusy/img/icon/pencil.png"></a>');
-        $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
+        $("#emailTemplates > option:contains('"+GM_config.get('GE_ReminderID')+"')").prop('selected', true);
+        unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
         function init() {let t1 = RegExptest(GM_config.get('GE_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_ReminderS2'))) );
                          let t2 = RegExptest(GM_config.get('GE_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_ReminderB2'))) );
                          if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").click()},500);}
                         }
         waitForText(document.querySelector('#mailSubject'), ' ', init);
-        document.getElementById("emailTemplates_chosen").scrollIntoView();
+
+        $('#mailSubject').parent().after('<a id="Awaiting"><img src="/bundles/mdpisusy/img/icon/pencil.png"></a>');
+        $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
+        $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
     } catch (error){ }}
 
     //EB invitation✏️
     if (window.location.href.indexOf("present_editor_ebm/invite_email") > -1){try{
-        let firstid = $('#emailTemplates :contains("Invite")').first().val();
-        $('#emailTemplates').val(firstid).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
+        if ($('#emailTemplates option').length > 1) { $('#emailTemplates').prop('selectedIndex', 1).trigger('change'); document.getElementById('emailTemplates').dispatchEvent(new CustomEvent('change'))}
         function init() {let t1 = RegExptest(GM_config.get('EB_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('EB_TemplateS2'))) );
                          let t2 = RegExptest(GM_config.get('EB_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_TemplateB2'))) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
-        document.getElementById("emailTemplates").scrollIntoView();
         $('#mailSubject').parent().after('<a id="No_Discount">[No Discount]</a>');
-        $('#No_Discount').click(function(e) {
-            $('#mailBody').val($('#mailBody').val().replace(/you will have the opportunity to publish one paper free of charge in .* per year, and can also publish extra papers with special discounts.\n\n/,'')
-                               .replace('Additionally, we would like to invite you to publish one paper per year—this will be free of charge once accepted for publication. ','').replace(/\nPlease click on the following link .*?\nhttp.*?\n/g,''))});
+        $('#No_Discount').click(function(e) {$('#mailBody').val($('#mailBody').val().replace(/you will have the opportunity to publish one paper free of charge in .* per year, and can also publish extra papers with special discounts.\n\n/,'').replace(
+            'Additionally, we would like to invite you to publish one paper per year—this will be free of charge once accepted for publication. ','').replace(/\nPlease click on the following link .*?\nhttp.*?\n/g,''))});
+        $('html, body').scrollTop($('#emailTemplates').offset().top);
     } catch (error){ }}
 
     //EB Reminder✏️
@@ -392,7 +379,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         function init() {let t1 = RegExptest(GM_config.get('EB_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('EB_ReminderS2'))) );
                          let t2 = RegExptest(GM_config.get('EB_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_ReminderB2'))) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
-        document.getElementById("emailTemplates").scrollIntoView();
+        $('html, body').scrollTop($('#emailTemplates').offset().top);
     } catch (error){ }}
 
     //文章处理页面[Voucher]按钮和发送推广信按钮等
@@ -401,9 +388,9 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             let Promote='', email=[], name=[];
             let m_id = $("#manuscript_id").parent().text().trim();
             let m_section = $("div.cell.small-12.medium-6.large-2:contains('Section') + div").text().trim();
-            let m_si = $("div.cell.small-12.medium-6.large-2:contains('Special Issue') + div").text().trim();
-            let corresponding=$("b:contains('*')").parent("td").next().last().text().trim();
             let m_journal=$("div .cell.small-12.medium-6.large-2:contains('Journal')").next().text().trim();
+            //let m_si = $("div.cell.small-12.medium-6.large-2:contains('Special Issue') + div").text().trim();
+            //let corresponding=$("b:contains('*')").parent("td").next().last().text().trim();
 
             $("table [title|='Google Scholar']").each(function( index ) {
                 name[index] = $(this).parent().prev().text().trim() + " " + $(this).parent().children("b").first().text().trim();
@@ -417,50 +404,65 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             if (window.location.href.indexOf("?linkedin") > -1) {$("#linkedin")[0].click(); history.back();}
             $("[title='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query='+$("[title='Google']").prev().text()+
                                          '" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="https://c5.rgstatic.net/m/41542880220916/images/favicon/favicon-16x16.png"></a> ');
-            $("[class|='margin-horizontal-1']").after(`<form id='vf' class='insertform' method='post' target='_blank' style='display:none;'><input name='form[journal_id]'><input name='form[is_percentage]' value='1'><input name='form[special_issue_id]'>`
-                                                      + `<input name='form[emails]'><input name='form[valid_months]' value='12'><input name='form[section_id]'><input name='form[reason]'><input name='form[manuscript_id]'><textarea name='form[note]'></textarea></form>`);
-            $("[class|='margin-horizontal-1']").after(`<div id="voucher" style="display:inline-block;"><a style="color:#4b5675;">[Vouchers]</a><div style="position:absolute;background-color: #f1f1f1;box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);display: none;"><a id="v_si"`
-                                                      + ` style="display:block;padding: 8px 12px;text-decoration: none;color:black;">Special Issue</a><a id="v_ec" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Regular Submission</a></div></div>`);
+
+            let lists = $("a:contains('Apply a voucher')").clone().css("display","block").css("padding","8px 12px").css("text-decoration","none").css("color","black")
+            $("[class|='margin-horizontal-1']").after(`<div id=voucher style=display:inline-block><a style=color:#4b5675>[Voucher]</a><div id=v_inner style="position:absolute;background-color:#f1f1f1;box-shadow:0 8px 16px 0 rgba(0,0,0,.2);display:none"></div></div>`);
+            if (lists.length) {
+                $("#v_inner").append(lists.clone().text("FP invited by GE").attr("reason","Feature paper invited by guest editor"));
+                $("#v_inner").append(lists.clone().text("Paper by GE").attr("reason","Paper by guest editor"));
+                $("#v_inner").append(lists.clone().text("Paper by EBM").attr("reason","Paper by editorial board member"));
+                $("#v_inner").append(lists.clone().text("Others").attr("reason","Others"));
+            } else {
+                $("#v_inner").append(`<a style="display: block; padding: 8px 12px; text-decoration: none; color: black;" href="`+$("a:contains('View Details')").attr("href")+`" target=_blank>Voucher already exists</a>`);
+            }
             $("#voucher").mouseover(function(){ $(this).children("div").show() });
             $("#voucher").mouseout(function(){ $(this).children("div").hide() });
             $('head').append('<style>#voucher a:hover {background-color: #ddd;}</style>');
-
-            if (!m_si) {$("#v_si").remove()};
             $("#voucher>div>a").click(function(){
-                let d_reason;
-                switch ($(this).attr("id")) {
-                    case 'v_si': $("#vf").attr("action","/voucher/application/create?waiverApplyForm[types]=6"); d_reason = "Dear Colleagues,\n\nThe paper invited by the Guest Editors is now submitted. I would like to apply for a XXX% discount on this paper as we "
-                        +"promised before. Hope you may approve.\n\nP.S. No need to send a promotion letter. / Promotion letter has been sent."; break;
-                    case 'v_ec': $("#vf").attr("action","/voucher/application/create?waiverApplyForm[types]=14"); d_reason = "Dear Colleagues,\n\nThe feature paper is now submitted. I would like to apply for a XXX% discount on this paper as we "
-                        +"promised before. Hope you may approve.\n\nP.S. No need to send a promotion letter. / Promotion letter has been sent."; break;
-                }
+                let list_clicked = $(this), firstopen = true;
+                waitForKeyElements('#form_reason', voucher_function, true); function voucher_function() {
+                    $("#wholebody > div.ui-widget-overlay.ui-front").remove()
+                    $("#form_is_percentage").val(1);
+                    $("#form_reason > option:contains('"+list_clicked.attr("reason")+"')").prop('selected', true);
+                    $("#form_reason").change(function(){
+                        switch ($(this).val()) {
+                            case "Feature paper invited by guest editor":
+                                $("#form_note").val("The paper invited by GE is now submitted. I would like to apply for a XXX% discount on this paper as we promised before. Hope you may approve.\n\nP.S. No need to send promotion letter. / Promotion letter has been sent.")
+                                break;
+                            case "Paper by guest editor":
+                                $("#form_note").val("The paper by GE is now submitted. We agreed to grant a XXX% discount on GE's paper. Hope you may approve.\n\nP.S. No need to send promotion letter. / Promotion letter has been sent.")
+                                break;
+                            case "Exceptional Case":
+                                break;
+                            default:
+                                $("#form_note").val("")
+                                break;
+                        }
+                    }).trigger("change")
 
-                let j_id = get_jid(m_id.split("-")[0]);
-                $("[name='form[journal_id]']").val(j_id);
-                $("[name='form[emails]']").val(corresponding);
-                $("[name='form[manuscript_id]']").val(m_id);
-                $("[name='form[note]']").val(d_reason);
-
-                if (!!m_section) {
-                    let xhr = new XMLHttpRequest(), s_search = new RegExp('(\\d*)[^0-9]:[^0-9]' + m_section.replace(/\(/g,"\\\(").replace(/\)/g,"\\\)"), '');
-                    xhr.open('GET', '/list/journal/'+j_id+'/sections', false); xhr.send();
-                    let s_result = $("<div/>").html(xhr.responseText).text().match(s_search);
-                    if (!!s_result) {$("[name='form[section_id]']").val(s_result.pop())};
+                    $("#maincol > form.interaction-form").after("<div id='sk_field-form_emails'></div>");
+                    $("b:contains('*')").parent("td").next().each(function() { $("#form_emails > option:contains('" + $(this).text().trim() + "')").prepend("* ").prop('selected', true) });
+                    $("#form_emails").change(function(){
+                        $.get("https://susy.mdpi.com/voucher/application/voucher_email_details/6?variable="+$("#form_emails").val(), function(res) {
+                            $("#sk_field-form_emails").html(res).find("legend").remove()
+                            $("#sk_field-form_emails fieldset>>div:contains('Name:')").next().wrapInner('<a id="update_reviewer" email="'+$("#form_emails").val()+'" target=_blank></a>');
+                            $("#update_reviewer").click(function(){
+                                $("body").css('cursor', 'wait');
+                                $.get("/list/reviewers/by-email-query?showName=1&term="+$(this).attr("email"), function(res) {
+                                    GM_openInTab("https://susy.mdpi.com/reivewer/managment/edit/"+res[0].id, {active: true});
+                                    $("body").css('cursor', 'default');
+                                });
+                            })
+                            if (firstopen) { firstopen=false; let entireform=$("#sk_field-form_emails").parent().parent(); $('html,body').scrollTop(entireform.offset().top+entireform.height()-window.innerHeight); }
+                        });
+                    }).trigger("change")
                 }
-                if (!!m_si) {
-                    let xhr = new XMLHttpRequest(), s_search = new RegExp('(\\d*)[^0-9]:[^0-9]' + m_si.replace(/\(/g,"\\\(").replace(/\)/g,"\\\)"), '');
-                    xhr.open('GET', '/list/journal/'+j_id+'/section/0/all_special_issues', false); xhr.send();
-                    let s_result = $("<div/>").html(xhr.responseText).text().match(s_search);
-                    if (!!s_result) {$("[name='form[special_issue_id]']").val(s_result.pop())};
-                }
-                $("#vf").submit();
             });
 
             $("[title='PubPeer']").each(function() {
                 let $link = $(this);
                 GM_xmlhttpRequest({
-                    method: "GET",
-                    url: $link.attr("href").replace("pubpeer.com","pubpeer.com/api"),
+                    method: "GET", url: $link.attr("href").replace("pubpeer.com","pubpeer.com/api"),
                     onload: function(response) {
                         let pub_num = $.parseJSON(response.responseText).meta.total;
                         $link.append("["+pub_num+"]");
@@ -472,7 +474,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
         if (GM_config.get('Assign_Assistant')) { //派稿助手
             try {let params = new window.URLSearchParams(window.location.search); let reviewer = params.get('r');
-                 if (reviewer.indexOf("@") > -1) {$("#form_email").val(reviewer); $("#nextBtn").click(); waitForKeyElements('#specialBackBtn', scrolldown, true); function scrolldown() {document.getElementById("form_email").scrollIntoView()}; }
+                 if (reviewer.indexOf("@") > -1) {$("#form_email").val(reviewer); $("#nextBtn").click(); waitForKeyElements('#specialBackBtn', scrolldown, true); function scrolldown() {$('html, body').scrollTop($('#form_email').offset().top)} }
                 } catch (error){ }
 
             if ($("strong.margin-horizontal-1").text().indexOf("decision") > -1) {
@@ -496,9 +498,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
     //特刊列表免翻页⚙️
     if (window.location.href.indexOf(".mdpi.com/special_issue_pending/list") > -1 && window.location.href.indexOf("page=") == -1){try{
-        if(GM_config.get('SInote')) {
-            waitForKeyElements(".special-issue-note-box",SidebarSize);
-        }
+        if(GM_config.get('SInote')) { waitForKeyElements(".special-issue-note-box",SidebarSize);}
         if(GM_config.get('SIpages')){
             let maxpage = 20, totalpage = Math.min(maxpage,parseInt($('li:contains("Next")').prev().text())), counter, Placeholder="";
             for (counter = 2; counter<=Math.min(maxpage,totalpage); counter++) {
@@ -521,9 +521,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
     //特刊页面➕按钮、Note
     if (window.location.href.indexOf(".mdpi.com/submission/topic/view")+window.location.href.indexOf(".mdpi.com/special_issue/process") > -2){try{
-        if(GM_config.get('SInote')) {
-            waitForKeyElements(".special-issue-note-box",SidebarSize);
-        }
+        if (GM_config.get('SInote')) {waitForKeyElements(".special-issue-note-box",SidebarSize)}
         if ($("a:contains('Edit at backend')").length) {$('#si-update-emphasized').parent().children("a").first().attr("href", $("a:contains('Edit at backend')").attr("href").replace(/.*\//,"https://mdpi.com/si/") )};
         $('#si-update-emphasized').before('<a href="?pagesection=AddGuestEditor" title="Add Guest Editor"><img border="0" src="/bundles/mdpisusy/img/icon/plus.png"></a> ');
         $("[for='form_name_system']").append(` <a onclick="$('#form_name_system').prop('readonly', false)">[Edit]</a>`);
@@ -751,15 +749,12 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                 $("div[title='Rich Text Editor, editor3']").html("<p>"+conclusion+"</p");
                 $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Generate Feasibility Report");
                 $('input[value="Complete"]').attr('disabled', false);
-                $('html, body').animate({
-                    scrollTop: $("div[title='Rich Text Editor, editor1']").parent().parent().prev().offset().top
-                }, 500);
+                $('html, body').animate({scrollTop: $("div[title='Rich Text Editor, editor1']").parent().parent().prev().offset().top}, 500);
             }
         }
     } catch (error){ }}
     if (window.location.href.indexOf("/email/invite/eic_decision/") > -1){try{
-        $('#emailTemplates').val( $('#emailTemplates').children().last().val() ).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-        $("span:contains('Select')").text( $('#emailTemplates').children().last().text() );
+        unsafeWindow.$('#emailTemplates').prop('selectedIndex', 1).trigger("chosen:updated").trigger('change');
     } catch (error){ }}
 
     //默认新建特刊位置和Title Case
@@ -768,23 +763,23 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $("#TitleCaseChicago").click(function () {
             if ($("#form_name").val().length > 1) {
                 (async () => {
-                    $("#form_name").prop("disabled", true); $('input[value="Edit"]').prop("disabled", true); $('input[value="Add"]').prop("disabled", true);
+                    $('#form_name, input[value="Edit"], input[value="Add"]').prop("disabled", true);
                     var result="";
                     let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($("#form_name").val()) + "&preserveAllCaps=true&styleC=true");
                     let jsonarray= $.parseJSON(response.responseText);
                     jsonarray[0].title.forEach(element => {result = result + element.joint + element.word});
                     $("#form_name").val(result);
-                    $("#form_name").prop("disabled", false); $('input[value="Edit"]').prop("disabled", false); $('input[value="Add"]').prop("disabled", false);
+                    $('#form_name, input[value="Edit"], input[value="Add"]').prop("disabled", false);
                 })()
             }
         });
-        if (window.location.href.indexOf("/edit/0") > -1 && S_J>0) { $('#form_id_journal').val(S_J).change(); $("#form_id_journal_chosen>a>span").text(GM_config.get('Journal')); document.getElementById('form_id_journal').dispatchEvent(new CustomEvent('change'));}
+        if (window.location.href.indexOf("/edit/0") > -1 && S_J>0) { unsafeWindow.$('#form_id_journal').val(S_J).trigger("chosen:updated").trigger("change") }
     } catch (error){ }}
 
     //默认新建EBM位置
     if (window.location.href.indexOf(".mdpi.com/user/ebm-new/management") > -1){try{
         if (S_J>0){
-            $("#journal_id").val(S_J); $("#role_id").val(9); $("#journal_id_chosen>a>span").text(GM_config.get('Journal'));
+            unsafeWindow.$("#journal_id").val(S_J).trigger("chosen:updated"); $("#role_id").val(9);
             $("[href='/user/ebm-new/management/pending_invitation/my_journals").attr("href","/user/ebm-new/management/pending_invitation/my_journals?form[journal_id]=" +S_J);
         }
         if (GM_config.get('Hidden_Func')){$("#ebm_pending_check_btn").after(' <input class="submit" type="submit" value="Force Proceed"> ');}
@@ -824,7 +819,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         function init() {let t1 = RegExptest(GM_config.get('PP_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('PP_TemplateS2')) );
                          let t2 = RegExptest(GM_config.get('PP_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('PP_TemplateB2')) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init, 1000);
-        document.getElementById("emailTemplates_chosen").scrollIntoView();
+        $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
     } catch (error){ }}
 
     //新增PP修改邮箱
@@ -949,7 +944,11 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
     } catch (error){ } }
 
     //Always: Paper ID to page
-    if(window.location.href.indexOf(".mdpi.com/ajax/submission_get_manuscripts") > -1){try{$.get(window.location.href, function(res) {window.location.href=res[0].url.replace('/production_form/','/process_form/')+window.location.search})} catch (error){ }}
+    if(window.location.href.indexOf(".mdpi.com/ajax/submission_get_manuscripts") > -1){try{
+        let jsonObject = JSON.parse( $("body").text().replace(/\\/g, '') );
+        document.body.innerHTML = '<p>' + jsonObject[0].label + '</p><p>&nbsp;</p><p>https://susy.mdpi.com/' + jsonObject[0].url + '</p><p>&nbsp;</p><p>Redirecting...</p>';
+        window.location.href = jsonObject[0].url;
+    } catch (error){ }}
 
     //Always: Unsubscribe link to page
     if(window.location.href.indexOf(".mdpi.com/user/get/unsubscribe_manage_link") > -1){try{$.get(window.location.href, function(res) {window.location.href=res.link})} catch (error){ }}
@@ -979,7 +978,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                                                                        +$("div.small-12.large-2:contains('Last name')").next().text().trim()+`" target=_blank><img src="//www.scopus.com/static/proteus-images/favicon.ico" width=16px height=16px></a>`)
     } catch (error){ }}
     if (window.location.href.indexOf("/volunteer/reviewer/email/") > -1 && GM_config.get('Hidden_Func')){try{
-        document.getElementById("mailSubject").scrollIntoView();
+        $('html, body').scrollTop($('#mailSubject').offset().top);
     } catch (error){ }}
 
     //Always: Reviewer Information is not required
@@ -1001,7 +1000,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         });
     } catch (error){ }}
 
-    //Always: Mailsdb登陆
+    //Always: Mailsdb登陆打勾
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/login") > -1){try{ $("[name=p_s]").attr('checked',true); $("#check-rem").attr('checked',true); } catch (error){ }}
 
     //Always: Manage Voucher Applications + 页面最底端
@@ -1077,9 +1076,6 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $("a:contains('Peer-Reviewed')").parent().after('<a id="s_linkedin" href="' + $("a:contains('Peer-Reviewed')").attr("href") +'?linkedin"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a"></a>');
         $("#s_linkedin").click(function() {$("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`)});
     } catch (error){ }}
-
-    //Temporary
-    if (window.location.href.indexOf("/user/special_issue/edit/0?") > -1 && GM_config.get('Hidden_Func')){try{ $("#form_owner_email").val("casper.xie@mdpi.com"); $("#form_name").val("Fuzzy Mathematics and Type-I Fuzzy Sets")} catch (error){ }}
 
     console.timeEnd("test")
 })();
