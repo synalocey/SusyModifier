@@ -459,8 +459,11 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
             $("[title='PubPeer']").each(function() {
                 let $link = $(this);
+                let pubpeer_search = new URLSearchParams(new URL($link.attr("href")).search);
+                let pubpeer_name = pubpeer_search.get("q");
+                $(this).attr("href","https://pubpeer.com/search?q=authors%3A%22"+pubpeer_name+"%22")
                 GM_xmlhttpRequest({
-                    method: "GET", url: $link.attr("href").replace("pubpeer.com","pubpeer.com/api"),
+                    method: "GET", url: 'https://pubpeer.com/api/search?q=authors%3A%22'+pubpeer_name+'%22',
                     onload: function(response) {
                         let pub_num = $.parseJSON(response.responseText).meta.total;
                         $link.append("["+pub_num+"]");
