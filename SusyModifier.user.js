@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.1.5
+// @version       3.2.15
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -124,7 +124,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
                               ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)','Guest Editor Invitation-Why a Special Issue',
                                '*Guest Editor - SI Mentor Program'], default: 'Guest Editor - Invite Free'},
-            'GE_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.* Guest Editor"},
+            'GE_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*Mathematics.*Guest Editor"},
             'GE_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.592, Rank Q1) Invitation to Serve as the Guest Editor"},
             'GE_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
@@ -144,11 +144,32 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             'EB_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.592, Rank Q1) Invitation"},
             'EB_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
+            'Report_TemplateID': {'section': [], 'label': '默认 GE Contact', 'type': 'select', 'labelPos': 'left', default: 'Monthly Report', 'options':
+                                  ['Website Online','SI Open','Paper Invitation','Ask GE To Provide List Template 1','Ask GE To Provide List Template 2','Invite The GE To Send Invitations','Remind Another GE To Send The CfP','Discuss Discount With GE',
+                                   'Ask GE To Invite Papers','Invite The GE To Send A Reminder','Paper Submission Guideline','Remind FP Invitations After One Month','CFP Authors And Reviewers In MDPI','Encourage And Motivate GE To Solicit Papers Template 1',
+                                   'Encourage And Motivate GE To Solicit Papers Template 2','Encourage And Motivate GE To Solicit Papers Template 3','Mailing List Check','Mailing List Check Reminder','Guide GE To Manage SI Template 1','Guide GE To Manage SI Template 2',
+                                   'Conference Inquiry','Slide','Some Tips','Review Paper Invitation','Happy Thanksgiving Day','Merry Christmas','FP Reminder One Month Before The Deadline Template 1','FP Reminder One Month Before The Deadline Template 2',
+                                   'Extend The Deadline','Editorial – SI Closed','Book Online','Check Abstract','Monthly Report','IF Increased','Journal Awards','First Publication']},
+            'Report_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=] )\\(.* – monthly report"},
+            'Report_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () {\n let $si_name = $('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();\n`
+                                  + ` return \`Monthly Report (\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – Special Issue: \${$si_name}\`;\n}`},
+            'Report_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=Dear[\\s\\S]*?,\\n\\n)I hope this finds you well. I have included,[\\S\\s]*Kind regards,"},
+            'Report_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (){\n let $si_name=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();`
+                                  + ` let $si_link=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().children().attr("href").replace(/journal\\/(.*)\\/special_issues/,"si/$1");`
+                                  + ` let $arr=$('div.cell.small-12.medium-6.large-2:contains("Manuscripts(")').next().text().split("/");\n let $process=$arr[0].trim(),$pub=$arr[1].trim(),$reject=$arr[2].trim(),$instruct;`
+                                  + ` if ($process+$pub+$reject>0) {$instruct="You can view all manuscripts submitted to the Special Issue by logging in with your email at the link provided. Please note that your own submissions will not be visible.`
+                                  + `\\nhttps://susy.mdpi.com/academic-editor/special_issues"} else {$instruct="This is a new Special Issue and hasn't received submissions yet."} return \`I am writing to update you on the status of our Special Issue "\${$si_name}".\n`
+                                  + `\${$si_link}\n\n1. Status of Submissions\n\nPublished: \${$pub}; Under Processing: \${$process}; Rejected: \${$reject}\n\n\${$instruct}\n\n2. Status of Planned Papers\n\nSeveral authors have committed to contributing feature papers`
+                                  + ` to the Special Issue. If there are any missing papers, please let me know.\n\n%pp_list%\n\nWe are excited about a productive collaboration and hope for a successful outcome for the Special Issue. If you have any questions, please `
+                                  + `do not hesitate to contact us.\n--\nBest regards,\n\`;\n}`},
             'PP_Template': {'section': [], 'label': '修改 PP 提醒模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'PP_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'PP_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'PP_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'PP_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
+            'PP_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
+                              "[Regex]A few months ago[\\s\\S]*submit to the special issue (.*?)\\.[\\s\\S]*(https:\\/\\/www.mdpi.com\\/journal\\/mathematics\\/special_issues.*)[\\s\\S]*Kind regards,"},
+            'PP_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': 'A few months ago, you expressed interest in submitting a paper to our special issue "$1". We would be grateful to have the opportunity to receive it.\n\n$2\n\n'
+                              + 'Please note that you will be offered a XX% discount on the Article Processing Charge by the guest editors if your paper is accepted for publication.To take advantage of the discount, we strongly encourage you to submit your'
+                              + ' manuscript by the deadline if possible.\n\nWe look forward to receiving your submission and thank you for your interest in our special issue.\n\nKind regards,'},
             'LinkShort': {'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Assign_Assistant': {'label': '派稿助手', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
@@ -202,7 +223,8 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,
         #SusyModifierConfig_LinkShort_field_label{width:140px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label{width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label
-        {width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label{display:block;}`
+        {width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
+        #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;}`
     });
     const date_v = new Date('202'+GM_info.script.version);
     if ((Date.now() - date_v)/86400000 > 180) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
@@ -378,6 +400,52 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                          let t2 = RegExptest(GM_config.get('EB_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_ReminderB2'))) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         $('html, body').scrollTop($('#emailTemplates').offset().top);
+    } catch (error){ }}
+
+    //GE Monthly Report
+    if (window.location.href.indexOf("/email/acknowledge/") > -1){try{
+        $("#emailTemplates > option:contains('"+GM_config.get('Report_TemplateID')+"')").prop('selected', true);
+        unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
+
+        let result = "";
+        if(GM_config.get('Report_TemplateB2').indexOf("%pp_list%") > -1) {
+            let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id"), false); xhr.send();
+            let $form = $($.parseHTML(xhr.responseText)).find('#special-issue-planned-papers-form');
+            $form.find('tbody tr').each(function() {
+                let $td = $(this).find('td'), email = $td.eq(0).text().trim(), status = $td.eq(1).text().trim(), invitedByGE = $td.eq(2).text().trim(),
+                    discount = parseFloat($td.eq(3).text().trim().replace(/ /g, '').replace(/CHF/g, '')), agreedDate = new Date($td.eq(5).text().trim());
+                if (status === "Title Provided" || status === "Agreed") { counter++;
+                    if (invitedByGE === "Yes" && discount > 0) {
+                        let discountRatio = 0;
+                        switch (agreedDate.getFullYear()) {
+                            case 2021: discountRatio = discount / 1600; break;
+                            case 2022: discountRatio = discount / 1800; break;
+                            case 2023: if(agreedDate.getMonth() < 6) {discountRatio = discount / 2100} else {discountRatio = discount / 2600}; break;
+                            default: discountRatio = 8;
+                        }
+                        result += `(${counter}) ${email} (${(discountRatio * 100).toFixed(0)}% discount)\n`;
+                    } else {
+                        result += `(${counter}) ${email}\n`;
+                    }
+                }
+            });
+        }
+
+        function init() {let t1 = RegExptest(GM_config.get('Report_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('Report_TemplateS2'))) );
+                         let t2 = RegExptest(GM_config.get('Report_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('Report_TemplateB2'))) );
+                         $("#mailBody").val( $("#mailBody").val().replace("%pp_list%", result.trim()) );
+
+                         $("#maincol").after('<div id="special_issue_note_offcanvas" class="hide-note-offcanvas"></div>');
+                         $.get("/user/notes_of_special_issue/" + $("#special_issue_id").attr("data-special-issue-id"), function(res) {
+                             $('#special_issue_note_offcanvas').html(res.note_html); $('#special_issue_note_offcanvas').removeClass('hide-note-offcanvas'); $('#special_issue_note_offcanvas').find('.manuscript-id').show();
+                             if (GM_config.get('SInote')) {waitForKeyElements(".special-issue-note-box",SidebarSize)};
+                             let OtherEmails = res.note_html.match(/GE Other Emails:(.*?)[\n<]/), Appellation = res.note_html.match(/GEs:(.*?)[\n<]/);
+                             if (OtherEmails) {$("#mailTo").val(OtherEmails[1]); $("#mailTo").focus();}
+                             if (Appellation) {$("#mailBody").val( $("#mailBody").val().replace(/(?<=^Dear ).*/, Appellation[1].trim()+",") )}
+                             $("#mailBody").prop('selectionStart', 0).prop('selectionEnd', 0).focus(); $("#mailTo").focus();
+                         });
+                        }
+        waitForText(document.querySelector('#mailSubject'), ' ', init);
     } catch (error){ }}
 
     //文章处理页面[Voucher]按钮和发送推广信按钮等
@@ -617,6 +685,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $('a[data-title="Extend Deadline"]').click(function(e){waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly(){$("#form_deadline").attr("readonly",false)};})
         $('a[data-title="Change special issue deadline"]').click(function(e){waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2(){$("#form_date").attr("readonly",false)};})
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
+        $('input[value="Contact All Guest Editors"]').after($('<a>', {text: 'Contact [New Tab]', href: $('input[value="Contact All Guest Editors"]').attr('onclick').match(/'([^']+)'/)[1], target: '_blank'})).after(" ");
         $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").click( function(){$("#si-cfp-form [type=\'checkbox\']").prop("checked",true)} );
     } catch (error){ }}
 
@@ -1098,7 +1167,7 @@ function SidebarSize() {
     $(".note-list-container").css("padding","0"); $(".note-box-component").css("margin-bottom","10px");
     if ($(".section-note-box .manuscript-note-item-content").height() > 200) {$(".section-note-box .manuscript-note-item-content").height(200).css("overflow-y","auto")}
     if ($(".apc-container .manuscript-note-item-content").height() > 200) {$(".apc-container .manuscript-note-item-content").height(200).css("overflow-y","auto")}
-    if ($('.special-issue-note-box').length > 1) {$(".special-issue-note-box .manuscript-add-note-form").eq(1).prop("rows",25)}
+    if ($('.special-issue-note-box').length > 1) {$(".special-issue-note-box .manuscript-add-note-form").eq(1).prop("rows",20)}
     else if ($('.special-issue-note-box').length > 0) {$(".manuscript-note-box .manuscript-note-item-content").height(200).css("overflow-y","auto")}
 }
 
