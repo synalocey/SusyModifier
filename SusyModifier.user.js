@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.2.15
+// @version       3.2.16
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -442,10 +442,52 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                              let OtherEmails = res.note_html.match(/GE Other Emails:(.*?)[\n<]/), Appellation = res.note_html.match(/GEs:(.*?)[\n<]/);
                              if (OtherEmails) {$("#mailTo").val(OtherEmails[1]); $("#mailTo").focus();}
                              if (Appellation) {$("#mailBody").val( $("#mailBody").val().replace(/(?<=^Dear ).*/, Appellation[1].trim()+",") )}
-                             $("#mailBody").prop('selectionStart', 0).prop('selectionEnd', 0).focus(); $("#mailTo").focus();
+                             $("#mailBody").focus(); $("#mailTo").focus();
                          });
                         }
         waitForText(document.querySelector('#mailSubject'), ' ', init);
+
+        $('#mailBody').parent().after(`<div style="flex-direction: column"><div style="flex-direction: row"><a id="undoBtn"><svg width="24" height="24"><path d="M6.4 8H12c3.7 0 6.2 2 6.8 5.1.6 2.7-.4 5.6-2.3 6.8a1 1 0 01-1-1.8c1.1-.6 1.8-2.7 1.4-4.6-.5-2.1-2.1-3.5-4.9-3.5H6.4l3.3 3.3a1 1 0 11-1.4 1.4l-5-5a1 1 0 010-1.4l5-5a1
+        1 0 011.4 1.4L6.4 8z" fill-rule="nonzero"></path></svg></a> <a id="redoBtn"><svg width="24" height="24"><path d="M17.6 10H12c-2.8 0-4.4 1.4-4.9 3.5-.4 2 .3 4 1.4 4.6a1 1 0 11-1 1.8c-2-1.2-2.9-4.1-2.3-6.8.6-3 3-5.1 6.8-5.1h5.6l-3.3-3.3a1 1 0 111.4-1.4l5 5a1 1 0 010 1.4l-5 5a1 1 0 01-1.4-1.4l3.3-3.3z" fill-rule="nonzero">
+        </path></svg></a></div><div style="flex-direction: column" id="insert"><p><a id="cfpapproval">[CfP Approval]</a></p><p><a id="cfpremind">[CfP Remind]</a></p><p><a id="cfpsent">[CfP Sent]</a></p><p><a id="personalcfp">[Personal CfP]</a></p><p><a id="book">[SI Book]</a></p><p><a id="certificate">[Certificate]</a></p>
+        <p><a id="conference">[Conference]</a></p><p><a id="deadline">[Deadline Ext.]</a></p><p><a id="deadline2">[Deadline Ext. 2]</a></p><p><a id="LinkedIn">[LinkedIn]</a></p></div></div>`);
+        let undoStack = [], redoStack = [], insert_text = "";
+        $('#insert a').click(function() {
+            switch ($(this).attr("id")) {
+                case 'cfpapproval': insert_text=`\n3. Approval of Call for Paper List\n\nI'd like to inquire about the appropriateness of using the attached list of email addresses to send out calls for papers for our special issue. These addresses were collected from our database using an AI system, and I wanted to confirm that they `
+                    + `are suitable for receiving calls for papers for our special issue. If you believe that any of the addresses on the list are not suitable, please let me know and I will remove them from the list. If you think that all of the addresses are suitable, please let me know as well.\n\nOnce I have received your feedback`
+                    + `, our editorial office will send out paper invitations to the potential authors on the list.\n\nThank you for your support. I look forward to hearing from you again.\n`; break;
+                case 'cfpremind': insert_text=`\n3. Reminder: Call for Paper List Approval\n\nLast month, we invited you to check the mailing list for your Special Issue. I would like to kindly inquire if you have had a chance to review the list. If so, please let me know if you approve of the invitations so that we can proceed with sending `
+                    + `them out. Your prompt response will be greatly appreciated.\n`; break;
+                case 'cfpsent': insert_text=`\n3. CfP Sent\n\nThe Editorial Office has finished sending the 'call for paper' (CfP) invitations to all the potential authors on the mailing list, and we have not received a positive response yet. We will send a reminder a few months later.\n`; break;
+                case 'personalcfp': insert_text=`\n3. Manuscript Submission Invitations\n\nBased on our experience with previous Special Issues, we have found that guest editors personally sending invitations can be more effective. In this regard, we would like to request your assistance in providing us with a list of 20-30 potential authors`
+                    + `, including their names, affiliations, and email addresses, to whom you can send feature paper invitations with discounts. We recommend that you include authors who will significantly enhance the Special Issue.\n\nWe would like to remind you that our Editorial Office is responsible for administering the discounts. `
+                    + `Therefore, we kindly request that you discuss the invitees with us before sending out the invitations.\n\nIf you are unable to provide us with a list, we would be happy if you could send invitations to scholars on our list. If you are interested, we can prepare a mailing list and email template that you can use to `
+                    + `send the invitations.\n\nThank you for your valuable time and consideration. We look forward to hearing back from you.\n`; break;
+                case 'book': insert_text=`\nIf ten or more papers are published in this Special Issue, we can make a Special Issue book and send a hard copy to each Guest Editor (free of charge). Special Issue book example:\nhttps://www.mdpi.com/books/pdfview/book/3008\n`; break;
+                case 'certificate': insert_text=`\n3. Editor Certificate\n\nOn behalf of the Editor-in-Chief, we would like to thank you for your editorial work, and we are glad to issue you the editor certificate (see attached). \n\nWe look forward to a fruitful collaboration.\n`; break;
+                case 'conference': insert_text=`\n3. Conferences\n\nI would like to express my sincere appreciation for your efforts in promoting our Special Issue. To further increase its visibility and support your promotional activities, I would like to inquire if you plan to attend or organize any international conferences or workshops `
+                    + `in the next months. We are pleased to offer you a travel grant of about 200 CHF to support attendance at these events.\n\nWe kindly ask for your support in promoting our Special Issue in the following ways:\n\n(1) Including one or two slides about our Special Issue in your presentation;\n(2) Attracting planned papers `
+                    + `for the Special Issue or encouraging your colleagues and friends to submit their work;\n(3) Distributing flyers about the journal or the Special Issue;\n(4) Promoting the journal during the conference via social media platforms, such as LinkedIn and Twitter.\n\nWe will be more than happy to supply you with promotional `
+                    + `materials in advance. Please let us know by writing to me at least eight weeks prior to the event, so that we have sufficient time to prepare and send you the materials.\n\nIf you are interested in this proposal, please send us the conference information in advance, including the estimated number of participants. We `
+                    + `will submit the application to our publisher and get back to you.\n\nThank you for considering this opportunity to promote our journal and Special Issue at your upcoming events. We appreciate your continued support.\n`; break;
+                case 'deadline': insert_text=`\n3. Submission Deadline\n\nThe submission deadline for our Special Issue is currently set for XXXXXXXXX, but there are still several planned papers that have not been submitted yet. Although we have published a few papers already, we would like to include at least ten papers to create a `
+                    + `Special Issue book, which we plan to send as a hard copy to our guest editors.\n\nWith that in mind, I would like to suggest that we extend the submission deadline, for example, to October or XXXXXXXXX, and send another round of "call for paper" invitations. This will give authors more time to complete their papers `
+                    + `and potentially attract additional submissions that would greatly enhance the Special Issue.\n\nWhat are your thoughts on this proposal? I would appreciate it if you could let me know if you agree with this suggestion.\n`; break;
+                case 'deadline2': insert_text=`\n3. Submission Deadline\n\nAs you may recall, the submission deadline is currently set for XXXXXXX, but there are still several planned papers that have not been submitted. [Additionally, I noticed that you had expressed your interest in submitting your own manuscript to this Special Issue, `
+                    + `but it appears that it has not been finished yet.]\n\nGiven these circumstances, I would like to inquire if you think we should extend the submission deadline again. As you know, we have published XXXX papers, and the Special Issue has already achieved significant success. We have seen a growing interest from authors `
+                    + `and readers alike, with many regular submissions in this research field recently. Therefore, it would be both reasonable and promising to continue running this Special Issue in the coming months, with a goal of publishing ten or more papers.\n\nI value your opinion on this matter, and I would appreciate it if you `
+                    + `could let me know your thoughts. Thank you for your time and consideration. I look forward to hearing back from you.\n`; break;
+                case 'LinkedIn': insert_text=`\n3. Promotion of the Special Issue\n\nI just wanted to let you know that the Special Issue is now being promoted on LinkedIn at the following link:\nhttps://www.linkedin.com/xxx\n\nIf you have a LinkedIn account, I would greatly appreciate it if you could share the promotion on your profile. `
+                    + `This will help to increase visibility for the special issue and potentially reach a wider audience.\n\nThank you in advance for your assistance.\n`; break;
+            }
+            let selectionStart = $('#mailBody')[0].selectionStart, selectionEnd = $('#mailBody')[0].selectionEnd, text = $('#mailBody').val(); let newText = text.substring(0, selectionStart) + insert_text + text.substring(selectionEnd);
+            undoStack.push(text); redoStack = []; $('#mailBody').val(newText);
+            $('#mailBody')[0].setSelectionRange(selectionStart + insert_text.length, selectionStart + insert_text.length);
+        });
+
+        $('#undoBtn').click(function() { if (undoStack.length > 0) {redoStack.push($('#mailBody').val()); $('#mailBody').val(undoStack.pop()); $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('undo');} });
+        $('#redoBtn').click(function() { if (redoStack.length > 0) {undoStack.push($('#mailBody').val()); $('#mailBody').val(redoStack.pop()); $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('redo');} });
     } catch (error){ }}
 
     //文章处理页面[Voucher]按钮和发送推广信按钮等
