@@ -437,7 +437,8 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
                          $("#maincol").after('<div id="special_issue_note_offcanvas" class="hide-note-offcanvas"></div>');
                          $.get("/user/notes_of_special_issue/" + $("#special_issue_id").attr("data-special-issue-id"), function(res) {
-                             $('#special_issue_note_offcanvas').html(res.note_html); $('#special_issue_note_offcanvas').removeClass('hide-note-offcanvas'); $('#special_issue_note_offcanvas').find('.manuscript-id').show();
+                             $('#special_issue_note_offcanvas').html(res.note_html); $('#special_issue_note_offcanvas').removeClass('hide-note-offcanvas');
+                             $('#close-offcanvas-note').parent().click(function(){$("#special_issue_note_offcanvas").toggleClass("hide-note-offcanvas");});
                              if (GM_config.get('SInote')) {waitForKeyElements(".special-issue-note-box",SidebarSize)};
                              let OtherEmails = res.note_html.match(/GE Other Emails:(.*?)[\n<]/), Appellation = res.note_html.match(/GEs:(.*?)[\n<]/);
                              if (OtherEmails) {$("#mailTo").val(OtherEmails[1]); $("#mailTo").focus();}
