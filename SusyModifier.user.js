@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.2.21
+// @version       3.2.22
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -489,6 +489,16 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
         $('#undoBtn').click(function() { if (undoStack.length > 0) {redoStack.push($('#mailBody').val()); $('#mailBody').val(undoStack.pop()); $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('undo');} });
         $('#redoBtn').click(function() { if (redoStack.length > 0) {undoStack.push($('#mailBody').val()); $('#mailBody').val(redoStack.pop()); $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('redo');} });
+
+        $("#addAttachment").after(` <input type="text" id="addnote" value="Monthly Report" style="width: 150px; display:inline-block">`); // $("#sendingEmail").after(`<a class="submit" type="button" id="SKsendingEmail">Send email</a>`).hide();
+        $("#sendingEmail").click(function(){
+            $("div.click-to-edit-manuscript").last().click();
+            let $textarea = $("div.manuscript-input-note-group textarea").last();
+            let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear();
+            let today = yy + '-' + mm + '-' + dd;
+            $textarea.val($textarea.val().replace("GE contact: \n", "GE contact: \n" + today + " " + $("#addnote").val() + "/"));
+            waitForKeyElements("button[data-url*='/user/edit/si_follow_up_notes/']",function(){$("button[data-url*='/user/edit/si_follow_up_notes/']").click()});
+        });
     } catch (error){ }}
 
     //文章处理页面[Voucher]按钮和发送推广信按钮等
