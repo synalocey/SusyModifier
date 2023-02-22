@@ -451,7 +451,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $('#mailBody').parent().after(`<div style="flex-direction: column"><div style="flex-direction: row"><a id="undoBtn"><svg width="24" height="24"><path d="M6.4 8H12c3.7 0 6.2 2 6.8 5.1.6 2.7-.4 5.6-2.3 6.8a1 1 0 01-1-1.8c1.1-.6 1.8-2.7 1.4-4.6-.5-2.1-2.1-3.5-4.9-3.5H6.4l3.3 3.3a1 1 0 11-1.4 1.4l-5-5a1 1 0 010-1.4l5-5a1
         1 0 011.4 1.4L6.4 8z" fill-rule="nonzero"></path></svg></a> <a id="redoBtn"><svg width="24" height="24"><path d="M17.6 10H12c-2.8 0-4.4 1.4-4.9 3.5-.4 2 .3 4 1.4 4.6a1 1 0 11-1 1.8c-2-1.2-2.9-4.1-2.3-6.8.6-3 3-5.1 6.8-5.1h5.6l-3.3-3.3a1 1 0 111.4-1.4l5 5a1 1 0 010 1.4l-5 5a1 1 0 01-1.4-1.4l3.3-3.3z" fill-rule="nonzero">
         </path></svg></a></div><div style="flex-direction: column" id="insert"><p><a id="cfpapproval">[CfP Approval]</a></p><p><a id="cfpremind">[CfP Remind]</a></p><p><a id="cfpsent">[CfP Sent]</a></p><p><a id="personalcfp">[Personal CfP]</a></p><p><a id="book">[SI Book]</a></p><p><a id="certificate">[Certificate]</a></p>
-        <p><a id="conference">[Conference]</a></p><p><a id="deadline">[Deadline Ext.]</a></p><p><a id="deadline2">[Deadline Ext. 2]</a></p><p><a id="LinkedIn">[LinkedIn]</a></p></div></div>`);
+        <p><a id="conference">[Conference]</a></p><p><a id="deadline">[Deadline Ext.]</a></p><p><a id="deadline2">[Deadline Ext. 2]</a></p><p><a id="LinkedIn">[LinkedIn]</a></p><p><a id="review">[Review Article]</a></p></div></div>`);
         let undoStack = [], redoStack = [], insert_text = "";
         $('#insert a').click(function() {
             switch ($(this).attr("id")) {
@@ -482,6 +482,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                     + `could let me know your thoughts. Thank you for your time and consideration. I look forward to hearing back from you.\n`; $("#addnote").val("询问二次延期"); break;
                 case 'LinkedIn': insert_text=`\n3. Promotion of the Special Issue\n\nI just wanted to let you know that the Special Issue is now being promoted on LinkedIn at the following link:\nhttps://www.linkedin.com/xxx\n\nIf you have a LinkedIn account, I would greatly appreciate it if you could share the promotion on your profile. `
                     + `This will help to increase visibility for the special issue and potentially reach a wider audience.\n\nThank you in advance for your assistance.\n`; $("#addnote").val("社交网站推广"); break;
+                case 'review': insert_text=`\n3. Invitation to Submit a Review Paper\n\nWe are pleased to invite you to submit a review paper for this Special Issue. A review paper is an article that summarizes and evaluates the current state of knowledge on a specific topic. We believe that your expertise and experience in these fields would make a valuable contribution to our Special Issue. Furthermore, we will waive all the fees associated with the review paper publication, which we hope will encourage you to participate in this opportunity.\n`; $("#addnote").val("邀请review"); break;
             }
             let selectionStart = $('#mailBody')[0].selectionStart, selectionEnd = $('#mailBody')[0].selectionEnd, text = $('#mailBody').val(); let newText = text.substring(0, selectionStart) + insert_text + text.substring(selectionEnd);
             undoStack.push(text); redoStack = []; $('#mailBody').val(newText);
@@ -493,12 +494,14 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
         $("#addAttachment").after(` <input type="text" id="addnote" value="月报" style="width: 150px; display:inline-block">`); // $("#sendingEmail").after(`<a class="submit" type="button" id="SKsendingEmail">Send email</a>`).hide();
         $("#sendingEmail").click(function(){
-            $("div.click-to-edit-manuscript").last().click();
-            let $textarea = $("div.manuscript-input-note-group textarea").last();
-            let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear().toString().slice(-2);
-            let today = yy + '-' + mm + '-' + dd;
-            $textarea.val($textarea.val().replace("GE contact: \n", "GE contact: \n" + today + " " + $("#addnote").val() + "/"));
-            waitForKeyElements("button[data-url*='/user/edit/si_follow_up_notes/']",function(){$("button[data-url*='/user/edit/si_follow_up_notes/']").click()});
+            if ($("#addnote").val().length) {
+                $("div.click-to-edit-manuscript").last().click();
+                let $textarea = $("div.manuscript-input-note-group textarea").last();
+                let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear().toString().slice(-2);
+                let today = yy + '-' + mm + '-' + dd;
+                $textarea.val($textarea.val().replace(/(GE contact:\s*)/, "$1" + today + " " + $("#addnote").val() + " / "));
+                waitForKeyElements("button[data-url*='/user/edit/si_follow_up_notes/']",function(){$("button[data-url*='/user/edit/si_follow_up_notes/']").click()});
+            }
         });
     } catch (error){ }}
 
