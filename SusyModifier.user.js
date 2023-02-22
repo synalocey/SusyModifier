@@ -494,7 +494,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $("#sendingEmail").click(function(){
             $("div.click-to-edit-manuscript").last().click();
             let $textarea = $("div.manuscript-input-note-group textarea").last();
-            let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear();
+            let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear().toString().slice(-2);
             let today = yy + '-' + mm + '-' + dd;
             $textarea.val($textarea.val().replace("GE contact: \n", "GE contact: \n" + today + " " + $("#addnote").val() + "/"));
             waitForKeyElements("button[data-url*='/user/edit/si_follow_up_notes/']",function(){$("button[data-url*='/user/edit/si_follow_up_notes/']").click()});
