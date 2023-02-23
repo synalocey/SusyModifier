@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.2.22
+// @version       3.2.23
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -10,7 +10,27 @@
 // @match         *://*.mdpi.com/*
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
-// @match         *://*/*amp;user*
+// @match         *://*.google.com/*
+// @match         *://*.google.com.hk/*
+// @match         *://*.google.co.uk/*
+// @match         *://*.google.ca/*
+// @match         *://*.google.de/*
+// @match         *://*.google.fr/*
+// @match         *://*.google.co.in/*
+// @match         *://*.google.co.jp/*
+// @match         *://*.google.com.br/*
+// @match         *://*.google.com.mx/*
+// @match         *://*.google.com.au/*
+// @match         *://*.google.es/*
+// @match         *://*.google.it/*
+// @match         *://*.google.co.kr/*
+// @match         *://*.google.com.tr/*
+// @match         *://*.google.com.ar/*
+// @match         *://*.google.com.sa/*
+// @match         *://*.google.com.sg/*
+// @match         *://*.google.com.tw/*
+// @match         *://*.google.co.id/*
+// @match         *://*.google.com.my/*
 // @require       https://code.jquery.com/jquery-3.6.1.min.js
 // @grant         GM_getValue
 // @grant         GM_setValue
@@ -1138,12 +1158,17 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $("div.cell.small-12.medium-6.large-2:contains('Manuscript ID')").next().append(`<a href="/user/assigned/process_form/`+$("a:contains('Download Manuscript')").attr("href").match("displayFile/(.*?)(/|$)")[1]+`">[Back to Manuscript]</a>`)
     } catch (error){ }}
 
-    //Always: Google Scholar校正
+    //Always: Google Scholar 校正
     if (window.location.href.indexOf("&amp;") > -1 && window.location.href.indexOf("google") > -1){try{
-        var new_uri, old_uri = window.location.search;
+        let new_uri, old_uri = window.location.search;
         for (let i = 1; i < 5; i++){ new_uri = $("<div />").html(old_uri).text(); if (new_uri==old_uri) {break;} else {old_uri = new_uri} }
         let searchParams = new URLSearchParams(new_uri)
         if(searchParams.has('user')) {window.location.href="https://scholar.google.com/citations?hl=en&user="+searchParams.get('user')}
+    } catch (error){ }}
+
+    //Always: Maths-Related Journal Search
+    if (window.location.hostname.indexOf("google") > -1){try{
+
     } catch (error){ }}
 
     //派稿助手: iThenticate AUTO
