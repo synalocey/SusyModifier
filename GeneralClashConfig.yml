@@ -21,7 +21,7 @@ allow-lan: true
 # #"*": 绑定所有IP地址
 # #192.168.122.11: 绑定单个IPv4地址
 # #"[aaaa::a8aa:ff:fe09:57d8]": 绑定单个IPv6地址
-#bind-address: "*"
+bind-address: "*"
 ipv6: true
 
 # 规则模式：rule（规则） / global（全局代理）/ direct（全局直连）/ script (脚本)
@@ -78,7 +78,7 @@ dns:
   enable: true # 是否启用dns false
   ipv6: true
   listen: 0.0.0.0:53
-  enhanced-mode: redir-host # 模式：redir-host或fake-ip
+  enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16 #
   fake-ip-filter:
     - "*.lan"
@@ -204,7 +204,7 @@ dns:
 # Clash for Windows
 # Proxies module latency test settings
 cfw-latency-timeout: 3000
-cfw-latency-url: https://www.google.com/images/errors/robot.png
+cfw-latency-url: http://maps.google.com/generate_204
 
 # 混合配置（mixin）
 # 支持向所有配置文件中注入公共属性设置
@@ -291,6 +291,7 @@ cfw-bypass:
   - 'music.163.com' # 网易云域名1
   - '*.music.126.net' # 网易云域名2
   - mail-internal.mdpi.com
+  - mail.mdpi.com
   - 212.243.204.39
   - localhost
   - 127.*
@@ -331,3 +332,35 @@ cfw-bypass:
   - 239.*
   - 255.*
   - <local>
+  - "*.13th.tech"
+  - "*.423down.com"
+  - "*.bokecc.com"
+  - "*.chaipip.com"
+  - "*.chinaplay.store"
+  - "*.hrtsea.com"
+  - "*.kaikeba.com"
+  - "*.laomo.me"
+  - "*.mpyit.com"
+  - "*.msftconnecttest.com"
+  - "*.msftncsi.com"
+  - "*.qupu123.com"
+  - "*.pdfwifi.com"
+  - "*.zhenguanyu.biz"
+  - "*.zhenguanyu.com"
+  - "*-cn*"
+  - "*360buy*"
+  - "*alicdn*"
+  - "*alimama*"
+  - "*alipay*"
+  - "*appzapp*"
+  - "*baidupcs*"
+  - "*bilibili*"
+  - "*ccgslb*"
+  - "*chinacache*"
+  - "*duobao*"
+  - "*jdpay*"
+  - "*moke*"
+  - "*qhimg*"
+  - "*vpimg*"
+  - "*xiami*"
+  - "*xiaomi*"
