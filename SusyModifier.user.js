@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.2.15
+// @version       3.2.24
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -10,7 +10,27 @@
 // @match         *://*.mdpi.com/*
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
-// @match         *://*/*amp;user*
+// @match         *://*.google.com/*
+// @match         *://*.google.com.hk/*
+// @match         *://*.google.co.uk/*
+// @match         *://*.google.ca/*
+// @match         *://*.google.de/*
+// @match         *://*.google.fr/*
+// @match         *://*.google.co.in/*
+// @match         *://*.google.co.jp/*
+// @match         *://*.google.com.br/*
+// @match         *://*.google.com.mx/*
+// @match         *://*.google.com.au/*
+// @match         *://*.google.es/*
+// @match         *://*.google.it/*
+// @match         *://*.google.co.kr/*
+// @match         *://*.google.com.tr/*
+// @match         *://*.google.com.ar/*
+// @match         *://*.google.com.sa/*
+// @match         *://*.google.com.sg/*
+// @match         *://*.google.com.tw/*
+// @match         *://*.google.co.id/*
+// @match         *://*.google.com.my/*
 // @require       https://code.jquery.com/jquery-3.6.1.min.js
 // @grant         GM_getValue
 // @grant         GM_setValue
@@ -121,6 +141,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                                +`your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.`},
             'SInote': {'section': [], 'label': 'Special Issue Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SIpages': {'label': '特刊列表免翻页', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Maths_J': {'label': 'Scopus/GS 标记 Maths 相关期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
                               ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)','Guest Editor Invitation-Why a Special Issue',
                                '*Guest Editor - SI Mentor Program'], default: 'Guest Editor - Invite Free'},
@@ -221,7 +242,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             },
         },
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
-        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,
+        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
         #SusyModifierConfig_LinkShort_field_label{width:140px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label{width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label
         {width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
         #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;}`
@@ -285,6 +306,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             $(".menu [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
             $(".menu [href='/user/manuscript/list/owner']").attr("href",'/user/manuscript/list/owner/my_journal');
             $(".menu [href='/user/manuscript/special_approval_list']").attr("href",'/user/manuscript/special_approval_list/my_journal');
+            $(".menu [href='/manuscript/quality/check/list']").attr("href",'/manuscript/quality/check/list?form[journal_id]=' + S_J);
             $(".menu [href='/user/list/editors']").after(" <a href='/user/ebm/contract?form[journal_id]=" + S_J + "'>[R]</a>");
         }
         $(".menu [href='/user/myprofile']").after(" <a href='/user/settings'>[Settings]</a>");
@@ -437,7 +459,8 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
                          $("#maincol").after('<div id="special_issue_note_offcanvas" class="hide-note-offcanvas"></div>');
                          $.get("/user/notes_of_special_issue/" + $("#special_issue_id").attr("data-special-issue-id"), function(res) {
-                             $('#special_issue_note_offcanvas').html(res.note_html); $('#special_issue_note_offcanvas').removeClass('hide-note-offcanvas'); $('#special_issue_note_offcanvas').find('.manuscript-id').show();
+                             $('#special_issue_note_offcanvas').html(res.note_html); $('#special_issue_note_offcanvas').removeClass('hide-note-offcanvas');
+                             $('#close-offcanvas-note').parent().click(function(){$("#special_issue_note_offcanvas").toggleClass("hide-note-offcanvas");});
                              if (GM_config.get('SInote')) {waitForKeyElements(".special-issue-note-box",SidebarSize)};
                              let OtherEmails = res.note_html.match(/GE Other Emails:(.*?)[\n<]/), Appellation = res.note_html.match(/GEs:(.*?)[\n<]/);
                              if (OtherEmails) {$("#mailTo").val(OtherEmails[1]); $("#mailTo").focus();}
@@ -446,6 +469,76 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                          });
                         }
         waitForText(document.querySelector('#mailSubject'), ' ', init);
+
+        $('#mailBody').parent().after(`<div style="flex-direction: column"><div style="flex-direction: row"><a id="undoBtn"><svg width="24" height="24"><path d="M6.4 8H12c3.7 0 6.2 2 6.8 5.1.6 2.7-.4 5.6-2.3 6.8a1 1 0 01-1-1.8c1.1-.6 1.8-2.7
+        1.4-4.6-.5-2.1-2.1-3.5-4.9-3.5H6.4l3.3 3.3a1 1 0 11-1.4 1.4l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.4 1.4L6.4 8z" fill-rule="nonzero"></path></svg></a> <a id="redoBtn"><svg width="24" height="24"><path d="M17.6 10H12c-2.8 0-4.4 1.4-4.9 3.5-.4 2 .3 4 1.4 4.6a1 1 0 11-1
+        1.8c-2-1.2-2.9-4.1-2.3-6.8.6-3 3-5.1 6.8-5.1h5.6l-3.3-3.3a1 1 0 111.4-1.4l5 5a1 1 0 010 1.4l-5 5a1 1 0 01-1.4-1.4l3.3-3.3z" fill-rule="nonzero"></path></svg></a></div><div style="flex-direction: column" id="insert"><p><a id="cfpapproval">[CfP Approval]</a></p>
+        <p><a id="cfpremind">[CfP Remind]</a></p><p><a id="cfpsent">[CfP Sent]</a></p><p><a id="personalcfp">[Personal CfP]</a></p><p><a id="book">[SI Book]</a></p><p><a id="certificate">[Certificate]</a></p><p><a id="conference">[Conference]</a></p>
+        <p><a id="deadline">[Deadline Ext.]</a></p><p><a id="deadline2">[Deadline Ext. 2]</a></p><p><a id="LinkedIn">[LinkedIn]</a></p><p><a id="review">[Review Article]</a></p></div></div>`);
+        let undoStack = [], redoStack = [], insert_text = "";
+        $('#insert a').click(function() {
+            switch ($(this).attr("id")) {
+                case 'cfpapproval': insert_text=`\n3. Approval of Call for Paper List\n\nI'd like to inquire about the appropriateness of using the attached list of email addresses to send out calls for papers for our special issue. These addresses were collected from our `
+                    + `database using an AI system, and I wanted to confirm that they are suitable for receiving calls for papers for our special issue. If you believe that any of the addresses on the list are not suitable, please let me know and I will remove them from `
+                    + `the list. If you think that all of the addresses are suitable, please let me know as well.\n\nOnce I have received your feedback, our editorial office will send out paper invitations to the potential authors on the list.\n\nThank you for your `
+                    + `support. I look forward to hearing from you again.\n`; $("#addnote").val("检查CfP list"); break;
+                case 'cfpremind': insert_text=`\n3. Reminder: Call for Paper List Approval\n\nLast month, we invited you to check the mailing list for your Special Issue. I would like to kindly inquire if you have had a chance to review the list. If so, please let me know `
+                    + `if you approve of the invitations so that we can proceed with sending them out. Your prompt response will be greatly appreciated.\n`; $("#addnote").val("提醒CfP list"); break;
+                case 'cfpsent': insert_text=`\n3. CfP Sent\n\nThe Editorial Office has finished sending the 'call for paper' (CfP) invitations to all the potential authors on the mailing list, and we have not received a positive response yet. We will send a reminder a few `
+                    + `months later.\n`; break;
+                case 'personalcfp': insert_text=`\n3. Manuscript Submission Invitations\n\nBased on our experience with previous Special Issues, we have found that guest editors personally sending invitations can be more effective. In this regard, we would like to request `
+                    + `your assistance in providing us with a list of 20-30 potential authors, including their names, affiliations, and email addresses, to whom you can send feature paper invitations with discounts. We recommend that you include authors who will `
+                    + `significantly enhance the Special Issue.\n\nWe would like to remind you that our Editorial Office is responsible for administering the discounts. Therefore, we kindly request that you discuss the invitees with us before sending out the invitations.`
+                    + `\n\nIf you are unable to provide us with a list, we would be happy if you could send invitations to scholars on our list. If you are interested, we can prepare a mailing list and email template that you can use to send the invitations.\n\n`
+                    + `Thank you for your valuable time and consideration. We look forward to hearing back from you.\n`; $("#addnote").val("请GE发邀请"); break;
+                case 'book': insert_text=`\nIf ten or more papers are published in this Special Issue, we can make a Special Issue book and send a hard copy to each Guest Editor (free of charge). Special Issue book example:\nhttps://www.mdpi.com/books/pdfview/book/3008\n`;
+                    $("#addnote").val("告知做书条件"); break;
+                case 'certificate': insert_text=`\n3. Editor Certificate\n\nOn behalf of the Editor-in-Chief, we would like to thank you for your editorial work, and we are glad to issue you the editor certificate (see attached). \n\nWe look forward to a fruitful `
+                    + `collaboration.\n`; $("#addnote").val("发证书"); window.open("https://susy.mdpi.com/user/list/editors?form[email]=" + $("#mailTo").attr("value").match(/<([^>]+)>/)[1] + "&form[_token]=INShBxf_zyiQ6XpSwRC7dFyTvOYTpaIsun9weGzmiPA"); break;
+                case 'conference': insert_text=`\n3. Conferences\n\nI would like to express my sincere appreciation for your efforts in promoting our Special Issue. To further increase its visibility and support your promotional activities, I would like to inquire if you `
+                    + `plan to attend or organize any international conferences or workshops in the next months. We are pleased to offer you a travel grant of about 200 CHF to support attendance at these events.\n\nWe kindly ask for your support in promoting our Special `
+                    + `Issue in the following ways:\n\n(1) Including one or two slides about our Special Issue in your presentation;\n(2) Attracting planned papers for the Special Issue or encouraging your colleagues and friends to submit their work;\n(3) Distributing `
+                    + `flyers about the journal or the Special Issue;\n(4) Promoting the journal during the conference via social media platforms, such as LinkedIn and Twitter.\n\nWe will be more than happy to supply you with promotional materials in advance. Please let `
+                    + `us know by writing to me at least eight weeks prior to the event, so that we have sufficient time to prepare and send you the materials.\n\nIf you are interested in this proposal, please send us the conference information in advance, including the `
+                    + `estimated number of participants. We will submit the application to our publisher and get back to you.\n\nThank you for considering this opportunity to promote our journal and Special Issue at your upcoming events. We appreciate your continued `
+                    + `support.\n`; $("#addnote").val("询问参会"); break;
+                case 'deadline': insert_text=`\n3. Submission Deadline\n\nThe submission deadline for our Special Issue is currently set for XXXXXXXXX, but there are still several planned papers that have not been submitted yet. Although we have published a few papers `
+                    + `already, we would like to include at least ten papers to create a Special Issue book, which we plan to send as a hard copy to our guest editors.\n\nWith that in mind, I would like to suggest that we extend the submission deadline, for example, to `
+                    + `October or XXXXXXXXX, and send another round of "call for paper" invitations. This will give authors more time to complete their papers and potentially attract additional submissions that would greatly enhance the Special Issue.\n\nWhat are your `
+                    + `thoughts on this proposal? I would appreciate it if you could let me know if you agree with this suggestion.\n`; $("#addnote").val("询问延期"); break;
+                case 'deadline2': insert_text=`\n3. Submission Deadline\n\nAs you may recall, the submission deadline is currently set for XXXXXXX, but there are still several planned papers that have not been submitted. [Additionally, I noticed that you had expressed `
+                    + `your interest in submitting your own manuscript to this Special Issue, but it appears that it has not been finished yet.]\n\nGiven these circumstances, I would like to inquire if you think we should extend the submission deadline again. As you know, `
+                    + `we have published XXXX papers, and the Special Issue has already achieved significant success. We have seen a growing interest from authors and readers alike, with many regular submissions in this research field recently. Therefore, it would be both `
+                    + `reasonable and promising to continue running this Special Issue in the coming months, with a goal of publishing ten or more papers.\n\nI value your opinion on this matter, and I would appreciate it if you could let me know your thoughts. Thank you `
+                    + `for your time and consideration. I look forward to hearing back from you.\n`; $("#addnote").val("询问二次延期"); break;
+                case 'LinkedIn': insert_text=`\n3. Promotion of the Special Issue\n\nI just wanted to let you know that the Special Issue is now being promoted on LinkedIn at the following link:\nhttps://www.linkedin.com/xxx\n\nIf you have a LinkedIn account, I would `
+                    + `greatly appreciate it if you could share the promotion on your profile. This will help to increase visibility for the special issue and potentially reach a wider audience.\n\nThank you in advance for your assistance.\n`;
+                    $("#addnote").val("社交网站推广"); break;
+                case 'review': insert_text=`\n3. Invitation to Submit a Review Paper\n\nWe are pleased to invite you to submit a review paper for this Special Issue. A review paper is an article that summarizes and evaluates the current state of knowledge on a specific `
+                    + `topic. We believe that your expertise and experience in these fields would make a valuable contribution to our Special Issue. Furthermore, we will waive all the fees associated with the review paper publication, which we hope will encourage you to `
+                    + `participate in this opportunity.\n`; $("#addnote").val("邀请review"); break;
+            }
+            let selectionStart = $('#mailBody')[0].selectionStart, selectionEnd = $('#mailBody')[0].selectionEnd, text = $('#mailBody').val(); let newText = text.substring(0, selectionStart) + insert_text + text.substring(selectionEnd);
+            undoStack.push(text); redoStack = []; $('#mailBody').val(newText);
+            $('#mailBody')[0].setSelectionRange(selectionStart + insert_text.length, selectionStart + insert_text.length);
+        });
+
+        $('#undoBtn').click(function() { if (undoStack.length > 0) {redoStack.push($('#mailBody').val()); $('#mailBody').val(undoStack.pop());
+                                                                    $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('undo');} });
+        $('#redoBtn').click(function() { if (redoStack.length > 0) {undoStack.push($('#mailBody').val()); $('#mailBody').val(redoStack.pop());
+                                                                    $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('redo');} });
+
+        $("#addAttachment").after(` <input type="text" id="addnote" value="月报" style="width: 150px; display:inline-block">`); // $("#sendingEmail").after(`<a class="submit" type="button" id="SKsendingEmail">Send email</a>`).hide();
+        $("#sendingEmail").click(function(){
+            if ($("#addnote").val().length) {
+                $("div.click-to-edit-manuscript").last().click();
+                let $textarea = $("div.manuscript-input-note-group textarea").last();
+                let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear().toString().slice(-2);
+                let today = yy + '-' + mm + '-' + dd;
+                $textarea.val($textarea.val().replace(/(GE contact:\s*)/, "$1" + today + " " + $("#addnote").val() + " / "));
+                waitForKeyElements("button[data-url*='/user/edit/si_follow_up_notes/']",function(){$("button[data-url*='/user/edit/si_follow_up_notes/']").click()});
+            }
+        });
     } catch (error){ }}
 
     //文章处理页面[Voucher]按钮和发送推广信按钮等
@@ -1081,12 +1174,107 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $("div.cell.small-12.medium-6.large-2:contains('Manuscript ID')").next().append(`<a href="/user/assigned/process_form/`+$("a:contains('Download Manuscript')").attr("href").match("displayFile/(.*?)(/|$)")[1]+`">[Back to Manuscript]</a>`)
     } catch (error){ }}
 
-    //Always: Google Scholar校正
+    //Always: Google Scholar 校正
     if (window.location.href.indexOf("&amp;") > -1 && window.location.href.indexOf("google") > -1){try{
-        var new_uri, old_uri = window.location.search;
+        let new_uri, old_uri = window.location.search;
         for (let i = 1; i < 5; i++){ new_uri = $("<div />").html(old_uri).text(); if (new_uri==old_uri) {break;} else {old_uri = new_uri} }
         let searchParams = new URLSearchParams(new_uri)
         if(searchParams.has('user')) {window.location.href="https://scholar.google.com/citations?hl=en&user="+searchParams.get('user')}
+    } catch (error){ }}
+
+    //Maths-Related Journal Search
+    if (window.location.hostname.indexOf("google") + window.location.hostname.indexOf("scopus") > -2 && GM_config.get('Maths_J')){try{
+        var maths_j = ["math","stat","computat","computing","equation","probab","algebra","algorithm","calculus","geometr","pde","nonlinear","topology","fractal","discrete","fixed point","artificial intelligence","inverse prob","combinatori","number theory", "matemati",
+                       "operator theory","3C Tic","4OR-A Quarterly Journal of Operations Research","Abakos","ACM Transactions on Architecture and Code Optimization","ACM Transactions on Asian and Low-Resource Language Information Processing",
+                       "ACM Transactions on Autonomous and Adaptive Systems","ACM TRANSACTIONS ON COMPUTER SYSTEMS","ACM Transactions on Intelligent Systems and Technology","ACM Transactions on Interactive Intelligent Systems",
+                       "ACM Transactions on Modeling and Computer Simulation","ACTA ARITHMETICA","ACTA BIOTHEORETICA","ACTA NUMERICA","Acta Universitatis Sapientiae Informatica","ADAPTIVE BEHAVIOR","ADVANCED ENGINEERING INFORMATICS","Advanced Intelligent Systems",
+                       "Advances in Data Analysis and Classification","Advances in Data Science and Adaptive Analysis","Advances in Electrical and Computer Engineering","Advances in Fuzzy Systems","Advances in Group Theory and Applications",
+                       "Advances in Human-Computer Interaction","Advances in Operations Research","AI & Society","AI COMMUNICATIONS","AI MAGAZINE","Analysis and Applications","ANNALES DE L INSTITUT FOURIER","Annales de l Institut Henri Poincare D",
+                       "ANNALES DE L INSTITUT HENRI POINCARE-ANALYSE NON LINEAIRE","ANNALES HENRI POINCARE","ANNALES SCIENTIFIQUES DE L ECOLE NORMALE SUPERIEURE","ANNALI DELLA SCUOLA NORMALE SUPERIORE DI PISA-CLASSE DI SCIENZE","Annals of Functional Analysis",
+                       "Annals of K-Theory","ANNALS OF OPERATIONS RESEARCH","ANNALS OF PURE AND APPLIED LOGIC","Annual Review of Biomedical Data Science","ANZIAM JOURNAL","APPLICABLE ANALYSIS","APPLIED CATEGORICAL STRUCTURES","Applied Computer Systems",
+                       "APPLIED INTELLIGENCE","APPLIED MEASUREMENT IN EDUCATION","Applied Network Science","Applied Ontology","APPLIED PSYCHOLOGICAL MEASUREMENT","APPLIED STOCHASTIC MODELS IN BUSINESS AND INDUSTRY","ARCHIVE FOR RATIONAL MECHANICS AND ANALYSIS",
+                       "Archives of Control Sciences","ARTIFICIAL LIFE","ASIA-PACIFIC JOURNAL OF OPERATIONAL RESEARCH","ASTERISQUE","Astin Bulletin-The Journal of the International Actuarial Association","ASYMPTOTIC ANALYSIS","Australasian Journal of Logic",
+                       "AUTONOMOUS AGENTS AND MULTI-AGENT SYSTEMS","AUTONOMOUS ROBOTS","Axioms","Bayesian Analysis","Behavior Research Methods","BERNOULLI","Big Data","Big Data Research","BioData Mining","BIOMETRICAL JOURNAL","BMC BIOINFORMATICS","Boundary Value Problems",
+                       "Brazilian Journal of Operations & Production Management","BRIEFINGS IN BIOINFORMATICS","BULLETIN OF SYMBOLIC LOGIC","Bulletin of the European Association for Theoretical Computer Science","CAAI Transactions on Intelligence Technology","CALCOLO",
+                       "Cancer Informatics","Central European Journal of Operations Research","CHEMOMETRICS AND INTELLIGENT LABORATORY SYSTEMS","Cognitive Systems Research","COMMUNICATIONS OF THE ACM","COMMUNICATIONS ON PURE AND APPLIED ANALYSIS",
+                       "Complex & Intelligent Systems","Complex Manifolds","Complex Systems","Computability-The Journal of the Association CiE","COMPUTER JOURNAL","Computer Methods and Programs in Biomedicine","COMPUTER PHYSICS COMMUNICATIONS",
+                       "Computer Science Journal of Moldova","Computer Science Review","Computer Science-AGH","COMPUTER SPEECH AND LANGUAGE","COMPUTER SYSTEMS SCIENCE AND ENGINEERING","COMPUTER VISION AND IMAGE UNDERSTANDING","COMPUTERS & OPERATIONS RESEARCH",
+                       "COMPUTERS IN BIOLOGY AND MEDICINE","Concrete Operators","CONCURRENT ENGINEERING-RESEARCH AND APPLICATIONS","CONNECTION SCIENCE","CONSTRUCTIVE APPROXIMATION","CRIMINAL JUSTICE STUDIES","Cuadernos del CIMBAGE","Current Bioinformatics",
+                       "CYBERNETICS AND SYSTEMS ANALYSIS","DATA & KNOWLEDGE ENGINEERING","DATA MINING AND KNOWLEDGE DISCOVERY","Data Science and Engineering","Database-The Journal of Biological Databases and Curation","DECISION SUPPORT SYSTEMS",
+                       "Decisions in Economics and Finance","Dependence Modeling","DESIGNS CODES AND CRYPTOGRAPHY","DISTRIBUTED AND PARALLEL DATABASES","Dolomites Research Notes on Approximation","DYNAMICAL SYSTEMS-AN INTERNATIONAL JOURNAL","Econometric Reviews",
+                       "ECONOMETRIC THEORY","Econometrics Journal","EDUCATIONAL AND PSYCHOLOGICAL MEASUREMENT","Egyptian Informatics Journal","Electronic Journal of Graph Theory and Applications","Electronic Research Archive","ELECTRONIC TRANSACTIONS ON NUMERICAL ANALYSIS",
+                       "Empirical Economics","ENGINEERING ECONOMIST","ENGINEERING OPTIMIZATION","EPJ Data Science","ERGODIC THEORY AND DYNAMICAL SYSTEMS","EURO Journal on Transportation and Logistics","European Journal of Industrial Engineering",
+                       "EUROPEAN JOURNAL OF OPERATIONAL RESEARCH","Evolutionary Bioinformatics","Evolutionary Intelligence","Evolving Systems","EXPERT SYSTEMS","EXPERT SYSTEMS WITH APPLICATIONS","FIBONACCI QUARTERLY","Filomat","FINANCE AND STOCHASTICS",
+                       "Financial Innovation","FINITE ELEMENTS IN ANALYSIS AND DESIGN","FINITE FIELDS AND THEIR APPLICATIONS","Flexible Services and Manufacturing Journal","FORMAL METHODS IN SYSTEM DESIGN","Foundations and Trends in Machine Learning",
+                       "Foundations of Data Science","Frontiers in Neuroinformatics","Frontiers in Neurorobotics","Frontiers of Computer Science","FUNCTIONAL ANALYSIS AND ITS APPLICATIONS","FUNDAMENTA INFORMATICAE","Funkcialaj Ekvacioj-Serio Internacia",
+                       "Future Generation Computer Systems-The International Journal of eScience","Fuzzy Information and Engineering","Fuzzy Optimization and Decision Making","FUZZY SETS AND SYSTEMS","GENETIC EPIDEMIOLOGY","Genetic Programming and Evolvable Machines",
+                       "HISTORY AND PHILOSOPHY OF LOGIC","Homology Homotopy and Applications","HUMAN-COMPUTER INTERACTION","IACR Transactions on Symmetric Cryptology","IBM JOURNAL OF RESEARCH AND DEVELOPMENT","IEEE INTELLIGENT SYSTEMS",
+                       "IEEE Journal of Biomedical and Health Informatics","IEEE MULTIMEDIA","IEEE Open Journal of Intelligent Transportation Systems","IEEE Open Journal of the Computer Society","IEEE Systems Journal","IEEE Transactions on Big Data",
+                       "IEEE Transactions on Cognitive and Developmental Systems","IEEE Transactions on Cybernetics","IEEE TRANSACTIONS ON FUZZY SYSTEMS","IEEE Transactions on Games","IEEE Transactions on Human-Machine Systems","IEEE TRANSACTIONS ON IMAGE PROCESSING",
+                       "IEEE Transactions on Information Forensics and Security","IEEE Transactions on Intelligent Vehicles","IEEE TRANSACTIONS ON KNOWLEDGE AND DATA ENGINEERING","IEEE Transactions on Neural Networks and Learning Systems",
+                       "IEEE TRANSACTIONS ON PARALLEL AND DISTRIBUTED SYSTEMS","IEEE TRANSACTIONS ON PATTERN ANALYSIS AND MACHINE INTELLIGENCE","IEEE-ACM TRANSACTIONS ON NETWORKING","IET Biometrics","IET Computer Vision","IET Computers and Digital Techniques",
+                       "IET Image Processing","IET Information Security","IET Systems Biology","IISE Transactions","IMA JOURNAL OF NUMERICAL ANALYSIS","Image Analysis & Stereology","in silico Plants","Infectious Disease Modelling",
+                       "Information and Inference-A Journal of the IMA","Information Fusion","INFORMATION SYSTEMS FRONTIERS","Information Technology and Control","INFORMS Journal on Applied Analytics","INTEGRAL TRANSFORMS AND SPECIAL FUNCTIONS",
+                       "INTEGRATED COMPUTER-AIDED ENGINEERING","Intelligent Data Analysis","Intelligent Decision Technologies-Netherlands","Intelligenza Artificiale","INTERFACES AND FREE BOUNDARIES","International Arab Journal of Information Technology",
+                       "International Game Theory Review","International Journal for Numerical Methods in Biomedical Engineering","International Journal of Advanced Computer Science and Applications","International Journal of Analysis and Applications",
+                       "International Journal of Applied Pattern Recognition","INTERNATIONAL JOURNAL OF APPROXIMATE REASONING","International Journal of Biometrics","International Journal of Cognitive Informatics and Natural Intelligence",
+                       "INTERNATIONAL JOURNAL OF COMPUTER INTEGRATED MANUFACTURING","INTERNATIONAL JOURNAL OF COMPUTER VISION","International Journal of Data Mining and Bioinformatics","International Journal of Data Mining Modelling and Management",
+                       "International Journal of Data Science and Analytics","INTERNATIONAL JOURNAL OF FOUNDATIONS OF COMPUTER SCIENCE","International Journal of Fuzzy Logic and Intelligent Systems","International Journal of Fuzzy Systems",
+                       "INTERNATIONAL JOURNAL OF GAME THEORY","INTERNATIONAL JOURNAL OF GENERAL SYSTEMS","International Journal of Group Theory","International Journal of Information Security","INTERNATIONAL JOURNAL OF INFORMATION TECHNOLOGY & DECISION MAKING",
+                       "INTERNATIONAL JOURNAL OF INTELLIGENT SYSTEMS","International Journal of Knowledge and Systems Science","International Journal of Knowledge-Based and Intelligent Engineering Systems","International Journal of Machine Learning and Cybernetics",
+                       "International Journal of Management Science and Engineering Management","INTERNATIONAL JOURNAL OF MODELLING AND SIMULATION","INTERNATIONAL JOURNAL OF MODERN PHYSICS B","INTERNATIONAL JOURNAL OF MODERN PHYSICS C",
+                       "International Journal of Multimedia Information Retrieval","International Journal of Neural Systems","International Journal of Numerical Analysis and Modeling","International Journal of Parallel Emergent and Distributed Systems",
+                       "INTERNATIONAL JOURNAL OF PARALLEL PROGRAMMING","INTERNATIONAL JOURNAL OF PRODUCTION ECONOMICS","INTERNATIONAL JOURNAL OF PRODUCTION RESEARCH","INTERNATIONAL JOURNAL OF SOFTWARE ENGINEERING AND KNOWLEDGE ENGINEERING",
+                       "INTERNATIONAL JOURNAL OF QUANTUM INFORMATION","International Journal of Swarm Intelligence Research","International Journal of System Dynamics Applications","International Journal of Systems Science-Operations & Logistics",
+                       "INTERNATIONAL JOURNAL OF SYSTEMS SCIENCE","INTERNATIONAL JOURNAL OF TECHNOLOGY MANAGEMENT","INTERNATIONAL JOURNAL OF UNCERTAINTY FUZZINESS AND KNOWLEDGE-BASED SYSTEMS","International Journal on Document Analysis and Recognition",
+                       "International Journal on Semantic Web and Information Systems","International Transactions in Operational Research","Iranian Journal of Fuzzy Systems","Journal de Theorie des Nombres de Bordeaux",
+                       "Journal of Ambient Intelligence and Smart Environments","Journal of Analysis","Journal of Applied Analysis","JOURNAL OF APPLIED ECONOMETRICS","Journal of Applied Logics-IfCoLoG Journal of Logics and their Applications",
+                       "JOURNAL OF APPROXIMATION THEORY","JOURNAL OF AUTOMATED REASONING","Journal of Big Data","Journal of Biological Dynamics","JOURNAL OF BIOLOGICAL SYSTEMS","Journal of Biomedical Semantics","Journal of Causal Inference","Journal of Cellular Automata",
+                       "JOURNAL OF CHEMOMETRICS","JOURNAL OF CLASSIFICATION","JOURNAL OF COMPLEXITY","JOURNAL OF COMPUTER AND SYSTEM SCIENCES","JOURNAL OF COMPUTER AND SYSTEMS SCIENCES INTERNATIONAL","Journal of Computer Science & Technology","JOURNAL OF CONVEX ANALYSIS",
+                       "Journal of Cryptographic Engineering","JOURNAL OF CRYPTOLOGY","Journal of Decision Systems","JOURNAL OF DYNAMICAL AND CONTROL SYSTEMS","Journal of Dynamics and Games","Journal of Econometrics","JOURNAL OF EDUCATIONAL MEASUREMENT",
+                       "Journal of Formalized Reasoning","JOURNAL OF FOURIER ANALYSIS AND APPLICATIONS","Journal of Function Spaces","JOURNAL OF FUNCTIONAL ANALYSIS","JOURNAL OF GLOBAL OPTIMIZATION","JOURNAL OF GRAPH THEORY","JOURNAL OF GROUP THEORY",
+                       "JOURNAL OF HEURISTICS","Journal of Homotopy and Related Structures","Journal of Industrial and Management Optimization","JOURNAL OF INEQUALITIES AND APPLICATIONS","Journal of Inequalities and Special Functions","Journal of Integer Sequences",
+                       "Journal of Integrative Bioinformatics","JOURNAL OF INTELLIGENT & FUZZY SYSTEMS","JOURNAL OF INTELLIGENT & ROBOTIC SYSTEMS","JOURNAL OF INTELLIGENT INFORMATION SYSTEMS","JOURNAL OF INTELLIGENT MANUFACTURING","Journal of Intelligent Systems",
+                       "JOURNAL OF INTERCONNECTION NETWORKS","JOURNAL OF KNOT THEORY AND ITS RAMIFICATIONS","JOURNAL OF LIE THEORY","Journal of Logic and Analysis","Journal of Logic Language and Information",
+                       "JOURNAL OF MACHINE LEARNING RESEARCH","Journal of Management Analytics","JOURNAL OF MANUFACTURING SYSTEMS","Journal of Modern Dynamics","JOURNAL OF MOLECULAR GRAPHICS & MODELLING","Journal of Multiscale Modelling","JOURNAL OF MULTIVARIATE ANALYSIS",
+                       "JOURNAL OF OPERATIONS MANAGEMENT","JOURNAL OF OPTIMIZATION THEORY AND APPLICATIONS","Journal of Physics-Complexity","JOURNAL OF PRODUCTIVITY ANALYSIS","Journal of Pseudo-Differential Operators and Applications","JOURNAL OF QUALITY TECHNOLOGY",
+                       "Journal of Quantitative Analysis in Sports","Journal of Real-Time Image Processing","JOURNAL OF SCHEDULING","Journal of Simulation","Journal of Singularities","Journal of Spectral Theory","Journal of Sports Analytics","JOURNAL OF SYMBOLIC LOGIC",
+                       "JOURNAL OF SYSTEMS AND SOFTWARE","Journal of Systems Engineering and Electronics","Journal of Systems Science and Systems Engineering","JOURNAL OF THE ACM","JOURNAL OF THE OPERATIONAL RESEARCH SOCIETY",
+                       "Journal of the Operations Research Society of China","Journal of the SFdS","JOURNAL OF THEORETICAL BIOLOGY","JOURNAL OF TIME SERIES ANALYSIS","Journal of Time Series Econometrics","JOURNAL OF UNIVERSAL COMPUTER SCIENCE","Journal of Web Engineering",
+                       "Journal of Web Semantics","Journal on Multimodal User Interfaces","JSIAM Letters","Kinetic and Related Models","KNOWLEDGE AND INFORMATION SYSTEMS","KNOWLEDGE ENGINEERING REVIEW","KNOWLEDGE-BASED SYSTEMS","Kunstliche Intelligenz",
+                       "LIFETIME DATA ANALYSIS","Logic and Logical Philosophy","LOGIC JOURNAL OF THE IGPL","Logica Universalis","Logical Methods in Computer Science","M&SOM-Manufacturing & Service Operations Management","MACHINE LEARNING",
+                       "Machine Learning and Knowledge Extraction","Machine Learning-Science and Technology","MACHINE TRANSLATION","MACHINE VISION AND APPLICATIONS","Malaysian Journal of Computer Science","MANAGEMENT SCIENCE","Markov Processes and Related Fields",
+                       "MEDICAL IMAGE ANALYSIS","Methodology-European Journal of Research Methods for the Behavioral and Social Sciences","Methods and Applications of Analysis","Methods Data Analyses","MICROPROCESSORS AND MICROSYSTEMS","MILITARY OPERATIONS RESEARCH",
+                       "MINDS AND MACHINES","Minimax Theory and its Applications","MODERN PHYSICS LETTERS A","MODERN PHYSICS LETTERS B","Modern Stochastics-Theory and Applications","Molecular Informatics","Monte Carlo Methods and Applications","Multiagent and Grid Systems",
+                       "MULTIDIMENSIONAL SYSTEMS AND SIGNAL PROCESSING","MULTIMEDIA SYSTEMS","MULTIMEDIA TOOLS AND APPLICATIONS","Multimodal Technologies and Interaction","MULTISCALE MODELING & SIMULATION","MULTIVARIATE BEHAVIORAL RESEARCH",
+                       "NAR Genomics and Bioinformatics","Natural Language Engineering","Nature Machine Intelligence","NAVAL RESEARCH LOGISTICS","Network Modeling and Analysis in Health Informatics and Bioinformatics","Network Science","NETWORKS & SPATIAL ECONOMICS",
+                       "Neural Network World","NEURAL NETWORKS","NEURAL PROCESSING LETTERS","Notre Dame Journal of Formal Logic","npj Systems Biology and Applications","Numerical Analysis and Applications","NUMERICAL FUNCTIONAL ANALYSIS AND OPTIMIZATION",
+                       "OMEGA-INTERNATIONAL JOURNAL OF MANAGEMENT SCIENCE","Open Computer Science","OPEN SYSTEMS & INFORMATION DYNAMICS","Operational Research","OPERATIONS RESEARCH","Operations Research and Decisions","OPERATIONS RESEARCH LETTERS",
+                       "Operations Research Perspectives","Operators and Matrices","OPTIMAL CONTROL APPLICATIONS & METHODS","OPTIMIZATION AND ENGINEERING","Optimization Letters","OPTIMIZATION METHODS & SOFTWARE","OR SPECTRUM",
+                       "ORDER-A JOURNAL ON THE THEORY OF ORDERED SETS AND ITS APPLICATIONS","Pacific Journal of Optimization","P-Adic Numbers Ultrametric Analysis and Applications","PATTERN ANALYSIS AND APPLICATIONS","PATTERN RECOGNITION","PATTERN RECOGNITION LETTERS",
+                       "PeerJ Computer Science","PERFORMANCE EVALUATION","PHYSICAL REVIEW E","POTENTIAL ANALYSIS","Problems of Information Transmission","Proceedings of the Institution of Mechanical Engineers Part O-Journal of Risk and Reliability",
+                       "Problemy Analiza-Issues of Analysis","Proceedings of the VLDB Endowment","PRODUCTION AND OPERATIONS MANAGEMENT","PRODUCTION PLANNING & CONTROL","PSYCHONOMIC BULLETIN & REVIEW","QME-Quantitative Marketing and Economics",
+                       "Qualitative Theory of Dynamical Systems","QUALITY AND RELIABILITY ENGINEERING INTERNATIONAL","Quality Engineering","Quality Technology and Quantitative Management","Quantitative Biology","QUANTITATIVE FINANCE","Quantum Information Processing",
+                       "Quantum Machine Intelligence","QUEUEING SYSTEMS","R Journal","RAIRO-OPERATIONS RESEARCH","RAIRO-THEORETICAL INFORMATICS AND APPLICATIONS","RAMANUJAN JOURNAL","Random Matrices-Theory and Applications","Real Analysis Exchange","REAL-TIME SYSTEMS",
+                       "REGULAR & CHAOTIC DYNAMICS","RELIABILITY ENGINEERING & SYSTEM SAFETY","Representation Theory","Research Synthesis Methods","Review of Symbolic Logic","RISK ANALYSIS","ROBOTICS AND AUTONOMOUS SYSTEMS",
+                       "Romanian Journal of Information Science and Technology","SAFETY SCIENCE","SAR AND QSAR IN ENVIRONMENTAL RESEARCH","Scandinavian Actuarial Journal","Scientific Annals of Computer Science","Semantic Web","SEMIGROUP FORUM",
+                       "Sequential Analysis-Design Methods and Applications","Set-Valued and Variational Analysis","SIAM JOURNAL ON APPLIED DYNAMICAL SYSTEMS","SIAM JOURNAL ON CONTROL AND OPTIMIZATION","SIAM Journal on Imaging Sciences",
+                       "SIAM JOURNAL ON MATRIX ANALYSIS AND APPLICATIONS","SIAM JOURNAL ON NUMERICAL ANALYSIS","SIAM JOURNAL ON OPTIMIZATION","SIAM REVIEW","SIAM-ASA Journal on Uncertainty Quantification","SOCIAL CHOICE AND WELFARE","SOCIO-ECONOMIC PLANNING SCIENCES",
+                       "SOCIOLOGICAL METHODS & RESEARCH","Special Matrices","Stata Journal","STOCHASTIC ANALYSIS AND APPLICATIONS","STOCHASTIC ENVIRONMENTAL RESEARCH AND RISK ASSESSMENT","STOCHASTIC MODELS","STOCHASTIC PROCESSES AND THEIR APPLICATIONS",
+                       "Stochastics and Dynamics","Studia Logica","Studies in Informatics and Control","Survey Methodology","Survey Research Methods","Swarm Intelligence","Symmetry-Culture and Science","SYSTEM DYNAMICS REVIEW","SYSTEMS & CONTROL LETTERS",
+                       "Systems Engineering","Theoretical Computer Science","THEORETICAL POPULATION BIOLOGY","Theory and Applications of Categories","THEORY AND DECISION","THEORY AND PRACTICE OF LOGIC PROGRAMMING","THEORY IN BIOSCIENCES","Traitement du Signal",
+                       "Transactions on Data Privacy","TRANSFORMATION GROUPS","TRANSPORTATION RESEARCH PART B-METHODOLOGICAL","TRANSPORTATION RESEARCH PART E-LOGISTICS AND TRANSPORTATION REVIEW","TRANSPORTATION SCIENCE",
+                       "Turkish Journal of Electrical Engineering and Computer Sciences","Vietnam Journal of Computer Science","Web Intelligence","Wiley Interdisciplinary Reviews-Data Mining and Knowledge Discovery","ZEITSCHRIFT FUR ANALYSIS UND IHRE ANWENDUNGEN"];
+        var regex = new RegExp("(" + maths_j.join("|") + ")", "i");
+        if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source']", mark_journals, true);} else {mark_journals()};
+        $("#gsc_bpf_more").click(function (){
+            let targetNode = document.querySelector('#gsc_a_nn')
+            let observer = new MutationObserver(function(mutations) { mark_journals() });
+            observer.observe(targetNode, {characterData: true, childList: true, subtree: true});
+        })
+        function mark_journals(){
+            $("div.gs_gray:not([style]),div[data-component='document-source']").each(function(){ if(regex.test($(this).text())){ $(this).css("background-color", "Wheat") } });
+        }
     } catch (error){ }}
 
     //派稿助手: iThenticate AUTO
