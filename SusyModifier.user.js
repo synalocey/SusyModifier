@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.3.6
+// @version       3.3.7
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -291,6 +291,9 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         if (S_S>0 && S_J>0){
             $(".menu [href='/special_issue_pending/list']").after("<a href='/special_issue_pending/list/online?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[S]</a>");
             $(".menu [href='/user/managing/status/submitted']").after(" <a href='/user/managing/status/submitted?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "'>[S]</a>");
+        }
+        if ($("#topmenu span:contains('@mdpi.com')").text() === 'syna.mu@mdpi.com') {
+            $(".menu [href='/voucher/application/list']").after("<div style='float:right;'><a href='//skday.com/task/susylog.php' target=_black>[Log]</a> </div> ");
         }
         if (S_J>0){
             $(".menu [href='/user/managing/status/submitted']").after("<a href='/user/managing/status/published?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.publish_date&sort=DESC'>[P]</a>");
