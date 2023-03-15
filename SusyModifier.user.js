@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.2.24
+// @version       3.3.15
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -31,6 +31,7 @@
 // @match         *://*.google.com.tw/*
 // @match         *://*.google.co.id/*
 // @match         *://*.google.com.my/*
+// @match         https://chat.openai.com/chat*
 // @require       https://code.jquery.com/jquery-3.6.1.min.js
 // @grant         GM_getValue
 // @grant         GM_setValue
@@ -290,6 +291,9 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         if (S_S>0 && S_J>0){
             $(".menu [href='/special_issue_pending/list']").after("<a href='/special_issue_pending/list/online?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[S]</a>");
             $(".menu [href='/user/managing/status/submitted']").after(" <a href='/user/managing/status/submitted?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "'>[S]</a>");
+        }
+        if ($("#topmenu span:contains('@mdpi.com')").text() === 'syna.mu@mdpi.com') {
+            $(".menu [href='/voucher/application/list']").after("<div style='float:right;'><a href='//skday.com/task/susylog.php' target=_black>[Log]</a> </div> ");
         }
         if (S_J>0){
             $(".menu [href='/user/managing/status/submitted']").after("<a href='/user/managing/status/published?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.publish_date&sort=DESC'>[P]</a>");
@@ -779,7 +783,9 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $('a[data-title="Change special issue deadline"]').click(function(e){waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2(){$("#form_date").attr("readonly",false)};})
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
         $('input[value="Contact All Guest Editors"]').after($('<a>', {text: 'Contact [New Tab]', href: $('input[value="Contact All Guest Editors"]').attr('onclick').match(/'([^']+)'/)[1], target: '_blank'})).after(" ");
-        $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").click( function(){$("#si-cfp-form [type=\'checkbox\']").prop("checked",true)} );
+        $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").click(function(){
+            $("#si-cfp-form [type=\'checkbox\']").prop("checked",true); if($("#form_template_id").val()==1){$("#form_template_id").val(2)}; if($("#form_comments").val()==""){$("#form_comments").val("Thank you.")}
+        });
     } catch (error){ }}
 
     //SI可行性报告
@@ -1182,89 +1188,13 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         if(searchParams.has('user')) {window.location.href="https://scholar.google.com/citations?hl=en&user="+searchParams.get('user')}
     } catch (error){ }}
 
+    //Always: ChatGPT Edit
+    if (window.location.href.indexOf("chat.openai.com/chat") > -1){try{ document.designMode = 'on' } catch (error){ }}
+
     //Maths-Related Journal Search
     if (window.location.hostname.indexOf("google") + window.location.hostname.indexOf("scopus") > -2 && GM_config.get('Maths_J')){try{
         var maths_j = ["math","stat","computat","computing","equation","probab","algebra","algorithm","calculus","geometr","pde","nonlinear","topology","fractal","discrete","fixed point","artificial intelligence","inverse prob","combinatori","number theory", "matemati",
-                       "operator theory","3C Tic","4OR-A Quarterly Journal of Operations Research","Abakos","ACM Transactions on Architecture and Code Optimization","ACM Transactions on Asian and Low-Resource Language Information Processing",
-                       "ACM Transactions on Autonomous and Adaptive Systems","ACM TRANSACTIONS ON COMPUTER SYSTEMS","ACM Transactions on Intelligent Systems and Technology","ACM Transactions on Interactive Intelligent Systems",
-                       "ACM Transactions on Modeling and Computer Simulation","ACTA ARITHMETICA","ACTA BIOTHEORETICA","ACTA NUMERICA","Acta Universitatis Sapientiae Informatica","ADAPTIVE BEHAVIOR","ADVANCED ENGINEERING INFORMATICS","Advanced Intelligent Systems",
-                       "Advances in Data Analysis and Classification","Advances in Data Science and Adaptive Analysis","Advances in Electrical and Computer Engineering","Advances in Fuzzy Systems","Advances in Group Theory and Applications",
-                       "Advances in Human-Computer Interaction","Advances in Operations Research","AI & Society","AI COMMUNICATIONS","AI MAGAZINE","Analysis and Applications","ANNALES DE L INSTITUT FOURIER","Annales de l Institut Henri Poincare D",
-                       "ANNALES DE L INSTITUT HENRI POINCARE-ANALYSE NON LINEAIRE","ANNALES HENRI POINCARE","ANNALES SCIENTIFIQUES DE L ECOLE NORMALE SUPERIEURE","ANNALI DELLA SCUOLA NORMALE SUPERIORE DI PISA-CLASSE DI SCIENZE","Annals of Functional Analysis",
-                       "Annals of K-Theory","ANNALS OF OPERATIONS RESEARCH","ANNALS OF PURE AND APPLIED LOGIC","Annual Review of Biomedical Data Science","ANZIAM JOURNAL","APPLICABLE ANALYSIS","APPLIED CATEGORICAL STRUCTURES","Applied Computer Systems",
-                       "APPLIED INTELLIGENCE","APPLIED MEASUREMENT IN EDUCATION","Applied Network Science","Applied Ontology","APPLIED PSYCHOLOGICAL MEASUREMENT","APPLIED STOCHASTIC MODELS IN BUSINESS AND INDUSTRY","ARCHIVE FOR RATIONAL MECHANICS AND ANALYSIS",
-                       "Archives of Control Sciences","ARTIFICIAL LIFE","ASIA-PACIFIC JOURNAL OF OPERATIONAL RESEARCH","ASTERISQUE","Astin Bulletin-The Journal of the International Actuarial Association","ASYMPTOTIC ANALYSIS","Australasian Journal of Logic",
-                       "AUTONOMOUS AGENTS AND MULTI-AGENT SYSTEMS","AUTONOMOUS ROBOTS","Axioms","Bayesian Analysis","Behavior Research Methods","BERNOULLI","Big Data","Big Data Research","BioData Mining","BIOMETRICAL JOURNAL","BMC BIOINFORMATICS","Boundary Value Problems",
-                       "Brazilian Journal of Operations & Production Management","BRIEFINGS IN BIOINFORMATICS","BULLETIN OF SYMBOLIC LOGIC","Bulletin of the European Association for Theoretical Computer Science","CAAI Transactions on Intelligence Technology","CALCOLO",
-                       "Cancer Informatics","Central European Journal of Operations Research","CHEMOMETRICS AND INTELLIGENT LABORATORY SYSTEMS","Cognitive Systems Research","COMMUNICATIONS OF THE ACM","COMMUNICATIONS ON PURE AND APPLIED ANALYSIS",
-                       "Complex & Intelligent Systems","Complex Manifolds","Complex Systems","Computability-The Journal of the Association CiE","COMPUTER JOURNAL","Computer Methods and Programs in Biomedicine","COMPUTER PHYSICS COMMUNICATIONS",
-                       "Computer Science Journal of Moldova","Computer Science Review","Computer Science-AGH","COMPUTER SPEECH AND LANGUAGE","COMPUTER SYSTEMS SCIENCE AND ENGINEERING","COMPUTER VISION AND IMAGE UNDERSTANDING","COMPUTERS & OPERATIONS RESEARCH",
-                       "COMPUTERS IN BIOLOGY AND MEDICINE","Concrete Operators","CONCURRENT ENGINEERING-RESEARCH AND APPLICATIONS","CONNECTION SCIENCE","CONSTRUCTIVE APPROXIMATION","CRIMINAL JUSTICE STUDIES","Cuadernos del CIMBAGE","Current Bioinformatics",
-                       "CYBERNETICS AND SYSTEMS ANALYSIS","DATA & KNOWLEDGE ENGINEERING","DATA MINING AND KNOWLEDGE DISCOVERY","Data Science and Engineering","Database-The Journal of Biological Databases and Curation","DECISION SUPPORT SYSTEMS",
-                       "Decisions in Economics and Finance","Dependence Modeling","DESIGNS CODES AND CRYPTOGRAPHY","DISTRIBUTED AND PARALLEL DATABASES","Dolomites Research Notes on Approximation","DYNAMICAL SYSTEMS-AN INTERNATIONAL JOURNAL","Econometric Reviews",
-                       "ECONOMETRIC THEORY","Econometrics Journal","EDUCATIONAL AND PSYCHOLOGICAL MEASUREMENT","Egyptian Informatics Journal","Electronic Journal of Graph Theory and Applications","Electronic Research Archive","ELECTRONIC TRANSACTIONS ON NUMERICAL ANALYSIS",
-                       "Empirical Economics","ENGINEERING ECONOMIST","ENGINEERING OPTIMIZATION","EPJ Data Science","ERGODIC THEORY AND DYNAMICAL SYSTEMS","EURO Journal on Transportation and Logistics","European Journal of Industrial Engineering",
-                       "EUROPEAN JOURNAL OF OPERATIONAL RESEARCH","Evolutionary Bioinformatics","Evolutionary Intelligence","Evolving Systems","EXPERT SYSTEMS","EXPERT SYSTEMS WITH APPLICATIONS","FIBONACCI QUARTERLY","Filomat","FINANCE AND STOCHASTICS",
-                       "Financial Innovation","FINITE ELEMENTS IN ANALYSIS AND DESIGN","FINITE FIELDS AND THEIR APPLICATIONS","Flexible Services and Manufacturing Journal","FORMAL METHODS IN SYSTEM DESIGN","Foundations and Trends in Machine Learning",
-                       "Foundations of Data Science","Frontiers in Neuroinformatics","Frontiers in Neurorobotics","Frontiers of Computer Science","FUNCTIONAL ANALYSIS AND ITS APPLICATIONS","FUNDAMENTA INFORMATICAE","Funkcialaj Ekvacioj-Serio Internacia",
-                       "Future Generation Computer Systems-The International Journal of eScience","Fuzzy Information and Engineering","Fuzzy Optimization and Decision Making","FUZZY SETS AND SYSTEMS","GENETIC EPIDEMIOLOGY","Genetic Programming and Evolvable Machines",
-                       "HISTORY AND PHILOSOPHY OF LOGIC","Homology Homotopy and Applications","HUMAN-COMPUTER INTERACTION","IACR Transactions on Symmetric Cryptology","IBM JOURNAL OF RESEARCH AND DEVELOPMENT","IEEE INTELLIGENT SYSTEMS",
-                       "IEEE Journal of Biomedical and Health Informatics","IEEE MULTIMEDIA","IEEE Open Journal of Intelligent Transportation Systems","IEEE Open Journal of the Computer Society","IEEE Systems Journal","IEEE Transactions on Big Data",
-                       "IEEE Transactions on Cognitive and Developmental Systems","IEEE Transactions on Cybernetics","IEEE TRANSACTIONS ON FUZZY SYSTEMS","IEEE Transactions on Games","IEEE Transactions on Human-Machine Systems","IEEE TRANSACTIONS ON IMAGE PROCESSING",
-                       "IEEE Transactions on Information Forensics and Security","IEEE Transactions on Intelligent Vehicles","IEEE TRANSACTIONS ON KNOWLEDGE AND DATA ENGINEERING","IEEE Transactions on Neural Networks and Learning Systems",
-                       "IEEE TRANSACTIONS ON PARALLEL AND DISTRIBUTED SYSTEMS","IEEE TRANSACTIONS ON PATTERN ANALYSIS AND MACHINE INTELLIGENCE","IEEE-ACM TRANSACTIONS ON NETWORKING","IET Biometrics","IET Computer Vision","IET Computers and Digital Techniques",
-                       "IET Image Processing","IET Information Security","IET Systems Biology","IISE Transactions","IMA JOURNAL OF NUMERICAL ANALYSIS","Image Analysis & Stereology","in silico Plants","Infectious Disease Modelling",
-                       "Information and Inference-A Journal of the IMA","Information Fusion","INFORMATION SYSTEMS FRONTIERS","Information Technology and Control","INFORMS Journal on Applied Analytics","INTEGRAL TRANSFORMS AND SPECIAL FUNCTIONS",
-                       "INTEGRATED COMPUTER-AIDED ENGINEERING","Intelligent Data Analysis","Intelligent Decision Technologies-Netherlands","Intelligenza Artificiale","INTERFACES AND FREE BOUNDARIES","International Arab Journal of Information Technology",
-                       "International Game Theory Review","International Journal for Numerical Methods in Biomedical Engineering","International Journal of Advanced Computer Science and Applications","International Journal of Analysis and Applications",
-                       "International Journal of Applied Pattern Recognition","INTERNATIONAL JOURNAL OF APPROXIMATE REASONING","International Journal of Biometrics","International Journal of Cognitive Informatics and Natural Intelligence",
-                       "INTERNATIONAL JOURNAL OF COMPUTER INTEGRATED MANUFACTURING","INTERNATIONAL JOURNAL OF COMPUTER VISION","International Journal of Data Mining and Bioinformatics","International Journal of Data Mining Modelling and Management",
-                       "International Journal of Data Science and Analytics","INTERNATIONAL JOURNAL OF FOUNDATIONS OF COMPUTER SCIENCE","International Journal of Fuzzy Logic and Intelligent Systems","International Journal of Fuzzy Systems",
-                       "INTERNATIONAL JOURNAL OF GAME THEORY","INTERNATIONAL JOURNAL OF GENERAL SYSTEMS","International Journal of Group Theory","International Journal of Information Security","INTERNATIONAL JOURNAL OF INFORMATION TECHNOLOGY & DECISION MAKING",
-                       "INTERNATIONAL JOURNAL OF INTELLIGENT SYSTEMS","International Journal of Knowledge and Systems Science","International Journal of Knowledge-Based and Intelligent Engineering Systems","International Journal of Machine Learning and Cybernetics",
-                       "International Journal of Management Science and Engineering Management","INTERNATIONAL JOURNAL OF MODELLING AND SIMULATION","INTERNATIONAL JOURNAL OF MODERN PHYSICS B","INTERNATIONAL JOURNAL OF MODERN PHYSICS C",
-                       "International Journal of Multimedia Information Retrieval","International Journal of Neural Systems","International Journal of Numerical Analysis and Modeling","International Journal of Parallel Emergent and Distributed Systems",
-                       "INTERNATIONAL JOURNAL OF PARALLEL PROGRAMMING","INTERNATIONAL JOURNAL OF PRODUCTION ECONOMICS","INTERNATIONAL JOURNAL OF PRODUCTION RESEARCH","INTERNATIONAL JOURNAL OF SOFTWARE ENGINEERING AND KNOWLEDGE ENGINEERING",
-                       "INTERNATIONAL JOURNAL OF QUANTUM INFORMATION","International Journal of Swarm Intelligence Research","International Journal of System Dynamics Applications","International Journal of Systems Science-Operations & Logistics",
-                       "INTERNATIONAL JOURNAL OF SYSTEMS SCIENCE","INTERNATIONAL JOURNAL OF TECHNOLOGY MANAGEMENT","INTERNATIONAL JOURNAL OF UNCERTAINTY FUZZINESS AND KNOWLEDGE-BASED SYSTEMS","International Journal on Document Analysis and Recognition",
-                       "International Journal on Semantic Web and Information Systems","International Transactions in Operational Research","Iranian Journal of Fuzzy Systems","Journal de Theorie des Nombres de Bordeaux",
-                       "Journal of Ambient Intelligence and Smart Environments","Journal of Analysis","Journal of Applied Analysis","JOURNAL OF APPLIED ECONOMETRICS","Journal of Applied Logics-IfCoLoG Journal of Logics and their Applications",
-                       "JOURNAL OF APPROXIMATION THEORY","JOURNAL OF AUTOMATED REASONING","Journal of Big Data","Journal of Biological Dynamics","JOURNAL OF BIOLOGICAL SYSTEMS","Journal of Biomedical Semantics","Journal of Causal Inference","Journal of Cellular Automata",
-                       "JOURNAL OF CHEMOMETRICS","JOURNAL OF CLASSIFICATION","JOURNAL OF COMPLEXITY","JOURNAL OF COMPUTER AND SYSTEM SCIENCES","JOURNAL OF COMPUTER AND SYSTEMS SCIENCES INTERNATIONAL","Journal of Computer Science & Technology","JOURNAL OF CONVEX ANALYSIS",
-                       "Journal of Cryptographic Engineering","JOURNAL OF CRYPTOLOGY","Journal of Decision Systems","JOURNAL OF DYNAMICAL AND CONTROL SYSTEMS","Journal of Dynamics and Games","Journal of Econometrics","JOURNAL OF EDUCATIONAL MEASUREMENT",
-                       "Journal of Formalized Reasoning","JOURNAL OF FOURIER ANALYSIS AND APPLICATIONS","Journal of Function Spaces","JOURNAL OF FUNCTIONAL ANALYSIS","JOURNAL OF GLOBAL OPTIMIZATION","JOURNAL OF GRAPH THEORY","JOURNAL OF GROUP THEORY",
-                       "JOURNAL OF HEURISTICS","Journal of Homotopy and Related Structures","Journal of Industrial and Management Optimization","JOURNAL OF INEQUALITIES AND APPLICATIONS","Journal of Inequalities and Special Functions","Journal of Integer Sequences",
-                       "Journal of Integrative Bioinformatics","JOURNAL OF INTELLIGENT & FUZZY SYSTEMS","JOURNAL OF INTELLIGENT & ROBOTIC SYSTEMS","JOURNAL OF INTELLIGENT INFORMATION SYSTEMS","JOURNAL OF INTELLIGENT MANUFACTURING","Journal of Intelligent Systems",
-                       "JOURNAL OF INTERCONNECTION NETWORKS","JOURNAL OF KNOT THEORY AND ITS RAMIFICATIONS","JOURNAL OF LIE THEORY","Journal of Logic and Analysis","Journal of Logic Language and Information",
-                       "JOURNAL OF MACHINE LEARNING RESEARCH","Journal of Management Analytics","JOURNAL OF MANUFACTURING SYSTEMS","Journal of Modern Dynamics","JOURNAL OF MOLECULAR GRAPHICS & MODELLING","Journal of Multiscale Modelling","JOURNAL OF MULTIVARIATE ANALYSIS",
-                       "JOURNAL OF OPERATIONS MANAGEMENT","JOURNAL OF OPTIMIZATION THEORY AND APPLICATIONS","Journal of Physics-Complexity","JOURNAL OF PRODUCTIVITY ANALYSIS","Journal of Pseudo-Differential Operators and Applications","JOURNAL OF QUALITY TECHNOLOGY",
-                       "Journal of Quantitative Analysis in Sports","Journal of Real-Time Image Processing","JOURNAL OF SCHEDULING","Journal of Simulation","Journal of Singularities","Journal of Spectral Theory","Journal of Sports Analytics","JOURNAL OF SYMBOLIC LOGIC",
-                       "JOURNAL OF SYSTEMS AND SOFTWARE","Journal of Systems Engineering and Electronics","Journal of Systems Science and Systems Engineering","JOURNAL OF THE ACM","JOURNAL OF THE OPERATIONAL RESEARCH SOCIETY",
-                       "Journal of the Operations Research Society of China","Journal of the SFdS","JOURNAL OF THEORETICAL BIOLOGY","JOURNAL OF TIME SERIES ANALYSIS","Journal of Time Series Econometrics","JOURNAL OF UNIVERSAL COMPUTER SCIENCE","Journal of Web Engineering",
-                       "Journal of Web Semantics","Journal on Multimodal User Interfaces","JSIAM Letters","Kinetic and Related Models","KNOWLEDGE AND INFORMATION SYSTEMS","KNOWLEDGE ENGINEERING REVIEW","KNOWLEDGE-BASED SYSTEMS","Kunstliche Intelligenz",
-                       "LIFETIME DATA ANALYSIS","Logic and Logical Philosophy","LOGIC JOURNAL OF THE IGPL","Logica Universalis","Logical Methods in Computer Science","M&SOM-Manufacturing & Service Operations Management","MACHINE LEARNING",
-                       "Machine Learning and Knowledge Extraction","Machine Learning-Science and Technology","MACHINE TRANSLATION","MACHINE VISION AND APPLICATIONS","Malaysian Journal of Computer Science","MANAGEMENT SCIENCE","Markov Processes and Related Fields",
-                       "MEDICAL IMAGE ANALYSIS","Methodology-European Journal of Research Methods for the Behavioral and Social Sciences","Methods and Applications of Analysis","Methods Data Analyses","MICROPROCESSORS AND MICROSYSTEMS","MILITARY OPERATIONS RESEARCH",
-                       "MINDS AND MACHINES","Minimax Theory and its Applications","MODERN PHYSICS LETTERS A","MODERN PHYSICS LETTERS B","Modern Stochastics-Theory and Applications","Molecular Informatics","Monte Carlo Methods and Applications","Multiagent and Grid Systems",
-                       "MULTIDIMENSIONAL SYSTEMS AND SIGNAL PROCESSING","MULTIMEDIA SYSTEMS","MULTIMEDIA TOOLS AND APPLICATIONS","Multimodal Technologies and Interaction","MULTISCALE MODELING & SIMULATION","MULTIVARIATE BEHAVIORAL RESEARCH",
-                       "NAR Genomics and Bioinformatics","Natural Language Engineering","Nature Machine Intelligence","NAVAL RESEARCH LOGISTICS","Network Modeling and Analysis in Health Informatics and Bioinformatics","Network Science","NETWORKS & SPATIAL ECONOMICS",
-                       "Neural Network World","NEURAL NETWORKS","NEURAL PROCESSING LETTERS","Notre Dame Journal of Formal Logic","npj Systems Biology and Applications","Numerical Analysis and Applications","NUMERICAL FUNCTIONAL ANALYSIS AND OPTIMIZATION",
-                       "OMEGA-INTERNATIONAL JOURNAL OF MANAGEMENT SCIENCE","Open Computer Science","OPEN SYSTEMS & INFORMATION DYNAMICS","Operational Research","OPERATIONS RESEARCH","Operations Research and Decisions","OPERATIONS RESEARCH LETTERS",
-                       "Operations Research Perspectives","Operators and Matrices","OPTIMAL CONTROL APPLICATIONS & METHODS","OPTIMIZATION AND ENGINEERING","Optimization Letters","OPTIMIZATION METHODS & SOFTWARE","OR SPECTRUM",
-                       "ORDER-A JOURNAL ON THE THEORY OF ORDERED SETS AND ITS APPLICATIONS","Pacific Journal of Optimization","P-Adic Numbers Ultrametric Analysis and Applications","PATTERN ANALYSIS AND APPLICATIONS","PATTERN RECOGNITION","PATTERN RECOGNITION LETTERS",
-                       "PeerJ Computer Science","PERFORMANCE EVALUATION","PHYSICAL REVIEW E","POTENTIAL ANALYSIS","Problems of Information Transmission","Proceedings of the Institution of Mechanical Engineers Part O-Journal of Risk and Reliability",
-                       "Problemy Analiza-Issues of Analysis","Proceedings of the VLDB Endowment","PRODUCTION AND OPERATIONS MANAGEMENT","PRODUCTION PLANNING & CONTROL","PSYCHONOMIC BULLETIN & REVIEW","QME-Quantitative Marketing and Economics",
-                       "Qualitative Theory of Dynamical Systems","QUALITY AND RELIABILITY ENGINEERING INTERNATIONAL","Quality Engineering","Quality Technology and Quantitative Management","Quantitative Biology","QUANTITATIVE FINANCE","Quantum Information Processing",
-                       "Quantum Machine Intelligence","QUEUEING SYSTEMS","R Journal","RAIRO-OPERATIONS RESEARCH","RAIRO-THEORETICAL INFORMATICS AND APPLICATIONS","RAMANUJAN JOURNAL","Random Matrices-Theory and Applications","Real Analysis Exchange","REAL-TIME SYSTEMS",
-                       "REGULAR & CHAOTIC DYNAMICS","RELIABILITY ENGINEERING & SYSTEM SAFETY","Representation Theory","Research Synthesis Methods","Review of Symbolic Logic","RISK ANALYSIS","ROBOTICS AND AUTONOMOUS SYSTEMS",
-                       "Romanian Journal of Information Science and Technology","SAFETY SCIENCE","SAR AND QSAR IN ENVIRONMENTAL RESEARCH","Scandinavian Actuarial Journal","Scientific Annals of Computer Science","Semantic Web","SEMIGROUP FORUM",
-                       "Sequential Analysis-Design Methods and Applications","Set-Valued and Variational Analysis","SIAM JOURNAL ON APPLIED DYNAMICAL SYSTEMS","SIAM JOURNAL ON CONTROL AND OPTIMIZATION","SIAM Journal on Imaging Sciences",
-                       "SIAM JOURNAL ON MATRIX ANALYSIS AND APPLICATIONS","SIAM JOURNAL ON NUMERICAL ANALYSIS","SIAM JOURNAL ON OPTIMIZATION","SIAM REVIEW","SIAM-ASA Journal on Uncertainty Quantification","SOCIAL CHOICE AND WELFARE","SOCIO-ECONOMIC PLANNING SCIENCES",
-                       "SOCIOLOGICAL METHODS & RESEARCH","Special Matrices","Stata Journal","STOCHASTIC ANALYSIS AND APPLICATIONS","STOCHASTIC ENVIRONMENTAL RESEARCH AND RISK ASSESSMENT","STOCHASTIC MODELS","STOCHASTIC PROCESSES AND THEIR APPLICATIONS",
-                       "Stochastics and Dynamics","Studia Logica","Studies in Informatics and Control","Survey Methodology","Survey Research Methods","Swarm Intelligence","Symmetry-Culture and Science","SYSTEM DYNAMICS REVIEW","SYSTEMS & CONTROL LETTERS",
-                       "Systems Engineering","Theoretical Computer Science","THEORETICAL POPULATION BIOLOGY","Theory and Applications of Categories","THEORY AND DECISION","THEORY AND PRACTICE OF LOGIC PROGRAMMING","THEORY IN BIOSCIENCES","Traitement du Signal",
-                       "Transactions on Data Privacy","TRANSFORMATION GROUPS","TRANSPORTATION RESEARCH PART B-METHODOLOGICAL","TRANSPORTATION RESEARCH PART E-LOGISTICS AND TRANSPORTATION REVIEW","TRANSPORTATION SCIENCE",
-                       "Turkish Journal of Electrical Engineering and Computer Sciences","Vietnam Journal of Computer Science","Web Intelligence","Wiley Interdisciplinary Reviews-Data Mining and Knowledge Discovery","ZEITSCHRIFT FUR ANALYSIS UND IHRE ANWENDUNGEN"];
+                       "operator theory"];
         var regex = new RegExp("(" + maths_j.join("|") + ")", "i");
         if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source']", mark_journals, true);} else {mark_journals()};
         $("#gsc_bpf_more").click(function (){
