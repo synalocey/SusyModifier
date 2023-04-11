@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.4.11
+// @version       3.4.12
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -642,12 +642,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         }
 
         //Always QC 换行
-        $('a[data-title="Quality Check"]').click(function() {
-            waitForKeyElements("span:contains('Quality Check')", LineBreak);
-            function LineBreak() {
-                $("div.large-2:contains('Note')").next().each(function() { $(this).html($(this).text().trim().replace(/\n/g, '<br>\n')) });
-            }
-        });
+        $('a[data-title="Quality Check"]').click(LineBreak);
     } catch (error){ }}
 
     //特刊列表免翻页⚙️
@@ -1104,9 +1099,10 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
     if (window.location.href.indexOf("quality/check/") > -1){try{
         if ($("tr th.user_box_head:nth-child(7)").text() == "Note") {
             $("tr td.user_box_item:nth-child(7)").css("width","60%").each(function() {
-                $(this).html($(this).text().replace(/\n/g, '<br>\n'));
+                $(this).html($(this).html().replace(/\n/g, '<br>\n'));
             });
         }
+        $('a[data-title="Quality Check"]').click(LineBreak);
     } catch (error){ } }
 
     //Always: Paper ID to page
@@ -1302,6 +1298,14 @@ function SidebarSize() {
     if ($(".apc-container .manuscript-note-item-content").height() > 200) {$(".apc-container .manuscript-note-item-content").height(200).css("overflow-y","auto")}
     if ($('.special-issue-note-box').length > 1) {$(".special-issue-note-box .manuscript-add-note-form").eq(1).prop("rows",20)}
     else if ($('.special-issue-note-box').length > 0) {$(".manuscript-note-box .manuscript-note-item-content").height(200).css("overflow-y","auto")}
+}
+function LineBreak() {
+    $("span:contains('Quality Check')").text("QC");
+//    waitForText(document.querySelector('span:contains("Quality Check")'), 'Quality Check', LineBreak2);
+    waitForKeyElements("div.ui-widget-overlay.ui-front", LineBreak2, true);
+    function LineBreak2() {
+        $("div.large-2:contains('Note')").next().each(function() { $(this).html($(this).html().trim().replace(/\n/g, '<br>\n')) });
+    }
 }
 
 function get_jid(sysname) {return[
