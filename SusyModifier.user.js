@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.4.7
+// @version       3.4.11
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -640,6 +640,14 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 //              $("table:has([title|='Google Scholar'])").parent().prev().html( $("table:has([title|='Google Scholar'])").parent().prev().html() + " <a href='//redmine.mdpi.cn/projects/journal-mathematics/wiki/SI_Manage_CN' target=_blank>[List]</a>" )
             }
         }
+
+        //Always QC 换行
+        $('a[data-title="Quality Check"]').click(function() {
+            waitForKeyElements("span:contains('Quality Check')", LineBreak);
+            function LineBreak() {
+                $("div.large-2:contains('Note')").next().each(function() { $(this).html($(this).text().trim().replace(/\n/g, '<br>\n')) });
+            }
+        });
     } catch (error){ }}
 
     //特刊列表免翻页⚙️
@@ -1092,6 +1100,15 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $("a:contains('see more')").attr('href',$("a:contains('see more')").attr('data-uri'));
     } catch (error){ } }
 
+    //Always: QC换行问题
+    if (window.location.href.indexOf("quality/check/") > -1){try{
+        if ($("tr th.user_box_head:nth-child(7)").text() == "Note") {
+            $("tr td.user_box_item:nth-child(7)").css("width","60%").each(function() {
+                $(this).html($(this).text().replace(/\n/g, '<br>\n'));
+            });
+        }
+    } catch (error){ } }
+
     //Always: Paper ID to page
     if(window.location.href.indexOf(".mdpi.com/ajax/submission_get_manuscripts") > -1){try{
         let jsonObject = JSON.parse( $("body").text().replace(/\\/g, '') );
@@ -1188,9 +1205,6 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         let searchParams = new URLSearchParams(new_uri)
         if(searchParams.has('user')) {window.location.href="https://scholar.google.com/citations?hl=en&user="+searchParams.get('user')}
     } catch (error){ }}
-
-    //Always: ChatGPT Edit
- //   if (window.location.href.indexOf("chat.openai.com/chat") > -1){try{ document.designMode = 'on' } catch (error){ }}
 
     //Maths-Related Journal Search
     if (window.location.hostname.indexOf("google") + window.location.hostname.indexOf("scopus") > -2 && GM_config.get('Maths_J')){try{
