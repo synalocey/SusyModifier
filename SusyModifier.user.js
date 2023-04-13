@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.4.12
+// @version       3.4.13
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1305,6 +1305,7 @@ function LineBreak() {
     waitForKeyElements("div.ui-widget-overlay.ui-front", LineBreak2, true);
     function LineBreak2() {
         $("div.large-2:contains('Note')").next().each(function() { $(this).html($(this).html().trim().replace(/\n/g, '<br>\n')) });
+        $("div.large-2:contains('Comment')").next().each(function() { $(this).html($(this).html().trim().replace(/\n/g, '<br>\n')) });
     }
 }
 
