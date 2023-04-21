@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.3.7
+// @version       3.4.21
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -142,6 +142,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                                +`your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.`},
             'SInote': {'section': [], 'label': 'Special Issue Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SIpages': {'label': '特刊列表免翻页', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Regular_Color': {'label': '稿件列表标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Maths_J': {'label': 'Scopus/GS 标记 Maths 相关期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
                               ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)','Guest Editor Invitation-Why a Special Issue',
@@ -244,9 +245,9 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         },
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
-        #SusyModifierConfig_LinkShort_field_label{width:140px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label{width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label
-        {width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
-        #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;}`
+        #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label{width:140px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label
+        {width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,
+        #SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;}`
     });
     const date_v = new Date('202'+GM_info.script.version);
     if ((Date.now() - date_v)/86400000 > 180) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
@@ -290,16 +291,16 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
         if (S_S>0 && S_J>0){
             $(".menu [href='/special_issue_pending/list']").after("<a href='/special_issue_pending/list/online?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[S]</a>");
-            $(".menu [href='/user/managing/status/submitted']").after(" <a href='/user/managing/status/submitted?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "'>[S]</a>");
+            $(".menu [href='/user/assigned/status/ongoing']").after(" <a href='/user/managing/status/submitted?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "'>[S]</a>");
         }
         if ($("#topmenu span:contains('@mdpi.com')").text() === 'syna.mu@mdpi.com') {
             $(".menu [href='/voucher/application/list']").after("<div style='float:right;'><a href='//skday.com/task/susylog.php' target=_black>[Log]</a> </div> ");
         }
         if (S_J>0){
-            $(".menu [href='/user/managing/status/submitted']").after("<a href='/user/managing/status/published?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.publish_date&sort=DESC'>[P]</a>");
-            $(".menu [href='/user/managing/status/submitted']").after(" <a href='/user/managing/status/production?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.last_action&sort=DESC'>[F]</a>");
+            $(".menu [href='/user/assigned/status/ongoing']").after("<a href='/user/managing/status/published?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.publish_date&sort=DESC'>[P]</a>");
+            $(".menu [href='/user/assigned/status/ongoing']").after(" <a href='/user/managing/status/production?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.last_action&sort=DESC'>[F]</a>");
+            $(".menu [href='/user/managing/status/submitted']").after(" <a id='owner' href='#'>[Owner]</a>");
             $(".menu [href='/voucher/application/list']").attr("href","/voucher/application/list/my_journal?form[journal_id]=" + S_J);
-            $(".menu [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=" + S_J);
             $(".menu [href='/user/manage/award_request']").attr("href","/user/manage/award_request?form[journal_id]=" + S_J);
             $(".menu [href='/user/manage/awards_item']").attr("href","/user/manage/awards_item?form[journal_id]=" + S_J);
             $(".menu [href='/si/proposal/list']").attr("href","/si/proposal/list?form[journal_id]=" + S_J);
@@ -310,7 +311,6 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             $(".menu [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
             $(".menu [href='/user/manuscript/list/owner']").attr("href",'/user/manuscript/list/owner/my_journal');
             $(".menu [href='/user/manuscript/special_approval_list']").attr("href",'/user/manuscript/special_approval_list/my_journal');
-            $(".menu [href='/manuscript/quality/check/list']").attr("href",'/manuscript/quality/check/list?form[journal_id]=' + S_J);
             $(".menu [href='/user/list/editors']").after(" <a href='/user/ebm/contract?form[journal_id]=" + S_J + "'>[R]</a>");
         }
         $(".menu [href='/user/myprofile']").after(" <a href='/user/settings'>[Settings]</a>");
@@ -322,18 +322,39 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
         if (GM_config.get('Assign_Assistant')) {
             $("body").append( `<div id='add_r' role='dialog' style='display: none; position: absolute; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
-        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [for GL]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
+        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Open Batch Urls, IDs & Emails</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
         onclick='document.getElementById("add_r").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_r_t" class="manuscript-add-note-form"
-        placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu\nmathematics-yyyyyy\nccc@ccc.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_r_b" class="submit">Submit</button></div></div>`);
-            $(".menu [href='/user/assigned/status/ongoing']").after(`<div style='float:right;'><a onclick='$("#add_r").show(); $("#add_r").draggable({handle: "#mover"});'><img src='/bundles/mdpisusy/img/icon/users.png'></a></div>`);
+        placeholder="Example:\nmathematics-11111111\nmathematics-2222222\n\nhttps://www.scopus.com/detail.uri?authorId=333\nhttps://scholar.google.com/citations?user=444\n\naaa@aaa.edu\nbbb@bbb.edu"
+        minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_r_b" class="submit">Submit</button></div></div>`);
+            $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a onclick='$("#add_r").show(); $("#add_r").draggable({handle: "#mover"});'><img src='/bundles/mdpisusy/img/icon/users.png'></a></div>`);
             $("#add_r_b").click(function (){
-                let myArray, add_id, rdline = $("#add_r_t").val().split("\n");
-                for (var i=0; i < rdline.length; i++){
-                    if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
-                    if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/ajax/submission_get_manuscripts?term="+add_id+"&r="+myArray[0], false)}
-                }
+                var textContent = $("#add_r_t").val();
+                var urlRegex = /(https?:\/\/[^\s]+)/g;
+                var emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
+                var digitRegex = /(?<!\d)(\d{6,7})(?!\d)/g;
+                // 查找网址
+                var urls = textContent.match(urlRegex) || [];
+                urls.forEach(function (url) {window.open(url, '_blank')});
+                textContent = textContent.replace(urlRegex, ''); // 移除已找到的网址
+                // 查找邮箱
+                var emails = textContent.match(emailRegex) || [];
+                emails.forEach(function (email) {window.open('https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=' + email, '_blank')});
+                textContent = textContent.replace(emailRegex, '');
+                // 查找连续的6位或7位数字
+                var digits = textContent.match(digitRegex) || [];
+                digits.forEach(function (digit) {window.open('https://susy.mdpi.com/ajax/submission_get_manuscripts?term=' + digit, '_blank')});
+
+                // let myArray, add_id, rdline = $("#add_r_t").val().split("\n");
+                // for (var i=0; i < rdline.length; i++){
+                //     if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
+                //     if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/ajax/submission_get_manuscripts?term="+add_id+"&r="+myArray[0], false)}
+                // }
             })
         }
+
+        $(".menu [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=" + S_J);
+        $(".menu [href='/manuscript/quality/check/list']").attr("href",'/manuscript/quality/check/list?form[journal_id]=' + S_J);
+        $("#owner").click(function(){ $.getJSON("/user/ajax/search_manuscript_owner?term="+$("#topmenu span:contains('@mdpi.com')").text(), function(data){window.location.href ='/user/managing/status/submitted?form[owner_id]=' + data[0].value}); });
     } catch (error){ }}
 
     //SI和Topic Manuscripts整合
@@ -430,6 +451,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
     //GE Monthly Report
     if (window.location.href.indexOf("/email/acknowledge/") > -1){try{
+        $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
         $("#emailTemplates > option:contains('"+GM_config.get('Report_TemplateID')+"')").prop('selected', true);
         unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
 
@@ -533,7 +555,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                                                                     $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('redo');} });
 
         $("#addAttachment").after(` <input type="text" id="addnote" value="月报" style="width: 150px; display:inline-block">`); // $("#sendingEmail").after(`<a class="submit" type="button" id="SKsendingEmail">Send email</a>`).hide();
-        $("#sendingEmail").click(function(){
+        $("#sendingCustomEmail").click(function(){
             if ($("#addnote").val().length) {
                 $("div.click-to-edit-manuscript").last().click();
                 let $textarea = $("div.manuscript-input-note-group textarea").last();
@@ -636,9 +658,12 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                         markup.css("background-color",ranking.color); markup.attr("title",markup.attr("title")+"<br>" + ranking.detail)
                     }
                 });
-                $("table:has([title|='Google Scholar'])").parent().prev().html( $("table:has([title|='Google Scholar'])").parent().prev().html() + " <a href='//redmine.mdpi.cn/projects/journal-mathematics/wiki/SI_Manage_CN' target=_blank>[List]</a>" )
+//              $("table:has([title|='Google Scholar'])").parent().prev().html( $("table:has([title|='Google Scholar'])").parent().prev().html() + " <a href='//redmine.mdpi.cn/projects/journal-mathematics/wiki/SI_Manage_CN' target=_blank>[List]</a>" )
             }
         }
+
+        //Always QC 换行
+        $('a[data-title="Quality Check"]').click(LineBreak);
     } catch (error){ }}
 
     //特刊列表免翻页⚙️
@@ -673,7 +698,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         if(GM_config.get('Hidden_Func')) {
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+'" title="Reset"><img border="0" src="/bundles/mdpisusy/img/icon/arrow.png"></a> ');
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+'" title="Close"><img border="0" src="/bundles/mdpisusy/img/icon/book.png"></a> ');
-            $(".input-group-button").append('&nbsp; <input type="button" class="submit add-planned-paper-btn" value="Force Add">');
+            $("button[data-title='Import']").before('<input type="button" class="submit add-planned-paper-btn" value="Force Add">&nbsp; ');
             $("#checkMailsdb").before('<input id=eltry_stop style=display:none type=button class=submit value=Stop><input id=eltry_stopbox style=display:none type=checkbox> ');
             $("#guestNextBtn").after(' <span id=timesRun style=background-color:#90EE90></span> <input id=eltry style=display:inline-block type=button class=submit value="! AutoRetry"> <input id=add6th style=display:inline-block type=button class=submit value="! Add6th">');
 
@@ -783,7 +808,9 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $('a[data-title="Change special issue deadline"]').click(function(e){waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2(){$("#form_date").attr("readonly",false)};})
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
         $('input[value="Contact All Guest Editors"]').after($('<a>', {text: 'Contact [New Tab]', href: $('input[value="Contact All Guest Editors"]').attr('onclick').match(/'([^']+)'/)[1], target: '_blank'})).after(" ");
-        $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").click( function(){$("#si-cfp-form [type=\'checkbox\']").prop("checked",true)} );
+        $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").click(function(){
+            $("#si-cfp-form [type=\'checkbox\']").prop("checked",true); if($("#form_template_id").val()==1){$("#form_template_id").val(2)}; if($("#form_comments").val()==""){$("#form_comments").val("Thank you.")}
+        });
     } catch (error){ }}
 
     //SI可行性报告
@@ -1089,10 +1116,20 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $("a:contains('see more')").attr('href',$("a:contains('see more')").attr('data-uri'));
     } catch (error){ } }
 
+    //Always: QC换行问题
+    if (window.location.href.indexOf("quality/check/") > -1){try{
+        if ($("tr th.user_box_head:nth-child(7)").text() == "Note") {
+            $("tr td.user_box_item:nth-child(7)").css("width","60%").each(function() {
+                $(this).html($(this).html().replace(/\n/g, '<br>\n'));
+            });
+        }
+        $('a[data-title="Quality Check"]').click(LineBreak);
+    } catch (error){ } }
+
     //Always: Paper ID to page
     if(window.location.href.indexOf(".mdpi.com/ajax/submission_get_manuscripts") > -1){try{
         let jsonObject = JSON.parse( $("body").text().replace(/\\/g, '') );
-        document.body.innerHTML = '<p>' + jsonObject[0].label + '</p><p>&nbsp;</p><p>https://susy.mdpi.com/' + jsonObject[0].url + '</p><p>&nbsp;</p><p>Redirecting...</p>';
+        document.body.innerHTML = '<p>' + jsonObject[0].label + '</p><p>&nbsp;</p><p>https://susy.mdpi.com' + jsonObject[0].url + '</p><p>&nbsp;</p><p>Redirecting...</p>';
         window.location.href = jsonObject[0].url;
     } catch (error){ }}
 
@@ -1186,92 +1223,10 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         if(searchParams.has('user')) {window.location.href="https://scholar.google.com/citations?hl=en&user="+searchParams.get('user')}
     } catch (error){ }}
 
-    //Always: ChatGPT Edit
-    if (window.location.href.indexOf("chat.openai.com/chat") > -1){try{ document.designMode = 'on' } catch (error){ }}
-
     //Maths-Related Journal Search
     if (window.location.hostname.indexOf("google") + window.location.hostname.indexOf("scopus") > -2 && GM_config.get('Maths_J')){try{
         var maths_j = ["math","stat","computat","computing","equation","probab","algebra","algorithm","calculus","geometr","pde","nonlinear","topology","fractal","discrete","fixed point","artificial intelligence","inverse prob","combinatori","number theory", "matemati",
-                       "operator theory","3C Tic","4OR-A Quarterly Journal of Operations Research","Abakos","ACM Transactions on Architecture and Code Optimization","ACM Transactions on Asian and Low-Resource Language Information Processing",
-                       "ACM Transactions on Autonomous and Adaptive Systems","ACM TRANSACTIONS ON COMPUTER SYSTEMS","ACM Transactions on Intelligent Systems and Technology","ACM Transactions on Interactive Intelligent Systems",
-                       "ACM Transactions on Modeling and Computer Simulation","ACTA ARITHMETICA","ACTA BIOTHEORETICA","ACTA NUMERICA","Acta Universitatis Sapientiae Informatica","ADAPTIVE BEHAVIOR","ADVANCED ENGINEERING INFORMATICS","Advanced Intelligent Systems",
-                       "Advances in Data Analysis and Classification","Advances in Data Science and Adaptive Analysis","Advances in Electrical and Computer Engineering","Advances in Fuzzy Systems","Advances in Group Theory and Applications",
-                       "Advances in Human-Computer Interaction","Advances in Operations Research","AI & Society","AI COMMUNICATIONS","AI MAGAZINE","Analysis and Applications","ANNALES DE L INSTITUT FOURIER","Annales de l Institut Henri Poincare D",
-                       "ANNALES DE L INSTITUT HENRI POINCARE-ANALYSE NON LINEAIRE","ANNALES HENRI POINCARE","ANNALES SCIENTIFIQUES DE L ECOLE NORMALE SUPERIEURE","ANNALI DELLA SCUOLA NORMALE SUPERIORE DI PISA-CLASSE DI SCIENZE","Annals of Functional Analysis",
-                       "Annals of K-Theory","ANNALS OF OPERATIONS RESEARCH","ANNALS OF PURE AND APPLIED LOGIC","Annual Review of Biomedical Data Science","ANZIAM JOURNAL","APPLICABLE ANALYSIS","APPLIED CATEGORICAL STRUCTURES","Applied Computer Systems",
-                       "APPLIED INTELLIGENCE","APPLIED MEASUREMENT IN EDUCATION","Applied Network Science","Applied Ontology","APPLIED PSYCHOLOGICAL MEASUREMENT","APPLIED STOCHASTIC MODELS IN BUSINESS AND INDUSTRY","ARCHIVE FOR RATIONAL MECHANICS AND ANALYSIS",
-                       "Archives of Control Sciences","ARTIFICIAL LIFE","ASIA-PACIFIC JOURNAL OF OPERATIONAL RESEARCH","ASTERISQUE","Astin Bulletin-The Journal of the International Actuarial Association","ASYMPTOTIC ANALYSIS","Australasian Journal of Logic",
-                       "AUTONOMOUS AGENTS AND MULTI-AGENT SYSTEMS","AUTONOMOUS ROBOTS","Axioms","Bayesian Analysis","Behavior Research Methods","BERNOULLI","Big Data","Big Data Research","BioData Mining","BIOMETRICAL JOURNAL","BMC BIOINFORMATICS","Boundary Value Problems",
-                       "Brazilian Journal of Operations & Production Management","BRIEFINGS IN BIOINFORMATICS","BULLETIN OF SYMBOLIC LOGIC","Bulletin of the European Association for Theoretical Computer Science","CAAI Transactions on Intelligence Technology","CALCOLO",
-                       "Cancer Informatics","Central European Journal of Operations Research","CHEMOMETRICS AND INTELLIGENT LABORATORY SYSTEMS","Cognitive Systems Research","COMMUNICATIONS OF THE ACM","COMMUNICATIONS ON PURE AND APPLIED ANALYSIS",
-                       "Complex & Intelligent Systems","Complex Manifolds","Complex Systems","Computability-The Journal of the Association CiE","COMPUTER JOURNAL","Computer Methods and Programs in Biomedicine","COMPUTER PHYSICS COMMUNICATIONS",
-                       "Computer Science Journal of Moldova","Computer Science Review","Computer Science-AGH","COMPUTER SPEECH AND LANGUAGE","COMPUTER SYSTEMS SCIENCE AND ENGINEERING","COMPUTER VISION AND IMAGE UNDERSTANDING","COMPUTERS & OPERATIONS RESEARCH",
-                       "COMPUTERS IN BIOLOGY AND MEDICINE","Concrete Operators","CONCURRENT ENGINEERING-RESEARCH AND APPLICATIONS","CONNECTION SCIENCE","CONSTRUCTIVE APPROXIMATION","CRIMINAL JUSTICE STUDIES","Cuadernos del CIMBAGE","Current Bioinformatics",
-                       "CYBERNETICS AND SYSTEMS ANALYSIS","DATA & KNOWLEDGE ENGINEERING","DATA MINING AND KNOWLEDGE DISCOVERY","Data Science and Engineering","Database-The Journal of Biological Databases and Curation","DECISION SUPPORT SYSTEMS",
-                       "Decisions in Economics and Finance","Dependence Modeling","DESIGNS CODES AND CRYPTOGRAPHY","DISTRIBUTED AND PARALLEL DATABASES","Dolomites Research Notes on Approximation","DYNAMICAL SYSTEMS-AN INTERNATIONAL JOURNAL","Econometric Reviews",
-                       "ECONOMETRIC THEORY","Econometrics Journal","EDUCATIONAL AND PSYCHOLOGICAL MEASUREMENT","Egyptian Informatics Journal","Electronic Journal of Graph Theory and Applications","Electronic Research Archive","ELECTRONIC TRANSACTIONS ON NUMERICAL ANALYSIS",
-                       "Empirical Economics","ENGINEERING ECONOMIST","ENGINEERING OPTIMIZATION","EPJ Data Science","ERGODIC THEORY AND DYNAMICAL SYSTEMS","EURO Journal on Transportation and Logistics","European Journal of Industrial Engineering",
-                       "EUROPEAN JOURNAL OF OPERATIONAL RESEARCH","Evolutionary Bioinformatics","Evolutionary Intelligence","Evolving Systems","EXPERT SYSTEMS","EXPERT SYSTEMS WITH APPLICATIONS","FIBONACCI QUARTERLY","Filomat","FINANCE AND STOCHASTICS",
-                       "Financial Innovation","FINITE ELEMENTS IN ANALYSIS AND DESIGN","FINITE FIELDS AND THEIR APPLICATIONS","Flexible Services and Manufacturing Journal","FORMAL METHODS IN SYSTEM DESIGN","Foundations and Trends in Machine Learning",
-                       "Foundations of Data Science","Frontiers in Neuroinformatics","Frontiers in Neurorobotics","Frontiers of Computer Science","FUNCTIONAL ANALYSIS AND ITS APPLICATIONS","FUNDAMENTA INFORMATICAE","Funkcialaj Ekvacioj-Serio Internacia",
-                       "Future Generation Computer Systems-The International Journal of eScience","Fuzzy Information and Engineering","Fuzzy Optimization and Decision Making","FUZZY SETS AND SYSTEMS","GENETIC EPIDEMIOLOGY","Genetic Programming and Evolvable Machines",
-                       "HISTORY AND PHILOSOPHY OF LOGIC","Homology Homotopy and Applications","HUMAN-COMPUTER INTERACTION","IACR Transactions on Symmetric Cryptology","IBM JOURNAL OF RESEARCH AND DEVELOPMENT","IEEE INTELLIGENT SYSTEMS",
-                       "IEEE Journal of Biomedical and Health Informatics","IEEE MULTIMEDIA","IEEE Open Journal of Intelligent Transportation Systems","IEEE Open Journal of the Computer Society","IEEE Systems Journal","IEEE Transactions on Big Data",
-                       "IEEE Transactions on Cognitive and Developmental Systems","IEEE Transactions on Cybernetics","IEEE TRANSACTIONS ON FUZZY SYSTEMS","IEEE Transactions on Games","IEEE Transactions on Human-Machine Systems","IEEE TRANSACTIONS ON IMAGE PROCESSING",
-                       "IEEE Transactions on Information Forensics and Security","IEEE Transactions on Intelligent Vehicles","IEEE TRANSACTIONS ON KNOWLEDGE AND DATA ENGINEERING","IEEE Transactions on Neural Networks and Learning Systems",
-                       "IEEE TRANSACTIONS ON PARALLEL AND DISTRIBUTED SYSTEMS","IEEE TRANSACTIONS ON PATTERN ANALYSIS AND MACHINE INTELLIGENCE","IEEE-ACM TRANSACTIONS ON NETWORKING","IET Biometrics","IET Computer Vision","IET Computers and Digital Techniques",
-                       "IET Image Processing","IET Information Security","IET Systems Biology","IISE Transactions","IMA JOURNAL OF NUMERICAL ANALYSIS","Image Analysis & Stereology","in silico Plants","Infectious Disease Modelling",
-                       "Information and Inference-A Journal of the IMA","Information Fusion","INFORMATION SYSTEMS FRONTIERS","Information Technology and Control","INFORMS Journal on Applied Analytics","INTEGRAL TRANSFORMS AND SPECIAL FUNCTIONS",
-                       "INTEGRATED COMPUTER-AIDED ENGINEERING","Intelligent Data Analysis","Intelligent Decision Technologies-Netherlands","Intelligenza Artificiale","INTERFACES AND FREE BOUNDARIES","International Arab Journal of Information Technology",
-                       "International Game Theory Review","International Journal for Numerical Methods in Biomedical Engineering","International Journal of Advanced Computer Science and Applications","International Journal of Analysis and Applications",
-                       "International Journal of Applied Pattern Recognition","INTERNATIONAL JOURNAL OF APPROXIMATE REASONING","International Journal of Biometrics","International Journal of Cognitive Informatics and Natural Intelligence",
-                       "INTERNATIONAL JOURNAL OF COMPUTER INTEGRATED MANUFACTURING","INTERNATIONAL JOURNAL OF COMPUTER VISION","International Journal of Data Mining and Bioinformatics","International Journal of Data Mining Modelling and Management",
-                       "International Journal of Data Science and Analytics","INTERNATIONAL JOURNAL OF FOUNDATIONS OF COMPUTER SCIENCE","International Journal of Fuzzy Logic and Intelligent Systems","International Journal of Fuzzy Systems",
-                       "INTERNATIONAL JOURNAL OF GAME THEORY","INTERNATIONAL JOURNAL OF GENERAL SYSTEMS","International Journal of Group Theory","International Journal of Information Security","INTERNATIONAL JOURNAL OF INFORMATION TECHNOLOGY & DECISION MAKING",
-                       "INTERNATIONAL JOURNAL OF INTELLIGENT SYSTEMS","International Journal of Knowledge and Systems Science","International Journal of Knowledge-Based and Intelligent Engineering Systems","International Journal of Machine Learning and Cybernetics",
-                       "International Journal of Management Science and Engineering Management","INTERNATIONAL JOURNAL OF MODELLING AND SIMULATION","INTERNATIONAL JOURNAL OF MODERN PHYSICS B","INTERNATIONAL JOURNAL OF MODERN PHYSICS C",
-                       "International Journal of Multimedia Information Retrieval","International Journal of Neural Systems","International Journal of Numerical Analysis and Modeling","International Journal of Parallel Emergent and Distributed Systems",
-                       "INTERNATIONAL JOURNAL OF PARALLEL PROGRAMMING","INTERNATIONAL JOURNAL OF PRODUCTION ECONOMICS","INTERNATIONAL JOURNAL OF PRODUCTION RESEARCH","INTERNATIONAL JOURNAL OF SOFTWARE ENGINEERING AND KNOWLEDGE ENGINEERING",
-                       "INTERNATIONAL JOURNAL OF QUANTUM INFORMATION","International Journal of Swarm Intelligence Research","International Journal of System Dynamics Applications","International Journal of Systems Science-Operations & Logistics",
-                       "INTERNATIONAL JOURNAL OF SYSTEMS SCIENCE","INTERNATIONAL JOURNAL OF TECHNOLOGY MANAGEMENT","INTERNATIONAL JOURNAL OF UNCERTAINTY FUZZINESS AND KNOWLEDGE-BASED SYSTEMS","International Journal on Document Analysis and Recognition",
-                       "International Journal on Semantic Web and Information Systems","International Transactions in Operational Research","Iranian Journal of Fuzzy Systems","Journal de Theorie des Nombres de Bordeaux",
-                       "Journal of Ambient Intelligence and Smart Environments","Journal of Analysis","Journal of Applied Analysis","JOURNAL OF APPLIED ECONOMETRICS","Journal of Applied Logics-IfCoLoG Journal of Logics and their Applications",
-                       "JOURNAL OF APPROXIMATION THEORY","JOURNAL OF AUTOMATED REASONING","Journal of Big Data","Journal of Biological Dynamics","JOURNAL OF BIOLOGICAL SYSTEMS","Journal of Biomedical Semantics","Journal of Causal Inference","Journal of Cellular Automata",
-                       "JOURNAL OF CHEMOMETRICS","JOURNAL OF CLASSIFICATION","JOURNAL OF COMPLEXITY","JOURNAL OF COMPUTER AND SYSTEM SCIENCES","JOURNAL OF COMPUTER AND SYSTEMS SCIENCES INTERNATIONAL","Journal of Computer Science & Technology","JOURNAL OF CONVEX ANALYSIS",
-                       "Journal of Cryptographic Engineering","JOURNAL OF CRYPTOLOGY","Journal of Decision Systems","JOURNAL OF DYNAMICAL AND CONTROL SYSTEMS","Journal of Dynamics and Games","Journal of Econometrics","JOURNAL OF EDUCATIONAL MEASUREMENT",
-                       "Journal of Formalized Reasoning","JOURNAL OF FOURIER ANALYSIS AND APPLICATIONS","Journal of Function Spaces","JOURNAL OF FUNCTIONAL ANALYSIS","JOURNAL OF GLOBAL OPTIMIZATION","JOURNAL OF GRAPH THEORY","JOURNAL OF GROUP THEORY",
-                       "JOURNAL OF HEURISTICS","Journal of Homotopy and Related Structures","Journal of Industrial and Management Optimization","JOURNAL OF INEQUALITIES AND APPLICATIONS","Journal of Inequalities and Special Functions","Journal of Integer Sequences",
-                       "Journal of Integrative Bioinformatics","JOURNAL OF INTELLIGENT & FUZZY SYSTEMS","JOURNAL OF INTELLIGENT & ROBOTIC SYSTEMS","JOURNAL OF INTELLIGENT INFORMATION SYSTEMS","JOURNAL OF INTELLIGENT MANUFACTURING","Journal of Intelligent Systems",
-                       "JOURNAL OF INTERCONNECTION NETWORKS","JOURNAL OF KNOT THEORY AND ITS RAMIFICATIONS","JOURNAL OF LIE THEORY","Journal of Logic and Analysis","Journal of Logic Language and Information",
-                       "JOURNAL OF MACHINE LEARNING RESEARCH","Journal of Management Analytics","JOURNAL OF MANUFACTURING SYSTEMS","Journal of Modern Dynamics","JOURNAL OF MOLECULAR GRAPHICS & MODELLING","Journal of Multiscale Modelling","JOURNAL OF MULTIVARIATE ANALYSIS",
-                       "JOURNAL OF OPERATIONS MANAGEMENT","JOURNAL OF OPTIMIZATION THEORY AND APPLICATIONS","Journal of Physics-Complexity","JOURNAL OF PRODUCTIVITY ANALYSIS","Journal of Pseudo-Differential Operators and Applications","JOURNAL OF QUALITY TECHNOLOGY",
-                       "Journal of Quantitative Analysis in Sports","Journal of Real-Time Image Processing","JOURNAL OF SCHEDULING","Journal of Simulation","Journal of Singularities","Journal of Spectral Theory","Journal of Sports Analytics","JOURNAL OF SYMBOLIC LOGIC",
-                       "JOURNAL OF SYSTEMS AND SOFTWARE","Journal of Systems Engineering and Electronics","Journal of Systems Science and Systems Engineering","JOURNAL OF THE ACM","JOURNAL OF THE OPERATIONAL RESEARCH SOCIETY",
-                       "Journal of the Operations Research Society of China","Journal of the SFdS","JOURNAL OF THEORETICAL BIOLOGY","JOURNAL OF TIME SERIES ANALYSIS","Journal of Time Series Econometrics","JOURNAL OF UNIVERSAL COMPUTER SCIENCE","Journal of Web Engineering",
-                       "Journal of Web Semantics","Journal on Multimodal User Interfaces","JSIAM Letters","Kinetic and Related Models","KNOWLEDGE AND INFORMATION SYSTEMS","KNOWLEDGE ENGINEERING REVIEW","KNOWLEDGE-BASED SYSTEMS","Kunstliche Intelligenz",
-                       "LIFETIME DATA ANALYSIS","Logic and Logical Philosophy","LOGIC JOURNAL OF THE IGPL","Logica Universalis","Logical Methods in Computer Science","M&SOM-Manufacturing & Service Operations Management","MACHINE LEARNING",
-                       "Machine Learning and Knowledge Extraction","Machine Learning-Science and Technology","MACHINE TRANSLATION","MACHINE VISION AND APPLICATIONS","Malaysian Journal of Computer Science","MANAGEMENT SCIENCE","Markov Processes and Related Fields",
-                       "MEDICAL IMAGE ANALYSIS","Methodology-European Journal of Research Methods for the Behavioral and Social Sciences","Methods and Applications of Analysis","Methods Data Analyses","MICROPROCESSORS AND MICROSYSTEMS","MILITARY OPERATIONS RESEARCH",
-                       "MINDS AND MACHINES","Minimax Theory and its Applications","MODERN PHYSICS LETTERS A","MODERN PHYSICS LETTERS B","Modern Stochastics-Theory and Applications","Molecular Informatics","Monte Carlo Methods and Applications","Multiagent and Grid Systems",
-                       "MULTIDIMENSIONAL SYSTEMS AND SIGNAL PROCESSING","MULTIMEDIA SYSTEMS","MULTIMEDIA TOOLS AND APPLICATIONS","Multimodal Technologies and Interaction","MULTISCALE MODELING & SIMULATION","MULTIVARIATE BEHAVIORAL RESEARCH",
-                       "NAR Genomics and Bioinformatics","Natural Language Engineering","Nature Machine Intelligence","NAVAL RESEARCH LOGISTICS","Network Modeling and Analysis in Health Informatics and Bioinformatics","Network Science","NETWORKS & SPATIAL ECONOMICS",
-                       "Neural Network World","NEURAL NETWORKS","NEURAL PROCESSING LETTERS","Notre Dame Journal of Formal Logic","npj Systems Biology and Applications","Numerical Analysis and Applications","NUMERICAL FUNCTIONAL ANALYSIS AND OPTIMIZATION",
-                       "OMEGA-INTERNATIONAL JOURNAL OF MANAGEMENT SCIENCE","Open Computer Science","OPEN SYSTEMS & INFORMATION DYNAMICS","Operational Research","OPERATIONS RESEARCH","Operations Research and Decisions","OPERATIONS RESEARCH LETTERS",
-                       "Operations Research Perspectives","Operators and Matrices","OPTIMAL CONTROL APPLICATIONS & METHODS","OPTIMIZATION AND ENGINEERING","Optimization Letters","OPTIMIZATION METHODS & SOFTWARE","OR SPECTRUM",
-                       "ORDER-A JOURNAL ON THE THEORY OF ORDERED SETS AND ITS APPLICATIONS","Pacific Journal of Optimization","P-Adic Numbers Ultrametric Analysis and Applications","PATTERN ANALYSIS AND APPLICATIONS","PATTERN RECOGNITION","PATTERN RECOGNITION LETTERS",
-                       "PeerJ Computer Science","PERFORMANCE EVALUATION","PHYSICAL REVIEW E","POTENTIAL ANALYSIS","Problems of Information Transmission","Proceedings of the Institution of Mechanical Engineers Part O-Journal of Risk and Reliability",
-                       "Problemy Analiza-Issues of Analysis","Proceedings of the VLDB Endowment","PRODUCTION AND OPERATIONS MANAGEMENT","PRODUCTION PLANNING & CONTROL","PSYCHONOMIC BULLETIN & REVIEW","QME-Quantitative Marketing and Economics",
-                       "Qualitative Theory of Dynamical Systems","QUALITY AND RELIABILITY ENGINEERING INTERNATIONAL","Quality Engineering","Quality Technology and Quantitative Management","Quantitative Biology","QUANTITATIVE FINANCE","Quantum Information Processing",
-                       "Quantum Machine Intelligence","QUEUEING SYSTEMS","R Journal","RAIRO-OPERATIONS RESEARCH","RAIRO-THEORETICAL INFORMATICS AND APPLICATIONS","RAMANUJAN JOURNAL","Random Matrices-Theory and Applications","Real Analysis Exchange","REAL-TIME SYSTEMS",
-                       "REGULAR & CHAOTIC DYNAMICS","RELIABILITY ENGINEERING & SYSTEM SAFETY","Representation Theory","Research Synthesis Methods","Review of Symbolic Logic","RISK ANALYSIS","ROBOTICS AND AUTONOMOUS SYSTEMS",
-                       "Romanian Journal of Information Science and Technology","SAFETY SCIENCE","SAR AND QSAR IN ENVIRONMENTAL RESEARCH","Scandinavian Actuarial Journal","Scientific Annals of Computer Science","Semantic Web","SEMIGROUP FORUM",
-                       "Sequential Analysis-Design Methods and Applications","Set-Valued and Variational Analysis","SIAM JOURNAL ON APPLIED DYNAMICAL SYSTEMS","SIAM JOURNAL ON CONTROL AND OPTIMIZATION","SIAM Journal on Imaging Sciences",
-                       "SIAM JOURNAL ON MATRIX ANALYSIS AND APPLICATIONS","SIAM JOURNAL ON NUMERICAL ANALYSIS","SIAM JOURNAL ON OPTIMIZATION","SIAM REVIEW","SIAM-ASA Journal on Uncertainty Quantification","SOCIAL CHOICE AND WELFARE","SOCIO-ECONOMIC PLANNING SCIENCES",
-                       "SOCIOLOGICAL METHODS & RESEARCH","Special Matrices","Stata Journal","STOCHASTIC ANALYSIS AND APPLICATIONS","STOCHASTIC ENVIRONMENTAL RESEARCH AND RISK ASSESSMENT","STOCHASTIC MODELS","STOCHASTIC PROCESSES AND THEIR APPLICATIONS",
-                       "Stochastics and Dynamics","Studia Logica","Studies in Informatics and Control","Survey Methodology","Survey Research Methods","Swarm Intelligence","Symmetry-Culture and Science","SYSTEM DYNAMICS REVIEW","SYSTEMS & CONTROL LETTERS",
-                       "Systems Engineering","Theoretical Computer Science","THEORETICAL POPULATION BIOLOGY","Theory and Applications of Categories","THEORY AND DECISION","THEORY AND PRACTICE OF LOGIC PROGRAMMING","THEORY IN BIOSCIENCES","Traitement du Signal",
-                       "Transactions on Data Privacy","TRANSFORMATION GROUPS","TRANSPORTATION RESEARCH PART B-METHODOLOGICAL","TRANSPORTATION RESEARCH PART E-LOGISTICS AND TRANSPORTATION REVIEW","TRANSPORTATION SCIENCE",
-                       "Turkish Journal of Electrical Engineering and Computer Sciences","Vietnam Journal of Computer Science","Web Intelligence","Wiley Interdisciplinary Reviews-Data Mining and Knowledge Discovery","ZEITSCHRIFT FUR ANALYSIS UND IHRE ANWENDUNGEN"];
+                       "operator theory"];
         var regex = new RegExp("(" + maths_j.join("|") + ")", "i");
         if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source']", mark_journals, true);} else {mark_journals()};
         $("#gsc_bpf_more").click(function (){
@@ -1282,6 +1237,13 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         function mark_journals(){
             $("div.gs_gray:not([style]),div[data-component='document-source']").each(function(){ if(regex.test($(this).text())){ $(this).css("background-color", "Wheat") } });
         }
+    } catch (error){ }}
+
+    //稿件列表标记Regular
+    if (window.location.href.indexOf("/managing/status/") > -1 && GM_config.get('Regular_Color')){try{
+        $("#manuscripts-list tbody tr").each(function() {
+            var si_item = $(this).find(".si_item").text(); if (!si_item.includes("SI: ") && !si_item.includes("Topic: ")) { $(this).css("background-color", "#FFE5B4") }
+        });
     } catch (error){ }}
 
     //派稿助手: iThenticate AUTO
@@ -1312,10 +1274,8 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                 }
             }
         });
-
         $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align","center").bind("contextmenu",function(e){return false;}).each(function() {
             $(this).append("<a class='sk_reject' style='font-style:italic' href='//susy.mdpi.com/user/assigned/reject-manuscript/"+$(this).parents("tr").find("td:nth-child(4) >> a").attr("href").split("/").pop()+"'>[Reject]</a>");} );
-
         $(".sk_reject").on('mouseup', function (e){switch (e.which) {
             case 3: // Right click.
                 if(confirm('The paper will be rejected immediately using "without Peer Review Template"')) {GM_openInTab($(this).attr("href")+"?quickreject", 1);$(this).parent().html("[Rejected]");}
@@ -1364,6 +1324,15 @@ function SidebarSize() {
     if ($(".apc-container .manuscript-note-item-content").height() > 200) {$(".apc-container .manuscript-note-item-content").height(200).css("overflow-y","auto")}
     if ($('.special-issue-note-box').length > 1) {$(".special-issue-note-box .manuscript-add-note-form").eq(1).prop("rows",20)}
     else if ($('.special-issue-note-box').length > 0) {$(".manuscript-note-box .manuscript-note-item-content").height(200).css("overflow-y","auto")}
+}
+function LineBreak() {
+    $("span:contains('Quality Check')").text("QC");
+//    waitForText(document.querySelector('span:contains("Quality Check")'), 'Quality Check', LineBreak2);
+    waitForKeyElements("div.ui-widget-overlay.ui-front", LineBreak2, true);
+    function LineBreak2() {
+        $("div.large-2:contains('Note')").next().each(function() { $(this).html($(this).html().trim().replace(/\n/g, '<br>\n')) });
+        $("div.large-2:contains('Comment')").next().each(function() { $(this).html($(this).html().trim().replace(/\n/g, '<br>\n')) });
+    }
 }
 
 function get_jid(sysname) {return[
