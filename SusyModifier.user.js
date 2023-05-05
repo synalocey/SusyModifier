@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.4.21
+// @version       3.5.5
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1150,6 +1150,35 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 //     if (window.location.href.indexOf("assigned/remind_reviewer") > -1 && GM_config.get('Hidden_Func')){try{
 //         $('#emailTemplates').val(21).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
 //     } catch (error){ }}
+
+    //Hidden_Func: MRS Chosen
+    if(window.location.href.indexOf("//mrs.mdpi.com/statistics") > -1 && GM_config.get('Hidden_Func')){try{
+        s_addChosen();
+        $("#statistic > span").wrapInner('<a id="s_chosen"></a>').click(function(){
+            if ($("#statisticSelecter").css("display")==="none"){
+                unsafeWindow.$(document.getElementById('statisticSelecter')).chosen("destroy"); $("#statistic").css('overflow','auto');
+            } else {
+                s_addChosen();
+            }
+        })
+
+        function s_addChosen(){
+            $("head").append('<link rel="stylesheet" type="text/css" href="https://harvesthq.github.io/chosen/chosen.css">');
+            let xhr = new XMLHttpRequest;
+            xhr.open('get','https://harvesthq.github.io/chosen/chosen.jquery.js',true);
+            xhr.onreadystatechange = function(){
+                if(xhr.readyState == 4){
+                    if(xhr.status >=200 && xhr.status < 300 || xhr.status == 304 ){
+                        var script = document.createElement('script');
+                        script.type = 'text/javascript'; script.text = xhr.responseText; document.body.appendChild(script);
+                        unsafeWindow.$(document.getElementById('statisticSelecter')).chosen();
+                        $("#statistic").css('overflow','visible'); $(".chosen-single").css("width","240px");
+                    }
+                }
+            };
+            xhr.send(null);
+        }
+    } catch (error){ }}
 
     //Hidden_Func: Volunteer Reviewer
     if (window.location.href.indexOf("/volunteer_reviewer_info/view/") > -1 && GM_config.get('Hidden_Func')){try{
