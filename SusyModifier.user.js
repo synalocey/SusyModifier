@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.4.19
+// @version       3.5.9
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -33,6 +33,7 @@
 // @match         *://*.google.com.my/*
 // @match         https://chat.openai.com/chat*
 // @require       https://code.jquery.com/jquery-3.6.1.min.js
+// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/chosen.jquery.js
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_xmlhttpRequest
@@ -142,6 +143,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                                +`your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.`},
             'SInote': {'section': [], 'label': 'Special Issue Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SIpages': {'label': '特刊列表免翻页', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Regular_Color': {'label': '稿件列表标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Maths_J': {'label': 'Scopus/GS 标记 Maths 相关期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
                               ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)','Guest Editor Invitation-Why a Special Issue',
@@ -244,9 +246,9 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         },
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
-        #SusyModifierConfig_LinkShort_field_label{width:140px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label{width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label
-        {width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
-        #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;}`
+        #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label{width:140px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label
+        {width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,
+        #SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;}`
     });
     const date_v = new Date('202'+GM_info.script.version);
     if ((Date.now() - date_v)/86400000 > 180) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
@@ -260,6 +262,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         case 'Games': S_J=25; break;
         case 'None': S_J=-1; break;
     }
+    var userNames = ["syna.mu", "susie.huang", "helene.hu", "linn.li", "debby.peng", "gladys.li", "connelly.yang", "tiffany.li", "lilia.ding", "inna.huang", "casper.xie"];
 
     //susy侧边栏的按钮🔎
     if (window.location.href.indexOf("susy.mdpi.com/")>-1 && GM_config.get('Interface_sidebar') && $('#leftcol').length){try{
@@ -698,6 +701,12 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+'" title="Reset"><img border="0" src="/bundles/mdpisusy/img/icon/arrow.png"></a> ');
             $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+'" title="Close"><img border="0" src="/bundles/mdpisusy/img/icon/book.png"></a> ');
             $("button[data-title='Import']").before('<input type="button" class="submit add-planned-paper-btn" value="Force Add">&nbsp; ');
+            SpecialFunc();
+        } else if(userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {
+            SpecialFunc();
+        }
+
+        function SpecialFunc() {
             $("#checkMailsdb").before('<input id=eltry_stop style=display:none type=button class=submit value=Stop><input id=eltry_stopbox style=display:none type=checkbox> ');
             $("#guestNextBtn").after(' <span id=timesRun style=background-color:#90EE90></span> <input id=eltry style=display:inline-block type=button class=submit value="! AutoRetry"> <input id=add6th style=display:inline-block type=button class=submit value="! Add6th">');
 
@@ -800,9 +809,9 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                 }
             }
         }
+
         Quick_InviteRemind($("a[href^='/email/invite/guest_editor/']")); Quick_InviteRemind($("a[href^='/email/remind/guest_editor/']"));
         function Quick_InviteRemind(param) {param.each(function(){$(this).after(" (<a href='" + $(this).attr("href") + "?Q'>Quick</a>)")})}
-
         $('a[data-title="Extend Deadline"]').click(function(e){waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly(){$("#form_deadline").attr("readonly",false)};})
         $('a[data-title="Change special issue deadline"]').click(function(e){waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2(){$("#form_date").attr("readonly",false)};})
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
@@ -1150,8 +1159,76 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 //         $('#emailTemplates').val(21).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
 //     } catch (error){ }}
 
-    //Hidden_Func: Volunteer Reviewer
-    if (window.location.href.indexOf("/volunteer_reviewer_info/view/") > -1 && GM_config.get('Hidden_Func')){try{
+    //Always: MRS Chosen
+    if(window.location.href.indexOf("//mrs.mdpi.com/statistics") > -1){try{
+        let styleElement = document.createElement("style"); styleElement.type = "text/css";
+        styleElement.innerHTML = `.chosen-container{position:relative;display:inline-block;vertical-align:middle;font-size:13px;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.chosen-container *{-webkit-box-sizing:border-box;
+        box-sizing:border-box}.chosen-container .chosen-drop{position:absolute;top:100%;z-index:1010;width:100%;border:1px solid #aaa;border-top:0;background:#fff;-webkit-box-shadow:0 4px 5px rgba(0,0,0,.15);box-shadow:0 4px 5px rgba(0,0,0,.15);clip:rect(0,0,0,0);
+        -webkit-clip-path:inset(100% 100%);clip-path:inset(100% 100%)}.chosen-container.chosen-with-drop .chosen-drop{clip:auto;-webkit-clip-path:none;clip-path:none}.chosen-container a{cursor:pointer}.chosen-container .chosen-single .group-name,.chosen-container
+        .search-choice .group-name{margin-right:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:400;color:#999}.chosen-container .chosen-single .group-name:after,.chosen-container .search-choice .group-name:after{content:":";padding-left:
+        2px;vertical-align:top}.chosen-container-single .chosen-single{position:relative;display:block;overflow:hidden;padding:0 0 0 8px;height:25px;border:1px solid #aaa;border-radius:5px;background-color:#fff;background:-webkit-gradient(linear,left top,left bottom,
+        color-stop(20%,#fff),color-stop(50%,#f6f6f6),color-stop(52%,#eee),to(#f4f4f4));background:linear-gradient(#fff 20%,#f6f6f6 50%,#eee 52%,#f4f4f4 100%);background-clip:padding-box;-webkit-box-shadow:0 0 3px #fff inset,0 1px 1px rgba(0,0,0,.1);box-shadow:
+        0 0 3px #fff inset,0 1px 1px rgba(0,0,0,.1);color:#444;text-decoration:none;white-space:nowrap;line-height:24px}.chosen-container-single .chosen-default{color:#999}.chosen-container-single .chosen-single span{display:block;overflow:hidden;margin-right:26px;
+        text-overflow:ellipsis;white-space:nowrap}.chosen-container-single .chosen-single-with-deselect span{margin-right:38px}.chosen-container-single .chosen-single abbr{position:absolute;top:6px;right:26px;display:block;width:12px;height:12px;background:url(
+        chosen-sprite.png) -42px 1px no-repeat;font-size:1px}.chosen-container-single .chosen-single abbr:hover{background-position:-42px -10px}.chosen-container-single.chosen-disabled .chosen-single abbr:hover{background-position:-42px -10px}.chosen-container-single
+        .chosen-single div{position:absolute;top:0;right:0;display:block;width:18px;height:100%}.chosen-container-single .chosen-single div b{display:block;width:100%;height:100%;background:url(chosen-sprite.png) no-repeat 0 2px}.chosen-container-single
+        .chosen-search{position:relative;z-index:1010;margin:0;padding:3px 4px;white-space:nowrap}.chosen-container-single .chosen-search input[type=text]{margin:1px 0;padding:4px 20px 4px 5px;width:100%;height:auto;outline:0;border:1px solid #aaa;
+        background:url(chosen-sprite.png) no-repeat 100% -20px;font-size:1em;font-family:sans-serif;line-height:normal;border-radius:0}.chosen-container-single .chosen-drop{margin-top:-1px;border-radius:0 0 4px 4px;background-clip:padding-box}
+        .chosen-container-single.chosen-container-single-nosearch .chosen-search{position:absolute;clip:rect(0,0,0,0);-webkit-clip-path:inset(100% 100%);clip-path:inset(100% 100%)}.chosen-container .chosen-results{color:#444;position:relative;overflow-x:hidden;
+        overflow-y:auto;margin:0 4px 4px 0;padding:0 0 0 4px;max-height:65vh;-webkit-overflow-scrolling:touch}.chosen-container .chosen-results li{display:none;margin:0;padding:5px 6px;list-style:none;line-height:15px;word-wrap:break-word;-webkit-touch-callout:none}
+        .chosen-container .chosen-results li.active-result{display:list-item;cursor:pointer}.chosen-container .chosen-results li.disabled-result{display:list-item;color:#ccc;cursor:default}.chosen-container .chosen-results li.highlighted{background-color:#3875d7;
+        background-image:-webkit-gradient(linear,left top,left bottom,color-stop(20%,#3875d7),color-stop(90%,#2a62bc));background-image:linear-gradient(#3875d7 20%,#2a62bc 90%);color:#fff}.chosen-container .chosen-results li.no-results{color:#777;display:list-item;
+        background:#f4f4f4}.chosen-container .chosen-results li.group-result{display:list-item;font-weight:700;cursor:default}.chosen-container .chosen-results li.group-option{padding-left:15px}.chosen-container .chosen-results li em{font-style:normal;
+        text-decoration:underline}.chosen-container-multi .chosen-choices{position:relative;overflow:hidden;margin:0;padding:0 5px;width:100%;height:auto;border:1px solid #aaa;background-color:#fff;background-image:-webkit-gradient(linear,left top,left bottom,
+        color-stop(1%,#eee),color-stop(15%,#fff));background-image:linear-gradient(#eee 1%,#fff 15%);cursor:text}.chosen-container-multi .chosen-choices li{float:left;list-style:none}.chosen-container-multi .chosen-choices li.search-field{margin:0;padding:0;
+        white-space:nowrap}.chosen-container-multi .chosen-choices li.search-field input[type=text]{margin:1px 0;padding:0;height:25px;outline:0;border:0!important;background:0 0!important;-webkit-box-shadow:none;box-shadow:none;color:#999;font-size:100%;
+        font-family:sans-serif;line-height:normal;border-radius:0;width:25px}.chosen-container-multi .chosen-choices li.search-choice{position:relative;margin:3px 5px 3px 0;padding:3px 20px 3px 5px;border:1px solid #aaa;max-width:100%;border-radius:3px;
+        background-color:#eee;background-image:-webkit-gradient(linear,left top,left bottom,color-stop(20%,#f4f4f4),color-stop(50%,#f0f0f0),color-stop(52%,#e8e8e8),to(#eee));background-image:linear-gradient(#f4f4f4 20%,#f0f0f0 50%,#e8e8e8 52%,#eee 100%);
+        background-size:100% 19px;background-repeat:repeat-x;background-clip:padding-box;-webkit-box-shadow:0 0 2px #fff inset,0 1px 0 rgba(0,0,0,.05);box-shadow:0 0 2px #fff inset,0 1px 0 rgba(0,0,0,.05);color:#333;line-height:13px;cursor:default}
+        .chosen-container-multi .chosen-choices li.search-choice span{word-wrap:break-word}.chosen-container-multi .chosen-choices li.search-choice .search-choice-close{position:absolute;top:4px;right:3px;display:block;width:12px;height:12px;
+        background:url(chosen-sprite.png) -42px 1px no-repeat;font-size:1px}.chosen-container-multi .chosen-choices li.search-choice .search-choice-close:hover{background-position:-42px -10px}.chosen-container-multi .chosen-choices li.search-choice-disabled
+        {padding-right:5px;border:1px solid #ccc;background-color:#e4e4e4;background-image:-webkit-gradient(linear,left top,left bottom,color-stop(20%,#f4f4f4),color-stop(50%,#f0f0f0),color-stop(52%,#e8e8e8),to(#eee));background-image:linear-gradient
+        (#f4f4f4 20%,#f0f0f0 50%,#e8e8e8 52%,#eee 100%);color:#666}.chosen-container-multi .chosen-choices li.search-choice-focus{background:#d4d4d4}.chosen-container-multi .chosen-choices li.search-choice-focus .search-choice-close{background-position:-42px -10px}
+        .chosen-container-multi .chosen-results{margin:0;padding:0}.chosen-container-multi .chosen-drop .result-selected{display:list-item;color:#ccc;cursor:default}.chosen-container-active .chosen-single{border:1px solid #5897fb;-webkit-box-shadow:0 0 5px
+        rgba(0,0,0,.3);box-shadow:0 0 5px rgba(0,0,0,.3)}.chosen-container-active.chosen-with-drop .chosen-single{border:1px solid #aaa;border-bottom-right-radius:0;border-bottom-left-radius:0;background-image:-webkit-gradient(linear,left top,left bottom,
+        color-stop(20%,#eee),color-stop(80%,#fff));background-image:linear-gradient(#eee 20%,#fff 80%);-webkit-box-shadow:0 1px 0 #fff inset;box-shadow:0 1px 0 #fff inset}.chosen-container-active.chosen-with-drop .chosen-single div{border-left:none;background:0 0}
+        .chosen-container-active.chosen-with-drop .chosen-single div b{background-position:-18px 2px}.chosen-container-active .chosen-choices{border:1px solid #5897fb;-webkit-box-shadow:0 0 5px rgba(0,0,0,.3);box-shadow:0 0 5px rgba(0,0,0,.3)}.chosen-container-active
+        .chosen-choices li.search-field input[type=text]{color:#222!important}.chosen-disabled{opacity:.5!important;cursor:default}.chosen-disabled .chosen-single{cursor:default}.chosen-disabled .chosen-choices .search-choice .search-choice-close{cursor:default}
+        .chosen-rtl{text-align:right}.chosen-rtl .chosen-single{overflow:visible;padding:0 8px 0 0}.chosen-rtl .chosen-single span{margin-right:0;margin-left:26px;direction:rtl}.chosen-rtl .chosen-single-with-deselect span{margin-left:38px}.chosen-rtl
+        .chosen-single div{right:auto;left:3px}.chosen-rtl .chosen-single abbr{right:auto;left:26px}.chosen-rtl .chosen-choices li{float:right}.chosen-rtl .chosen-choices li.search-field input[type=text]{direction:rtl}.chosen-rtl .chosen-choices
+        li.search-choice{margin:3px 5px 3px 0;padding:3px 5px 3px 19px}.chosen-rtl .chosen-choices li.search-choice .search-choice-close{right:auto;left:4px}.chosen-rtl.chosen-container-single .chosen-results{margin:0 0 4px 4px;padding:0 4px 0 0}.chosen-rtl
+        .chosen-results li.group-option{padding-right:15px;padding-left:0}.chosen-rtl.chosen-container-active.chosen-with-drop .chosen-single div{border-right:none}.chosen-rtl .chosen-search input[type=text]{padding:4px 5px 4px 20px;background:url(chosen-sprite.png)
+        no-repeat -30px -20px;direction:rtl}.chosen-rtl.chosen-container-single .chosen-single div b{background-position:6px 2px}.chosen-rtl.chosen-container-single.chosen-with-drop .chosen-single div b{background-position:-12px 2px}@media only screen and
+        (-webkit-min-device-pixel-ratio:1.5),only screen and (min-resolution:144dpi),only screen and (min-resolution:1.5dppx){.chosen-container .chosen-results-scroll-down span,.chosen-container .chosen-results-scroll-up span,.chosen-container-multi .chosen-choices
+        .search-choice .search-choice-close,.chosen-container-single .chosen-search input[type=text],.chosen-container-single .chosen-single abbr,.chosen-container-single .chosen-single div b,.chosen-rtl .chosen-search input[type=text]{background-image:
+        url(chosen-sprite@2x.png)!important;background-size:52px 37px!important;background-repeat:no-repeat!important}}`;
+        document.head.appendChild(styleElement);
+
+        function toggleChosen() {
+            if ($("#statisticSelecter").css("display") === "none") {
+                unsafeWindow.$(document.getElementById('statisticSelecter')).chosen("destroy"); $("#statistic").css('overflow','auto');
+            } else {
+                let xhr = new XMLHttpRequest;
+                xhr.open('get','https://harvesthq.github.io/chosen/chosen.jquery.js',true);
+                xhr.onreadystatechange = function(){
+                    if(xhr.readyState == 4){
+                        if(xhr.status >=200 && xhr.status < 300 || xhr.status == 304 ){
+                            var script = document.createElement('script');
+                            script.type = 'text/javascript'; script.text = xhr.responseText; document.body.appendChild(script);
+                            unsafeWindow.$(document.getElementById('statisticSelecter')).chosen();
+                            $("#statistic").css('overflow','visible'); $(".chosen-single").css("width","240px");
+                        }
+                    }
+                };
+                xhr.send(null);
+            }
+        }
+        toggleChosen();
+        $("#statistic > span").after("<br><br>").wrapInner('<a id="s_chosen"></a>').click(function() {toggleChosen()});
+    } catch (error){ }}
+
+    //Always: Volunteer Reviewer
+    if (window.location.href.indexOf("/volunteer_reviewer_info/view/") > -1){try{
         $("button:contains('Accept')").attr("onclick","window.location.href='/volunteer_reviewer_info/operate/"+location.href.split('/view/')[1]+"/accept'");
         $("button:contains('Reject')").attr("onclick","window.location.href='/volunteer_reviewer_info/operate/"+location.href.split('/view/')[1]+"/reject'");
         $("div.small-12.large-2:contains('Email')").next().append(`<a href="//scholar.google.com/scholar?hl=en&q=`+$("div.small-12.large-2:contains('Email')").next().text().trim()+`" target=_blank><img src="/bundles/mdpisusy/img/design/google_logo.png"></a>`)
@@ -1159,7 +1236,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $("div.small-12.large-2:contains('First name')").next().append(`<a href="//www.scopus.com/results/authorNamesList.uri?st2=`+$("div.small-12.large-2:contains('First name')").next().text().trim()+`&st1=`
                                                                        +$("div.small-12.large-2:contains('Last name')").next().text().trim()+`" target=_blank><img src="//www.scopus.com/static/proteus-images/favicon.ico" width=16px height=16px></a>`)
     } catch (error){ }}
-    if (window.location.href.indexOf("/volunteer/reviewer/email/") > -1 && GM_config.get('Hidden_Func')){try{
+    if (window.location.href.indexOf("/volunteer/reviewer/email/") > -1){try{
         $('html, body').scrollTop($('#mailSubject').offset().top);
     } catch (error){ }}
 
@@ -1238,6 +1315,13 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         }
     } catch (error){ }}
 
+    //稿件列表标记Regular
+    if (window.location.href.indexOf("/managing/status/") > -1 && GM_config.get('Regular_Color')){try{
+        $("#manuscripts-list tbody tr").each(function() {
+            var si_item = $(this).find(".si_item").text(); if (!si_item.includes("SI: ") && !si_item.includes("Topic: ")) { $(this).css("background-color", "#FFE5B4") }
+        });
+    } catch (error){ }}
+
     //派稿助手: iThenticate AUTO
     if (window.location.href.indexOf("managing/status/submitted") + window.location.href.indexOf("sme/status/submitted") > -2 && GM_config.get('Assign_Assistant')){try{
         $("#show_title").parent().append("<input type='button' id='send_ith' value='Send iThenticate in OneClick'>")
@@ -1266,10 +1350,8 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                 }
             }
         });
-
         $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align","center").bind("contextmenu",function(e){return false;}).each(function() {
             $(this).append("<a class='sk_reject' style='font-style:italic' href='//susy.mdpi.com/user/assigned/reject-manuscript/"+$(this).parents("tr").find("td:nth-child(4) >> a").attr("href").split("/").pop()+"'>[Reject]</a>");} );
-
         $(".sk_reject").on('mouseup', function (e){switch (e.which) {
             case 3: // Right click.
                 if(confirm('The paper will be rejected immediately using "without Peer Review Template"')) {GM_openInTab($(this).attr("href")+"?quickreject", 1);$(this).parent().html("[Rejected]");}
