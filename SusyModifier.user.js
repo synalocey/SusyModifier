@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.5.9
+// @version       3.5.10
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -143,7 +143,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                                +`your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.`},
             'SInote': {'section': [], 'label': 'Special Issue Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SIpages': {'label': '特刊列表免翻页', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Regular_Color': {'label': '稿件列表标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Regular_Color': {'label': '稿件列表标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Maths_J': {'label': 'Scopus/GS 标记 Maths 相关期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
                               ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)','Guest Editor Invitation-Why a Special Issue',
@@ -464,7 +464,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             $form.find('tbody tr').each(function() {
                 let $td = $(this).find('td'), email = $td.eq(0).text().trim(), status = $td.eq(1).text().trim(), invitedByGE = $td.eq(2).text().trim(),
                     discount = parseFloat($td.eq(3).text().trim().replace(/ /g, '').replace(/CHF/g, '')), agreedDate = new Date($td.eq(5).text().trim());
-                if (status === "Title Provided" || status === "Agreed") { counter++;
+                if (status === "Title Provided" || status === "Agreed" || status === "Approved") { counter++;
                     if (invitedByGE === "Yes" && discount > 0) {
                         let discountRatio = 0;
                         switch (agreedDate.getFullYear()) {
@@ -1302,7 +1302,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
     //Maths-Related Journal Search
     if (window.location.hostname.indexOf("google") + window.location.hostname.indexOf("scopus") > -2 && GM_config.get('Maths_J')){try{
         var maths_j = ["math","stat","computat","computing","equation","probab","algebra","algorithm","calculus","geometr","pde","nonlinear","topology","fractal","discrete","fixed point","artificial intelligence","inverse prob","combinatori","number theory", "matemati",
-                       "operator theory"];
+                       "operator theory","axiom"];
         var regex = new RegExp("(" + maths_j.join("|") + ")", "i");
         if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source']", mark_journals, true);} else {mark_journals()};
         $("#gsc_bpf_more").click(function (){
