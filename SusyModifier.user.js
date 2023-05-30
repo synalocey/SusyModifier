@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.5.10
+// @version       3.5.29
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -31,7 +31,6 @@
 // @match         *://*.google.com.tw/*
 // @match         *://*.google.co.id/*
 // @match         *://*.google.com.my/*
-// @match         https://chat.openai.com/chat*
 // @require       https://code.jquery.com/jquery-3.6.1.min.js
 // @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/chosen.jquery.js
 // @grant         GM_getValue
@@ -307,13 +306,14 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             $(".menu [href='/user/manage/awards_item']").attr("href","/user/manage/awards_item?form[journal_id]=" + S_J);
             $(".menu [href='/si/proposal/list']").attr("href","/si/proposal/list?form[journal_id]=" + S_J);
             $(".menu [href='/list/list_volunteer_reviewers']").attr("href","/list/list_volunteer_reviewers?form[journal_id]=" + S_J);
-            $(".menu [href='/tap/list']").attr("href","/tap/list?form[journal_id]=" + S_J);
+            $(".menu [href='/tap/list']").after("<a href='/tap/list/all/my_journals?form[journal_id]=" + S_J + "'> [J</a>");
             $(".menu [href='/topic/proposal/list']").attr("href","/topic/proposal/list?form[journal_id]=" + S_J);
             $(".menu [href='/user/conference/list']").attr("href","/user/conference/list?form[subject_id]=4");
             $(".menu [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
             $(".menu [href='/user/manuscript/list/owner']").attr("href",'/user/manuscript/list/owner/my_journal');
             $(".menu [href='/user/manuscript/special_approval_list']").attr("href",'/user/manuscript/special_approval_list/my_journal');
             $(".menu [href='/user/list/editors']").after(" <a href='/user/ebm/contract?form[journal_id]=" + S_J + "'>[R]</a>");
+            $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list?form[journal_id]=" + S_J + "'>[J]</a>");
         }
         $(".menu [href='/user/myprofile']").after(" <a href='/user/settings'>[Settings]</a>");
         $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
@@ -1127,7 +1127,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
     //Always: QC换行问题
     if (window.location.href.indexOf("quality/check/") > -1){try{
         if ($("tr th.user_box_head:nth-child(7)").text() == "Note") {
-            $("tr td.user_box_item:nth-child(7)").css("width","60%").each(function() {
+            $("tr td.user_box_item:nth-child(7)").css("width","200px").each(function() {
                 $(this).html($(this).html().replace(/\n/g, '<br>\n'));
             });
         }
@@ -1153,6 +1153,29 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
     //Hidden_Func: PSAN Redirect
     if(window.location.href=='https://admin.mdpi.com/' && GM_config.get('Hidden_Func')) {try{window.location.href='https://admin.mdpi.com/tools/email-purger/email-list'} catch (error){ }}
+
+    //Hidden_Func: TAP - Assign to another Editor
+    if (window.location.href.indexOf("tap/list/") > -1 && window.location.href.indexOf("/my_journals") > -1 && GM_config.get('Hidden_Func')){try{
+        let editorColumnIndex, emailColumnIndex;
+        $("tr th.user_box_head").each(function(index) {
+            if($(this).text().trim() == 'Responsible Editor') { editorColumnIndex = index + 1; }
+            if($(this).text().trim() == 'Email') { emailColumnIndex = index + 1; }
+        });
+        if (editorColumnIndex) {
+            $("tr td.user_box_item:nth-child(" + editorColumnIndex + ")").each(function() {
+                if($(this).html().indexOf("icon/pencil.png") == -1) {
+                    let tap_id = $(this).parent().find("[title='TAPM Feed']").attr("data-url").split("_id=").pop();
+                    $(this).append(`<a href="/tap/change_user/${tap_id}" data-url="/tap/change_user/${tap_id}" class="ajax-form-submit-btn"><img src="/bundles/mdpisusy/img/icon/pencil.png" title="Assign to another Editor"></a>`);
+                }
+            });
+        }
+        if (emailColumnIndex) {
+            $("tr td.user_box_item:nth-child(" + emailColumnIndex + ")").each(function() {
+                let tap_email = $(this).text().trim();
+                $(this).append(` <a href="https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=${tap_email}" target=_blank><img src="/bundles/mdpisusy/img/icon/magnifier.png"></a>`);
+            });
+        }
+    } catch (error){ } }
 
 //     //Hidden_Func: Remind 2nd Round Reviewer
 //     if (window.location.href.indexOf("assigned/remind_reviewer") > -1 && GM_config.get('Hidden_Func')){try{
@@ -1265,7 +1288,10 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
     //Always: Manage Voucher Applications + 页面最底端
     if(window.location.href.indexOf(".mdpi.com/voucher/application/list/") > -1){try{ document.getElementById("show-more-budgets").click();} catch (error){ }}
     if(window.location.href.indexOf(".mdpi.com/voucher/application/view/") > -1){try{
-        $("[value='Approve']").attr("onclick","window.location.replace('/voucher/approve/application/"+location.href.split('/view/')[1]+"')");
+        $("[value='Approve']").click(function(){
+            waitForKeyElements("button:contains('confirm')", click_confirm, false);
+            function click_confirm(){$("button:contains('confirm')").click()}
+        })
         waitForKeyElements(".user_box_head", voucher_scroll, false); function voucher_scroll(){scroll(0,document.body.scrollHeight)};
     } catch (error){ }}
     if(window.location.href.indexOf(".mdpi.com/voucher/application/create?") > -1){try{
