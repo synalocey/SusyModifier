@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.5.29
+// @version       3.5.31
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -33,8 +33,11 @@
 // @match         *://*.google.com.my/*
 // @require       https://code.jquery.com/jquery-3.6.1.min.js
 // @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/chosen.jquery.js
+// @require       https://raw.githubusercontent.com/sizzlemctwizzle/GM_config/master/gm_config.js
 // @grant         GM_getValue
 // @grant         GM_setValue
+// @grant         GM.getValue
+// @grant         GM.setValue
 // @grant         GM_xmlhttpRequest
 // @grant         GM_openInTab
 // @connect       mdpi.com
@@ -44,78 +47,7 @@
 // @connect       skday.com
 // @connect       pubpeer.com
 // ==/UserScript==
-/* globals jQuery, $ */
-
-function GM_configStruct(){arguments.length&&(GM_configInit(this,arguments),this.onInit())}
-function GM_configInit(config,args){
-    if(void 0===config.fields&&(config.fields={},config.onInit=config.onInit||function(){},config.onOpen=config.onOpen||function(){},config.onSave=config.onSave||function(){},
-                                config.onClose=config.onClose||function(){},config.onReset=config.onReset||function(){},config.isOpen=!1,config.title='User Script Settings',config.css={basic:[
-        "#GM_config * { font-family: arial,tahoma,myriad pro,sans-serif; }","#GM_config { background: #FFF; }","#GM_config input[type='radio'] { margin-right: 8px; }","#GM_config .indent40 { margin-left: 40%; }",
-        "#GM_config .field_label { font-size: 12px; font-weight: bold; margin-right: 6px; }","#GM_config .radio_label { font-size: 12px; }","#GM_config .block { display: block; }","#GM_config .saveclose_buttons { margin: 16px 10px 10px; padding: 2px 12px; }",
-        "#GM_config .reset, #GM_config .reset a, #GM_config_buttons_holder { color: #000; text-align: right; }","#GM_config .config_header { font-size: 20pt; margin: 0; }","#GM_config .config_desc, #GM_config .section_desc, #GM_config .reset { font-size: 9pt; }",
-        "#GM_config .center { text-align: center; }","#GM_config .section_header_holder { margin-top: 8px; }","#GM_config .config_var { margin: 0 0 4px; }","#GM_config .section_header { background: #414141; border: 1px solid #000; color: #FFF;",
-        " font-size: 13pt; margin: 0; }","#GM_config .section_desc { background: #EFEFEF; border: 1px solid #CCC; color: #575757; font-size: 9pt; margin: 0 0 6px; }"].join('\n')+'\n',basicPrefix:"GM_config",stylish:""}),
-       1==args.length&&"string"==typeof args[0].id&&"function"!=typeof args[0].appendChild)var settings=args[0];else {settings={}; for(var arg,i=0,l=args.length;i<l;++i) if("function"!=typeof(arg=args[i]).appendChild)
-        switch(typeof arg){case'object':for(var j in arg){ if("function"!=typeof arg[j]){settings.fields=arg;break;} settings.events||(settings.events={}),settings.events[j]=arg[j]}break;case'function':settings.events={onOpen:arg};break;
-            case'string':/\w+\s*\{\s*\w+\s*:\s*\w+[\s|\S]*\}/.test(arg)?settings.css=arg:settings.title=arg}else settings.frame=arg}
-    if(settings.id?config.id=settings.id:void 0===config.id&&(config.id='GM_config'),settings.title&&(config.title=settings.title),settings.css&&(config.css.stylish=settings.css),settings.frame&&(config.frame=settings.frame),
-       settings.events){var events=settings.events;for(var e in events)config["on"+e.charAt(0).toUpperCase()+e.slice(1)]=events[e]}
-    if(settings.fields){var stored=config.read(),fields=settings.fields,customTypes=settings.types||{},configId=config.id;for(var id in fields){var field=fields[id];field?config.fields[id]=new GM_configField(field,stored[id],id,customTypes[field.type],
-        configId):config.fields[id]&&delete config.fields[id]}} config.id!=config.css.basicPrefix&&(config.css.basic=config.css.basic.replace(new RegExp('#'+config.css.basicPrefix,'gm'),'#'+config.id),config.css.basicPrefix=config.id)}
-function GM_configDefaultValue(type,options){var value;switch(0==type.indexOf('unsigned ')&&(type=type.substring(9)),type){
-    case'radio':case'select':value=options[0];break;case'checkbox':value=!1;break;case'int':case'integer':case'float':case'number':value=0;break;default:value=''}return value}
-function GM_configField(settings,stored,id,customType,configId){this.settings=settings,this.id=id,this.configId=configId,this.node=null,this.wrapper=null,this.save=void 0===settings.save||settings.save,"button"==settings.type&&(this.save=!1),this.default=void 0===
-    settings.default?customType?customType.default:GM_configDefaultValue(settings.type,settings.options):settings.default,this.value=void 0===stored?this.default:stored,customType&&(this.toNode=customType.toNode,this.toValue=customType.toValue,this.reset=customType.reset)}
-GM_configStruct.prototype={
-    init:function(){GM_configInit(this,arguments),this.onInit()},open:function(){var match=document.getElementById(this.id);if(!match||!("IFRAME"==match.tagName||match.childNodes.length>0)){
-        var config=this,defaultStyle="bottom: auto; border: 1px solid #000; display: none; height: 80%; left: 0; margin: 0; max-height: 95%; max-width: 95%; opacity: 0; overflow: auto; padding: 0; position: fixed; right: auto; top: 0; width: 80%; z-index: 9999;";
-        if(this.frame)this.frame.id=this.id,this.frame.setAttribute('style',defaultStyle),buildConfigWin(this.frame,this.frame.ownerDocument.getElementsByTagName('head')[0]);else{document.body.appendChild(this.frame=this.create('iframe',{id:this.id,style:defaultStyle})),
-            this.frame.src='about:blank';var that=this;this.frame.addEventListener('load',(function(e){var frame=config.frame;frame.src&&!frame.contentDocument?frame.src="":frame.contentDocument||that.log("GM_config failed to initialize default settings dialog node!");
-                                                                                                       var body=frame.contentDocument.getElementsByTagName('body')[0];body.id=config.id,buildConfigWin(body,frame.contentDocument.getElementsByTagName('head')[0])}),!1)}
-    } function buildConfigWin(body,head){var create=config.create,fields=config.fields,configId=config.id,bodyWrapper=create('div',{id:configId+'_wrapper'});head.appendChild(create('style',{type:'text/css',textContent:config.css.basic+config.css.stylish})),
-        bodyWrapper.appendChild(create('div',{id:configId+'_header',className:'config_header block center'},config.title));var section=bodyWrapper,secNum=0;for(var id in fields){var field=fields[id],settings=field.settings;settings.section&&(
-        section=bodyWrapper.appendChild(create('div',{className:'section_header_holder',id:configId+'_section_'+secNum})),'[object Array]'!==Object.prototype.toString.call(settings.section)&&(settings.section=[settings.section]),
-        settings.section[0]&&section.appendChild(create('div',{className:'section_header center',id:configId+'_section_header_'+secNum},settings.section[0])),settings.section[1]&&section.appendChild(create('p',
-        {className:'section_desc center',id:configId+'_section_desc_'+secNum},settings.section[1])),++secNum),section.appendChild(field.wrapper=field.toNode())} bodyWrapper.appendChild(create('div',{id:configId+'_buttons_holder'},create('button',{id:configId+'_saveBtn',
-        textContent:'Save',title:'Save settings',className:'saveclose_buttons',onclick:function(){config.save()}}),create('button',{id:configId+'_closeBtn',textContent:'Close',title:'Close window',className:'saveclose_buttons',onclick:function(){config.close()}}),
-        create('div',{className:'reset_holder block'},create('a',{id:configId+'_resetLink',textContent:'Reset to defaults',href:'#',title:'Reset fields to default values',className:'reset',onclick:function(e){e.preventDefault(),config.reset()}})))),
-        body.appendChild(bodyWrapper),config.center(),window.addEventListener('resize',config.center,!1),config.onOpen(config.frame.contentDocument||config.frame.ownerDocument,config.frame.contentWindow||window,config.frame),
-        window.addEventListener('beforeunload',(function(){config.close()}),!1),config.frame.style.display="block",config.isOpen=!0}},
-    save:function(){var forgotten=this.write();this.onSave(forgotten)},close:function(){this.frame.contentDocument?(this.remove(this.frame),this.frame=null):(this.frame.innerHTML="",this.frame.style.display="none");var fields=this.fields;for(var id in fields){
-        var field=fields[id];field.wrapper=null,field.node=null}this.onClose(),this.isOpen=!1},set:function(name,val){this.fields[name].value=val,this.fields[name].node&&this.fields[name].reload()},get:function(name,getLive){var field=this.fields[name],fieldVal=null;
-        return getLive&&field.node&&(fieldVal=field.toValue()),null!=fieldVal?fieldVal:field.value},write:function(store,obj){if(!obj){var values={},forgotten={},fields=this.fields;for(var id in fields){var field=fields[id],value=field.toValue();
-        field.save?null!=value?(values[id]=value,field.value=value):values[id]=field.value:forgotten[id]=value}} try{this.setValue(store||this.id,this.stringify(obj||values))}catch(e){this.log("GM_config failed to save settings!")}return forgotten},read:function(store){
-            try{var rval=this.parser(this.getValue(store||this.id,'{}'))}catch(e){this.log("GM_config failed to read saved settings!");rval={}}return rval},reset:function(){var fields=this.fields;for(var id in fields)fields[id].reset();this.onReset()},
-    create:function(){switch(arguments.length){case 1:var A=document.createTextNode(arguments[0]);break;default:A=document.createElement(arguments[0]);var B=arguments[1];for(var b in B)0==b.indexOf("on")?A.addEventListener(b.substring(2),B[b],!1):-1!=
-        ",style,accesskey,id,name,src,href,which,for".indexOf(","+b.toLowerCase())?A.setAttribute(b,B[b]):A[b]=B[b];if("string"==typeof arguments[2])A.innerHTML=arguments[2];else for(var i=2,len=arguments.length;i<len;++i)A.appendChild(arguments[i])}return A},
-    center:function(){var node=this.frame;if(node){var style=node.style;style.opacity;'none'==style.display&&(style.opacity='0'),style.display='',style.top=Math.floor(window.innerHeight/2-node.offsetHeight/2)+'px',
-        style.left=Math.floor(window.innerWidth/2-node.offsetWidth/2)+'px',style.opacity='1'}},remove:function(el){el&&el.parentNode&&el.parentNode.removeChild(el)}},
-    function(){var setValue,getValue,stringify,parser,isGM='undefined'!=typeof GM_getValue&&void 0!==GM_getValue('a','b');
-               isGM?(setValue=GM_setValue,getValue=GM_getValue,stringify="undefined"==typeof JSON?function(obj){return obj.toSource()}:JSON.stringify,parser="undefined"==typeof JSON?function(jsonData){return new Function('return '+jsonData+';')()}:JSON.parse)
-               :(setValue=function(name,value){return localStorage.setItem(name,value)},getValue=function(name,def){var s=localStorage.getItem(name);return null==s?def:s},stringify=JSON.stringify,parser=JSON.parse),
-                   GM_configStruct.prototype.isGM=isGM,GM_configStruct.prototype.setValue=setValue,GM_configStruct.prototype.getValue=getValue,GM_configStruct.prototype.stringify=stringify,GM_configStruct.prototype.parser=parser,
-                   GM_configStruct.prototype.log=window.console?console.log:isGM&&'undefined'!=typeof GM_log?GM_log:window.opera?opera.postError:function(){/* no logging */}}(),
-    GM_configField.prototype={create:GM_configStruct.prototype.create,toNode:function(){
-        var field=this.settings,value=this.value,options=field.options,type=field.type,id=this.id,configId=this.configId,labelPos=field.labelPos,create=this.create;function addLabel(pos,labelEl,parentNode,beforeEl){switch(beforeEl||(beforeEl=parentNode.firstChild),pos)
-        {case'right':case'below':'below'==pos&&parentNode.appendChild(create('br',{})),parentNode.appendChild(labelEl);break;default:'above'==pos&&parentNode.insertBefore(create('br',{}),beforeEl),parentNode.insertBefore(labelEl,beforeEl)}}
-        var firstProp,retNode=create('div',{className:'config_var',id:configId+'_'+id+'_var',title:field.title||''});for(var i in field){firstProp=i;break} var label=field.label&&"button"!=type?create('label',{id:configId+'_'+id+'_field_label',for:configId+'_field_'+id,
-        className:'field_label'},field.label):null;switch(type){case'textarea':retNode.appendChild(this.node=create('textarea',{innerHTML:value,id:configId+'_field_'+id,className:'block',cols:field.cols?field.cols:20,rows:field.rows?field.rows:2}));break;
-            case'radio':var wrap=create('div',{id:configId+'_field_'+id});this.node=wrap;i=0;for(var len=options.length;i<len;++i){var radLabel=create('label',{className:'radio_label'},options[i]),rad=wrap.appendChild(create('input',{value:options[i],type:'radio',name:id,
-            checked:options[i]==value}));addLabel(!labelPos||'left'!=labelPos&&'right'!=labelPos?'options'==firstProp?'left':'right':labelPos,radLabel,wrap,rad)}retNode.appendChild(wrap);break;
-            case'select':wrap=create('select',{id:configId+'_field_'+id});this.node=wrap;for(i=0,len=options.length;i<len;++i){var option=options[i];wrap.appendChild(create('option',{value:option,selected:option==value},option))}retNode.appendChild(wrap);break;
-            default:var props={id:configId+'_field_'+id,type:type,value:'button'==type?field.label:value};switch(type){case'checkbox':props.checked=value;break;case'button':props.size=field.size?field.size:25,field.script&&(field.click=field.script),
-                field.click&&(props.onclick=field.click);break;case'hidden':break;default:props.type='text',props.size=field.size?field.size:25}retNode.appendChild(this.node=create('input',props))}
-        return label&&(labelPos||(labelPos="label"==firstProp||"radio"==type?"left":"right"),addLabel(labelPos,label,retNode)),retNode},toValue:function(){var node=this.node,field=this.settings,type=field.type,unsigned=!1,rval=null;if(!node) return rval;
-        switch(0==type.indexOf('unsigned ')&&(type=type.substring(9),unsigned=!0),type){case'checkbox':rval=node.checked;break;case'select':rval=node[node.selectedIndex].value;break;case'radio':for(var radios=node.getElementsByTagName('input'),i=0,len=radios.length;i<len;
-        ++i)radios[i].checked&&(rval=radios[i].value);break;case'button':break;case'int':case'integer':case'float':case'number':var num=Number(node.value),warn='Field labeled "'+field.label+'" expects a'+(unsigned?' positive ':'n ')+'integer value';if(isNaN(num)||
-        'int'==type.substr(0,3)&&Math.ceil(num)!=Math.floor(num)||unsigned&&num<0)return alert(warn+'.'),null;if(!this._checkNumberRange(num,warn))return null;rval=num;break;default:rval=node.value}return rval;},reset:function(){var node=this.node,type=this.settings.type;
-        if(node)switch(type){case'checkbox':node.checked=this.default;break;
-            case'select':for(var i=0,len=node.options.length;i<len;++i)node.options[i].textContent==this.default&&(node.selectedIndex=i);break;
-            case'radio':var radios=node.getElementsByTagName('input');for(i=0,len=radios.length;i<len;++i)radios[i].value==this.default&&(radios[i].checked=!0);break;case'button':break;
-            default:node.value=this.default}},remove:function(el){GM_configStruct.prototype.remove(el||this.wrapper),this.wrapper=null,this.node=null},reload:function(){var wrapper=this.wrapper;wrapper&&(wrapper.parentNode.insertBefore(this.wrapper=this.toNode(),wrapper),
-            this.remove(wrapper))},_checkNumberRange:function(num,warn){
-                var field=this.settings;return"number"==typeof field.min&&num<field.min?(alert(warn+' greater than or equal to '+field.min+'.'),null):!("number"==typeof field.max&&num>field.max)||(alert(warn+' less than or equal to '+field.max+'.'),null)}};
-var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_config/blob/master/gm_config.js
+/* globals jQuery, $, GM_config */
 
 (function() {
     'use strict'; console.time("test");
@@ -123,14 +55,9 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         'id': 'SusyModifierConfig',
         'title': 'Settings of SusyModifier v'+GM_info.script.version,
         'fields':  {
-            'Interface_sidebar': {'section': [],'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Interface_SME': {'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
-                              ['','Algebra and Geometry','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
-                               'Fuzzy Set Theory','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics Theory'], 'default': ''},
-            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Children','Games','Mathematics','None'], 'default': 'Mathematics'},
-            'Interface_combine': {'label': 'Topic Manuscripts整合到SI', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Manuscriptnote': {'section': [],'label': 'Manuscript Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'ManuscriptFunc': {'label': '快捷申请优惠券和发送推广信按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Manuscriptnote': {'section': [GM_config.create('Function Modification'),'Manuscript Pages'],'label': 'Manuscript Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Assign_Assistant': {'label': '派稿助手', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'ManuscriptFunc': {'label': '申请优惠券和发推广信', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Template_Linkedin': {'label': 'LinkedIn推广信模板', 'type': 'textarea', 'default':
                                   `Dear Authors,\n\nHope this email finds you well. Your manuscript %m_id% is promoted by the Mathematics "%m_section%" Section LinkedIn account. Welcome to like, share, send and comment on it.\n\n`
                                   +`Find us and receive more information in the section "%m_section%" of Mathematics:\n[Links]\n\nPlease do not hesitate to let us know if you have questions.`},
@@ -140,10 +67,11 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                                +`attention. Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\nIn addition, you have published a paper/`
                                +`papers in /Mathematics/ in 20XX with the citation of XXXXX times, congratulations on your great work!\nTo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper/papers to `
                                +`your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.`},
-            'SInote': {'section': [], 'label': 'Special Issue Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+
+            'SInote': {'section': [,'Special Issue Pages'], 'label': 'Special Issue Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SIpages': {'label': '特刊列表免翻页', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Regular_Color': {'label': '稿件列表标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Maths_J': {'label': 'Scopus/GS 标记 Maths 相关期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'LinkShort': {'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
                               ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)','Guest Editor Invitation-Why a Special Issue',
                                '*Guest Editor - SI Mentor Program'], default: 'Guest Editor - Invite Free'},
@@ -193,15 +121,24 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             'PP_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': 'A few months ago, you expressed interest in submitting a paper to our special issue "$1". We would be grateful to have the opportunity to receive it.\n\n$2\n\n'
                               + 'Please note that you will be offered a XX% discount on the Article Processing Charge by the guest editors if your paper is accepted for publication.To take advantage of the discount, we strongly encourage you to submit your'
                               + ' manuscript by the deadline if possible.\n\nWe look forward to receiving your submission and thank you for your interest in our special issue.\n\nKind regards,'},
-            'LinkShort': {'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Assign_Assistant': {'label': '派稿助手', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Hidden_Func': {'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Con_Template': {'section': [], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Interface_combine': {'label': 'Topic Manuscripts整合到SI', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+
+            'Con_Template': {'section': [,"Conference Pages"], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Con_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
             'Con_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390, IF 2.592)"},
             'Con_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex] and within the journal newsletter.* website and newsletter."},
             'Con_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website."},
+
+            'Interface_SME': {'section': [GM_config.create('Interface Modification')],'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
+                              ['','Algebra and Geometry','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
+                               'Fuzzy Set Theory','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics Theory'], 'default': ''},
+            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Children','Games','Mathematics','None'], 'default': 'Mathematics'},
+            'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
+            'Interface_sidebar': {'section': [], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Old_Icon': {'label': '使用旧图标', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Regular_Color': {'label': '列表橙色标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Maths_J': {'label': 'Scopus标记Maths期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Hidden_Func': {'section': [], 'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
         },
         'events': {
             'save': function() {location.href = location.href},
@@ -242,13 +179,19 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                     else { f_settings.find("#SusyModifierConfig_field_Interface_SME").hide() }
                 });
             },
+            'init': onInit,
         },
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
-        #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label{width:140px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label
-        {width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,
+        #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label,#SusyModifierConfig_ManuscriptFunc_field_label,
+        #SusyModifierConfig_Old_Icon_field_label{width:140px;display:inline-block;}
+        #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,
         #SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;}`
     });
+})();
+
+
+function onInit() {
     const date_v = new Date('202'+GM_info.script.version);
     if ((Date.now() - date_v)/86400000 > 180) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
     else {$("#topmenu > ul").append("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});}
@@ -315,7 +258,6 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             $(".menu [href='/user/list/editors']").after(" <a href='/user/ebm/contract?form[journal_id]=" + S_J + "'>[R]</a>");
             $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list?form[journal_id]=" + S_J + "'>[J]</a>");
         }
-        $(".menu [href='/user/myprofile']").after(" <a href='/user/settings'>[Settings]</a>");
         $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
         $(".menu [href='/special_issue_pending/list']").text("Manage").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC")
         $(".menu [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[M]</a>");
@@ -1163,7 +1105,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         });
         if (editorColumnIndex) {
             $("tr td.user_box_item:nth-child(" + editorColumnIndex + ")").each(function() {
-                if($(this).html().indexOf("icon/pencil.png") == -1) {
+                if($(this).html().indexOf("Assign to another Editor") == -1) {
                     let tap_id = $(this).parent().find("[title='TAPM Feed']").attr("data-url").split("_id=").pop();
                     $(this).append(`<a href="/tap/change_user/${tap_id}" data-url="/tap/change_user/${tap_id}" class="ajax-form-submit-btn"><img src="/bundles/mdpisusy/img/icon/pencil.png" title="Assign to another Editor"></a>`);
                 }
@@ -1400,8 +1342,27 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $("#s_linkedin").click(function() {$("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`)});
     } catch (error){ }}
 
+    //Interface: 修改图标
+    if (GM_config.get('Old_Icon')) {
+        $('head').append('<style>.ms-edit:before, .ms-note:before, .ms-note-add:before, .ms-mail:before{content: "";}</style>');
+        $('.ms-edit').each(function() {$(this).before(`<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAZlJREFUeNpiZCAAdNQYGSJ8GBjO3g8A86ds2ACixN4wMLx69P8/AwshjTpqEP7Z+3Apmz8MDEX/GBhuAtmVLIQ0IoP
+        ///+rxTg4GO81MQlkvHTp1f2dO/eyEKMRpvnjx4+ee/bsmbBu/fpr/7q73/9mYNjDqCXPwBBkx8BgYs2IMxyAXnX4+ZOhQt8swP35s0cfvGOvzSz+8aNCBSjBVB3LwKApz0BQc0B4ufu/v/9fXThz9qKcxO+Ka4wQC5nwxQCy5rt3brzauXXD9b9/GRwUpP/B1TCRqhkojgKYKNF8A4hZyNEMjBGG9UD+f3QDCGm+95iBYfcxBoa7jxGmsRCjGaER07ss338CC
+        WYGuXePeWwDkyPd9+3e8/LGtTM3QJrvPsKtEW7At58MjH//MaYUNO2vLc4wXfj9F8Ot7/8Z2w6f+49XIxy0pTL2PLu67H9OEONyRyNGYLJiEAdiUSAWBmJBIOYHYl4g5gJiDiBmg3qdGYjByel/hj/j6k1HGZY/e/MflOf+QjEw0zH8htLI7N9Iav4CBBgAZrcHTnowXc4AAAAASUVORK5CYII=" />`); });
+        $('.ms-note').each(function() {$(this).before(`<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAfZJREFUeNqMk01LG1EUht87DkkmtgsXWvIxUhLd6B+I27q1q/ZH9E9UULrouhTqupCu+geKUBAqBNy4r42tmoQgZPx
+        IOh+Zj55zMpOZQJReONxz597zvs+ZO6Ne7+6Ch1LqJU0lPD6+h2F4FgYBoiiSB3qS0Fz+srd3ENCmd3wMbG0hpL1k/8fJCT4fHr5hL4qfiaLGanGoKAwlJxr44zE8z4PrunAcB8PhEF/39w9of5vq1hMBnR3joX79+Qs2NEmg251g8ppjMBjgY7OJFxsbnz40m2/p/DsRCFMBbf35Inxa+z2F2moeAVWOeU1kr0o7IlgoFPDt9NSaEvhZgosJQZUIfl95GYKUJ
+        IocNlFpC74/FVhbLSIgt7EQFOLCaIYkl8uBauYKaO0rW1wqQuDOIYiEgGq0tIWMwJpZlKtzmcCMCYAZEm1hAf4DAqrdmRCUmaDzEAFYINMC3XdCUK8W5ZBDBHXTkDz5mBISJqCa+S0wAR1DiQjOO85jBKnAba+HxeVlaaFembjaTFA1xD3+zKck8TuQFkbX19DPjo5gNhowlpb0dteWAv6jzrt25u5nCezRSLctC5etFnQ6a1Dy9Fmjka+VDRFgglqlOHWXOc7
+        5P7m1rHy/1VqhR/ciQLFy1+/fPNncfI//GKFt33ANhf9PgAEA+ImOPNiBpOQAAAAASUVORK5CYII=" />`); });
+        $('.ms-note-add').each(function() {$(this).before(`<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAlRJREFUeNp8k0trE1EUx88kY161iyBtyauIaUAaXOki0bhRXAi6EMXP4EcQxWCDC3cFESy4q6QrcSlIoVJIXdg
+        Uik01YppYaWZoqLEpIZmZzNzrOTeTF9YeOMx9nf//d+feK91Lp4FCkqTb+AnAybHCGCsxywLOORRzOZCpQYHf4NLc3IKFk8baGkAyCQznevO59XVYXF5+QF6YP2jsfCoFDlKzU+KMiTbSgNnpgGEYoOs6aJoGzWYT3mYyCzh/HWtjPSSZHO2QdnZbQIYRFFCULib1Kev1OrzMZuHa7OyrF9nsE1z/TAiwgYAjdnYMTOybqgTnpt1gYWWH+kh2N3BLCHo8Hviwu
+        fmnT2AOE/zqEoSR4OeeMUQwIOFcIxNpsAXT7AvMTPvAQreOIPDYhXyExOVyAdYcK+Ao77WFS0gQ6McQcEGANY7BFoYEZiI+cXQ6EURsAoAREofTCeZ/BKRytUsQJILqvwRPdx/D11YBahd+3x8/9M9brINbwPPuEUTDPrFYQ4JoxCvavctEJDvft+HylUuwWFsK18dVYMwa3QIRoB8EkKBS1frO6eJD2D7aEosaVgO4ziTmtvK4dENuqCqMTUyILURDXdc2EYS
+        9wp2i9HkLJq+eEe0D8wBSd5IhbIY+vlsBubS6CpFEArx+v1xW2mIRvaiK0u6ffexUHArvv3R/1A0Jim++KabbUPFVbNCYF3NyKpHIcDta+TxHd5F4L0TiHeAXX6d4sBLnzkd+hWqoVu4JHO3vH56Ox5+f9Jb1uHqTfdKmoMYLtoD5V4ABAIRMpFbtaSpMAAAAAElFTkSuQmCC" />`); });
+        $('.ms-mail').each(function() {$(this).before(`<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAALdQTFRF////AAAAAAAAAAAAVX9/VX9/CyQkUnx8T3h4S3R0R29vQ2pqPmVlOV9fNFpaL1RUH0JCDS4una6uobKypba
+        2qru7r8DAtMXFuMnJvc7OwNHRwdLSxdbWydrazdvb0t7e1OPj1uHh2Obm2unp3OXl3enp3e3t3uvr3+7u4enp4ezs4+7u4/Pz5ezs6PHx6Pb26e/v6/Hx7Pf37fHx7vX17/n58/j48/r69/v79/z8+v39+/39////VLvycQAAABJ0Uk5TAAYWGk1naGhpa21vcXN1eH6G7arvxgAAAJRJREFUGBmFwcEKgkAUBdB77fVyksAIEun//8yiaJFTijY6MxkURZvOA
+        f6hEN+izNY7g7duf0lYVk18aaqSQrM9FBme2lNhmDCazdGGiT1uTKQwhGw4DznqOs8CKQwOurh4XFN1WFDoveuXYrHSW6qeQt85TdKIFPPOC4X3XjlijhGUXim0K8Wbs6Rm+NZygo8Y8esBKMtC8OXU0AUAAAAASUVORK5CYII=" />`); });
+    }
+
     console.timeEnd("test")
-})();
+}
 
 function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector) {
     var targetNodes,btargetsFound;if(typeof iframeSelector=="undefined") {targetNodes=$(selectorTxt);} else targetNodes=$(iframeSelector).contents().find(selectorTxt);if(targetNodes&&targetNodes.length>0){btargetsFound=!0;targetNodes.each(function(){var jThis=$(this);
