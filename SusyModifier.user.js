@@ -130,8 +130,8 @@
             'Con_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website."},
 
             'Interface_SME': {'section': [GM_config.create('Interface Modification')],'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
-                              ['','Algebra and Geometry','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
-                               'Fuzzy Set Theory','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics Theory'], 'default': ''},
+                              ['','Algebra, Geometry and Topology','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
+                               'Fuzzy Sets, Systems and Decision Making','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics'], 'default': ''},
             'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Children','Games','Mathematics','None'], 'default': 'Mathematics'},
             'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
             'Interface_sidebar': {'section': [], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
@@ -218,19 +218,19 @@ function onInit() {
 
         S_S=-1;
         if (S_J==154) {switch (GM_config.get('Interface_SME')) {
-            case 'Algebra and Geometry': S_S=915; break;
+            case 'Algebra, Geometry and Topology': S_S=915; break;
             case 'Computational and Applied Mathematics': S_S=892; break;
             case 'Difference and Differential Equations': S_S=894; break;
             case 'Dynamical Systems': S_S=891; break;
             case 'Engineering Mathematics': S_S=544; break;
             case 'Financial Mathematics': S_S=895; break;
             case 'Functional Interpolation': S_S=1671; break;
-            case 'Fuzzy Set Theory': S_S=893; break;
+            case 'Fuzzy Sets, Systems and Decision Making': S_S=893; break;
             case 'Mathematical Biology': S_S=545; break;
             case 'Mathematical Physics': S_S=896; break;
             case 'Mathematics and Computer Science': S_S=555; break;
             case 'Network Science': S_S=557; break;
-            case 'Probability and Statistics Theory': S_S=916; break;
+            case 'Probability and Statistics': S_S=916; break;
         }}
 
         if (S_S>0 && S_J>0){
