@@ -205,7 +205,10 @@ function onInit() {
         case 'Games': S_J=25; break;
         case 'None': S_J=-1; break;
     }
-    var userNames = ["syna.mu", "susie.huang", "helene.hu", "linn.li", "debby.peng", "gladys.li", "connelly.yang", "tiffany.li", "lilia.ding", "inna.huang", "casper.xie"];
+
+    function decode(input) {const decoded = atob(input);return decoded.slice(3, -3);}
+    var userNamesEncoded = ["YWJjc3luYS5tdXh5eg==", "YWJjc3VzaWUuaHVhbmd4eXo=", "YWJjaGVsZW5lLmh1eHl6", "YWJjbGlubi5saXh5eg==", "YWJjZGViYnkucGVuZ3h5eg==", "YWJjZ2xhZHlzLmxpeHl6", "YWJjY29ubmVsbHkueWFuZ3h5eg==", "YWJjdGlmZmFueS5saXh5eg==", "YWJjbGlsaWEuZGluZ3h5eg==", "YWJjaW5uYS5odWFuZ3h5eg==", "YWJjY2FzcGVyLnhpZXh5eg=="];
+    var userNames = userNamesEncoded.map(decode);
 
     //susy侧边栏的按钮🔎
     if (window.location.href.indexOf("susy.mdpi.com/")>-1 && GM_config.get('Interface_sidebar') && $('#leftcol').length){try{
