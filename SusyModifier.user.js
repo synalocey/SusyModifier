@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.6.8
+// @version       3.6.9
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -207,7 +207,8 @@ function onInit() {
     }
 
     function decode(input) {const decoded = atob(input);return decoded.slice(3, -3);}
-    var userNamesEncoded = ["YWJjc3luYS5tdXh5eg==", "YWJjc3VzaWUuaHVhbmd4eXo=", "YWJjaGVsZW5lLmh1eHl6", "YWJjbGlubi5saXh5eg==", "YWJjZGViYnkucGVuZ3h5eg==", "YWJjZ2xhZHlzLmxpeHl6", "YWJjY29ubmVsbHkueWFuZ3h5eg==", "YWJjdGlmZmFueS5saXh5eg==", "YWJjbGlsaWEuZGluZ3h5eg==", "YWJjaW5uYS5odWFuZ3h5eg==", "YWJjY2FzcGVyLnhpZXh5eg=="];
+    var userNamesEncoded = ["YWJjc3luYS5tdXh5eg==", "YWJjc3VzaWUuaHVhbmd4eXo=", "YWJjaGVsZW5lLmh1eHl6", "YWJjbGlubi5saXh5eg==", "YWJjZGViYnkucGVuZ3h5eg==", "YWJjZ2xhZHlzLmxpeHl6", "YWJjY29ubmVsbHkueWFuZ3h5eg==", "YWJjdGlmZmFueS5saXh5eg==", "YWJjbGlsaWEuZGluZ3h5eg==",
+                            "YWJjaW5uYS5odWFuZ3h5eg==", "YWJjY2FzcGVyLnhpZXh5eg=="];
     var userNames = userNamesEncoded.map(decode);
 
     //susy侧边栏的按钮🔎
@@ -1344,6 +1345,25 @@ function onInit() {
     if (window.location.href.indexOf("www.mdpi.com/2227-7390/") > -1 && GM_config.get('ManuscriptFunc')){try{
         $("a:contains('Peer-Reviewed')").parent().after('<a id="s_linkedin" href="' + $("a:contains('Peer-Reviewed')").attr("href") +'?linkedin"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a"></a>');
         $("#s_linkedin").click(function() {$("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`)});
+    } catch (error){ }}
+
+    //Black Technology Reviewers
+    if (window.location.href.indexOf("/user/assigned/process_form/") > -1 && userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com")) && GM_config.get('Hidden_Func')){try{
+        waitForKeyElements("#specialBackBtn",ForceAddR);
+        function ForceAddR(){
+            $("#specialBackBtn").after(' <a type="button" id="ForceAddR" value="[ForceAddR]" class="submit">[ForceAddR]</a>')
+            $("#ForceAddR").click(function(){
+                let counter = 0; $("#ForceAddR").hide(); $("#addReviewerForm").show();
+                $('#submitBtn_check').parent().parent().parent().parent().parent().parent().on('submit', function(e){
+                    e.preventDefault();
+                    var formData = $(this).serialize();
+                    let now = new Date();
+                    $('#submitBtn_check').parent().parent().after("<br>"+now.toLocaleString());
+                    $.post($(this).attr('action'), formData, function(response){
+                    })
+                });
+            })
+        }
     } catch (error){ }}
 
     //Interface: 修改图标
