@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.6.30
+// @version       3.7.5
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -9,7 +9,8 @@
 // @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
 // @match         *://*.mdpi.com/*
 // @match         *://redmine.mdpi.cn/*
-// @match         *://*.scopus.com/*
+// @match         *://www.scilit.net/articles/search*
+// @match         *://*.mdpi.com/*
 // @match         *://*.google.com/*
 // @match         *://*.google.com.hk/*
 // @match         *://*.google.co.uk/*
@@ -75,7 +76,7 @@
                               ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)','Guest Editor Invitation-Why a Special Issue',
                                '*Guest Editor - SI Mentor Program'], default: 'Guest Editor - Invite Free'},
             'GE_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*Mathematics.*Guest Editor"},
-            'GE_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.592, Rank Q1) Invitation to Serve as the Guest Editor"},
+            'GE_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.4, Rank Q1) Invitation to Serve as the Guest Editor"},
             'GE_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderID': {'section': [], 'label': '默认 GE Reminder Template', 'type': 'select', 'labelPos': 'left', 'options':
@@ -86,12 +87,12 @@
             'GE_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_TemplateID': {'section': [], 'label': '默认 EB Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Editorial Board Member – Invite Version 1']},
             'EB_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation"},
-            'EB_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.592, Rank Q1) Invitation"},
+            'EB_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.4, Rank Q1) Invitation"},
             'EB_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_ReminderID': {'section': [], 'label': '默认 EB Reminder Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Editorial Board Member – Reminder']},
             'EB_ReminderS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation"},
-            'EB_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.592, Rank Q1) Invitation"},
+            'EB_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.4, Rank Q1) Invitation"},
             'EB_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'Report_TemplateID': {'section': [], 'label': '默认 GE Contact', 'type': 'select', 'labelPos': 'left', default: 'Monthly Report', 'options':
@@ -125,7 +126,7 @@
 
             'Con_Template': {'section': [,"Conference Pages"], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Con_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
-            'Con_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390, IF 2.592)"},
+            'Con_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390, IF 2.4)"},
             'Con_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex] and within the journal newsletter.* website and newsletter."},
             'Con_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website."},
 
@@ -530,7 +531,7 @@ function onInit() {
             $("table [title|='Google Scholar']").each(function( index ) {
                 name[index] = $(this).parent().prev().text().trim() + " " + $(this).parent().children("b").first().text().trim();
                 email[index] = $(this).parent().next().text().trim();
-                $(this).before('<a href="mailto:'+email[index]+'?subject=['+ m_journal +'] (IF 2.592, ISSN 2227-7390) Promote Your Published Papers&body=' +
+                $(this).before('<a href="mailto:'+email[index]+'?subject=['+ m_journal +'] (IF 2.4, ISSN 2227-7390) Promote Your Published Papers&body=' +
                                GM_config.get('Template_Paper').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section).replace(/%name%/g,name[index]) + '"><img src="/bundles/mdpisusy/img/icon/mail.png"></a> ');
             });
 
@@ -1353,7 +1354,7 @@ function onInit() {
     if (window.location.href.indexOf("/user/assigned/process_form/") > -1 && userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com")) && GM_config.get('Hidden_Func')){try{
         waitForKeyElements("#specialBackBtn",ForceAddR);
         function ForceAddR(){
-            $("#specialBackBtn").after(' <a type="button" id="ForceAddR" value="[ForceAddR]" class="submit">[ForceAddR]</a>')
+            $("#specialBackBtn").after(' <a type="button" id="ForceAddR" value="[ForceAddR]" class="submit">非常认真的找人</a>')
             $("#ForceAddR").click(function(){
                 let counter = 0; $("#ForceAddR").hide(); $("#addReviewerForm").show();
                 $('#submitBtn_check').parent().parent().parent().parent().parent().parent().on('submit', function(e){
@@ -1369,7 +1370,7 @@ function onInit() {
     } catch (error){ }}
 
     //Interface: 修改图标
-    if (window.location.href.indexOf("susy.mdpi.com") > -1 && GM_config.get('Old_Icon')) {
+    if (window.location.href.indexOf("susy.mdpi.com") > -1 && GM_config.get('Old_Icon')) {try{
         $("._removeEmail:contains('x')").text(" x");
         $('head').append(
             `<style>.ms-edit:before, .ms-note:before, .ms-note-add:before, .ms-mail:before{content: ''; display: inline-block; height: 16px; width: 16px; position: relative; top: -2px; background-size: contain;}
@@ -1388,8 +1389,38 @@ function onInit() {
             + `OwNHRwdLSxdbWydrazdvb0t7e1OPj1uHh2Obm2unp3OXl3enp3e3t3uvr3+7u4enp4ezs4+7u4/Pz5ezs6PHx6Pb26e/v6/Hx7Pf37fHx7vX17/n58/j48/r69/v79/z8+v39+/39////VLvycQAAABJ0Uk5TAAYWGk1naGhpa21vcXN1eH6G7arvxgAAAJRJREFUGBmFwcEKgkAUBdB77fVyksAIEun//8yiaJFTijY6MxkURZvOAf6hEN+izNY7g7`
             + `duf0lYVk18aaqSQrM9FBme2lNhmDCazdGGiT1uTKQwhGw4DznqOs8CKQwOurh4XFN1WFDoveuXYrHSW6qeQt85TdKIFPPOC4X3XjlijhGUXim0K8Wbs6Rm+NZygo8Y8esBKMtC8OXU0AUAAAAASUVORK5CYII=') no-repeat center center;} </style>`);
         waitForKeyElements("#intercom-frame",function(){$('.intercom-lightweight-app,#intercom-frame').remove();},true);
-    }
+    } catch (error){ }}
 
+    if (window.location.href.indexOf("www.scilit.net/articles/search") > -1 && userNames.some(userName => $("a.dropdown-toggle:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {try{
+        let urlObj = new URL($("span.nextPage").first().parent().attr("href"), window.location.origin);
+        let params = new URLSearchParams(urlObj.search);
+        let page = $('input[name="page"]').last().attr("value");
+        let totalpage = $('input[name="page"]').last().parent().text().match(/\d+/)[0];
+
+        if (window.location.href.indexOf("#ScilitBatchDownload") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
+            $("input.inheritPos").prop("checked",true);
+            unsafeWindow.$("a[data-action='/api/excel_report/authors']").click();
+            $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
+            <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
+            <p></p><p id=ith_prompt>Downloading ${page} of ${totalpage}</p><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
+        } else if(window.location.href.indexOf("#ScilitBatchInit") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
+            for (let i = 0; i < Math.min(totalpage, 11); i++) {
+                let urlObj_n = urlObj, params_n = params;
+                params_n.set('nb_articles', '1000'); params_n.set('offset', i*1000);
+                urlObj_n.search = params_n.toString();
+                GM_openInTab(urlObj_n.href+"#ScilitBatchDownload", {active: true});
+            }
+        }
+        else {
+            $(".header-results > h4.inline.bold").after(" <a id='ScilitDownload' href=#>[Batch Download Tool]</a>");
+            $("#ScilitDownload").click(function(){
+                let urlObj_n = urlObj, params_n = params;
+                params_n.set('nb_articles', '1000'); params_n.set('offset', 0);
+                urlObj_n.search = params_n.toString();
+                GM_openInTab(urlObj_n.href+"#ScilitBatchInit", {active: true});
+            })
+        }
+    } catch (error){ }}
     console.timeEnd("test")
 }
 
