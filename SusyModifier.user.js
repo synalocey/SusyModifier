@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.7.11
+// @version       3.7.12
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1278,8 +1278,8 @@ function onInit() {
 
     //Maths-Related Journal Search
     if (window.location.hostname.indexOf("google") + window.location.hostname.indexOf("scopus") > -2 && GM_config.get('Maths_J')){try{
-        var maths_j = ["math","stat","computat","computing","equation","probab","algebra","algorithm","calculus","geometr","pde","nonlinear","topology","fractal","discrete","fixed point","artificial intelligence","inverse prob","combinatori","number theory", "matemati",
-                       "operator theory","axiom"];
+        var maths_j = ["math","stat","computat","computing","equation","probab","algebr","algorithm","calculus","geometr","pde","nonlinear","topology","fractal","discrete","fixed point","artificial intelligence","inverse prob","combinatori","number theory", "matemati",
+                       "operator theory","axiom","numeric","stochastic","fuzzy set","dynamical sys","chaos","functional analysis","optimization theory"];
         var regex = new RegExp("(" + maths_j.join("|") + ")", "i");
         if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source']", mark_journals, true);} else {mark_journals()};
         $("#gsc_bpf_more").click(function (){
@@ -1355,7 +1355,7 @@ function onInit() {
     if (window.location.href.indexOf("/user/assigned/process_form/") > -1 && userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com")) && GM_config.get('Hidden_Func')){try{
         waitForKeyElements("#specialBackBtn",ForceAddR);
         function ForceAddR(){
-            $("#specialBackBtn").after(' <a type="button" id="ForceAddR" value="[ForceAddR]" class="submit">非常认真的找人</a>')
+            $("#specialBackBtn").after(' <a type="button" id="ForceAddR" value="[ForceAddR]" class="submit">　　　</a>')
             $("#ForceAddR").click(function(){
                 let counter = 0; $("#ForceAddR").hide(); $("#addReviewerForm").show();
                 $('#submitBtn_check').parent().parent().parent().parent().parent().parent().on('submit', function(e){
