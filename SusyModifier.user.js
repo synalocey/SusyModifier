@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.7.5
+// @version       3.7.11
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -9,6 +9,7 @@
 // @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
 // @match         *://*.mdpi.com/*
 // @match         *://redmine.mdpi.cn/*
+// @match         *://*.scopus.com/*
 // @match         *://www.scilit.net/articles/search*
 // @match         *://*.mdpi.com/*
 // @match         *://*.google.com/*
