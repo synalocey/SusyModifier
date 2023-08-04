@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.7.13
+// @version       3.8.3
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -211,7 +211,7 @@ function onInit() {
 
     function decode(input) {const decoded = atob(input);return decoded.slice(3, -3);}
     var userNamesEncoded = ["YWJjc3luYS5tdXh5eg==", "YWJjc3VzaWUuaHVhbmd4eXo=", "YWJjaGVsZW5lLmh1eHl6", "YWJjbGlubi5saXh5eg==", "YWJjZGViYnkucGVuZ3h5eg==", "YWJjZ2xhZHlzLmxpeHl6", "YWJjY29ubmVsbHkueWFuZ3h5eg==", "YWJjdGlmZmFueS5saXh5eg==", "YWJjbGlsaWEuZGluZ3h5eg==",
-                            "YWJjaW5uYS5odWFuZ3h5eg==", "YWJjY2FzcGVyLnhpZXh5eg==", "YWJjZGFuaWVsLmRhbnh5eg=="];
+                            "YWJjaW5uYS5odWFuZ3h5eg==", "YWJjY2FzcGVyLnhpZXh5eg==", "YWJjZGFuaWVsLmRhbnh5eg==", "YWJjZWlsZWVuLnpoYW5neHl6"];
     var userNames = userNamesEncoded.map(decode);
 
     //susy侧边栏的按钮🔎
@@ -905,7 +905,11 @@ function onInit() {
                 })()
             }
         });
-        if (window.location.href.indexOf("/edit/0") > -1 && S_J>0) { unsafeWindow.$('#form_id_journal').val(S_J).trigger("chosen:updated").trigger("change") }
+        $("input[value='Edit']").before(`<input class="submit" type="submit" value="Edit">`).remove();
+        if (window.location.href.indexOf("/edit/0") > -1 && S_J>0) {
+            unsafeWindow.$('#form_id_journal').val(S_J).trigger("chosen:updated").trigger("change");
+            $("input[value='Add']").before(`<input class="submit" type="submit" value="Add">`).remove();
+        }
     } catch (error){ }}
 
     //默认新建EBM位置
