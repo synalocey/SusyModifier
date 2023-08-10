@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Maths ToolKit
-// @version       3.6.28
+// @version       3.8.10
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Maths ToolKit
 // @author        Syna
@@ -49,7 +49,7 @@
 111@111.com
 222@222.com
 aaa@aaa.edu
-bbb@bbb.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea>
+bbb@bbb.edu" minlength="1" rows="10" spellcheck="false"></textarea>
                         <input type="button" value="Get Unsubscribe Links" id="mathbatch_button" class="submit" />
                     </div>
                 </div>
@@ -61,7 +61,7 @@ bbb@bbb.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></text
                         <break></break>
                     </div>
                     <div class="cell small-12 medium-6 large-8">
-                        <textarea id="mathbatch_results" minlength="1" maxlength="20000" rows="3" spellcheck="false"></textarea>
+                        <textarea id="mathbatch_results" minlength="1" rows="3" spellcheck="false"></textarea>
                     </div>
                 </div>
 
