@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Maths ToolKit
-// @version       3.8.10
+// @version       3.8.12
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Maths ToolKit
 // @author        Syna
@@ -69,41 +69,50 @@ bbb@bbb.edu" minlength="1" rows="10" spellcheck="false"></textarea>
         </div>
     </form>
 </div>`);
+
             $("#mathbatch_button").click(function (){
                 $("#mathbatch_button").prop("disabled", true);
                 var textContent = $("#mathbatch_emails").val().trim();
-                var emails = textContent.split(/[\n;,\t]+/), results = [];
+                var emails = textContent.split(/[\n;,\t]+/), results = Array(emails.length).fill("");
 
-                async function getEmailResponses() {
-                    for (let email of emails) {
-                        var url = 'https://susy.mdpi.com/user/get/unsubscribe_manage_link/' + email.trim();
-                        await $.ajax({
-                            url: url,
-                            type: 'GET',
-                            success: function(response) {
-                                if (response.status === "success") {
-                                    results.push(response.link);
-                                } else if (response.status === "failed") {
-                                    results.push(response.message);
-                                } else {
-                                    results.push("error");
-                                }
-                                $("#mathbatch_results").prop("rows",$("#mathbatch_results").prop("rows")+2);
-                                $("#mathbatch_results").val(results.join('\n'));
-                            },
-                            error: function(jqXHR, textStatus, errorThrown) {
-                                results.push("Error: " + errorThrown);
-                                $("#mathbatch_results").prop("rows",$("#mathbatch_results").prop("rows")+2);
-                                $("#mathbatch_results").val(results.join('\n'));
-                            }
-                        });
+                const CONCURRENT_REQUESTS = 10; //并发数
+
+                async function fetchUnsubscribeLink(email, index) {
+                    var url = 'https://susy.mdpi.com/user/get/unsubscribe_manage_link/' + email.trim();
+                    try {
+                        let response = await $.ajax({ url: url, type: 'GET' });
+                        if (response.status === "success") {
+                            results[index] = response.link;
+                        } else if (response.status === "failed") {
+                            results[index] = response.message;
+                        } else {
+                            results[index] = "error";
+                        }
+                    } catch (error) {
+                        results[index] = "Error: " + error.statusText;
+                    }
+                    $("#mathbatch_results").val(results.join('\n'));
+                    const nonEmptyResults = results.filter(result => result !== "").length + 2;
+                    $("#mathbatch_results").prop("rows", nonEmptyResults * 2);
+                }
+
+                async function batchRequest(emailsBatch, startIndex) {
+                    let promises = emailsBatch.map((email, batchIndex) => fetchUnsubscribeLink(email, startIndex + batchIndex));
+                    await Promise.all(promises);
+                }
+
+                async function handleAllRequests() {
+                    for (let i = 0; i < emails.length; i += CONCURRENT_REQUESTS) {
+                        let batch = emails.slice(i, i + CONCURRENT_REQUESTS);
+                        await batchRequest(batch, i);
                     }
                     $("#mathbatch_button").prop("disabled", false);
                 }
 
+                handleAllRequests();
                 $("#mathbatch_form2").show();
-                getEmailResponses();
             });
+
         }
     }
     console.timeEnd("Maths")
