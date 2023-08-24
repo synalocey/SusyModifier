@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.8.22
+// @version       3.8.24
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -773,7 +773,6 @@ function onInit() {
         $('a[data-title="Extend Deadline"]').click(function(e){waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly(){$("#form_deadline").attr("readonly",false)};})
         $('a[data-title="Change special issue deadline"]').click(function(e){waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2(){$("#form_date").attr("readonly",false)};})
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
-        $('input[value="Contact All Guest Editors"]').after($('<a>', {text: 'Contact [New Tab]', href: $('input[value="Contact All Guest Editors"]').attr('onclick').match(/'([^']+)'/)[1], target: '_blank'})).after(" ");
         $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").click(function(){
             $("#si-cfp-form [type=\'checkbox\']").prop("checked",true); if($("#form_template_id").val()==1){$("#form_template_id").val(2)}; if($("#form_comments").val()==""){$("#form_comments").val("Thank you.")}
         });
