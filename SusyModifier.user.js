@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.9.1
+// @version       3.10.16
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -10,7 +10,7 @@
 // @match         *://*.mdpi.com/*
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
-// @match         *://www.scilit.net/articles/search*
+// @match         *://admin.scilit.net/articles/search*
 // @match         *://*.mdpi.com/*
 // @match         *://*.google.com/*
 // @match         *://*.google.com.hk/*
@@ -134,7 +134,7 @@
             'Interface_SME': {'section': [GM_config.create('Interface Modification')],'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
                               ['','Algebra, Geometry and Topology','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
                                'Fuzzy Sets, Systems and Decision Making','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics'], 'default': ''},
-            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Children','Games','Mathematics','Risks','None'], 'default': 'Mathematics'},
+            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Children','Games','Mathematics','Risks','Geometry','None'], 'default': 'Mathematics'},
             'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
             'MathBatch': {'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function() {window.location.href="https://skday.eu.org/math.html"}},
             'Interface_sidebar': {'section': [], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
@@ -206,6 +206,7 @@ function onInit() {
         case 'Children': S_J=159; break;
         case 'Risks': S_J=162; break;
         case 'AppliedMath': S_J=517; break;
+        case 'Geometry': S_J=599; break;
         case 'Games': S_J=25; break;
         case 'None': S_J=-1; break;
     }
@@ -1404,7 +1405,7 @@ function onInit() {
         waitForKeyElements("#intercom-frame",function(){$('.intercom-lightweight-app,#intercom-frame').remove();},true);
     } catch (error){ }}
 
-    if (window.location.href.indexOf("www.scilit.net/articles/search") > -1 && userNames.some(userName => $("a.dropdown-toggle:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {try{
+    if (window.location.href.indexOf("admin.scilit.net/articles/search") > -1 && userNames.some(userName => $("a.dropdown-toggle:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {try{
         let urlObj = new URL($("span.nextPage").first().parent().attr("href"), window.location.origin);
         let params = new URLSearchParams(urlObj.search);
         let page = $('input[name="page"]').last().attr("value");
