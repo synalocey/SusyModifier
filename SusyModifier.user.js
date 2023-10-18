@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.10.17
+// @version       3.10.18
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -412,12 +412,13 @@ function onInit() {
         let result = "";
         if(GM_config.get('Report_TemplateB2').indexOf("%pp_list%") > -1) {
             let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id"), false); xhr.send();
-            let $form = $($.parseHTML(xhr.responseText)).find('#special-issue-planned-papers-form');
+            let $form = $($.parseHTML(xhr.responseText)).find('#single-planned-paper-form');
             $form.find('tbody tr').each(function() {
                 let $td = $(this).find('td'), email = $td.eq(0).text().trim(), status = $td.eq(1).text().trim(), invitedByGE = $td.eq(2).text().trim(),
                     discount = parseFloat($td.eq(3).text().trim().replace(/ /g, '').replace(/CHF/g, '')), agreedDate = new Date($td.eq(5).text().trim());
+                console.log(email); console.log(status); console.log(invitedByGE); console.log(discount);
                 if (status === "Title Provided" || status === "Agreed" || status === "Approved") { counter++;
-                    if (invitedByGE === "Yes" && discount > 0) {
+                    if (invitedByGE === "Paper invited by GE" && discount > 0) {
                         let discountRatio = 0;
                         switch (agreedDate.getFullYear()) {
                             case 2021: discountRatio = discount / 1600; break;
@@ -777,6 +778,10 @@ function onInit() {
         $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").click(function(){
             $("#si-cfp-form [type=\'checkbox\']").prop("checked",true); if($("#form_template_id").val()==1){$("#form_template_id").val(2)}; if($("#form_comments").val()==""){$("#form_comments").val("Thank you.")}
         });
+
+        // 按钮Contact All Guest Editors
+        let button = $('input.submit[value="Contact All Guest Editors (Special Issue Management)"]');
+        button.replaceWith(`<a href="${button.attr('onclick').match(/'([^']+)'/)[1]}" class="submit">${button.val()}</a>`);
     } catch (error){ }}
 
     //SI可行性报告
@@ -922,7 +927,8 @@ function onInit() {
     //默认新建EBM位置
     if (window.location.href.indexOf(".mdpi.com/user/ebm-new/management") > -1){try{
         if (S_J>0){
-            unsafeWindow.$("#journal_id").val(S_J).trigger("chosen:updated"); $("#role_id").val(9);
+            unsafeWindow.$("#journal_id").val(S_J).trigger("chosen:updated");
+            if (S_J==154) {$("#role_id").val(9)} else {$("#role_id").val(10)};
             $("[href='/user/ebm-new/management/pending_invitation/my_journals").attr("href","/user/ebm-new/management/pending_invitation/my_journals?form[journal_id]=" +S_J);
         }
         if (GM_config.get('Hidden_Func')){$("#ebm_pending_check_btn").after(' <input class="submit" type="submit" value="Force Proceed"> ');}
