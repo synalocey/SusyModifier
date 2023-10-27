@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.10.24
+// @version       3.10.26
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -419,7 +419,7 @@ function onInit() {
                     discount = parseFloat($td.eq(3).text().trim().replace(/ /g, '').replace(/CHF/g, '')), agreedDate = new Date($td.eq(5).text().trim());
                 console.log(email); console.log(status); console.log(invitedByGE); console.log(discount);
                 if (status === "Title Provided" || status === "Agreed" || status === "Approved") { counter++;
-                    if (invitedByGE === "Paper invited by GE" && discount > 0) {
+                    if (invitedByGE.indexOf("by GE") > -1 && discount > 0) {
                         let discountRatio = 0;
                         switch (agreedDate.getFullYear()) {
                             case 2021: discountRatio = discount / 1600; break;
@@ -972,10 +972,22 @@ function onInit() {
         $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
     } catch (error){ }}
 
-    //新增PP修改邮箱
+    //新增PP修改邮箱1
     if (window.location.href.indexOf("mdpi.com/si/planned_paper") + window.location.href.indexOf("planned_paper/edit/") > -2) {
         $("[for='form_email']").append(` <a onclick="$('#form_email').prop('readonly', false)">[Edit]</a>`);
         $("[for='form_agreed_date']").append(` <a onclick="$('#form_agreed_date').prop('readonly', false)">[Edit]</a>`);
+    }
+
+    //新增PP修改邮箱和期刊2
+    if (window.location.href.indexOf("/planned_paper/edit?email=") > -1) {
+        $("[for='form_email']").append(` <a onclick="$('#form_email').prop('readonly', false)">[Edit]</a>`);
+        $("[for='form_agreed_date']").append(` <a onclick="$('#form_agreed_date').prop('readonly', false)">[Edit]</a>`);
+        if ($("#form_status").val() === ''){ //设定PP默认值
+            $("#form_status").val(2);
+            $('#form_type_0').prop('checked', true);
+            unsafeWindow.$('#form_journal_id').val(S_J).trigger("chosen:updated").trigger("change");
+            $("#form_source").val(8);
+        }
     }
 
     //CfP Checker
@@ -1443,6 +1455,13 @@ function onInit() {
             })
         }
     } catch (error){ }}
+
+    if (window.location.href.indexOf("/user/special_issue/edit/0?") > -1 && GM_config.get('Hidden_Func')){try{
+        unsafeWindow.$('#form_type').val(0).trigger("chosen:updated").trigger('change');
+        $("#form_name").val("Mathematics")
+        $("#form_owner_email").val("pongphai@mdpi.com");
+    } catch (error){ }}
+
     console.timeEnd("test")
 }
 
