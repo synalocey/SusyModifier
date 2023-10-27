@@ -921,7 +921,9 @@ function onInit() {
         $("input[value='Edit']").before(`<input class="submit" type="submit" value="Edit">`).remove();
         if (window.location.href.indexOf("/edit/0") > -1 && S_J>0) {
             unsafeWindow.$('#form_id_journal').val(S_J).trigger("chosen:updated").trigger("change");
+            unsafeWindow.$('#form_type').val(0).trigger("chosen:updated").trigger('change');
             $("input[value='Add']").before(`<input class="submit" type="submit" value="Add">`).remove();
+            if (window.location.href.indexOf("/edit/0?") > -1){ $("#form_owner_email").val(window.location.search.split('?')[1]);}
         }
     } catch (error){ }}
 
@@ -1454,12 +1456,6 @@ function onInit() {
                 GM_openInTab(urlObj_n.href+"#ScilitBatchInit", {active: true});
             })
         }
-    } catch (error){ }}
-
-    if (window.location.href.indexOf("/user/special_issue/edit/0?") > -1 && GM_config.get('Hidden_Func')){try{
-        unsafeWindow.$('#form_type').val(0).trigger("chosen:updated").trigger('change');
-        $("#form_name").val("Mathematics")
-        $("#form_owner_email").val("pongphai@mdpi.com");
     } catch (error){ }}
 
     console.timeEnd("test")
