@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.10.26
+// @version       3.11.02
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1316,14 +1316,14 @@ function onInit() {
         var maths_j = ["math","stat","computat","computing","equation","probab","algebr","algorithm","calculus","geometr","pde","nonlinear","topology","fractal","discrete","fixed point","artificial intelligence","inverse prob","combinatori","number theory", "matemati",
                        "operator theory","axiom","numeric","stochastic","fuzzy set","dynamical sys","chaos","functional analysis","optimization theory"];
         var regex = new RegExp("(" + maths_j.join("|") + ")", "i");
-        if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source']", mark_journals, true);} else {mark_journals()};
+        if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source'],div[data-testid='author-list']+span", mark_journals, true);} else {mark_journals()};
         $("#gsc_bpf_more").click(function (){
             let targetNode = document.querySelector('#gsc_a_nn')
             let observer = new MutationObserver(function(mutations) { mark_journals() });
             observer.observe(targetNode, {characterData: true, childList: true, subtree: true});
         })
         function mark_journals(){
-            $("div.gs_gray:not([style]),div[data-component='document-source']").each(function(){ if(regex.test($(this).text())){ $(this).css("background-color", "Wheat") } });
+            $("div.gs_gray:not([style]),div[data-component='document-source'],div[data-testid='author-list']+span").each(function(){ if(regex.test($(this).text())){ $(this).css("background-color", "Wheat") } });
         }
     } catch (error){ }}
 
