@@ -60,8 +60,8 @@ experimental:
 # 注意: hosts 在 fake-ip 模式下不生效
 hosts:
     'merrin5.mdpi.lab': 210.51.191.7
-    '*.mdpi.lab': 210.51.191.2 
-    '*.*.mdpi.lab': 210.51.191.2 
+    '*.mdpi.lab': 210.51.191.4
+    '*.*.mdpi.lab': 210.51.191.4
     'mail.mdpi.com': 212.243.204.123
     '*.mdpi.test': 62.202.7.117
     '*.*.mdpi.test': 62.202.7.117
