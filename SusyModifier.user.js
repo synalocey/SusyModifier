@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.11.02
+// @version       3.11.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1139,6 +1139,12 @@ function onInit() {
 
     //Hidden_Func: PSAN Redirect
     if(window.location.href=='https://admin.mdpi.com/' && GM_config.get('Hidden_Func')) {try{window.location.href='https://admin.mdpi.com/tools/email-purger/email-list'} catch (error){ }}
+
+    //PSAN Journal
+    if(window.location.href.indexOf("admin.mdpi.com/tools/email-purger/") > -1){try{
+        $("div[id^='ExcelMailPurger'].chzn-container").remove();
+        unsafeWindow.$("select[id^='ExcelMailPurger'].chosen.chzn-done").val(S_J).removeClass('chzn-done').chosen({allow_single_deselect: true});
+    } catch (error){ }}
 
     //Hidden_Func: TAP - Assign to another Editor
     if (window.location.href.indexOf("tap/list/") > -1 && window.location.href.indexOf("/my_journals") > -1 && GM_config.get('Hidden_Func')){try{
