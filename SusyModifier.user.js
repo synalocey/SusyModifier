@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.11.20
+// @version       3.11.29
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -782,7 +782,25 @@ function onInit() {
 
         // 按钮Contact All Guest Editors
         let button = $('input.submit[value="Contact All Guest Editors (Special Issue Management)"]');
-        button.replaceWith(`<a href="${button.attr('onclick').match(/'([^']+)'/)[1]}" class="submit">${button.val()}</a>`);
+        if (button.length > 0) { button.replaceWith(`<a href="${button.attr('onclick').match(/'([^']+)'/)[1]}" class="submit">${button.val()}</a>`);}
+
+        if (GM_config.get('Hidden_Func')){
+            $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `)
+            $("#sk_list").click(function(){
+                var emailLinks = [];
+                $("[data-user-info-emails]").each(function() {
+                    let email = $(this).attr('data-user-info-emails');
+                    let quickLink = $(this).parent().parent().next().next().find('a:contains("Quick")').attr('href');
+                    emailLinks.push(email + "\thttps://susy.mdpi.com" + quickLink);
+                })
+                $("body").append(`<div class="blockUI blockOverlay"id=links-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
+                                <div class="blockUI blockMsg blockPage" id=links-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:5%;height:90%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
+                                <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><textarea id=links_prompt rows=30>`+emailLinks.join('\n')+`</textarea>
+                                <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
+                console.log(emailLinks.join('\n'));
+            })
+        }
+
     } catch (error){ }}
 
     //SI可行性报告
@@ -1142,6 +1160,7 @@ function onInit() {
 
     //PSAN Journal
     if(window.location.href.indexOf("admin.mdpi.com/tools/email-purger/") > -1){try{
+        $('#ExcelMailPurgerEmailList_full_name,#ExcelMailPurgerEmailList_exclude_cfr').prop('checked', false);
         $("div[id^='ExcelMailPurger'].chzn-container").remove();
         unsafeWindow.$("select[id^='ExcelMailPurger'].chosen.chzn-done").val(S_J).removeClass('chzn-done').chosen({allow_single_deselect: true});
     } catch (error){ }}
