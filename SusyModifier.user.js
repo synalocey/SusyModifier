@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.11.29
+// @version       3.12.12
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -10,7 +10,7 @@
 // @match         *://*.mdpi.com/*
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
-// @match         *://admin.scilit.net/articles/search*
+// @match         *://www.scilit.net/publications*
 // @match         *://*.mdpi.com/*
 // @match         *://*.google.com/*
 // @match         *://*.google.com.hk/*
@@ -791,13 +791,13 @@ function onInit() {
                 $("[data-user-info-emails]").each(function() {
                     let email = $(this).attr('data-user-info-emails');
                     let quickLink = $(this).parent().parent().next().next().find('a:contains("Quick")').attr('href');
-                    emailLinks.push(email + "\thttps://susy.mdpi.com" + quickLink);
+                    if(quickLink) {emailLinks.push(email + "\thttps://susy.mdpi.com" + quickLink)};
                 })
                 $("body").append(`<div class="blockUI blockOverlay"id=links-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
-                                <div class="blockUI blockMsg blockPage" id=links-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:5%;height:90%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
+                                <div class="blockUI blockMsg blockPage" id=links-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:50%;top:5%;height:90%;left:25%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
                                 <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><textarea id=links_prompt rows=30>`+emailLinks.join('\n')+`</textarea>
                                 <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
-                console.log(emailLinks.join('\n'));
+                $("#links_prompt").select(); document.execCommand('copy');
             })
         }
 
@@ -1243,7 +1243,7 @@ function onInit() {
                 unsafeWindow.$(document.getElementById('statisticSelecter')).chosen("destroy"); $("#statistic").css('overflow','auto');
             } else {
                 let xhr = new XMLHttpRequest;
-                xhr.open('get','https://harvesthq.github.io/chosen/chosen.jquery.js',true);
+                xhr.open('get','https://raw.githubusercontent.com/synalocey/SusyModifier/master/chosen.jquery.js',true);
                 xhr.onreadystatechange = function(){
                     if(xhr.readyState == 4){
                         if(xhr.status >=200 && xhr.status < 300 || xhr.status == 304 ){
@@ -1412,7 +1412,8 @@ function onInit() {
     } catch (error){ }}
 
     //Black Technology Reviewers
-    if (window.location.href.indexOf("/user/assigned/process_form/") > -1 && userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com")) && GM_config.get('Hidden_Func')){try{
+    if (window.location.href.indexOf("/user/assigned/process_form/") + window.location.href.indexOf("/user/managing/process_form/") > -2 && userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))
+        && GM_config.get('Hidden_Func')){try{
         waitForKeyElements("#specialBackBtn",ForceAddR);
         function ForceAddR(){
             $("#specialBackBtn").after(' <a type="button" id="ForceAddR" value="[ForceAddR]" class="submit">　　　</a>')
@@ -1452,7 +1453,75 @@ function onInit() {
         waitForKeyElements("#intercom-frame",function(){$('.intercom-lightweight-app,#intercom-frame').remove();},true);
     } catch (error){ }}
 
-    if (window.location.href.indexOf("admin.scilit.net/articles/search") > -1 && userNames.some(userName => $("a.dropdown-toggle:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {try{
+    // Scilit Batch Download
+    if (window.location.href.indexOf("www.scilit.net/publications") > -1 && GM_config.get('Hidden_Func')) {try{
+        if (window.location.href.indexOf("#SBD=") > -1){
+            let sbdMatch = parseInt(window.location.href.match(/SBD=(\d+)/)[1]);
+            let sbdeMatch = parseInt(window.location.href.match(/SBDE=(\d+)/)[1]);
+            waitForKeyElements('main:contains("found")',function(){
+                $('button.m-button--secondary:contains("Export"):first').click();
+                waitForKeyElements('button:contains("Authors"):first', function(){
+                    $('button:contains("Authors")').click();
+                    var clicked1 = 0;
+                    $('label:contains("Export records:")').click(function(){
+                        $('div.m-input--filled:contains("From") input').val(sbdMatch)
+                        $('div.m-input--filled:contains("To") input').val(sbdeMatch)
+                    });
+                    setTimeout(function() {
+ //                       $('label:contains("Authors Having Email")').click();
+                    }, 300);
+//                    setTimeout(function() {
+//                        $('div.m-input--filled:contains("From") input').val(sbdMatch)
+//                        $('div.m-input--filled:contains("To") input').val(sbdeMatch)
+//                        $('button.m-button--primary:contains("Export")').click();
+//                    }, 3000);
+                }, true);
+            }, true);
+        } else { waitForKeyElements('label:contains("Authors Having Email"):first', function(){
+            $('button.m-button--secondary:contains("Cancel")').after(` <button id="SBD" class="m-button m-button--md m-button--primary rounded justify-center">批量下载</button>`);
+            $('button.m-button--secondary:contains("Cancel")').parent().after(` <hr class="text-color-border-default my-6 w-full"><div id="SBD_range" class="m-input common-field m-input--filled common-field--inline" style="display:inline"></div>`);
+            $("#SBD").click(function(){
+                let total = parseInt($("h2:contains('publications found')").text().replace(/,/g,""));
+                $("#SBD_range").html(`Batch Download From <input id="SBD_start" type="number" value="1" min=1 autocomplete="off" style="width:6ch; text-align:center;">
+                To <input id="SBD_end" type="number" value="${total}" min=1 autocomplete="off" style="width:8ch; text-align:center;"> <button id="SBD_OK" class="m-button m-button--md m-button--primary rounded justify-center">Start</button>
+                <p class="text-color-subtlest text-sm mt-2">*Caution: It will open many new tabs during downloading. Please ensure your PC has enough memory.</p>`);
+                $("#SBD_OK").click(function(){
+                    var start = parseInt($("#SBD_start").val());
+                    var end = parseInt($("#SBD_end").val());
+                    var maxLimit = Math.min(total, 100000);
+                    if(start < 1 || end < 1 || start > maxLimit || end > maxLimit || start >= end){
+                        alert("Error: Please ensure that both FROM and TO are correct, and are less than 100,000.");
+                    } else {
+                        var urls = [];
+                        for(var i = start; i <= end; i += 1000){
+                            var sbde = Math.min(i + 999, end);
+                            var url = window.location.href + "#SBD=" + i + "&SBDE=" + sbde;
+                            GM_openInTab(url, {active: false});
+                            if(sbde == end){
+                                break;
+                            }
+                        }
+                    }
+                });
+            })
+        });}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         let urlObj = new URL($("span.nextPage").first().parent().attr("href"), window.location.origin);
         let params = new URLSearchParams(urlObj.search);
         let page = $('input[name="page"]').last().attr("value");
