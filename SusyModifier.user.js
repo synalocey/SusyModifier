@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.12.12
+// @version       3.12.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -198,7 +198,16 @@
 function onInit() {
     const date_v = new Date('202'+GM_info.script.version);
     if ((Date.now() - date_v)/86400000 > 90) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
-    else {$("#topmenu > ul").append("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});}
+    else {
+        $("#topmenu > ul").append("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
+
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'q') {
+                e.preventDefault();
+                sf();
+            }
+        })
+    }
 
     var S_J, S_S;
     switch (GM_config.get('Journal')) {
@@ -275,38 +284,7 @@ function onInit() {
         $(".menu [href='/planned_paper/my/list']").after(" <a href='/planned_paper/my/list?form[submission_topic_id]=-1&form[special_issue_id]=-1'>[R]</a>");
         $(".menu [href='/user/ebm-new/management']").after("<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='/bundles/mdpisusy/img/icon/magnifier.png'></a> </div> ");
 
-        if (GM_config.get('Assign_Assistant')) {
-            $("body").append( `<div id='add_r' role='dialog' style='display: none; position: absolute; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
-        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Open Batch Urls, IDs & Emails</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
-        onclick='document.getElementById("add_r").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_r_t" class="manuscript-add-note-form"
-        placeholder="Example:\nmathematics-11111111\nmathematics-2222222\n\nhttps://www.scopus.com/detail.uri?authorId=333\nhttps://scholar.google.com/citations?user=444\n\naaa@aaa.edu\nbbb@bbb.edu"
-        minlength="1" rows="10" spellcheck="false"></textarea><button id="add_r_b" class="submit">Submit</button></div></div>`);
-            $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a onclick='$("#add_r").show(); $("#add_r").draggable({handle: "#mover"});'><img src='/bundles/mdpisusy/img/icon/users.png'></a></div>`);
-            $("#add_r_b").click(function (){
-                var textContent = $("#add_r_t").val();
-                var urlRegex = /(https?:\/\/[^\s]+)/g;
-                var emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
-                var digitRegex = /(?<!\d)(\d{6,7})(?!\d)/g;
-                // 查找网址
-                var urls = textContent.match(urlRegex) || [];
-                urls.forEach(function (url) {window.open(url, '_blank')});
-                textContent = textContent.replace(urlRegex, ''); // 移除已找到的网址
-                // 查找邮箱
-                var emails = textContent.match(emailRegex) || [];
-                emails.forEach(function (email) {window.open('https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=' + email, '_blank')});
-                textContent = textContent.replace(emailRegex, '');
-                // 查找连续的6位或7位数字
-                var digits = textContent.match(digitRegex) || [];
-                digits.forEach(function (digit) {window.open('https://susy.mdpi.com/ajax/submission_get_manuscripts?term=' + digit, '_blank')});
-
-                // let myArray, add_id, rdline = $("#add_r_t").val().split("\n");
-                // for (var i=0; i < rdline.length; i++){
-                //     if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
-                //     if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/ajax/submission_get_manuscripts?term="+add_id+"&r="+myArray[0], false)}
-                // }
-            })
-        }
-
+        $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='/bundles/mdpisusy/img/icon/users.png'></a></div>`); $("#sf_b").click(sf)
         $(".menu [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=" + S_J);
         $(".menu [href='/manuscript/quality/check/list']").attr("href",'/manuscript/quality/check/list?form[journal_id]=' + S_J);
         $("#owner").click(function(){ $.getJSON("/user/ajax/search_manuscript_owner?term="+$("#topmenu span:contains('@mdpi.com')").text(), function(data){window.location.href ='/user/managing/status/submitted?form[owner_id]=' + data[0].value}); });
@@ -1689,6 +1667,42 @@ function get_univ(aff) {
         if (aff.indexOf(u_A[i]) > -1 && (u_A[i].indexOf("of") > -1 || (u_A[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){results += "<br><span style='background-color:lightblue;font-weight:bold'>Zone A: "+u_Ar[i]+"</span>"; color="lightblue";break;} }
     for (i = 0, len = u_QP.length; i < len ; i++){ if (aff.indexOf(u_QP[i]) > -1){results += "<br><span style='background-color:cyan;font-weight:bold'>Zone QP: "+u_QPr[i]+"</span>"; color="cyan";}}
     return {detail: results, color: color};
+}
+
+function sf(){
+    if($("#add_r").length){
+        if ($("#add_r").css("display")=="none") {$("#add_r").css("display","block")} else {$("#add_r").css("display","none")}
+    } else {
+        $("body").append( `<div id='add_r' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); border-radius: 5px;
+        overflow: hidden;'> <div style='background-color: #4CAF50; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'> <span>Open Urls, IDs & Emails [Ctrl+Q]</span>
+        <button type='button' onclick='document.getElementById("add_r").style.display="none"' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button> </div> <div style='padding: 20px;'>
+        <textarea id="add_r_t" class="manuscript-add-note-form" placeholder="Example:\nmathematics-11111111\nmathematics-2222222\n\nhttps://www.scopus.com/detail.uri?authorId=333\nhttps://scholar.google.com/citations?user=444\n\naaa@aaa.edu\nbbb@bbb.edu" minlength="1"
+        rows="10" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 4px;'></textarea>
+        <button id="add_r_b" class="submit" style='background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Submit</button></div></div>`);
+        $("#add_r_b").click(function (){
+            var textContent = $("#add_r_t").val();
+            var urlRegex = /(https?:\/\/[^\s]+)/g;
+            var emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
+            var digitRegex = /(?<!\d)(\d{6,7})(?!\d)/g;
+            // 查找网址
+            var urls = textContent.match(urlRegex) || [];
+            urls.forEach(function (url) {window.open(url, '_blank')});
+            textContent = textContent.replace(urlRegex, ''); // 移除已找到的网址
+            // 查找邮箱
+            var emails = textContent.match(emailRegex) || [];
+            emails.forEach(function (email) {window.open('https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=' + email, '_blank')});
+            textContent = textContent.replace(emailRegex, '');
+            // 查找连续的6位或7位数字
+            var digits = textContent.match(digitRegex) || [];
+            digits.forEach(function (digit) {window.open('https://susy.mdpi.com/ajax/submission_get_manuscripts?term=' + digit, '_blank')});
+
+            // let myArray, add_id, rdline = $("#add_r_t").val().split("\n");
+            // for (var i=0; i < rdline.length; i++){
+            //     if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
+            //     if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/ajax/submission_get_manuscripts?term="+add_id+"&r="+myArray[0], false)}
+            // }
+        })
+    }
 }
 
 //[Regex][\S\s]*
