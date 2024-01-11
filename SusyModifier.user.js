@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.12.20
+// @version       4.1.9
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
-// @icon          https://susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-196x196.png
+// @icon          https://susy.mdpi.com/build/img/icon_old/favicon-32x32.ca4c8124.png
 // @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
 // @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
 // @match         *://*.mdpi.com/*
@@ -357,7 +357,10 @@ function onInit() {
                         }
         waitForText(document.querySelector('#mailSubject'), ' ', init);
 
-        $('#mailSubject').parent().after('<a id="Awaiting"><img src="/bundles/mdpisusy/img/icon/pencil.png"></a>');
+        $('#mailSubject').parent().after(`<a id="Awaiting"><img src=data:image/png;base64,
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAZlJREFUeNpiZCAAdNQYGSJ8GBjO3g8A86ds2ACixN4wMLx69P8/AwshjTpqEP7Z+3Apmz8MDEX/GBhuAtmVLIQ0IoP///+rxTg4GO81MQlkvHT`
+            + `p1f2dO/eyEKMRpvnjx4+ee/bsmbBu/fpr/7q73/9mYNjDqCXPwBBkx8BgYs2IMxyAXnX4+ZOhQt8swP35s0cfvGOvzSz+8aNCBSjBVB3LwKApz0BQc0B4ufu/v/9fXThz9qKcxO+Ka4wQC5nwxQCy5rt3brzauXXD9b9/GRwUpP/B1TCRqhkojgKYKNF8A4hZyNEMjBGG9UD+f3QDCGm+95iBYfcxBoa7jxGmsRCjGaER07ss338CCWYGuXePeWwDky`
+            + `Pd9+3e8/LGtTM3QJrvPsKtEW7At58MjH//MaYUNO2vLc4wXfj9F8Ot7/8Z2w6f+49XIxy0pTL2PLu67H9OEONyRyNGYLJiEAdiUSAWBmJBIOYHYl4g5gJiDiBmg3qdGYjByel/hj/j6k1HGZY/e/MflOf+QjEw0zH8htLI7N9Iav4CBBgAZrcHTnowXc4AAAAASUVORK5CYII=></a>`);
         $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
         $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
     } catch (error){ }}
@@ -1154,7 +1157,10 @@ function onInit() {
             $("tr td.user_box_item:nth-child(" + editorColumnIndex + ")").each(function() {
                 if($(this).html().indexOf("Assign to another Editor") == -1) {
                     let tap_id = $(this).parent().find("[title='TAPM Feed']").attr("data-url").split("_id=").pop();
-                    $(this).append(`<a href="/tap/change_user/${tap_id}" data-url="/tap/change_user/${tap_id}" class="ajax-form-submit-btn"><img src="/bundles/mdpisusy/img/icon/pencil.png" title="Assign to another Editor"></a>`);
+                    $(this).append(`<a href="/tap/change_user/${tap_id}" data-url="/tap/change_user/${tap_id}" class="ajax-form-submit-btn"><img src=data:image/png;base64,
+                    iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAZlJREFUeNpiZCAAdNQYGSJ8GBjO3g8A86ds2ACixN4wMLx69P8/AwshjTpqEP7Z+3Apmz8MDEX/GBhuAtmVLIQ0IoP///+rxTg4GO81MQlkvHT`
+            + `p1f2dO/eyEKMRpvnjx4+ee/bsmbBu/fpr/7q73/9mYNjDqCXPwBBkx8BgYs2IMxyAXnX4+ZOhQt8swP35s0cfvGOvzSz+8aNCBSjBVB3LwKApz0BQc0B4ufu/v/9fXThz9qKcxO+Ka4wQC5nwxQCy5rt3brzauXXD9b9/GRwUpP/B1TCRqhkojgKYKNF8A4hZyNEMjBGG9UD+f3QDCGm+95iBYfcxBoa7jxGmsRCjGaER07ss338CCWYGuXePeWwDky`
+            + `Pd9+3e8/LGtTM3QJrvPsKtEW7At58MjH//MaYUNO2vLc4wXfj9F8Ot7/8Z2w6f+49XIxy0pTL2PLu67H9OEONyRyNGYLJiEAdiUSAWBmJBIOYHYl4g5gJiDiBmg3qdGYjByel/hj/j6k1HGZY/e/MflOf+QjEw0zH8htLI7N9Iav4CBBgAZrcHTnowXc4AAAAASUVORK5CYII= title="Assign to another Editor"></a>`);
                 }
             });
         }
