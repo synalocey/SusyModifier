@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.1.9
+// @version       4.1.10
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -406,6 +406,7 @@ function onInit() {
                             case 2021: discountRatio = discount / 1600; break;
                             case 2022: discountRatio = discount / 1800; break;
                             case 2023: if(agreedDate.getMonth() < 6) {discountRatio = discount / 2100} else {discountRatio = discount / 2600}; break;
+                            case 2024: discountRatio = discount / 2600; break;
                             default: discountRatio = 8;
                         }
                         result += `(${counter}) ${email} (${(discountRatio * 100).toFixed(0)}% discount)\n`;
