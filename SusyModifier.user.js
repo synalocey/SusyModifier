@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.1.10
+// @version       4.1.11
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -765,6 +765,34 @@ function onInit() {
         // 按钮Contact All Guest Editors
         let button = $('input.submit[value="Contact All Guest Editors (Special Issue Management)"]');
         if (button.length > 0) { button.replaceWith(`<a href="${button.attr('onclick').match(/'([^']+)'/)[1]}" class="submit">${button.val()}</a>`);}
+
+        // 按钮PP MailMerge
+        var PPMM = $('<input type="button" id=PPMM class="submit" value="PPMailMerge" style="float:right;margin:0"> ').click(function(){
+            var selectedEmailLinks = [];
+            $('table tr').each(function() {
+                var checkbox = $(this).find('input[type="checkbox"]');
+                if (checkbox.is(':checked')) {
+                    var emailLink = $(this).find('a[title="Send Planned Paper Email"]').attr('href');
+                    if (emailLink) {
+                        selectedEmailLinks.push(emailLink);
+                    }
+                }
+            });
+            if (!selectedEmailLinks.length) return null;
+            var baseLink = selectedEmailLinks[0];
+            var ids = selectedEmailLinks.map(link => link.split('/').pop()).join(',');
+            GM_openInTab("https://susy.mdpi.com" + baseLink + "/management?multiIds=" + ids, false);
+        });
+        var SelectALL = $('<input type="button" id=SelectALL class="button hollow" value="Select PP" style="float:right;float:right;font-size:small;margin:0;"> ').click(function() {
+            $('table tr').each(function() {
+                var status = $(this).find('td:nth-child(2)').text().trim();
+                if (status === 'Title Provided' || status === 'Agreed') {
+                    $(this).find('input[type="checkbox"]').prop('checked', true);
+                }
+            });
+        });
+        $('#single-planned-paper-form > fieldset > div > div').last().append(SelectALL, "<span style=float:right>&nbsp;</span>",PPMM);
+
 
         if (GM_config.get('Hidden_Func')){
             $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `)
