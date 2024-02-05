@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.1.22
+// @version       4.2.4
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -197,7 +197,7 @@
 
 function onInit() {
     const date_v = new Date('202'+GM_info.script.version);
-    if ((Date.now() - date_v)/86400000 > 90) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
+    if ((Date.now() - date_v)/86400000 > 75) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
     else {
         $("#topmenu > ul").append("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
 
@@ -806,8 +806,14 @@ function onInit() {
                                 <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
                 $("#links_prompt").select(); document.execCommand('copy');
             })
-        }
 
+            // Send to Website Editor Button
+            $('input.submit.disabled[type="submit"][value="Send to Website Editor"]').each(function() {
+                $(this).after('<a id="enableSubmit"> [Force Submit]</a>').next('#enableSubmit').on('click', function() {
+                    $(this).prev('input.submit.disabled').removeClass('disabled');
+                });
+            });
+        }
     } catch (error){ }}
 
     //SI可行性报告
