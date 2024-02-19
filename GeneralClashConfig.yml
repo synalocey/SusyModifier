@@ -62,6 +62,7 @@ hosts:
     'merrin5.mdpi.lab': 210.51.191.7
     '*.mdpi.lab': 210.51.191.4
     '*.*.mdpi.lab': 210.51.191.4
+    'feedback.mdpi.cn': 210.51.191.4
     'mail.mdpi.com': 212.243.204.123
     '*.mdpi.test': 195.65.177.76
     '*.*.mdpi.test': 195.65.177.76
