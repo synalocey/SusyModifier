@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.2.4
+// @version       4.2.19
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -285,9 +285,25 @@ function onInit() {
         $(".menu [href='/user/ebm-new/management']").after(`<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='${icon_magnifier}'></a> </div> `);
 
         $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_users}'></a></div>`); $("#sf_b").click(sf)
+
         $(".menu [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=" + S_J);
         $(".menu [href='/manuscript/quality/check/list']").attr("href",'/manuscript/quality/check/list?form[journal_id]=' + S_J);
         $("#owner").click(function(){ $.getJSON("/user/ajax/search_manuscript_owner?term="+$("#topmenu span:contains('@mdpi.com')").text(), function(data){window.location.href ='/user/managing/status/submitted?form[owner_id]=' + data[0].value}); });
+
+        if (GM_config.get('Assign_Assistant')) { //派稿助手
+            $("body").append( `<div id='add_r' role='dialog' style='display: none; position: absolute; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
+        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [for GL]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
+        onclick='document.getElementById("add_r").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_r_t" class="manuscript-add-note-form"
+        placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu\nmathematics-yyyyyy\nccc@ccc.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_r_b2" class="submit">Submit</button></div></div>`);
+            $(".menu [href='/user/manage/crosscheck']").after(`<div style='float:right;'><a onclick='$("#add_r").show(); $("#add_r").draggable({handle: "#mover"});'><img src='${icon_users}'></a></div>`);
+            $("#add_r_b2").click(function (){
+                let myArray, add_id, rdline = $("#add_r_t").val().split("\n");
+                for (var i=0; i < rdline.length; i++){
+                    if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
+                    if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/ajax/submission_get_manuscripts?term="+add_id+"&r="+myArray[0], false)}
+                }
+            })
+        }
     } catch (error){ }}
 
     //SI和Topic Manuscripts整合
@@ -657,7 +673,7 @@ function onInit() {
                     method: "GET",
                     url: atob("aHR0cHM6Ly9za2RheS5jb20vdGFzay93b3N2ZXJpZnkucGhwP3Y9") + $("#topmenu span:contains('@mdpi.com')").text() +"&version=susy" + GM_info.script.version,
                     onload: function(responseDetails) {
-                        let response = responseDetails.responseText ?? "";
+                        let response = responseDetails.responseText || "";
                         if(response.indexOf("OK ") > -1) {sk_eltry_action(response.split("OK ").pop());} else {$("#ith-shade1").remove(); alert("Not developed yet...");}
                     }
                 });
@@ -1155,7 +1171,7 @@ function onInit() {
     if(window.location.href.indexOf(".mdpi.com/ajax/submission_get_manuscripts") > -1){try{
         let jsonObject = JSON.parse( $("body").text().replace(/\\/g, '') );
         document.body.innerHTML = '<p>' + jsonObject[0].label + '</p><p>&nbsp;</p><p>https://susy.mdpi.com' + jsonObject[0].url + '</p><p>&nbsp;</p><p>Redirecting...</p>';
-        window.location.href = jsonObject[0].url;
+        window.location.href = jsonObject[0].url + window.location.search;
     } catch (error){ }}
 
     //Always: Unsubscribe link to page
@@ -1509,22 +1525,6 @@ function onInit() {
             })
         });}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         let urlObj = new URL($("span.nextPage").first().parent().attr("href"), window.location.origin);
         let params = new URLSearchParams(urlObj.search);
         let page = $('input[name="page"]').last().attr("value");
@@ -1733,7 +1733,6 @@ function sf(){
 }
 
 //---------------------------------------------------------------------------------------------------------------------------ICON-------------------------------------------------------------------------------------------------------------------------
-
 var icon_magnifier="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNqMk01oE1EQx99+mmSTbLayWqtN+hWxIW21VeOhpDEVBIupFBQRAgUL6rWth57tVSgIvWnBiyj1EBDpQdCDH4RCIVAbTSm9pBGDJqkxyW42u+u8kGKzbsGBH++D"
 + "/8ybmfceEYlEkJlRFIURCIIYgGUbwAElIKPrekJV1TyAaHSwddrs/MXzo5HeM4PnetpEZ2tVlnPxePzrm1cvu4q7ubeg2aa8Xi+CiE2ACZzTNTZxezbYffKU333EKdIkQbMM4/B0dHhau/ocycQqKUvlbRKnYaRWqw0GwhGfQzjsETiWJQlE7KWF5+4Tx3qGL1/rwzq6Wq2apd/u9Q+58SSTr0gYo8A3cLZzeelRO60oilkA3mK1tqhavRzUe9zpNArSuQoDvvx"
 + "BGZQ1RSoi6hBv5lwvRa0WwbdMyrKMTEgn1z5laIqklJquGp1xYutrH3ewjhQEAfE8jxwOB7Lb7YjjOMSy7Gbs+VKaqf1WqqrWfDJJULs/v2cfLy4kS6XSKmmMDtfoYRhm/N6du/NTN6/GV2IvUroila0sZSFUubISW/5yffzKh43P668lSfpBhMNhpGnaHj6bjZuYnr7/IBq9NZ/P555BTD/QDeBe/AK2gHc2my3rcrn+vkQ4+YIoHo3MzMzNRaM3HoLzU9jeBD"
@@ -1767,8 +1766,3 @@ var icon_users="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/
 + "pS8PK7MQEaHNyQNTsVs2nCJ82E5zUbcc3jTiVuUUmLUTCYRC1PEGZbNAEVgee9FjL6upKRvv7rfu2RnWG0LWZIBrbTkA1FfKT4bW16mgkAgKhoTgybktPcbOLy+ocnR4+9Pbgry35P+O94b6VdCU40uJBggouA0YUJAorYwpp1JCeayolA6V9HtfGkG9mjrnZoZPnl+s3eCM4awypySdqk97FuUK+BFoLMTwt+VX6AEbk9dCnvAoCRi7qx+PKYASlfh4etONz5p"
 + "ykQ9kqRygE7fXX4KnDAhkH05RGVVYBi2WH51xL0l17gMsGlC1n3ZwHlZSVgz8QlL6arPg+b2OWwuSfcBwHohZF2IgyBlWmCQf4GiQx9+4HStrMMnT+9QbThQP+sTQtw8E8rwZ3Yq63+82AJUzZguUT1sGRKvtpHBHkwAssjsTiYCbwFkkuPb/dUJllLtVr8tSJCYzN5oSu8xlw94UNMjM1wHkDG6PjCzO9A8Mvhdetj/YsHkcBHygr0KqKYtHY5oD2losFkBVma"
 + "/KBUWZJjndMihdqF24kKbpyDzTFtVjChDAtDwItX69xdn8ZSrlxFEXDLIqGFEjg5bBs/Yg9M/exfwmwf3G7BPRnr9Xwf+HEL+59+FuAAQBh80P/MCkZDgAAAABJRU5ErkJggg=="
-
-
-
-
-
