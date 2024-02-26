@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.2.19
+// @version       4.2.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -284,25 +284,14 @@ function onInit() {
         $(".menu [href='/planned_paper/my/list']").after(" <a href='/planned_paper/my/list?form[submission_topic_id]=-1&form[special_issue_id]=-1'>[R]</a>");
         $(".menu [href='/user/ebm-new/management']").after(`<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='${icon_magnifier}'></a> </div> `);
 
-        $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_users}'></a></div>`); $("#sf_b").click(sf)
+        $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_webs}'></a></div>`); $("#sf_b").click(sf)
 
         $(".menu [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=" + S_J);
         $(".menu [href='/manuscript/quality/check/list']").attr("href",'/manuscript/quality/check/list?form[journal_id]=' + S_J);
         $("#owner").click(function(){ $.getJSON("/user/ajax/search_manuscript_owner?term="+$("#topmenu span:contains('@mdpi.com')").text(), function(data){window.location.href ='/user/managing/status/submitted?form[owner_id]=' + data[0].value}); });
 
         if (GM_config.get('Assign_Assistant')) { //派稿助手
-            $("body").append( `<div id='add_r' role='dialog' style='display: none; position: absolute; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
-        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [for GL]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
-        onclick='document.getElementById("add_r").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_r_t" class="manuscript-add-note-form"
-        placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu\nmathematics-yyyyyy\nccc@ccc.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_r_b2" class="submit">Submit</button></div></div>`);
-            $(".menu [href='/user/manage/crosscheck']").after(`<div style='float:right;'><a onclick='$("#add_r").show(); $("#add_r").draggable({handle: "#mover"});'><img src='${icon_users}'></a></div>`);
-            $("#add_r_b2").click(function (){
-                let myArray, add_id, rdline = $("#add_r_t").val().split("\n");
-                for (var i=0; i < rdline.length; i++){
-                    if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
-                    if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/ajax/submission_get_manuscripts?term="+add_id+"&r="+myArray[0], false)}
-                }
-            })
+            $(".menu [href='/user/manage/crosscheck']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").click(sk_susie);
         }
     } catch (error){ }}
 
@@ -1048,7 +1037,7 @@ function onInit() {
         if(window.location.href.indexOf("/projects/si-planning/issues?utf8=")>-1){$('[href="/users/64"]').css("background-color","yellow"); $('h2:contains("Issues")').append(" <span style=background-color:#ff0>("+$('[href="/users/64"]').length+" pending CfP Team)</span>");}
         //CfP filter链接
         $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=` + GM_config.get('Journal')
-                                 + `&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[` + `CfP]</a>`) // + GM_config.get('Journal')
+                                 + `&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[CfP]</a>`) // + GM_config.get('Journal')
         $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-committee/issues?c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&f[]=status_id&utf8=%E2%9C%93&v[subject][]=[` + GM_config.get('Journal')
                                  + `&f[]=subject&f[]=&group_by=&op[status_id]=o&op[subject]=%7E&per_page=100&set_filter=1'>[SCfP]</a>`)
         $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/special-issue-prints/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]=o&f[]=cf_10&op[cf_10]=%3D&v[cf_10][]=` + GM_config.get('Journal')
@@ -1732,6 +1721,24 @@ function sf(){
     }
 }
 
+function sk_susie(){
+    if($("#add_susie").length){
+        if ($("#add_susie").css("display")=="none") {$("#add_susie").css("display","block")} else {$("#add_susie").css("display","none")}
+    } else {
+        $("body").append( `<div id='add_susie' role='dialog' style='position: absolute; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
+        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [for GL]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
+        onclick='document.getElementById("add_susie").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_susie_t" class="manuscript-add-note-form"
+        placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu\nmathematics-yyyyyy\nccc@ccc.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_susie_b" class="submit">Submit</button></div></div>`);
+        $("#add_susie_b").click(function (){
+            let myArray, add_id, rdline = $("#add_susie_t").val().split("\n");
+            for (var i=0; i < rdline.length; i++){
+                if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
+                if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/ajax/submission_get_manuscripts?term="+add_id+"&r="+myArray[0], false)}
+            }
+        })
+    }
+}
+
 //---------------------------------------------------------------------------------------------------------------------------ICON-------------------------------------------------------------------------------------------------------------------------
 var icon_magnifier="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNqMk01oE1EQx99+mmSTbLayWqtN+hWxIW21VeOhpDEVBIupFBQRAgUL6rWth57tVSgIvWnBiyj1EBDpQdCDH4RCIVAbTSm9pBGDJqkxyW42u+u8kGKzbsGBH++D"
 + "/8ybmfceEYlEkJlRFIURCIIYgGUbwAElIKPrekJV1TyAaHSwddrs/MXzo5HeM4PnetpEZ2tVlnPxePzrm1cvu4q7ubeg2aa8Xi+CiE2ACZzTNTZxezbYffKU333EKdIkQbMM4/B0dHhau/ocycQqKUvlbRKnYaRWqw0GwhGfQzjsETiWJQlE7KWF5+4Tx3qGL1/rwzq6Wq2apd/u9Q+58SSTr0gYo8A3cLZzeelRO60oilkA3mK1tqhavRzUe9zpNArSuQoDvvx"
@@ -1766,3 +1773,8 @@ var icon_users="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/
 + "pS8PK7MQEaHNyQNTsVs2nCJ82E5zUbcc3jTiVuUUmLUTCYRC1PEGZbNAEVgee9FjL6upKRvv7rfu2RnWG0LWZIBrbTkA1FfKT4bW16mgkAgKhoTgybktPcbOLy+ocnR4+9Pbgry35P+O94b6VdCU40uJBggouA0YUJAorYwpp1JCeayolA6V9HtfGkG9mjrnZoZPnl+s3eCM4awypySdqk97FuUK+BFoLMTwt+VX6AEbk9dCnvAoCRi7qx+PKYASlfh4etONz5p"
 + "ykQ9kqRygE7fXX4KnDAhkH05RGVVYBi2WH51xL0l17gMsGlC1n3ZwHlZSVgz8QlL6arPg+b2OWwuSfcBwHohZF2IgyBlWmCQf4GiQx9+4HStrMMnT+9QbThQP+sTQtw8E8rwZ3Yq63+82AJUzZguUT1sGRKvtpHBHkwAssjsTiYCbwFkkuPb/dUJllLtVr8tSJCYzN5oSu8xlw94UNMjM1wHkDG6PjCzO9A8Mvhdetj/YsHkcBHygr0KqKYtHY5oD2losFkBVma"
 + "/KBUWZJjndMihdqF24kKbpyDzTFtVjChDAtDwItX69xdn8ZSrlxFEXDLIqGFEjg5bBs/Yg9M/exfwmwf3G7BPRnr9Xwf+HEL+59+FuAAQBh80P/MCkZDgAAAABJRU5ErkJggg=="
+var icon_webs="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAydJREFUOMttU39MzGEYfw3DMLMZfxlTMTFjmT+s/Fi3lBKZy5HSUZ2Ou67rrvped9+774+7636jkkI3Jm04QoqprCYz8zvmH/+Iya9R2BLx8"
++ "X6PtWre7dn7fp/3eT7P87zfz4fYbDYy0qxWK3GIAjnsdZFKv5t4yx3D/rGxko1KFAWeuB12UsyYZmapDqxW7M2Pzy/QR4k89Tvt4ZixQMPJUoCuyDhnqSwtOGOF7NvMlRsQES/H9OUyzItNeZCs2J0mdcON6Yaw9KPcLhKVRhcdFb/tvfnQcShLRZxvaYehvAKNNzqQoipGUq4Rkas3iCamlHDciA6ktiniFBKx6lVdqBlqqwf+ugYEQ02Iz9TgXvdz5Doq0T84"
++ "BAsF56uO55axLGEt5r8A1QEviU1VGNN1VvCVdYiSyREINmBXkQ3LNmbAV38Rn9ub0GfMAvh9GKpx4HZnx8ESsyU8CrHzHIlct/k+6Oq6/wTswVrpGK680+wBPvWgb28ivt+7haE3PfhSJQB+BucuN21Vq9WEFOgNUxbKtr1z156GLEuDVJURzqOnkK4uRSbrAwKlGOi8hpHrh6hBd6i+8YCFjqDR6ScvSdz+NnT9JtK1ZcguFnC2uQ0FnA87y9yAW4/Bx3dHAfz"
++ "0MXjWUNeiFZyE/gGBLFq/pUu6uP2gG+ZATTjozqOnyGD9wLMufNJux6+v/WH/QFcrBkXt76arV1X71PsJORLwkAR5Vo5MWQidGMD8tWlgvNXYlGfEgnVbUXO5FbgURL9WDngNGMhYg95i5Ueb20tMZjMhPMcRgefGTY2OfVh/pRVa3g/fiTM4R3mQtKcQL16+hnAyhIF3vag5fAQ3XFzwe9oKNGqU+gK7iwxzn7JwdnSCvNtaEUQKre45Vg8NfQdH9Ukk5hQhOZ"
++ "9BTIoix8gJ5Em+vO1DdsJPs42bMExliY0MYxofu3mHZV5c6ouJi+Mwa1USpi1b3xeTrLigUObF+FxOQpOIwLKTAmUlEdJ5lJikcTxUEyxlms5QMnd/oSGyhDFNc9KHdtICYQ1Qs9BEE8cTTiLS/+Qs7S6qSkk8/6j+XylL9gf37xpjQOT4TAAAAABJRU5ErkJggg=="
