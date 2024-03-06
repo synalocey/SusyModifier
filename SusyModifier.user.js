@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.2.20
+// @version       4.3.4
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -393,13 +393,23 @@ function onInit() {
         $("#emailTemplates > option:contains('"+GM_config.get('Report_TemplateID')+"')").prop('selected', true);
         unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
 
-        let result = "";
+        let result = "", headers = {};
         if(GM_config.get('Report_TemplateB2').indexOf("%pp_list%") > -1) {
             let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id"), false); xhr.send();
             let $form = $($.parseHTML(xhr.responseText)).find('#single-planned-paper-form');
+            let emailIndex=1, statusIndex=2, sourceIndex=3, discountIndex=4, agreedDateIndex=6;
+            $form.find('thead th').each(function(index) {
+                let text = $(this).text().trim();
+                headers[text] = index;
+                let emailIndex = headers.Email !== undefined ? headers.Email : 0;
+                let statusIndex = headers.Status !== undefined ? headers.Status : 0;
+                let sourceIndex = headers.Source !== undefined ? headers.Source : 0;
+                let discountIndex = headers.Discount !== undefined ? headers.Discount : -1;
+                let agreedDateIndex = headers['Agreed Date'] !== undefined ? headers['Agreed Date'] : -1;
+            });
             $form.find('tbody tr').each(function() {
-                let $td = $(this).find('td'), email = $td.eq(0).text().trim(), status = $td.eq(1).text().trim(), invitedByGE = $td.eq(2).text().trim(),
-                    discount = parseFloat($td.eq(3).text().trim().replace(/ /g, '').replace(/CHF/g, '')), agreedDate = new Date($td.eq(5).text().trim());
+                let $td = $(this).find('td'), email = $td.eq(emailIndex).text().trim(), status = $td.eq(statusIndex).text().trim(), invitedByGE = $td.eq(sourceIndex).text().trim(),
+                    discount = parseFloat($td.eq(discountIndex).text().trim().replace(/ /g, '').replace(/CHF/g, '')), agreedDate = new Date($td.eq(agreedDateIndex).text().trim());
                 console.log(email); console.log(status); console.log(invitedByGE); console.log(discount);
                 if (status === "Title Provided" || status === "Agreed" || status === "Approved") { counter++;
                     if (invitedByGE.indexOf("by GE") > -1 && discount > 0) {
@@ -825,7 +835,8 @@ function onInit() {
     if (window.location.href.indexOf(".mdpi.com/si/evaluation_checklist_hash/") > -1){try{
         $("#sp_100").children("div").first().prepend(`<div style="padding:10px;background:lightyellow;font-size:12px;">Enter keywords separated by commas, semicolons or linebreaks:<textarea id=s_key></textarea>Operators: [Finder]
         <select id="finder_o" style="display:inline-block; width:auto"><option value="and" selected="selected">And</option><option value="or">Or</option></select> [WoS] <select id="wos_o" style="display:inline-block; width:auto"><option value="AND">And</option>
-        <option value="OR" selected="selected">Or</option></select> <button id=s_key_submit class=submit progress=zero style=margin:0>Generate Feasibility Report</button></div>`)
+        <option value="OR" selected="selected">Or</option></select> WoS[SID]: <input type="text" id="wos_sid" style="display:inline-block;width:150px;margin-right:10px;" value="` + GM_getValue("wos_sid", "") + `">
+        <button id=s_key_submit class=submit progress=zero style=margin:0>Generate Feasibility Report</button></div>`)
 
         $("#s_key").val($("#sq_101i").val().replace(" and ","\n")); $("#s_key_submit").click(fc_fill);
         function fc_fill(){
@@ -864,12 +875,15 @@ function onInit() {
                 url: 'https://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl',
                 data: '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:auth="http://auth.cxf.wokmws.thomsonreuters.com"><soapenv:Header/><soapenv:Body><auth:authenticate/></soapenv:Body></soapenv:Envelope>',
                 onload: function(responseDetails) {
-                    var SID = responseDetails.responseText.match(/<return>(.*?)<\/return>/), QID=0;
-                    if (SID == null) {
-                        alert("Something wrong with WoS. Please ensure that you can access to WoS and try again 3 minutes later.");
+                    var QID=0, SID = $("#wos_sid").val();
+                    if (!SID && responseDetails.responseText) {SID = responseDetails.responseText.match(/<return>(.*?)<\/return>/); SID=SID.pop();}
+                    else if(SID) {GM_setValue("wos_sid", SID);}
+
+                    if (!SID) {
+                        alert("Something wrong with WoS. Please ensure that you can access to WoS or SID is correct. Try again later.");
                         $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
                         return;
-                    } else {SID=SID.pop();}
+                    }
                     var ws = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
                     let param = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=("+keywords.join(' '+$("#wos_o").val()+' ')
                     + ") and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6","EARLY ACCESS.Value.6","OA.Value.6","PY.Field_D.6",
@@ -891,18 +905,23 @@ function onInit() {
                     ws.onclose = function () {
                         console.log("WSS is closed......");
                         url2="https://www.webofscience.com/wos/woscc/summary/"+QID+"/relevance/1";
-                        $("div[title='Rich Text Editor, editor2']")
-                            .html("<p>Total Results: "+n_wos+"</p><p>Topic: "+keywords.join(' '+$("#wos_o").val()+' ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: SCI-EXPANDED</p><p>Top Categories: "+WOS_Category+"</p><p>Link: "+url2+"</p>")
-                        let ws_m = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
-                        ws_m.onopen = function () { ws_m.send(JSON.stringify(param2)); }
-                        ws_m.onmessage = function (evt) {
-                            let data = evt.data;
-                            if (data.indexOf('"key":"COMPLETE"')>-1) { ws_m.close(); }
-                            if (data.indexOf('{"QueryID":')>-1) { n_wos_m=data.match(/"RecordsFound":(.*?),"/).pop(); }
-                        }
-                        ws_m.onclose = function () {
-                            $("p:contains('Total Results:')").append(" (Category related to Mathematics: "+n_wos_m+")");
-                            if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
+                        if(n_wos) {
+                            $("div[title='Rich Text Editor, editor2']")
+                                .html("<p>Total Results: "+n_wos+"</p><p>Topic: "+keywords.join(' '+$("#wos_o").val()+' ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: SCI-EXPANDED</p><p>Top Categories: "+WOS_Category+"</p><p>Link: "+url2+"</p>")
+                            let ws_m = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
+                            ws_m.onopen = function () { ws_m.send(JSON.stringify(param2)); }
+                            ws_m.onmessage = function (evt) {
+                                let data = evt.data;
+                                if (data.indexOf('"key":"COMPLETE"')>-1) { ws_m.close(); }
+                                if (data.indexOf('{"QueryID":')>-1) { n_wos_m=data.match(/"RecordsFound":(.*?),"/).pop(); }
+                            }
+                            ws_m.onclose = function () {
+                                $("p:contains('Total Results:')").append(" (Category related to Mathematics: "+n_wos_m+")");
+                                if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
+                            }
+                        } else {
+                            alert("Failed to receive valid data. Please revise SID and try again.");
+                            $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
                         }
                     };
 
