@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.3.4
+// @version       4.3.10
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -11,6 +11,7 @@
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
 // @match         *://www.scilit.net/publications*
+// @match         *://admin.scilit.net/articles*
 // @match         *://*.mdpi.com/*
 // @match         *://*.google.com/*
 // @match         *://*.google.com.hk/*
@@ -119,7 +120,7 @@
             'PP_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'PP_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'PP_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
-                              "[Regex]A few months ago[\\s\\S]*submit to the special issue (.*?)\\.[\\s\\S]*(https:\\/\\/www.mdpi.com\\/journal\\/mathematics\\/special_issues.*)[\\s\\S]*Kind regards,"},
+                              "[Regex]A few months ago[\\s\\S]*submit to the Special Issue (.*?)\\.[\\s\\S]*(https:\\/\\/www.mdpi.com\\/journal\\/mathematics\\/special_issues.*)[\\s\\S]*Kind regards,"},
             'PP_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': 'A few months ago, you expressed interest in submitting a paper to our special issue "$1". We would be grateful to have the opportunity to receive it.\n\n$2\n\n'
                               + 'Please note that you will be offered a XX% discount on the Article Processing Charge by the guest editors if your paper is accepted for publication. To take advantage of the discount, we strongly encourage you to submit your'
                               + ' manuscript by the deadline if possible.\n\nWe look forward to receiving your submission and thank you for your interest in our special issue.\n\nKind regards,'},
@@ -275,7 +276,7 @@ function onInit() {
             $(".menu [href='/user/manuscript/list/owner']").attr("href",'/user/manuscript/list/owner/my_journal');
             $(".menu [href='/user/manuscript/special_approval_list']").attr("href",'/user/manuscript/special_approval_list/my_journal');
             $(".menu [href='/user/list/editors']").after(" <a href='/user/ebm/contract?form[journal_id]=" + S_J + "'>[R]</a>");
-            $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list?form[journal_id]=" + S_J + "'>[J]</a>");
+            $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a>");
         }
         $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC&page_limit=100'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
         $(".menu [href='/special_issue_pending/list']").text("Manage").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC&page_limit=100")
@@ -797,7 +798,7 @@ function onInit() {
         });
         var SelectALL = $('<input type="button" id=SelectALL class="button hollow" value="Select PP" style="float:right;float:right;font-size:small;margin:0;"> ').click(function() {
             $('table tr').each(function() {
-                var status = $(this).find('td:nth-child(2)').text().trim();
+                var status = $(this).find('td:nth-child(3)').text().trim();
                 if (status === 'Title Provided' || status === 'Agreed') {
                     $(this).find('input[type="checkbox"]').prop('checked', true);
                 }
@@ -1478,6 +1479,38 @@ function onInit() {
             .ms-note-add:before{background: url('${icon_note_add}') no-repeat center center;}
             .ms-mail:before{background: url('${icon_mail}') no-repeat center center;} </style>`);
         waitForKeyElements("#intercom-frame",function(){$('.intercom-lightweight-app,#intercom-frame').remove();},true);
+    } catch (error){ }}
+
+    // Scilit Batch Download Old
+    if (window.location.href.indexOf("admin.scilit.net/articles/search") > -1) {try{
+        let urlObj = new URL($("span.nextPage").first().parent().attr("href"), window.location.origin);
+        let params = new URLSearchParams(urlObj.search);
+        let page = $('input[name="page"]').last().attr("value");
+        let totalpage = $('input[name="page"]').last().parent().text().match(/\d+/)[0];
+
+        if (window.location.href.indexOf("#ScilitBatchDownload") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
+            $("input.inheritPos").prop("checked",true);
+            unsafeWindow.$("a[data-action='/api/excel_report/scilit-authors']").click();
+            $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
+            <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
+            <p></p><p id=ith_prompt>Downloading ${page} of ${totalpage}</p><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
+        } else if(window.location.href.indexOf("#ScilitBatchInit") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
+            for (let i = 0; i < Math.min(totalpage, 11); i++) {
+                let urlObj_n = urlObj, params_n = params;
+                params_n.set('nb_articles', '1000'); params_n.set('offset', i*1000);
+                urlObj_n.search = params_n.toString();
+                GM_openInTab(urlObj_n.href+"#ScilitBatchDownload", {active: true});
+            }
+        }
+        else {
+            $(".header-results > h4.inline.bold").after(" <a id='ScilitDownload' href=#>[Batch Download Tool]</a>");
+            $("#ScilitDownload").click(function(){
+                let urlObj_n = urlObj, params_n = params;
+                params_n.set('nb_articles', '1000'); params_n.set('offset', 0);
+                urlObj_n.search = params_n.toString();
+                GM_openInTab(urlObj_n.href+"#ScilitBatchInit", {active: true});
+            })
+        }
     } catch (error){ }}
 
     // Scilit Batch Download
