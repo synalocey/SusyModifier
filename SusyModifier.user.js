@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.3.10
+// @version       4.3.12
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -223,7 +223,7 @@ function onInit() {
 
     function decode(input) {const decoded = atob(input);return decoded.slice(3, -3);}
     var userNamesEncoded = ["YWJjc3luYS5tdXh5eg==", "YWJjc3VzaWUuaHVhbmd4eXo=", "YWJjaGVsZW5lLmh1eHl6", "YWJjbGlubi5saXh5eg==", "YWJjZGViYnkucGVuZ3h5eg==", "YWJjZ2xhZHlzLmxpeHl6", "YWJjY29ubmVsbHkueWFuZ3h5eg==", "YWJjdGlmZmFueS5saXh5eg==", "YWJjbGlsaWEuZGluZ3h5eg==",
-                            "YWJjaW5uYS5odWFuZ3h5eg==", "YWJjY2FzcGVyLnhpZXh5eg==", "YWJjZGFuaWVsLmRhbnh5eg==", "YWJjZWlsZWVuLnpoYW5neHl6"];
+                            "YWJjaW5uYS5odWFuZ3h5eg==", "YWJjY2FzcGVyLnhpZXh5eg==", "YWJjZGFuaWVsLmRhbnh5eg==", "YWJjZWlsZWVuLnpoYW5neHl6", "YWJjZWRlbi54aWF4eXo="];
     var userNames = userNamesEncoded.map(decode);
 
     //susy侧边栏的按钮🔎
@@ -808,8 +808,9 @@ function onInit() {
 
 
         if (GM_config.get('Hidden_Func')){
-            $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `)
-            $("#sk_list").click(function(){
+            $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `);
+            $("h1:contains('Process Special Issue')").attr("id","sk_list2")
+            $("#sk_list,#sk_list2").click(function(){
                 var emailLinks = [];
                 $("[data-user-info-emails]").each(function() {
                     let email = $(this).attr('data-user-info-emails');
