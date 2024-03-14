@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.3.12
+// @version       4.3.13
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -34,7 +34,7 @@
 // @match         *://*.google.com.tw/*
 // @match         *://*.google.co.id/*
 // @match         *://*.google.com.my/*
-// @require       https://unpkg.com/jquery@3.7.0/dist/jquery.js
+// @require       https://unpkg.com/jquery@4.0.0-beta/dist/jquery.js
 // @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/chosen.jquery.js
 // @require       https://raw.githubusercontent.com/sizzlemctwizzle/GM_config/master/gm_config.js
 // @grant         GM_getValue
@@ -1180,8 +1180,27 @@ function onInit() {
     //Always: Paper ID to page
     if(window.location.href.indexOf(".mdpi.com/ajax/submission_get_manuscripts") > -1){try{
         let jsonObject = JSON.parse( $("body").text().replace(/\\/g, '') );
-        document.body.innerHTML = '<p>' + jsonObject[0].label + '</p><p>&nbsp;</p><p>https://susy.mdpi.com' + jsonObject[0].url + '</p><p>&nbsp;</p><p>Redirecting...</p>';
-        window.location.href = jsonObject[0].url + window.location.search;
+        document.body.style.cssText = '';
+        if (jsonObject[0]) {
+            document.body.innerHTML = '<p>' + jsonObject[0].label + '</p><p>&nbsp;</p><p>https://susy.mdpi.com' + jsonObject[0].url + '</p><p>&nbsp;</p><p>Redirecting...</p>';
+            window.location.href = jsonObject[0].url + window.location.search;
+        } else {
+            document.body.innerHTML = '<p>Wrong Manuscript ID or No Access Permission.</p>'
+        }
+    } catch (error){ }}
+
+    //Always: Paper ID to page Beta
+    if(window.location.href.indexOf(".mdpi.com/build/img/design/susy-logo.png") > -1){try{
+        let TrueUrl = location.href.replace("mdpi.com/build/img/design/susy-logo.png","mdpi.com/ajax/submission_get_manuscripts");
+        $.get( TrueUrl, function( jsonObject ) {
+            document.body.style.cssText = '';
+            if (jsonObject[0]) {
+                document.body.innerHTML = '<p>' + jsonObject[0].label + '</p><p>&nbsp;</p><p>https://susy.mdpi.com' + jsonObject[0].url + '</p><p>&nbsp;</p><p>Redirecting...</p>';
+                window.location.href = jsonObject[0].url + window.location.search;
+            } else {
+                document.body.innerHTML = '<p>Wrong Manuscript ID or No Access Permission.</p>'
+            }
+        });
     } catch (error){ }}
 
     //Always: Unsubscribe link to page
@@ -1763,7 +1782,7 @@ function sf(){
             textContent = textContent.replace(emailRegex, '');
             // 查找连续的6位或7位数字
             var digits = textContent.match(digitRegex) || [];
-            digits.forEach(function (digit) {window.open('https://susy.mdpi.com/ajax/submission_get_manuscripts?term=' + digit, '_blank')});
+            digits.forEach(function (digit) {window.open('https://susy.mdpi.com/build/img/design/susy-logo.png?term=' + digit, '_blank')});
 
             // let myArray, add_id, rdline = $("#add_r_t").val().split("\n");
             // for (var i=0; i < rdline.length; i++){
@@ -1786,7 +1805,7 @@ function sk_susie(){
             let myArray, add_id, rdline = $("#add_susie_t").val().split("\n");
             for (var i=0; i < rdline.length; i++){
                 if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
-                if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/ajax/submission_get_manuscripts?term="+add_id+"&r="+myArray[0], false)}
+                if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/build/img/design/susy-logo.png?term="+add_id+"&r="+myArray[0], false)}
             }
         })
     }
