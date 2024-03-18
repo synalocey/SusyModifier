@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.3.14
+// @version       4.3.15
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
 // @icon          https://susy.mdpi.com/build/img/design/susy-logo.png
-// @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
-// @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
+// @updateURL     https://cdn.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
+// @downloadURL   https://cdn.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @match         *://*.mdpi.com/*
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
@@ -399,35 +399,38 @@ function onInit() {
             let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id"), false); xhr.send();
             let $form = $($.parseHTML(xhr.responseText)).find('#single-planned-paper-form');
             let emailIndex=1, statusIndex=2, sourceIndex=3, discountIndex=4, agreedDateIndex=6;
-            $form.find('thead th').each(function(index) {
-                let text = $(this).text().trim();
-                headers[text] = index;
-                let emailIndex = headers.Email !== undefined ? headers.Email : 0;
-                let statusIndex = headers.Status !== undefined ? headers.Status : 0;
-                let sourceIndex = headers.Source !== undefined ? headers.Source : 0;
-                let discountIndex = headers.Discount !== undefined ? headers.Discount : -1;
-                let agreedDateIndex = headers['Agreed Date'] !== undefined ? headers['Agreed Date'] : -1;
-            });
-            $form.find('tbody tr').each(function() {
-                let $td = $(this).find('td'), email = $td.eq(emailIndex).text().trim(), status = $td.eq(statusIndex).text().trim(), invitedByGE = $td.eq(sourceIndex).text().trim(),
-                    discount = parseFloat($td.eq(discountIndex).text().trim().replace(/ /g, '').replace(/CHF/g, '')), agreedDate = new Date($td.eq(agreedDateIndex).text().trim());
-                console.log(email); console.log(status); console.log(invitedByGE); console.log(discount);
-                if (status === "Title Provided" || status === "Agreed" || status === "Approved") { counter++;
-                    if (invitedByGE.indexOf("by GE") > -1 && discount > 0) {
-                        let discountRatio = 0;
-                        switch (agreedDate.getFullYear()) {
-                            case 2021: discountRatio = discount / 1600; break;
-                            case 2022: discountRatio = discount / 1800; break;
-                            case 2023: if(agreedDate.getMonth() < 6) {discountRatio = discount / 2100} else {discountRatio = discount / 2600}; break;
-                            case 2024: discountRatio = discount / 2600; break;
-                            default: discountRatio = 8;
+            $form.find('table').each(function(index) {
+                $(this).find('thead th').each(function(index) {
+                    let text = $(this).text().trim();
+                    if (text.indexOf("Email")>-1) {emailIndex = index};
+                    if (text == "Status") {statusIndex = index};
+                    if (text == "Source") {sourceIndex = index};
+                    if (text == "Discount") {discountIndex = index};
+                    if (text == "Agreed Date" || text == "Decision Date") {agreedDateIndex = index};
+                });
+
+                $(this).find('tbody tr').each(function() {
+                    let $td = $(this).find('td'), email = $td.eq(emailIndex).text().trim(), status = $td.eq(statusIndex).text().trim(), invitedByGE = $td.eq(sourceIndex).text().trim(),
+                        discount = parseFloat($td.eq(discountIndex).text().trim().replace(/ /g, '').replace(/CHF/g, '')), agreedDate = new Date($td.eq(agreedDateIndex).text().trim());
+                    console.log(email); console.log(status); console.log(invitedByGE); console.log(discount);
+                    if (status === "Title Provided" || status === "Agreed" || status === "Approved") {
+                        counter++;
+                        if (invitedByGE.indexOf("by GE") > -1 && discount > 0) {
+                            let discountRatio = 0;
+                            switch (agreedDate.getFullYear()) {
+                                case 2021: discountRatio = discount / 1600; break;
+                                case 2022: discountRatio = discount / 1800; break;
+                                case 2023: if(agreedDate.getMonth() < 6) {discountRatio = discount / 2100} else {discountRatio = discount / 2600}; break;
+                                case 2024: discountRatio = discount / 2600; break;
+                                default: discountRatio = 8;
+                            }
+                            result += `(${counter}) ${email} (${(discountRatio * 100).toFixed(0)}% discount)\n`;
+                        } else {
+                            result += `(${counter}) ${email}\n`;
                         }
-                        result += `(${counter}) ${email} (${(discountRatio * 100).toFixed(0)}% discount)\n`;
-                    } else {
-                        result += `(${counter}) ${email}\n`;
                     }
-                }
-            });
+                });
+            })
         }
 
         function init() {let t1 = RegExptest(GM_config.get('Report_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('Report_TemplateS2'))) );
