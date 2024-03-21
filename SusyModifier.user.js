@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.3.15
+// @version       4.3.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
 // @icon          https://susy.mdpi.com/build/img/design/susy-logo.png
-// @updateURL     https://cdn.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
-// @downloadURL   https://cdn.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
+// @updateURL     https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
+// @downloadURL   https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @match         *://*.mdpi.com/*
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
@@ -35,8 +35,8 @@
 // @match         *://*.google.co.id/*
 // @match         *://*.google.com.my/*
 // @require       https://unpkg.com/jquery@4.0.0-beta/dist/jquery.js
-// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/chosen.jquery.js
-// @require       https://raw.githubusercontent.com/sizzlemctwizzle/GM_config/master/gm_config.js
+// @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
+// @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.js
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM.getValue
@@ -1068,6 +1068,8 @@ function onInit() {
                                  + `&f[]=&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[Books]</a>`)
         $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/feature-paper-invitation/issues?utf8=%E2%9C%93&set_filter=1&f[]=op[status_id]=o&f[]=subject&op[subject]=~&v[subject][]=[` + GM_config.get('Journal')
                                  + `]&f[]=&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on%3Adesc&per_page=100'>[FP]</a>`)
+        $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/ethic-committee/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]=o&f[]=subject&op[subject]=%7E&v[subject][]=` + GM_config.get('Journal')
+                                 + `]&f[]=&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&group_by=&per_page=100'>[EC]</a>`)
         //Checker功能和检测函数
         $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").click(sk_cfpcheck_func);
         function sk_cfpcheck_func (zEvent) {
@@ -1442,7 +1444,7 @@ function onInit() {
         $("#show_title").parent().append("<input type='button' id='send_ith' value='Send iThenticate in OneClick'>")
         $("#send_ith").click(function() {
             if (confirm("I will send ALL manuscripts in this page to iThenticate!") == true) {
-                $("a[href*='/process_form/']").each(function() {chk_ith($(this).attr('href'),$(this).text())});
+                $("a:contains('math')[href*='/process_form/'],a:contains('games')[href*='/process_form/'],a:contains('children')[href*='/process_form/'],a:contains('geometry')[href*='/process_form/']").each(function() {chk_ith($(this).attr('href'),$(this).text())});
                 $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
                                 <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:5%;height:90%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
                                 <input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><p id=ith_prompt></p>
