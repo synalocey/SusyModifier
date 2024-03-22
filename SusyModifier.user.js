@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.3.20
+// @version       4.3.21
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -585,7 +585,7 @@ function onInit() {
                 GM_xmlhttpRequest({
                     method: "GET", url: 'https://pubpeer.com/api/search?q=authors%3A%22'+pubpeer_name+'%22',
                     onload: function(response) {
-                        let pub_num = $.parseJSON(response.responseText).meta.total;
+                        let pub_num = JSON.parse(response.responseText).meta.total;
                         $link.append("["+pub_num+"]");
                         if(pub_num > 0) {$link.css('background-color', 'gold');}
                     }
@@ -971,7 +971,7 @@ function onInit() {
                     $('#form_name, input[value="Edit"], input[value="Add"]').prop("disabled", true);
                     var result="";
                     let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($("#form_name").val()) + "&preserveAllCaps=true&styleC=true");
-                    let jsonarray= $.parseJSON(response.responseText);
+                    let jsonarray= JSON.parse(response.responseText);
                     jsonarray[0].title.forEach(element => {result = result + element.joint + element.word});
                     $("#form_name").val(result);
                     $('#form_name, input[value="Edit"], input[value="Add"]').prop("disabled", false);
