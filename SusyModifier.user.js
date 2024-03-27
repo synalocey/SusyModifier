@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.3.21
+// @version       4.3.24
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -874,63 +874,56 @@ function onInit() {
                     } });
                 } });
 
-            let date = new Date(), year5=date.getFullYear()-5, year1=date.getFullYear()+1, url2;
-            GM_xmlhttpRequest({
-                method: 'POST',
-                url: 'https://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl',
-                data: '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:auth="http://auth.cxf.wokmws.thomsonreuters.com"><soapenv:Header/><soapenv:Body><auth:authenticate/></soapenv:Body></soapenv:Envelope>',
-                onload: function(responseDetails) {
-                    var QID=0, SID = $("#wos_sid").val();
-                    if (!SID && responseDetails.responseText) {SID = responseDetails.responseText.match(/<return>(.*?)<\/return>/); SID=SID.pop();}
-                    else if(SID) {GM_setValue("wos_sid", SID);}
 
-                    if (!SID) {
-                        alert("Something wrong with WoS. Please ensure that you can access to WoS or SID is correct. Try again later.");
-                        $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
-                        return;
-                    }
-                    var ws = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
-                    let param = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=("+keywords.join(' '+$("#wos_o").val()+' ')
+            let date = new Date(), year5=date.getFullYear()-5, year1=date.getFullYear()+1, url2;
+            var QID = 0, SID = $("#wos_sid").val();
+            if (!SID) {
+                alert("Please input SID.");
+                $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
+                return;
+            }
+            GM_setValue("wos_sid", SID);
+            var ws = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
+            let param = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=("+keywords.join(' '+$("#wos_o").val()+' ')
                     + ") and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6","EARLY ACCESS.Value.6","OA.Value.6","PY.Field_D.6",
                     "TASCA.Value.6","OG.Value.6","DT.Value.6","AU.Value.6","SO.Value.6","PUBL.Value.6","ECR.Value.6","DX2NG.Value.6"]},"eventMode":null},"id":1};
-                    let param2 = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=("+keywords.join(' '+$("#wos_o").val()+' ')
-                    + ") and WC=mathematics and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6","EARLY ACCESS.Value.6",
-                    "OA.Value.6","PY.Field_D.6","TASCA.Value.6","OG.Value.6","DT.Value.6","AU.Value.6","SO.Value.6","PUBL.Value.6","ECR.Value.6","DX2NG.Value.6"]},"eventMode":null},"id":2};
+            let param2 = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=("+keywords.join(' '+$("#wos_o").val()+' ')
+                    + ") and WC=(mathematic* OR statistic*) and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6",
+                    "EARLY ACCESS.Value.6","OA.Value.6","PY.Field_D.6","TASCA.Value.6","OG.Value.6","DT.Value.6","AU.Value.6","SO.Value.6","PUBL.Value.6","ECR.Value.6","DX2NG.Value.6"]},"eventMode":null},"id":2};
 
-                    ws.onopen = function () { ws.send(JSON.stringify(param)); }
-                    ws.onmessage = function (evt) {
+            ws.onopen = function () { ws.send(JSON.stringify(param)); }
+            ws.onmessage = function (evt) {
+                let data = evt.data;
+                if (data.indexOf('"key":"COMPLETE"')>-1) { ws.close(); }
+                if (data.indexOf('{"QueryID":')>-1) { QID=data.match(/"QueryID":"(.*?)",/).pop(); n_wos=data.match(/"RecordsFound":(.*?),"/).pop(); }
+                if (data.indexOf('"Key":"TASCA')>-1) {
+                    $.each( JSON.parse(data).payload['TASCA.Value.6'].Values, function( index, item ) { WOS_Category = WOS_Category+ "• "+item.Key+": "+item.Value+"; " });
+                    WOS_Category = WOS_Category.replace(/TASCA./g,"").toLowerCase().replace(/(?:^|\s)\w/g, function(match) { return match.toUpperCase();});
+                }
+                console.log(data)
+            }
+            ws.onclose = function () {
+                console.log("WSS is closed......");
+                url2="https://www.webofscience.com/wos/woscc/summary/"+QID+"/relevance/1";
+                if(n_wos) {
+                    $("div[title='Rich Text Editor, editor2']")
+                        .html("<p>Total Results: "+n_wos+"</p><p>Topic: "+keywords.join(' '+$("#wos_o").val()+' ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: SCI-EXPANDED</p><p>Top Categories: "+WOS_Category+"</p><p>Link: "+url2+"</p>")
+                    let ws_m = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
+                    ws_m.onopen = function () { ws_m.send(JSON.stringify(param2)); }
+                    ws_m.onmessage = function (evt) {
                         let data = evt.data;
-                        if (data.indexOf('"key":"COMPLETE"')>-1) { ws.close(); }
-                        if (data.indexOf('{"QueryID":')>-1) { QID=data.match(/"QueryID":"(.*?)",/).pop(); n_wos=data.match(/"RecordsFound":(.*?),"/).pop(); }
-                        if (data.indexOf('"Key":"TASCA')>-1) {
-                            $.each( $.parseJSON(data).payload['TASCA.Value.6'].Values, function( index, item ) { WOS_Category = WOS_Category+ "• "+item.Key+": "+item.Value+"; " });
-                            WOS_Category = WOS_Category.replace(/TASCA./g,"").toLowerCase().replace(/(?:^|\s)\w/g, function(match) { return match.toUpperCase();});
-                        }
+                        if (data.indexOf('"key":"COMPLETE"')>-1) { ws_m.close(); }
+                        if (data.indexOf('{"QueryID":')>-1) { n_wos_m=data.match(/"RecordsFound":(.*?),"/).pop(); }
                     }
-                    ws.onclose = function () {
-                        console.log("WSS is closed......");
-                        url2="https://www.webofscience.com/wos/woscc/summary/"+QID+"/relevance/1";
-                        if(n_wos) {
-                            $("div[title='Rich Text Editor, editor2']")
-                                .html("<p>Total Results: "+n_wos+"</p><p>Topic: "+keywords.join(' '+$("#wos_o").val()+' ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: SCI-EXPANDED</p><p>Top Categories: "+WOS_Category+"</p><p>Link: "+url2+"</p>")
-                            let ws_m = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
-                            ws_m.onopen = function () { ws_m.send(JSON.stringify(param2)); }
-                            ws_m.onmessage = function (evt) {
-                                let data = evt.data;
-                                if (data.indexOf('"key":"COMPLETE"')>-1) { ws_m.close(); }
-                                if (data.indexOf('{"QueryID":')>-1) { n_wos_m=data.match(/"RecordsFound":(.*?),"/).pop(); }
-                            }
-                            ws_m.onclose = function () {
-                                $("p:contains('Total Results:')").append(" (Category related to Mathematics: "+n_wos_m+")");
-                                if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
-                            }
-                        } else {
-                            alert("Failed to receive valid data. Please revise SID and try again.");
-                            $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
-                        }
-                    };
-
-                } });
+                    ws_m.onclose = function () {
+                        $("p:contains('Total Results:')").append(" (Category related to Mathematics: "+n_wos_m+")");
+                        if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
+                    }
+                } else {
+                    alert("Failed to receive valid data. Please revise SID and try again.");
+                    $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
+                }
+            };
 
             function write_conclusion(){
                 if(j_open==0) {
@@ -1080,7 +1073,7 @@ function onInit() {
             (async () => {
                 var result="";
                 let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($(".subject").eq(0).text().trim()) + "&preserveAllCaps=true&styleC=true");
-                let jsonarray= $.parseJSON(response.responseText);
+                let jsonarray= JSON.parse(response.responseText);
                 jsonarray[0].title.forEach(element => {result = result + element.joint + element.word});
                 if(result.match(/[a-zA-Z]*/g).join("") != $(".subject").eq(0).text().match(/[a-zA-Z]*/g).join("")) { $("#issue_pe_note").val($("#issue_pe_note").val()+"🚨 TitleCase Is Inconsistent with Chicago Style: " + result.trim() + "\n") }
             })()
@@ -1638,6 +1631,44 @@ function onInit() {
         }
     } catch (error){ }}
 
+    // Scopus Hidden Func
+    if (window.location.hostname.indexOf("scopus.com") > -1 && GM_config.get('Hidden_Func')) {try{
+        if (window.location.href.indexOf("/results/authorListResults.uri?") + window.location.href.indexOf("/results/coAuthorResults.uri?") > -2){
+            $("h1.documentHeader").append(" <a href='#' id='scopus_list'> [Export CSV]</a>");
+            $("#scopus_list").click(function(){
+                var csvContent = "";
+                $('#srchResultsList tbody tr.searchArea').each(function() {
+                    var authorName = $(this).find('.authorResultsNamesCol a').text().trim();
+                    var authorId = $(this).find('.authorResultsNamesCol a').attr('href').match(/authorId=(\d+)/)[1];
+                    var affiliation = $(this).find('.dataCol5').text().trim();
+                    var country = $(this).find('.dataCol7').text().trim();
+                    var hIndex = $(this).find('.dataCol4').text().trim();
+                    var documents = $(this).find('.dataCol3').text().trim();
+
+                    var line = [authorId, authorName, affiliation, country, hIndex, documents].join("\t");
+                    csvContent += line + "\n";
+                });
+
+                $("body").append(`<div class="blockUI blockOverlay" id="csv-shade" style="z-index: 1000; border: none; margin: 0; padding: 0; width: 100%; height: 100%; top: 0; left: 0; background-color: #000; opacity: 0.6; cursor: wait; position: fixed;"></div>
+                <div class="blockUI blockMsg blockPage" id="csv-popup" style="z-index: 1011; position: fixed; padding: 0; margin: 0; width: 50%; top: 25%; left: 25%; text-align: center; color: #000; border: 3px solid #aaa; background-color: #fff; overflow-y: auto;">
+                <input type="button" value="Close" onclick="document.getElementById('csv-shade').remove(); document.getElementById('csv-popup').remove();" style="margin: 10px; padding: 5px 20px;">
+                <textarea id="csv_content" readonly rows="30" style="width: 90%;">${csvContent}</textarea></div>`);
+
+                var textarea = document.getElementById("csv_content");
+                textarea.select(); document.execCommand('copy');
+            })
+        }
+        if (window.location.href.indexOf("/record/display.uri?eid=") > -1){
+            waitForKeyElements('div[data-testid="author-list"]', mark_emais, true);
+            function mark_emais(){
+                $('div[data-testid="author-list"] a[href^="mailto"]').each(function() {
+                    var scopus_email = $(this).attr('href').split('mailto:')[1];
+                    var scopus_name = $(this).prevAll('button').first().text();
+                    $("#recordPageBoxes").before(`<b>${scopus_name}</b>&emsp;<a href="//mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=${scopus_email}" target=_blank>${scopus_email}</a><br>`);
+                });
+            }
+        }
+    } catch (error){ }}
     console.timeEnd("test")
 }
 
