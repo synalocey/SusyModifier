@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.3.24
+// @version       4.3.30
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -516,7 +516,7 @@ function onInit() {
                 let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear().toString().slice(-2);
                 let today = yy + '-' + mm + '-' + dd;
                 $textarea.val($textarea.val().replace(/(GE contact:\s*)/, "$1" + today + " " + $("#addnote").val() + " / "));
-                waitForKeyElements("button[data-url*='/user/edit/si_follow_up_notes/']",function(){$("button[data-url*='/user/edit/si_follow_up_notes/']").click()});
+                waitForKeyElements("button[data-url*='/user/edit/si_morph_notes/']",function(){$("button[data-url*='/user/edit/si_morph_notes/']").last().click()});
             }
         });
     } catch (error){ }}
@@ -590,6 +590,10 @@ function onInit() {
                         if(pub_num > 0) {$link.css('background-color', 'gold');}
                     }
                 });
+
+                let firstName = $link.parent().contents().filter(function() {return this.nodeType === 3;}).first().text().trim();
+                let lastName = $link.parent().find('b').first().text().trim();
+                $(this).before(` <a href="//www.scopus.com/results/authorNamesList.uri?st2=${firstName}&st1=${lastName}" title="Scopus" target="_blank" rel="noopener noreferrer"><img src=${icon_scopus}></a> `);
             });
         }
 
@@ -1151,7 +1155,7 @@ function onInit() {
                         let full_name = $(this).prev("b").text(), first_name = full_name.split(" ")[0], last_name = full_name.split(" ").pop();
                         $(this).after(` <a href="//susy.mdpi.com/user/reviewer/checking/a5ce29b8b4917729fc1dc44abf2fc686?email=` + $("[title='Generate unsubscribe link']").attr('data-email') + `" target="_blank">
                         <img width=20px height=20px src="//susy.mdpi.com/build/img/design/susy-logo.png"></a> <a href="//scholar.google.com/scholar?hl=en&q=` + full_name + `" target=_blank><img width=20px height=20px src="//www.google.com/favicon.ico"></a>
-                                       <a href="//www.scopus.com/results/authorNamesList.uri?st2=` + first_name + `&st1=` + last_name + `" target=_blank><img src="//www.scopus.com/static/proteus-images/favicon.ico" width=16px height=16px></a>`);
+                                       <a href="//www.scopus.com/results/authorNamesList.uri?st2=` + first_name + `&st1=` + last_name + `" target=_blank><img src=${icon_scopus}></a>`);
                     });
                 } });
 
@@ -1903,3 +1907,6 @@ var icon_webs="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9
 + "BAsF56uO55axLGEt5r8A1QEviU1VGNN1VvCVdYiSyREINmBXkQ3LNmbAV38Rn9ub0GfMAvh9GKpx4HZnx8ESsyU8CrHzHIlct/k+6Oq6/wTswVrpGK680+wBPvWgb28ivt+7haE3PfhSJQB+BucuN21Vq9WEFOgNUxbKtr1z156GLEuDVJURzqOnkK4uRSbrAwKlGOi8hpHrh6hBd6i+8YCFjqDR6ScvSdz+NnT9JtK1ZcguFnC2uQ0FnA87y9yAW4/Bx3dHAfz"
 + "0MXjWUNeiFZyE/gGBLFq/pUu6uP2gG+ZATTjozqOnyGD9wLMufNJux6+v/WH/QFcrBkXt76arV1X71PsJORLwkAR5Vo5MWQidGMD8tWlgvNXYlGfEgnVbUXO5FbgURL9WDngNGMhYg95i5Ueb20tMZjMhPMcRgefGTY2OfVh/pRVa3g/fiTM4R3mQtKcQL16+hnAyhIF3vag5fAQ3XFzwe9oKNGqU+gK7iwxzn7JwdnSCvNtaEUQKre45Vg8NfQdH9Ukk5hQhOZ"
 + "9BTIoix8gJ5Em+vO1DdsJPs42bMExliY0MYxofu3mHZV5c6ouJi+Mwa1USpi1b3xeTrLigUObF+FxOQpOIwLKTAmUlEdJ5lJikcTxUEyxlms5QMnd/oSGyhDFNc9KHdtICYQ1Qs9BEE8cTTiLS/+Qs7S6qSkk8/6j+XylL9gf37xpjQOT4TAAAAABJRU5ErkJggg=="
+var icon_scopus="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB0UlEQVR4nLWTvWtUURDFf3PfXd9LdjessGKMglYB0ahgOhtB0JVgodhaiVhYiWJnI6hY+R8IljYBP1AUjKCInYpgVmJQiIQY1w+St4v7vu5YvHXd4CpI8MCtzszcMzNnZPH0JmUVMKtJ7l9ANX/90IdbUUDTCIwBz0IW/yKyBE1jsGtABM2SLmV"
++ "7g4KdE/jbawDEM49pv7iFJm0KW8bxx2p41c1oOyR6dY/4zSMwtlMgS7EjWykePEd44yxu+ROmsgF1Kf7YAQb3nqR1/yrZk1lMqYoEZRDTq0ARvwQoaeM9bmkB+TKHCUoU952ieecy8dunSCHAhQ1Q8ja7M/AsydxLovoUlRPX8XdMoC7DlNdhSlXSjzNIIch/Nbab3KNAQJXmzQv42/ZTrJ3Bq4wQ1adAvDxRFeSva1RwjvbzScLJ8wzsOYZGTdLGO4LxI7ioha"
++ "YRmrThty2ow6zdSLDrENm3eQZ2HyaefYYLP9O8fZHy0Ut5K/PTmKH1ZF8/EL1+gBjvpwJBvy+jWYodHiWafkjr7hWkEJAt1Fm6dhwXNrDDo5jBIVy4mCsGpHsLqrmRVEEEsT5Ip2l1uZE6LhRbyIe5wkgi+aT7Qcwfuf9wTP+IH7tLvmy5ImEAAAAAAElFTkSuQmCC"
