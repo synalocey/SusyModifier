@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.4.11
+// @version       4.4.12
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1415,9 +1415,27 @@ function onInit() {
 
     //Maths-Related Journal Search
     if (window.location.hostname.indexOf("google") + window.location.hostname.indexOf("scopus") > -2 && GM_config.get('Maths_J')){try{
-        var maths_j = ["math","stat","computat","computing","equation","probab","algebr","algorithm","calculus","geometr","pde","nonlinear","topology","fractal","discrete","fixed point","artificial intelligence","inverse prob","combinatori","number theory", "matemati",
-                       "operator theory","axiom","numeric","stochastic","fuzzy set","dynamical sys","chaos","functional analysis","optimization theory"];
-        var regex = new RegExp("(" + maths_j.join("|") + ")", "i");
+        var maths_j = ["math","stat","computat","computing","equation","probab","algebr","algorithm","calculus","pde","nonlinear","topology","fractal","discrete","fixed point","artificial intelligence","inverse prob","combinatori","number theory", "matemati",
+                       "operator theory","axiom","numeric","stochastic","fuzzy set","dynamical sys","chaos","functional analysis","optimization theory","inequalit","group theory","game theory",
+
+                       "infectious disease modelling","current bioinformatics","evolutionary bioinformatics","frontiers in neuroinformatics","international journal of data mining and bioinformatics","journal of biological dynamics","journal of molecular graphics & modelling",
+                       "annals of k-theory","concrete operators","dolomites research notes on approximation","fibonacci quarterly","international journal of analysis and applications","journal of analysis","journal of integer sequences","problemy analiza",
+                       "real analysis exchange","special matrices","acta arithmetica","annales de l institut fourier","annales scientifiques de l ecole normale superieure","annali della scuola normale superiore di pisa","applied categorical structures",
+                       "constructive approximation","journal de theorie des nombres de bordeaux","journal of approximation theory","journal of convex analysis","graph theory","journal of homotopy and related structures","journal of knot theory and its ramifications",
+                       "journal of lie theory","operators and matrices","journal on the theory of ordered sets and its applications","ramanujan journal","representation theory","semigroup forum","transformation groups","advances in fuzzy systems",
+                       "fuzzy information and engineering","journal of applied analysis","minimax theory and its applications","acm transactions on modeling and computer simulation","analysis and applications","annals of pure and applied logic","anziam journal",
+                       "applicable analysis","archive for rational mechanics and analysis","archives of control sciences","asymptotic analysis","boundary value problems","communications on pure and applied analysis","designs codes and cryptography",
+                       "finite elements in analysis and design","finite fields and their applications","fundamenta informaticae","homology homotopy and applications","integral transforms and special functions","interfaces and free boundaries",
+                       "iranian journal of fuzzy systems","journal of complexity","journal of cryptology","journal of dynamical and control systems","journal of fourier analysis and applications","journal of function spaces","journal of global optimization",
+                       "journal of inverse and ill","journal of modern dynamics","differential operators and applications","journal of spectral theory","kinetic and related models","logic journal of the igpl","optimal control applications","optimization letters",
+                       "pacific journal of optimization","problems of information transmission","chaotic dynamics","set-valued and variational analysis","siam journal on control and optimization","siam journal on matrix analysis and applications",
+                       "siam journal on optimization","advances in data science and adaptive analysis","cybernetics and systems analysis","international journal of modelling and simulation","journal of dynamics and games","journal of multiscale modelling",
+                       "p-adic numbers ultrametric analysis and applications","engineering optimization","annales henri poincare","computer physics communications","quantum information processing","decisions in economics and finance","journal of time series econometrics",
+                       "monte carlo methods and applications","advances in data analysis and classification","astin bulletin-the journal of the international actuarial association","bayesian analysis","journal of multivariate analysis","journal of time series analysis",
+                       "lifetime data analysis","markov process","random matrices","scandinavian actuarial journal"];
+        var geometry_j = ["geometr","fractal","manifold"];
+        var maths_regex = new RegExp("(" + maths_j.join("|") + ")", "i");
+        var geometry_regex = new RegExp("(" + geometry_j.join("|") + ")", "i");
         if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source'],div[data-testid='author-list']+span", mark_journals, true);} else {mark_journals()};
         $("#gsc_bpf_more").click(function (){
             let targetNode = document.querySelector('#gsc_a_nn')
@@ -1425,7 +1443,10 @@ function onInit() {
             observer.observe(targetNode, {characterData: true, childList: true, subtree: true});
         })
         function mark_journals(){
-            $("div.gs_gray:not([style]),div[data-component='document-source'],div[data-testid='author-list']+span").each(function(){ if(regex.test($(this).text())){ $(this).css("background-color", "Wheat") } });
+            $("div.gs_gray:not([style]),div[data-component='document-source'],div[data-testid='author-list']+span").each(function(){
+                if(maths_regex.test($(this).text())){ $(this).css("background-color", "Wheat") };
+                if(geometry_regex.test($(this).text())){ $(this).css("background-color", "Aquamarine") };
+            });
         }
     } catch (error){ }}
 
