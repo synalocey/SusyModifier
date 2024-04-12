@@ -1447,6 +1447,9 @@ function onInit() {
                 if(maths_regex.test($(this).text())){ $(this).css("background-color", "Wheat") };
                 if(geometry_regex.test($(this).text())){ $(this).css("background-color", "Aquamarine") };
             });
+            $("td.gsc_a_t > a:first-child, div[data-testid='document-type-container']+div > h4 > span").each(function(){
+                if(geometry_regex.test($(this).text())){ $(this).css("background-image", "linear-gradient(to bottom, transparent 30%, aquamarine 30%, aquamarine 70%, transparent 70%)") };
+            });
         }
     } catch (error){ }}
 
