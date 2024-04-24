@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.4.12
+// @version       4.4.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
-// @icon          https://susy.mdpi.com/build/img/design/susy-logo.png
+// @icon64          https://susy.mdpi.com/build/img/design/susy-logo.png
 // @updateURL     https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @downloadURL   https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @match         *://*.mdpi.com/*
@@ -124,7 +124,12 @@
             'PP_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': 'A few months ago, you expressed interest in submitting a paper to our special issue "$1". We would be grateful to have the opportunity to receive it.\n\n$2\n\n'
                               + 'Please note that you will be offered a XX% discount on the Article Processing Charge by the guest editors if your paper is accepted for publication. To take advantage of the discount, we strongly encourage you to submit your'
                               + ' manuscript by the deadline if possible.\n\nWe look forward to receiving your submission and thank you for your interest in our special issue.\n\nKind regards,'},
-            'Interface_combine': {'label': 'Topic Manuscripts整合到SI', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Interface_combine': {'label': 'Topic Manuscripts整合SI', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Topic_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*"},
+            'Topic_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () { let $topic_name= $('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().text().trim(); return \`[MDPI Topics] Monthly Report `
+                                 + `(\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – \${$topic_name}\`; }`},
+            'Topic_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ''},
+            'Topic_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ''},
 
             'Con_Template': {'section': [,"Conference Pages"], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Con_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
@@ -162,6 +167,7 @@
                 f_settings.find("#SusyModifierConfig_PP_TemplateB2_var").after('<div id="c_br2"></div>')
                 if(!GM_config.get('Con_Template')) { f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").hide() }
                 if(!GM_config.get('PP_Template')) { f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").hide() }
+                if(!GM_config.get('Interface_combine')) { f_settings.find("#SusyModifierConfig_Topic_TemplateS1_var,#SusyModifierConfig_Topic_TemplateS2_var,#SusyModifierConfig_Topic_TemplateB1_var,#SusyModifierConfig_Topic_TemplateB2_var").hide() }
                 GM_config.fields.Con_Template.node.addEventListener('change', function(doc){
                     if(f_settings.find("#SusyModifierConfig_field_Con_Template")[0].checked) {
                         f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").show()
@@ -173,6 +179,12 @@
                         f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").show()
                     }
                     else { f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").hide() }
+                });
+                GM_config.fields.Interface_combine.node.addEventListener('change', function(doc){
+                    if(f_settings.find("#SusyModifierConfig_field_Interface_combine")[0].checked) {
+                        f_settings.find("#SusyModifierConfig_Topic_TemplateS1_var,#SusyModifierConfig_Topic_TemplateS2_var,#SusyModifierConfig_Topic_TemplateB1_var,#SusyModifierConfig_Topic_TemplateB2_var").show()
+                    }
+                    else { f_settings.find("#SusyModifierConfig_Topic_TemplateS1_var,#SusyModifierConfig_Topic_TemplateS2_var,#SusyModifierConfig_Topic_TemplateB1_var,#SusyModifierConfig_Topic_TemplateB2_var").hide() }
                 });
                 //隐藏Section
                 if(GM_config.get('Journal') != "Mathematics"){ f_settings.find("#SusyModifierConfig_field_Interface_SME").hide(); }
@@ -188,10 +200,10 @@
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
         #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label,#SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_field_Report_Notes,
-        #SusyModifierConfig_Old_Icon_field_label{width:140px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,
-        #SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;}
-        #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);grid-template-rows:auto auto;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;}
-        #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,#SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3}`
+        #SusyModifierConfig_Old_Icon_field_label{width:140px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label,#SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;}
+        #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;}
+        #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);grid-template-rows:auto auto;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;}
+        #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,#SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3}`
     });
 })();
 
@@ -276,7 +288,7 @@ function onInit() {
             $(".menu [href='/user/manuscript/list/owner']").attr("href",'/user/manuscript/list/owner/my_journal');
             $(".menu [href='/user/manuscript/special_approval_list']").attr("href",'/user/manuscript/special_approval_list/my_journal');
             $(".menu [href='/user/list/editors']").after(" <a href='/user/ebm/contract?form[journal_id]=" + S_J + "'>[R]</a>");
-            $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a>");
+            $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a> <a href='/user/pubpeer_case/list?form[journal_id]=" + S_J + "'>[P]</a>");
         }
         $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC&page_limit=100'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
         $(".menu [href='/special_issue_pending/list']").text("Manage").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC&page_limit=100")
@@ -391,8 +403,14 @@ function onInit() {
     //GE Monthly Report
     if (window.location.href.indexOf("/email/acknowledge/") > -1){try{
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
-        $("#emailTemplates > option:contains('"+GM_config.get('Report_TemplateID')+"')").prop('selected', true);
-        unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
+
+        if (window.location.href.indexOf("guest_editor") > -1){
+            $("#emailTemplates > option:contains('"+GM_config.get('Report_TemplateID')+"')").prop('selected', true);
+            unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
+        } else {
+            $("#emailTemplates > option:contains('Custom')").prop('selected', true);
+            unsafeWindow.$(document.getElementById('emailTemplates')).trigger("change");
+        }
 
         let result = "", headers = {};
         if(GM_config.get('Report_TemplateB2').indexOf("%pp_list%") > -1) {
@@ -433,21 +451,29 @@ function onInit() {
             })
         }
 
-        function init() {let t1 = RegExptest(GM_config.get('Report_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('Report_TemplateS2'))) );
-                         let t2 = RegExptest(GM_config.get('Report_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('Report_TemplateB2'))) );
-                         $("#mailBody").val( $("#mailBody").val().replace("%pp_list%", result.trim()) );
-
-                         $("#maincol").after('<div id="special_issue_note_offcanvas" class="hide-note-offcanvas"></div>');
-                         $.get("/user/notes_of_special_issue/" + $("#special_issue_id").attr("data-special-issue-id"), function(res) {
-                             $('#special_issue_note_offcanvas').html(res.note_html); $('#special_issue_note_offcanvas').removeClass('hide-note-offcanvas');
-                             $('#close-offcanvas-note').parent().click(function(){$("#special_issue_note_offcanvas").toggleClass("hide-note-offcanvas");});
-                             if (GM_config.get('SInote')) {waitForKeyElements(".special-issue-note-box",SidebarSize)};
-                             let OtherEmails = res.note_html.match(/GE Other Emails:(.*?)[\n<]/), Appellation = res.note_html.match(/GEs:(.*?)[\n<]/);
-                             if (OtherEmails) {$("#mailTo").val(OtherEmails[1]); $("#mailTo").focus();}
-                             if (Appellation) {$("#mailBody").val( $("#mailBody").val().replace(/(?<=^Dear ).*/, Appellation[1].trim()+",") )}
-                             $("#mailBody").prop('selectionStart', 0).prop('selectionEnd', 0).focus(); $("#mailTo").focus();
-                         });
-                        }
+        function init() {
+            let GetNoteUrl;
+            if (window.location.href.indexOf("guest_editor") > -1){
+                GetNoteUrl = "/user/notes_of_special_issue/" + $("#special_issue_id").attr("data-special-issue-id");
+                let t1 = RegExptest(GM_config.get('Report_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('Report_TemplateS2'))) );
+                let t2 = RegExptest(GM_config.get('Report_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('Report_TemplateB2'))) );
+                $("#mailBody").val( $("#mailBody").val().replace("%pp_list%", result.trim()) );
+            } else {
+                GetNoteUrl = "/submission/topic/show_notes/" + $("#submission_topic_id").attr("data-topic-id");
+                let t1 = RegExptest(GM_config.get('Topic_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('Topic_TemplateS2'))) );
+                let t2 = RegExptest(GM_config.get('Topic_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('Topic_TemplateB2'))) );
+            }
+            $("#maincol").after('<div id="special_issue_note_offcanvas" class="hide-note-offcanvas"></div>');
+            $.get(GetNoteUrl, function(res) {
+                $('#special_issue_note_offcanvas').html(res.note_html); $('#special_issue_note_offcanvas').removeClass('hide-note-offcanvas');
+                $('#close-offcanvas-note').parent().click(function(){$("#special_issue_note_offcanvas").toggleClass("hide-note-offcanvas");});
+                let OtherEmails = res.note_html.match(/GE Other Emails:(.*?)[\n<]/), Appellation = res.note_html.match(/GEs:(.*?)[\n<]/);
+                if (OtherEmails) {$("#mailTo").val(OtherEmails[1]); $("#mailTo").focus();}
+                if (Appellation) {$("#mailBody").val( $("#mailBody").val().replace(/(?<=^Dear ).*/, Appellation[1].trim()+",") )}
+                $("#mailBody").prop('selectionStart', 0).prop('selectionEnd', 0).focus(); $("#mailTo").focus();
+                waitForKeyElements(".special-issue-note-box",SidebarSize);
+            });
+        }
         waitForText(document.querySelector('#mailSubject'), ' ', init);
 
         $('#mailBody').parent().after(`<div style="flex-direction: column"><div style="flex-direction: row"><a id="undoBtn"><svg width="24" height="24"><path d="M6.4 8H12c3.7 0 6.2 2 6.8 5.1.6 2.7-.4 5.6-2.3 6.8a1 1 0 01-1-1.8c1.1-.6 1.8-2.7
@@ -865,6 +891,7 @@ function onInit() {
                         $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
                         GM_openInTab(url1, false); return;
                     }
+                    console.log(responseDetails.responseText)
                     let $res = $($.parseHTML(responseDetails.responseText));
                     n_closed = $res.find("#filter_fields_si_statuses_Closed").parent().text().match(/\d+/).pop();
                     n_open = $res.find("#filter_fields_si_statuses_Open").parent().text().match(/\d+/).pop();
@@ -876,7 +903,9 @@ function onInit() {
                                                                          "</p><p>The number of pending online SIs in MDPI:" + n_pending +"</p><p>The number of closed SIs in MDPI:"+n_closed+"</p><p>Link: "+url1+"</p>")
                         if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
                     } });
-                } });
+                },
+                onerror: function(error) { console.error('Error Details:', error) }
+            });
 
 
             let date = new Date(), year5=date.getFullYear()-5, year1=date.getFullYear()+1, url2;
