@@ -1,15 +1,18 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       3.5.6
+// @version       4.4.28
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
-// @icon          https://susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-196x196.png
-// @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
-// @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/SusyModifier.user.js
+// @icon64          https://susy.mdpi.com/build/img/design/susy-logo.png
+// @updateURL     https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
+// @downloadURL   https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @match         *://*.mdpi.com/*
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
+// @match         *://www.scilit.net/*
+// @match         *://admin.scilit.net/articles*
+// @match         *://*.mdpi.com/*
 // @match         *://*.google.com/*
 // @match         *://*.google.com.hk/*
 // @match         *://*.google.co.uk/*
@@ -31,11 +34,13 @@
 // @match         *://*.google.com.tw/*
 // @match         *://*.google.co.id/*
 // @match         *://*.google.com.my/*
-// @match         https://chat.openai.com/chat*
-// @require       https://code.jquery.com/jquery-3.6.1.min.js
-// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/chosen.jquery.js
+// @require       https://unpkg.com/jquery@4.0.0-beta/dist/jquery.js
+// @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
+// @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.js
 // @grant         GM_getValue
 // @grant         GM_setValue
+// @grant         GM.getValue
+// @grant         GM.setValue
 // @grant         GM_xmlhttpRequest
 // @grant         GM_openInTab
 // @connect       mdpi.com
@@ -45,78 +50,7 @@
 // @connect       skday.com
 // @connect       pubpeer.com
 // ==/UserScript==
-/* globals jQuery, $ */
-
-function GM_configStruct(){arguments.length&&(GM_configInit(this,arguments),this.onInit())}
-function GM_configInit(config,args){
-    if(void 0===config.fields&&(config.fields={},config.onInit=config.onInit||function(){},config.onOpen=config.onOpen||function(){},config.onSave=config.onSave||function(){},
-                                config.onClose=config.onClose||function(){},config.onReset=config.onReset||function(){},config.isOpen=!1,config.title='User Script Settings',config.css={basic:[
-        "#GM_config * { font-family: arial,tahoma,myriad pro,sans-serif; }","#GM_config { background: #FFF; }","#GM_config input[type='radio'] { margin-right: 8px; }","#GM_config .indent40 { margin-left: 40%; }",
-        "#GM_config .field_label { font-size: 12px; font-weight: bold; margin-right: 6px; }","#GM_config .radio_label { font-size: 12px; }","#GM_config .block { display: block; }","#GM_config .saveclose_buttons { margin: 16px 10px 10px; padding: 2px 12px; }",
-        "#GM_config .reset, #GM_config .reset a, #GM_config_buttons_holder { color: #000; text-align: right; }","#GM_config .config_header { font-size: 20pt; margin: 0; }","#GM_config .config_desc, #GM_config .section_desc, #GM_config .reset { font-size: 9pt; }",
-        "#GM_config .center { text-align: center; }","#GM_config .section_header_holder { margin-top: 8px; }","#GM_config .config_var { margin: 0 0 4px; }","#GM_config .section_header { background: #414141; border: 1px solid #000; color: #FFF;",
-        " font-size: 13pt; margin: 0; }","#GM_config .section_desc { background: #EFEFEF; border: 1px solid #CCC; color: #575757; font-size: 9pt; margin: 0 0 6px; }"].join('\n')+'\n',basicPrefix:"GM_config",stylish:""}),
-       1==args.length&&"string"==typeof args[0].id&&"function"!=typeof args[0].appendChild)var settings=args[0];else {settings={}; for(var arg,i=0,l=args.length;i<l;++i) if("function"!=typeof(arg=args[i]).appendChild)
-        switch(typeof arg){case'object':for(var j in arg){ if("function"!=typeof arg[j]){settings.fields=arg;break;} settings.events||(settings.events={}),settings.events[j]=arg[j]}break;case'function':settings.events={onOpen:arg};break;
-            case'string':/\w+\s*\{\s*\w+\s*:\s*\w+[\s|\S]*\}/.test(arg)?settings.css=arg:settings.title=arg}else settings.frame=arg}
-    if(settings.id?config.id=settings.id:void 0===config.id&&(config.id='GM_config'),settings.title&&(config.title=settings.title),settings.css&&(config.css.stylish=settings.css),settings.frame&&(config.frame=settings.frame),
-       settings.events){var events=settings.events;for(var e in events)config["on"+e.charAt(0).toUpperCase()+e.slice(1)]=events[e]}
-    if(settings.fields){var stored=config.read(),fields=settings.fields,customTypes=settings.types||{},configId=config.id;for(var id in fields){var field=fields[id];field?config.fields[id]=new GM_configField(field,stored[id],id,customTypes[field.type],
-        configId):config.fields[id]&&delete config.fields[id]}} config.id!=config.css.basicPrefix&&(config.css.basic=config.css.basic.replace(new RegExp('#'+config.css.basicPrefix,'gm'),'#'+config.id),config.css.basicPrefix=config.id)}
-function GM_configDefaultValue(type,options){var value;switch(0==type.indexOf('unsigned ')&&(type=type.substring(9)),type){
-    case'radio':case'select':value=options[0];break;case'checkbox':value=!1;break;case'int':case'integer':case'float':case'number':value=0;break;default:value=''}return value}
-function GM_configField(settings,stored,id,customType,configId){this.settings=settings,this.id=id,this.configId=configId,this.node=null,this.wrapper=null,this.save=void 0===settings.save||settings.save,"button"==settings.type&&(this.save=!1),this.default=void 0===
-    settings.default?customType?customType.default:GM_configDefaultValue(settings.type,settings.options):settings.default,this.value=void 0===stored?this.default:stored,customType&&(this.toNode=customType.toNode,this.toValue=customType.toValue,this.reset=customType.reset)}
-GM_configStruct.prototype={
-    init:function(){GM_configInit(this,arguments),this.onInit()},open:function(){var match=document.getElementById(this.id);if(!match||!("IFRAME"==match.tagName||match.childNodes.length>0)){
-        var config=this,defaultStyle="bottom: auto; border: 1px solid #000; display: none; height: 80%; left: 0; margin: 0; max-height: 95%; max-width: 95%; opacity: 0; overflow: auto; padding: 0; position: fixed; right: auto; top: 0; width: 80%; z-index: 9999;";
-        if(this.frame)this.frame.id=this.id,this.frame.setAttribute('style',defaultStyle),buildConfigWin(this.frame,this.frame.ownerDocument.getElementsByTagName('head')[0]);else{document.body.appendChild(this.frame=this.create('iframe',{id:this.id,style:defaultStyle})),
-            this.frame.src='about:blank';var that=this;this.frame.addEventListener('load',(function(e){var frame=config.frame;frame.src&&!frame.contentDocument?frame.src="":frame.contentDocument||that.log("GM_config failed to initialize default settings dialog node!");
-                                                                                                       var body=frame.contentDocument.getElementsByTagName('body')[0];body.id=config.id,buildConfigWin(body,frame.contentDocument.getElementsByTagName('head')[0])}),!1)}
-    } function buildConfigWin(body,head){var create=config.create,fields=config.fields,configId=config.id,bodyWrapper=create('div',{id:configId+'_wrapper'});head.appendChild(create('style',{type:'text/css',textContent:config.css.basic+config.css.stylish})),
-        bodyWrapper.appendChild(create('div',{id:configId+'_header',className:'config_header block center'},config.title));var section=bodyWrapper,secNum=0;for(var id in fields){var field=fields[id],settings=field.settings;settings.section&&(
-        section=bodyWrapper.appendChild(create('div',{className:'section_header_holder',id:configId+'_section_'+secNum})),'[object Array]'!==Object.prototype.toString.call(settings.section)&&(settings.section=[settings.section]),
-        settings.section[0]&&section.appendChild(create('div',{className:'section_header center',id:configId+'_section_header_'+secNum},settings.section[0])),settings.section[1]&&section.appendChild(create('p',
-        {className:'section_desc center',id:configId+'_section_desc_'+secNum},settings.section[1])),++secNum),section.appendChild(field.wrapper=field.toNode())} bodyWrapper.appendChild(create('div',{id:configId+'_buttons_holder'},create('button',{id:configId+'_saveBtn',
-        textContent:'Save',title:'Save settings',className:'saveclose_buttons',onclick:function(){config.save()}}),create('button',{id:configId+'_closeBtn',textContent:'Close',title:'Close window',className:'saveclose_buttons',onclick:function(){config.close()}}),
-        create('div',{className:'reset_holder block'},create('a',{id:configId+'_resetLink',textContent:'Reset to defaults',href:'#',title:'Reset fields to default values',className:'reset',onclick:function(e){e.preventDefault(),config.reset()}})))),
-        body.appendChild(bodyWrapper),config.center(),window.addEventListener('resize',config.center,!1),config.onOpen(config.frame.contentDocument||config.frame.ownerDocument,config.frame.contentWindow||window,config.frame),
-        window.addEventListener('beforeunload',(function(){config.close()}),!1),config.frame.style.display="block",config.isOpen=!0}},
-    save:function(){var forgotten=this.write();this.onSave(forgotten)},close:function(){this.frame.contentDocument?(this.remove(this.frame),this.frame=null):(this.frame.innerHTML="",this.frame.style.display="none");var fields=this.fields;for(var id in fields){
-        var field=fields[id];field.wrapper=null,field.node=null}this.onClose(),this.isOpen=!1},set:function(name,val){this.fields[name].value=val,this.fields[name].node&&this.fields[name].reload()},get:function(name,getLive){var field=this.fields[name],fieldVal=null;
-        return getLive&&field.node&&(fieldVal=field.toValue()),null!=fieldVal?fieldVal:field.value},write:function(store,obj){if(!obj){var values={},forgotten={},fields=this.fields;for(var id in fields){var field=fields[id],value=field.toValue();
-        field.save?null!=value?(values[id]=value,field.value=value):values[id]=field.value:forgotten[id]=value}} try{this.setValue(store||this.id,this.stringify(obj||values))}catch(e){this.log("GM_config failed to save settings!")}return forgotten},read:function(store){
-            try{var rval=this.parser(this.getValue(store||this.id,'{}'))}catch(e){this.log("GM_config failed to read saved settings!");rval={}}return rval},reset:function(){var fields=this.fields;for(var id in fields)fields[id].reset();this.onReset()},
-    create:function(){switch(arguments.length){case 1:var A=document.createTextNode(arguments[0]);break;default:A=document.createElement(arguments[0]);var B=arguments[1];for(var b in B)0==b.indexOf("on")?A.addEventListener(b.substring(2),B[b],!1):-1!=
-        ",style,accesskey,id,name,src,href,which,for".indexOf(","+b.toLowerCase())?A.setAttribute(b,B[b]):A[b]=B[b];if("string"==typeof arguments[2])A.innerHTML=arguments[2];else for(var i=2,len=arguments.length;i<len;++i)A.appendChild(arguments[i])}return A},
-    center:function(){var node=this.frame;if(node){var style=node.style;style.opacity;'none'==style.display&&(style.opacity='0'),style.display='',style.top=Math.floor(window.innerHeight/2-node.offsetHeight/2)+'px',
-        style.left=Math.floor(window.innerWidth/2-node.offsetWidth/2)+'px',style.opacity='1'}},remove:function(el){el&&el.parentNode&&el.parentNode.removeChild(el)}},
-    function(){var setValue,getValue,stringify,parser,isGM='undefined'!=typeof GM_getValue&&void 0!==GM_getValue('a','b');
-               isGM?(setValue=GM_setValue,getValue=GM_getValue,stringify="undefined"==typeof JSON?function(obj){return obj.toSource()}:JSON.stringify,parser="undefined"==typeof JSON?function(jsonData){return new Function('return '+jsonData+';')()}:JSON.parse)
-               :(setValue=function(name,value){return localStorage.setItem(name,value)},getValue=function(name,def){var s=localStorage.getItem(name);return null==s?def:s},stringify=JSON.stringify,parser=JSON.parse),
-                   GM_configStruct.prototype.isGM=isGM,GM_configStruct.prototype.setValue=setValue,GM_configStruct.prototype.getValue=getValue,GM_configStruct.prototype.stringify=stringify,GM_configStruct.prototype.parser=parser,
-                   GM_configStruct.prototype.log=window.console?console.log:isGM&&'undefined'!=typeof GM_log?GM_log:window.opera?opera.postError:function(){/* no logging */}}(),
-    GM_configField.prototype={create:GM_configStruct.prototype.create,toNode:function(){
-        var field=this.settings,value=this.value,options=field.options,type=field.type,id=this.id,configId=this.configId,labelPos=field.labelPos,create=this.create;function addLabel(pos,labelEl,parentNode,beforeEl){switch(beforeEl||(beforeEl=parentNode.firstChild),pos)
-        {case'right':case'below':'below'==pos&&parentNode.appendChild(create('br',{})),parentNode.appendChild(labelEl);break;default:'above'==pos&&parentNode.insertBefore(create('br',{}),beforeEl),parentNode.insertBefore(labelEl,beforeEl)}}
-        var firstProp,retNode=create('div',{className:'config_var',id:configId+'_'+id+'_var',title:field.title||''});for(var i in field){firstProp=i;break} var label=field.label&&"button"!=type?create('label',{id:configId+'_'+id+'_field_label',for:configId+'_field_'+id,
-        className:'field_label'},field.label):null;switch(type){case'textarea':retNode.appendChild(this.node=create('textarea',{innerHTML:value,id:configId+'_field_'+id,className:'block',cols:field.cols?field.cols:20,rows:field.rows?field.rows:2}));break;
-            case'radio':var wrap=create('div',{id:configId+'_field_'+id});this.node=wrap;i=0;for(var len=options.length;i<len;++i){var radLabel=create('label',{className:'radio_label'},options[i]),rad=wrap.appendChild(create('input',{value:options[i],type:'radio',name:id,
-            checked:options[i]==value}));addLabel(!labelPos||'left'!=labelPos&&'right'!=labelPos?'options'==firstProp?'left':'right':labelPos,radLabel,wrap,rad)}retNode.appendChild(wrap);break;
-            case'select':wrap=create('select',{id:configId+'_field_'+id});this.node=wrap;for(i=0,len=options.length;i<len;++i){var option=options[i];wrap.appendChild(create('option',{value:option,selected:option==value},option))}retNode.appendChild(wrap);break;
-            default:var props={id:configId+'_field_'+id,type:type,value:'button'==type?field.label:value};switch(type){case'checkbox':props.checked=value;break;case'button':props.size=field.size?field.size:25,field.script&&(field.click=field.script),
-                field.click&&(props.onclick=field.click);break;case'hidden':break;default:props.type='text',props.size=field.size?field.size:25}retNode.appendChild(this.node=create('input',props))}
-        return label&&(labelPos||(labelPos="label"==firstProp||"radio"==type?"left":"right"),addLabel(labelPos,label,retNode)),retNode},toValue:function(){var node=this.node,field=this.settings,type=field.type,unsigned=!1,rval=null;if(!node) return rval;
-        switch(0==type.indexOf('unsigned ')&&(type=type.substring(9),unsigned=!0),type){case'checkbox':rval=node.checked;break;case'select':rval=node[node.selectedIndex].value;break;case'radio':for(var radios=node.getElementsByTagName('input'),i=0,len=radios.length;i<len;
-        ++i)radios[i].checked&&(rval=radios[i].value);break;case'button':break;case'int':case'integer':case'float':case'number':var num=Number(node.value),warn='Field labeled "'+field.label+'" expects a'+(unsigned?' positive ':'n ')+'integer value';if(isNaN(num)||
-        'int'==type.substr(0,3)&&Math.ceil(num)!=Math.floor(num)||unsigned&&num<0)return alert(warn+'.'),null;if(!this._checkNumberRange(num,warn))return null;rval=num;break;default:rval=node.value}return rval;},reset:function(){var node=this.node,type=this.settings.type;
-        if(node)switch(type){case'checkbox':node.checked=this.default;break;
-            case'select':for(var i=0,len=node.options.length;i<len;++i)node.options[i].textContent==this.default&&(node.selectedIndex=i);break;
-            case'radio':var radios=node.getElementsByTagName('input');for(i=0,len=radios.length;i<len;++i)radios[i].value==this.default&&(radios[i].checked=!0);break;case'button':break;
-            default:node.value=this.default}},remove:function(el){GM_configStruct.prototype.remove(el||this.wrapper),this.wrapper=null,this.node=null},reload:function(){var wrapper=this.wrapper;wrapper&&(wrapper.parentNode.insertBefore(this.wrapper=this.toNode(),wrapper),
-            this.remove(wrapper))},_checkNumberRange:function(num,warn){
-                var field=this.settings;return"number"==typeof field.min&&num<field.min?(alert(warn+' greater than or equal to '+field.min+'.'),null):!("number"==typeof field.max&&num>field.max)||(alert(warn+' less than or equal to '+field.max+'.'),null)}};
-var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_config/blob/master/gm_config.js
+/* globals jQuery, $, GM_config */
 
 (function() {
     'use strict'; console.time("test");
@@ -124,14 +58,9 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         'id': 'SusyModifierConfig',
         'title': 'Settings of SusyModifier v'+GM_info.script.version,
         'fields':  {
-            'Interface_sidebar': {'section': [],'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Interface_SME': {'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
-                              ['','Algebra and Geometry','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
-                               'Fuzzy Set Theory','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics Theory'], 'default': ''},
-            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Children','Games','Mathematics','None'], 'default': 'Mathematics'},
-            'Interface_combine': {'label': 'Topic Manuscripts整合到SI', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Manuscriptnote': {'section': [],'label': 'Manuscript Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'ManuscriptFunc': {'label': '快捷申请优惠券和发送推广信按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Manuscriptnote': {'section': [GM_config.create('Function Modification'),'Manuscript Pages'],'label': 'Manuscript Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Assign_Assistant': {'label': '派稿助手', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'ManuscriptFunc': {'label': '申请优惠券和发推广信', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Template_Linkedin': {'label': 'LinkedIn推广信模板', 'type': 'textarea', 'default':
                                   `Dear Authors,\n\nHope this email finds you well. Your manuscript %m_id% is promoted by the Mathematics "%m_section%" Section LinkedIn account. Welcome to like, share, send and comment on it.\n\n`
                                   +`Find us and receive more information in the section "%m_section%" of Mathematics:\n[Links]\n\nPlease do not hesitate to let us know if you have questions.`},
@@ -141,15 +70,15 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                                +`attention. Therefore, could you please promote the paper/papers to your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\nIn addition, you have published a paper/`
                                +`papers in /Mathematics/ in 20XX with the citation of XXXXX times, congratulations on your great work!\nTo encourage open scientific discussions and increase the visibility of your results, could you please promote the paper/papers to `
                                +`your colleagues, friends, or related scholars by sharing the paper using the button on the right sidebar of the article page?\n\n1. [paper link]\n2. [paper link]\n\nThank you in advance for your support.`},
-            'SInote': {'section': [], 'label': 'Special Issue Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'SInote': {'section': [,'Special Issue Pages'], 'label': 'Special Issue Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'SIpages': {'label': '特刊列表免翻页', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Regular_Color': {'label': '稿件列表标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Maths_J': {'label': 'Scopus/GS 标记 Maths 相关期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'LinkShort': {'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
                               ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)','Guest Editor Invitation-Why a Special Issue',
                                '*Guest Editor - SI Mentor Program'], default: 'Guest Editor - Invite Free'},
             'GE_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*Mathematics.*Guest Editor"},
-            'GE_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.592, Rank Q1) Invitation to Serve as the Guest Editor"},
+            'GE_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation to Serve as the Guest Editor"},
             'GE_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderID': {'section': [], 'label': '默认 GE Reminder Template', 'type': 'select', 'labelPos': 'left', 'options':
@@ -160,12 +89,12 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             'GE_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_TemplateID': {'section': [], 'label': '默认 EB Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Editorial Board Member – Invite Version 1']},
             'EB_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation"},
-            'EB_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.592, Rank Q1) Invitation"},
+            'EB_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation"},
             'EB_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_ReminderID': {'section': [], 'label': '默认 EB Reminder Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Editorial Board Member – Reminder']},
             'EB_ReminderS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation"},
-            'EB_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (IF: 2.592, Rank Q1) Invitation"},
+            'EB_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation"},
             'EB_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'Report_TemplateID': {'section': [], 'label': '默认 GE Contact', 'type': 'select', 'labelPos': 'left', default: 'Monthly Report', 'options':
@@ -174,13 +103,14 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                                    'Encourage And Motivate GE To Solicit Papers Template 2','Encourage And Motivate GE To Solicit Papers Template 3','Mailing List Check','Mailing List Check Reminder','Guide GE To Manage SI Template 1','Guide GE To Manage SI Template 2',
                                    'Conference Inquiry','Slide','Some Tips','Review Paper Invitation','Happy Thanksgiving Day','Merry Christmas','FP Reminder One Month Before The Deadline Template 1','FP Reminder One Month Before The Deadline Template 2',
                                    'Extend The Deadline','Editorial – SI Closed','Book Online','Check Abstract','Monthly Report','IF Increased','Journal Awards','First Publication']},
+            'Report_Notes': {'label': '', 'labelPos': 'left', 'type': 'text', 'default': "月报"},
             'Report_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=] )\\(.* – monthly report"},
             'Report_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () {\n let $si_name = $('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();\n`
                                   + ` return \`Monthly Report (\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – Special Issue: \${$si_name}\`;\n}`},
             'Report_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=Dear[\\s\\S]*?,\\n\\n)I hope this finds you well. I have included,[\\S\\s]*Kind regards,"},
             'Report_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (){\n let $si_name=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();`
                                   + ` let $si_link=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().children().attr("href").replace(/journal\\/(.*)\\/special_issues/,"si/$1");`
-                                  + ` let $arr=$('div.cell.small-12.medium-6.large-2:contains("Manuscripts(")').next().text().split("/");\n let $process=$arr[0].trim(),$pub=$arr[1].trim(),$reject=$arr[2].trim(),$instruct;`
+                                  + ` let $arr=$('div.cell.small-12.medium-6.large-2:contains("Manuscripts(")').first().next().text().split("/");\n let $process=$arr[0].trim(),$pub=$arr[1].trim(),$reject=$arr[2].trim(),$instruct;`
                                   + ` if ($process+$pub+$reject>0) {$instruct="You can view all manuscripts submitted to the Special Issue by logging in with your email at the link provided. Please note that your own submissions will not be visible.`
                                   + `\\nhttps://susy.mdpi.com/academic-editor/special_issues"} else {$instruct="This is a new Special Issue and hasn't received submissions yet."} return \`I am writing to update you on the status of our Special Issue "\${$si_name}".\n`
                                   + `\${$si_link}\n\n1. Status of Submissions\n\nPublished: \${$pub}; Under Processing: \${$process}; Rejected: \${$reject}\n\n\${$instruct}\n\n2. Status of Planned Papers\n\nSeveral authors have committed to contributing feature papers`
@@ -190,22 +120,37 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             'PP_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'PP_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'PP_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
-                              "[Regex]A few months ago[\\s\\S]*submit to the special issue (.*?)\\.[\\s\\S]*(https:\\/\\/www.mdpi.com\\/journal\\/mathematics\\/special_issues.*)[\\s\\S]*Kind regards,"},
+                              "[Regex]A few months ago[\\s\\S]*submit to the Special Issue (.*?)\\.[\\s\\S]*(https:\\/\\/www.mdpi.com\\/journal\\/mathematics\\/special_issues.*)[\\s\\S]*Kind regards,"},
             'PP_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': 'A few months ago, you expressed interest in submitting a paper to our special issue "$1". We would be grateful to have the opportunity to receive it.\n\n$2\n\n'
-                              + 'Please note that you will be offered a XX% discount on the Article Processing Charge by the guest editors if your paper is accepted for publication.To take advantage of the discount, we strongly encourage you to submit your'
+                              + 'Please note that you will be offered a XX% discount on the Article Processing Charge by the guest editors if your paper is accepted for publication. To take advantage of the discount, we strongly encourage you to submit your'
                               + ' manuscript by the deadline if possible.\n\nWe look forward to receiving your submission and thank you for your interest in our special issue.\n\nKind regards,'},
-            'LinkShort': {'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Assign_Assistant': {'label': '派稿助手', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Hidden_Func': {'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
-            'Con_Template': {'section': [], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Interface_combine': {'label': 'Topic Manuscripts整合SI', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Topic_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*"},
+            'Topic_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () { let $topic_name= $('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().text().trim(); return \`[MDPI Topics] Monthly Report `
+                                 + `(\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – \${$topic_name}\`; }`},
+            'Topic_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ''},
+            'Topic_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ''},
+
+            'Con_Template': {'section': [,"Conference Pages"], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Con_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
-            'Con_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390, IF 2.592)"},
+            'Con_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
             'Con_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex] and within the journal newsletter.* website and newsletter."},
             'Con_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website."},
+
+            'Interface_SME': {'section': [GM_config.create('Interface Modification')],'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
+                              ['','Algebra, Geometry and Topology','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
+                               'Fuzzy Sets, Systems and Decision Making','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics'], 'default': ''},
+            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Children','Games','Mathematics','Risks','Geometry','None'], 'default': 'Mathematics'},
+            'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
+            'MathBatch': {'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function() {window.location.href="https://skday.eu.org/math.html"}},
+            'Interface_sidebar': {'section': [], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Old_Icon': {'label': '使用旧图标', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Regular_Color': {'label': '橙色标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Maths_J': {'label': 'Scopus标记Maths期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Hidden_Func': {'section': [], 'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
         },
         'events': {
-            'save': function() {location.href = location.href},
+            'save': function() {location.reload();},
             'open': function(doc) {
                 var f_settings = $("#SusyModifierConfig").contents();
                 //Experimental警告
@@ -222,6 +167,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                 f_settings.find("#SusyModifierConfig_PP_TemplateB2_var").after('<div id="c_br2"></div>')
                 if(!GM_config.get('Con_Template')) { f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").hide() }
                 if(!GM_config.get('PP_Template')) { f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").hide() }
+                if(!GM_config.get('Interface_combine')) { f_settings.find("#SusyModifierConfig_Topic_TemplateS1_var,#SusyModifierConfig_Topic_TemplateS2_var,#SusyModifierConfig_Topic_TemplateB1_var,#SusyModifierConfig_Topic_TemplateB2_var").hide() }
                 GM_config.fields.Con_Template.node.addEventListener('change', function(doc){
                     if(f_settings.find("#SusyModifierConfig_field_Con_Template")[0].checked) {
                         f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").show()
@@ -234,6 +180,12 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                     }
                     else { f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").hide() }
                 });
+                GM_config.fields.Interface_combine.node.addEventListener('change', function(doc){
+                    if(f_settings.find("#SusyModifierConfig_field_Interface_combine")[0].checked) {
+                        f_settings.find("#SusyModifierConfig_Topic_TemplateS1_var,#SusyModifierConfig_Topic_TemplateS2_var,#SusyModifierConfig_Topic_TemplateB1_var,#SusyModifierConfig_Topic_TemplateB2_var").show()
+                    }
+                    else { f_settings.find("#SusyModifierConfig_Topic_TemplateS1_var,#SusyModifierConfig_Topic_TemplateS2_var,#SusyModifierConfig_Topic_TemplateB1_var,#SusyModifierConfig_Topic_TemplateB2_var").hide() }
+                });
                 //隐藏Section
                 if(GM_config.get('Journal') != "Mathematics"){ f_settings.find("#SusyModifierConfig_field_Interface_SME").hide(); }
                 GM_config.fields.Journal.node.addEventListener('change', function(doc){
@@ -243,25 +195,48 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                     else { f_settings.find("#SusyModifierConfig_field_Interface_SME").hide() }
                 });
             },
+            'init': onInit,
         },
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
-        #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label{width:140px;display:inline-block;} #SusyModifierConfig_ManuscriptFunc_field_label
-        {width:200px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,
-        #SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;}`
+        #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label,#SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_field_Report_Notes,
+        #SusyModifierConfig_Old_Icon_field_label{width:140px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label,#SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;}
+        #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;}
+        #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);grid-template-rows:auto auto;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;}
+        #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,#SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3}`
     });
+})();
+
+
+function onInit() {
     const date_v = new Date('202'+GM_info.script.version);
-    if ((Date.now() - date_v)/86400000 > 180) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
-    else {$("#topmenu > ul").append("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});}
+    if ((Date.now() - date_v)/86400000 > 75) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
+    else {
+        $("#topmenu > ul").append("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
+
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'q') {
+                e.preventDefault();
+                sf();
+            }
+        })
+    }
 
     var S_J, S_S;
     switch (GM_config.get('Journal')) {
         case 'Mathematics': S_J=154; break;
         case 'Children': S_J=159; break;
+        case 'Risks': S_J=162; break;
         case 'AppliedMath': S_J=517; break;
+        case 'Geometry': S_J=599; break;
         case 'Games': S_J=25; break;
         case 'None': S_J=-1; break;
     }
+
+    function decode(input) {const decoded = atob(input);return decoded.slice(3, -3);}
+    var userNamesEncoded = ["YWJjc3luYS5tdXh5eg==", "YWJjc3VzaWUuaHVhbmd4eXo=", "YWJjaGVsZW5lLmh1eHl6", "YWJjbGlubi5saXh5eg==", "YWJjZGViYnkucGVuZ3h5eg==", "YWJjZ2xhZHlzLmxpeHl6", "YWJjY29ubmVsbHkueWFuZ3h5eg==", "YWJjdGlmZmFueS5saXh5eg==", "YWJjbGlsaWEuZGluZ3h5eg==",
+                            "YWJjaW5uYS5odWFuZ3h5eg==", "YWJjY2FzcGVyLnhpZXh5eg==", "YWJjZGFuaWVsLmRhbnh5eg==", "YWJjZWlsZWVuLnpoYW5neHl6", "YWJjZWRlbi54aWF4eXo="];
+    var userNames = userNamesEncoded.map(decode);
 
     //susy侧边栏的按钮🔎
     if (window.location.href.indexOf("susy.mdpi.com/")>-1 && GM_config.get('Interface_sidebar') && $('#leftcol').length){try{
@@ -275,19 +250,19 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
         S_S=-1;
         if (S_J==154) {switch (GM_config.get('Interface_SME')) {
-            case 'Algebra and Geometry': S_S=915; break;
+            case 'Algebra, Geometry and Topology': S_S=915; break;
             case 'Computational and Applied Mathematics': S_S=892; break;
             case 'Difference and Differential Equations': S_S=894; break;
             case 'Dynamical Systems': S_S=891; break;
             case 'Engineering Mathematics': S_S=544; break;
             case 'Financial Mathematics': S_S=895; break;
             case 'Functional Interpolation': S_S=1671; break;
-            case 'Fuzzy Set Theory': S_S=893; break;
+            case 'Fuzzy Sets, Systems and Decision Making': S_S=893; break;
             case 'Mathematical Biology': S_S=545; break;
             case 'Mathematical Physics': S_S=896; break;
             case 'Mathematics and Computer Science': S_S=555; break;
             case 'Network Science': S_S=557; break;
-            case 'Probability and Statistics Theory': S_S=916; break;
+            case 'Probability and Statistics': S_S=916; break;
         }}
 
         if (S_S>0 && S_J>0){
@@ -306,56 +281,31 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             $(".menu [href='/user/manage/awards_item']").attr("href","/user/manage/awards_item?form[journal_id]=" + S_J);
             $(".menu [href='/si/proposal/list']").attr("href","/si/proposal/list?form[journal_id]=" + S_J);
             $(".menu [href='/list/list_volunteer_reviewers']").attr("href","/list/list_volunteer_reviewers?form[journal_id]=" + S_J);
-            $(".menu [href='/tap/list']").attr("href","/tap/list?form[journal_id]=" + S_J);
+            $(".menu [href='/tap/list']").after("<a href='/tap/list/pending/my_journals?form[journal_id]=" + S_J + "'> [J</a>");
             $(".menu [href='/topic/proposal/list']").attr("href","/topic/proposal/list?form[journal_id]=" + S_J);
             $(".menu [href='/user/conference/list']").attr("href","/user/conference/list?form[subject_id]=4");
             $(".menu [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
             $(".menu [href='/user/manuscript/list/owner']").attr("href",'/user/manuscript/list/owner/my_journal');
             $(".menu [href='/user/manuscript/special_approval_list']").attr("href",'/user/manuscript/special_approval_list/my_journal');
             $(".menu [href='/user/list/editors']").after(" <a href='/user/ebm/contract?form[journal_id]=" + S_J + "'>[R]</a>");
+            $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a> <a href='/user/pubpeer_case/list?form[journal_id]=" + S_J + "'>[P]</a>");
         }
-        $(".menu [href='/user/myprofile']").after(" <a href='/user/settings'>[Settings]</a>");
-        $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
-        $(".menu [href='/special_issue_pending/list']").text("Manage").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC")
+        $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC&page_limit=100'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
+        $(".menu [href='/special_issue_pending/list']").text("Manage").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC&page_limit=100")
         $(".menu [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[M]</a>");
         $(".menu [href='/submission/topic/list']").attr("href","/submission/topic/list/online");
-        $(".menu [href='/user/ebm-new/management']").after("<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='/bundles/mdpisusy/img/icon/magnifier.png'></a> </div> ");
+        $(".menu [href='/planned_paper/my/list']").after(" <a href='/planned_paper/my/list?form[submission_topic_id]=-1&form[special_issue_id]=-1'>[R]</a>");
+        $(".menu [href='/user/ebm-new/management']").after(`<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='${icon_magnifier}'></a> </div> `);
 
-        if (GM_config.get('Assign_Assistant')) {
-            $("body").append( `<div id='add_r' role='dialog' style='display: none; position: absolute; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
-        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Open Batch Urls, IDs & Emails</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
-        onclick='document.getElementById("add_r").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_r_t" class="manuscript-add-note-form"
-        placeholder="Example:\nmathematics-11111111\nmathematics-2222222\n\nhttps://www.scopus.com/detail.uri?authorId=333\nhttps://scholar.google.com/citations?user=444\n\naaa@aaa.edu\nbbb@bbb.edu"
-        minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_r_b" class="submit">Submit</button></div></div>`);
-            $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a onclick='$("#add_r").show(); $("#add_r").draggable({handle: "#mover"});'><img src='/bundles/mdpisusy/img/icon/users.png'></a></div>`);
-            $("#add_r_b").click(function (){
-                var textContent = $("#add_r_t").val();
-                var urlRegex = /(https?:\/\/[^\s]+)/g;
-                var emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
-                var digitRegex = /(?<!\d)(\d{6,7})(?!\d)/g;
-                // 查找网址
-                var urls = textContent.match(urlRegex) || [];
-                urls.forEach(function (url) {window.open(url, '_blank')});
-                textContent = textContent.replace(urlRegex, ''); // 移除已找到的网址
-                // 查找邮箱
-                var emails = textContent.match(emailRegex) || [];
-                emails.forEach(function (email) {window.open('https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=' + email, '_blank')});
-                textContent = textContent.replace(emailRegex, '');
-                // 查找连续的6位或7位数字
-                var digits = textContent.match(digitRegex) || [];
-                digits.forEach(function (digit) {window.open('https://susy.mdpi.com/ajax/submission_get_manuscripts?term=' + digit, '_blank')});
-
-                // let myArray, add_id, rdline = $("#add_r_t").val().split("\n");
-                // for (var i=0; i < rdline.length; i++){
-                //     if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
-                //     if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/ajax/submission_get_manuscripts?term="+add_id+"&r="+myArray[0], false)}
-                // }
-            })
-        }
+        $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_webs}'></a></div>`); $("#sf_b").click(sf)
 
         $(".menu [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=" + S_J);
         $(".menu [href='/manuscript/quality/check/list']").attr("href",'/manuscript/quality/check/list?form[journal_id]=' + S_J);
         $("#owner").click(function(){ $.getJSON("/user/ajax/search_manuscript_owner?term="+$("#topmenu span:contains('@mdpi.com')").text(), function(data){window.location.href ='/user/managing/status/submitted?form[owner_id]=' + data[0].value}); });
+
+        if (GM_config.get('Assign_Assistant')) { //派稿助手
+            $(".menu [href='/user/manage/crosscheck']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").click(sk_susie);
+        }
     } catch (error){ }}
 
     //SI和Topic Manuscripts整合
@@ -425,7 +375,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                         }
         waitForText(document.querySelector('#mailSubject'), ' ', init);
 
-        $('#mailSubject').parent().after('<a id="Awaiting"><img src="/bundles/mdpisusy/img/icon/pencil.png"></a>');
+        $('#mailSubject').parent().after(`<a id="Awaiting"><img src="${icon_pencil}"></a>`);
         $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
         $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
     } catch (error){ }}
@@ -453,48 +403,77 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
     //GE Monthly Report
     if (window.location.href.indexOf("/email/acknowledge/") > -1){try{
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
-        $("#emailTemplates > option:contains('"+GM_config.get('Report_TemplateID')+"')").prop('selected', true);
-        unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
 
-        let result = "";
-        if(GM_config.get('Report_TemplateB2').indexOf("%pp_list%") > -1) {
-            let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id"), false); xhr.send();
-            let $form = $($.parseHTML(xhr.responseText)).find('#special-issue-planned-papers-form');
-            $form.find('tbody tr').each(function() {
-                let $td = $(this).find('td'), email = $td.eq(0).text().trim(), status = $td.eq(1).text().trim(), invitedByGE = $td.eq(2).text().trim(),
-                    discount = parseFloat($td.eq(3).text().trim().replace(/ /g, '').replace(/CHF/g, '')), agreedDate = new Date($td.eq(5).text().trim());
-                if (status === "Title Provided" || status === "Agreed") { counter++;
-                    if (invitedByGE === "Yes" && discount > 0) {
-                        let discountRatio = 0;
-                        switch (agreedDate.getFullYear()) {
-                            case 2021: discountRatio = discount / 1600; break;
-                            case 2022: discountRatio = discount / 1800; break;
-                            case 2023: if(agreedDate.getMonth() < 6) {discountRatio = discount / 2100} else {discountRatio = discount / 2600}; break;
-                            default: discountRatio = 8;
-                        }
-                        result += `(${counter}) ${email} (${(discountRatio * 100).toFixed(0)}% discount)\n`;
-                    } else {
-                        result += `(${counter}) ${email}\n`;
-                    }
-                }
-            });
+        if (window.location.href.indexOf("guest_editor") > -1){
+            $("#emailTemplates > option:contains('"+GM_config.get('Report_TemplateID')+"')").prop('selected', true);
+            unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
+        } else {
+            $("#emailTemplates > option:contains('Custom')").prop('selected', true);
+            unsafeWindow.$(document.getElementById('emailTemplates')).trigger("change");
         }
 
-        function init() {let t1 = RegExptest(GM_config.get('Report_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('Report_TemplateS2'))) );
-                         let t2 = RegExptest(GM_config.get('Report_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('Report_TemplateB2'))) );
-                         $("#mailBody").val( $("#mailBody").val().replace("%pp_list%", result.trim()) );
+        let result = "", headers = {};
+        if(GM_config.get('Report_TemplateB2').indexOf("%pp_list%") > -1) {
+            let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id"), false); xhr.send();
+            let $form = $($.parseHTML(xhr.responseText)).find('#single-planned-paper-form');
+            let emailIndex=1, statusIndex=2, sourceIndex=3, discountIndex=4, agreedDateIndex=6;
+            $form.find('table').each(function(index) {
+                $(this).find('thead th').each(function(index) {
+                    let text = $(this).text().trim();
+                    if (text.indexOf("Email")>-1) {emailIndex = index};
+                    if (text == "Status") {statusIndex = index};
+                    if (text == "Source") {sourceIndex = index};
+                    if (text == "Discount") {discountIndex = index};
+                    if (text == "Agreed Date" || text == "Decision Date") {agreedDateIndex = index};
+                });
 
-                         $("#maincol").after('<div id="special_issue_note_offcanvas" class="hide-note-offcanvas"></div>');
-                         $.get("/user/notes_of_special_issue/" + $("#special_issue_id").attr("data-special-issue-id"), function(res) {
-                             $('#special_issue_note_offcanvas').html(res.note_html); $('#special_issue_note_offcanvas').removeClass('hide-note-offcanvas');
-                             $('#close-offcanvas-note').parent().click(function(){$("#special_issue_note_offcanvas").toggleClass("hide-note-offcanvas");});
-                             if (GM_config.get('SInote')) {waitForKeyElements(".special-issue-note-box",SidebarSize)};
-                             let OtherEmails = res.note_html.match(/GE Other Emails:(.*?)[\n<]/), Appellation = res.note_html.match(/GEs:(.*?)[\n<]/);
-                             if (OtherEmails) {$("#mailTo").val(OtherEmails[1]); $("#mailTo").focus();}
-                             if (Appellation) {$("#mailBody").val( $("#mailBody").val().replace(/(?<=^Dear ).*/, Appellation[1].trim()+",") )}
-                             $("#mailBody").prop('selectionStart', 0).prop('selectionEnd', 0).focus(); $("#mailTo").focus();
-                         });
+                $(this).find('tbody tr').each(function() {
+                    let $td = $(this).find('td'), email = $td.eq(emailIndex).text().trim(), status = $td.eq(statusIndex).text().trim(), invitedByGE = $td.eq(sourceIndex).text().trim(),
+                        discount = parseFloat($td.eq(discountIndex).text().trim().replace(/ /g, '').replace(/CHF/g, '')), agreedDate = new Date($td.eq(agreedDateIndex).text().trim());
+                    console.log(email); console.log(status); console.log(invitedByGE); console.log(discount);
+                    if (status === "Title Provided" || status === "Agreed" || status === "Approved") {
+                        counter++;
+                        if (invitedByGE.indexOf("by GE") > -1 && discount > 0) {
+                            let discountRatio = 0;
+                            switch (agreedDate.getFullYear()) {
+                                case 2021: discountRatio = discount / 1600; break;
+                                case 2022: discountRatio = discount / 1800; break;
+                                case 2023: if(agreedDate.getMonth() < 6) {discountRatio = discount / 2100} else {discountRatio = discount / 2600}; break;
+                                case 2024: discountRatio = discount / 2600; break;
+                                default: discountRatio = 8;
+                            }
+                            result += `(${counter}) ${email} (${(discountRatio * 100).toFixed(0)}% discount)\n`;
+                        } else {
+                            result += `(${counter}) ${email}\n`;
                         }
+                    }
+                });
+            })
+        }
+
+        function init() {
+            let GetNoteUrl;
+            if (window.location.href.indexOf("guest_editor") > -1){
+                GetNoteUrl = "/user/notes_of_special_issue/" + $("#special_issue_id").attr("data-special-issue-id");
+                let t1 = RegExptest(GM_config.get('Report_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('Report_TemplateS2'))) );
+                let t2 = RegExptest(GM_config.get('Report_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('Report_TemplateB2'))) );
+                $("#mailBody").val( $("#mailBody").val().replace("%pp_list%", result.trim()) );
+            } else {
+                GetNoteUrl = "/submission/topic/show_notes/" + $("#submission_topic_id").attr("data-topic-id");
+                let t1 = RegExptest(GM_config.get('Topic_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('Topic_TemplateS2'))) );
+                let t2 = RegExptest(GM_config.get('Topic_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('Topic_TemplateB2'))) );
+            }
+            $("#maincol").after('<div id="special_issue_note_offcanvas" class="hide-note-offcanvas"></div>');
+            $.get(GetNoteUrl, function(res) {
+                $('#special_issue_note_offcanvas').html(res.note_html); $('#special_issue_note_offcanvas').removeClass('hide-note-offcanvas');
+                $('#close-offcanvas-note').parent().click(function(){$("#special_issue_note_offcanvas").toggleClass("hide-note-offcanvas");});
+                let OtherEmails = res.note_html.match(/GE Other Emails:(.*?)[\n<]/), Appellation = res.note_html.match(/GEs:(.*?)[\n<]/);
+                if (OtherEmails) {$("#mailTo").val(OtherEmails[1]); $("#mailTo").focus();}
+                if (Appellation) {$("#mailBody").val( $("#mailBody").val().replace(/(?<=^Dear ).*/, Appellation[1].trim()+",") )}
+                $("#mailBody").prop('selectionStart', 0).prop('selectionEnd', 0).focus(); $("#mailTo").focus();
+                waitForKeyElements(".special-issue-note-box",SidebarSize);
+            });
+        }
         waitForText(document.querySelector('#mailSubject'), ' ', init);
 
         $('#mailBody').parent().after(`<div style="flex-direction: column"><div style="flex-direction: row"><a id="undoBtn"><svg width="24" height="24"><path d="M6.4 8H12c3.7 0 6.2 2 6.8 5.1.6 2.7-.4 5.6-2.3 6.8a1 1 0 01-1-1.8c1.1-.6 1.8-2.7
@@ -555,7 +534,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $('#redoBtn').click(function() { if (redoStack.length > 0) {undoStack.push($('#mailBody').val()); $('#mailBody').val(redoStack.pop());
                                                                     $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('redo');} });
 
-        $("#addAttachment").after(` <input type="text" id="addnote" value="月报" style="width: 150px; display:inline-block">`); // $("#sendingEmail").after(`<a class="submit" type="button" id="SKsendingEmail">Send email</a>`).hide();
+        $("#addAttachment").after(` <input type="text" id="addnote" value="${GM_config.get('Report_Notes')}" style="width: 150px; display:inline-block">`); // $("#sendingEmail").after(`<a class="submit" type="button" id="SKsendingEmail">Send email</a>`).hide();
         $("#sendingCustomEmail").click(function(){
             if ($("#addnote").val().length) {
                 $("div.click-to-edit-manuscript").last().click();
@@ -563,7 +542,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                 let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear().toString().slice(-2);
                 let today = yy + '-' + mm + '-' + dd;
                 $textarea.val($textarea.val().replace(/(GE contact:\s*)/, "$1" + today + " " + $("#addnote").val() + " / "));
-                waitForKeyElements("button[data-url*='/user/edit/si_follow_up_notes/']",function(){$("button[data-url*='/user/edit/si_follow_up_notes/']").click()});
+                waitForKeyElements("button[data-url*='/user/edit/si_morph_notes/']",function(){$("button[data-url*='/user/edit/si_morph_notes/']").last().click()});
             }
         });
     } catch (error){ }}
@@ -581,8 +560,8 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
             $("table [title|='Google Scholar']").each(function( index ) {
                 name[index] = $(this).parent().prev().text().trim() + " " + $(this).parent().children("b").first().text().trim();
                 email[index] = $(this).parent().next().text().trim();
-                $(this).before('<a href="mailto:'+email[index]+'?subject=['+ m_journal +'] (IF 2.592, ISSN 2227-7390) Promote Your Published Papers&body=' +
-                               GM_config.get('Template_Paper').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section).replace(/%name%/g,name[index]) + '"><img src="/bundles/mdpisusy/img/icon/mail.png"></a> ');
+                $(this).before('<a href="mailto:'+email[index]+'?subject=['+ m_journal +'] (ISSN 2227-7390) Promote Your Published Papers&body=' +
+                               GM_config.get('Template_Paper').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section).replace(/%name%/g,name[index]) + `"><img src=${icon_mail}></a> `);
             });
 
             $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=['+ m_journal +'] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Social Media&body=' + GM_config.get('Template_Linkedin')
@@ -632,11 +611,15 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                 GM_xmlhttpRequest({
                     method: "GET", url: 'https://pubpeer.com/api/search?q=authors%3A%22'+pubpeer_name+'%22',
                     onload: function(response) {
-                        let pub_num = $.parseJSON(response.responseText).meta.total;
+                        let pub_num = JSON.parse(response.responseText).meta.total;
                         $link.append("["+pub_num+"]");
                         if(pub_num > 0) {$link.css('background-color', 'gold');}
                     }
                 });
+
+                let firstName = $link.parent().contents().filter(function() {return this.nodeType === 3;}).first().text().trim();
+                let lastName = $link.parent().find('b').first().text().trim();
+                $(this).before(` <a href="//www.scopus.com/results/authorNamesList.uri?st2=${firstName}&st1=${lastName}" title="Scopus" target="_blank" rel="noopener noreferrer"><img src=${icon_scopus}></a> `);
             });
         }
 
@@ -668,10 +651,10 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
     } catch (error){ }}
 
     //特刊列表免翻页⚙️
-    if (window.location.href.indexOf(".mdpi.com/special_issue_pending/list") > -1 && window.location.href.indexOf("page=") == -1){try{
+    if (window.location.href.indexOf(".mdpi.com/special_issue_pending/list") > -1 && !window.location.href.match(/page=(?!1\b)[0-9]+/)){try{
         if(GM_config.get('SInote')) { waitForKeyElements(".special-issue-note-box",SidebarSize);}
         if(GM_config.get('SIpages')){
-            let maxpage = 20, totalpage = Math.min(maxpage,parseInt($('li:contains("Next")').prev().text())), counter, Placeholder="";
+            let maxpage = 10, totalpage = Math.min(maxpage,parseInt($('li:contains("Next")').first().prev().text())), counter, Placeholder="";
             for (counter = 2; counter<=Math.min(maxpage,totalpage); counter++) {
                 let i = counter;
                 $('#maincol >>> table').parent().append("<table cellspacing=0 cellpadding=0 id='statustable" + i + "'></table>")
@@ -692,14 +675,27 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
     //特刊页面➕按钮、Note
     if (window.location.href.indexOf(".mdpi.com/submission/topic/view")+window.location.href.indexOf(".mdpi.com/special_issue/process") > -2){try{
+        if (window.location.href.indexOf("?pagesection=AddGuestEditor") > -1 && GM_config.get('Hidden_Func')){
+            if ($("#guestNextBtn").length === 0) {
+                $("#form_email").after(`<input id="process-special-issue-guest-editor" type="submit" value="Force Add (Info must be pre-filled)" class="submit is-psme-assessment">`)
+            }
+        }
+
         if (GM_config.get('SInote')) {waitForKeyElements(".special-issue-note-box",SidebarSize)}
         if ($("a:contains('Edit at backend')").length) {$('#si-update-emphasized').parent().children("a").first().attr("href", $("a:contains('Edit at backend')").attr("href").replace(/.*\//,"https://mdpi.com/si/") )};
-        $('#si-update-emphasized').before('<a href="?pagesection=AddGuestEditor" title="Add Guest Editor"><img border="0" src="/bundles/mdpisusy/img/icon/plus.png"></a> ');
+        $('#si-update-emphasized').before(`<a href="?pagesection=AddGuestEditor" title="Add Guest Editor"><img border="0" src="${icon_plus}"></a> `);
+        $("a:contains('SI manuscripts')").after(" <a href=" + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/academic-editor/special_issues/process/") + ">[AcE Interface]</a>");
         $("[for='form_name_system']").append(` <a onclick="$('#form_name_system').prop('readonly', false)">[Edit]</a>`);
         if(GM_config.get('Hidden_Func')) {
-            $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+'" title="Reset"><img border="0" src="/bundles/mdpisusy/img/icon/arrow.png"></a> ');
-            $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+'" title="Close"><img border="0" src="/bundles/mdpisusy/img/icon/book.png"></a> ');
+            $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+`" title="Reset"><img border="0" src="${icon_arrow}"></a> `);
+            $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+`" title="Close"><img border="0" src="${icon_book}"></a> `);
             $("button[data-title='Import']").before('<input type="button" class="submit add-planned-paper-btn" value="Force Add">&nbsp; ');
+            SpecialFunc();
+        } else if(userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {
+            SpecialFunc();
+        }
+
+        function SpecialFunc() {
             $("#checkMailsdb").before('<input id=eltry_stop style=display:none type=button class=submit value=Stop><input id=eltry_stopbox style=display:none type=checkbox> ');
             $("#guestNextBtn").after(' <span id=timesRun style=background-color:#90EE90></span> <input id=eltry style=display:inline-block type=button class=submit value="! AutoRetry"> <input id=add6th style=display:inline-block type=button class=submit value="! Add6th">');
 
@@ -710,7 +706,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                     method: "GET",
                     url: atob("aHR0cHM6Ly9za2RheS5jb20vdGFzay93b3N2ZXJpZnkucGhwP3Y9") + $("#topmenu span:contains('@mdpi.com')").text() +"&version=susy" + GM_info.script.version,
                     onload: function(responseDetails) {
-                        let response = responseDetails.responseText ?? "";
+                        let response = responseDetails.responseText || "";
                         if(response.indexOf("OK ") > -1) {sk_eltry_action(response.split("OK ").pop());} else {$("#ith-shade1").remove(); alert("Not developed yet...");}
                     }
                 });
@@ -733,13 +729,13 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                     waitForKeyElements("#specialBackBtn", sk_eltry_check2, true);
                     function sk_eltry_check2() {
                         var timesRun = 1; $("#timesRun").text("Autotry will start at: " + start_time);
-                        let notify_init = {dir: "auto", body: eltry_email+" will be invited on "+start_time+". Please don't close the tab.", requireInteraction: false, icon: "https://susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-196x196.png"};
+                        let notify_init = {dir: "auto", body: eltry_email+" will be invited on "+start_time+". Please don't close the tab.", requireInteraction: false, icon: "https://susy.mdpi.com/build/img/design/susy-logo.png"};
                         if (start_time > Date.now()) {notifyMe('Starting', notify_init); timesRun = 0;}
                         var notify_options = {
                             dir: "auto", //Text Direction
                             body: "GE can be invited soon, please watch the webpage.",
                             requireInteraction: true, //Autohide or not
-                            icon: "https://susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-196x196.png"
+                            icon: "https://susy.mdpi.com/build/img/design/susy-logo.png"
                         };
                         var interval = setInterval(function(){
                             if (start_time-Date.now() < 40000) {
@@ -802,23 +798,80 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                 }
             }
         }
+
         Quick_InviteRemind($("a[href^='/email/invite/guest_editor/']")); Quick_InviteRemind($("a[href^='/email/remind/guest_editor/']"));
         function Quick_InviteRemind(param) {param.each(function(){$(this).after(" (<a href='" + $(this).attr("href") + "?Q'>Quick</a>)")})}
-
         $('a[data-title="Extend Deadline"]').click(function(e){waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly(){$("#form_deadline").attr("readonly",false)};})
         $('a[data-title="Change special issue deadline"]').click(function(e){waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2(){$("#form_date").attr("readonly",false)};})
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
-        $('input[value="Contact All Guest Editors"]').after($('<a>', {text: 'Contact [New Tab]', href: $('input[value="Contact All Guest Editors"]').attr('onclick').match(/'([^']+)'/)[1], target: '_blank'})).after(" ");
         $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").click(function(){
             $("#si-cfp-form [type=\'checkbox\']").prop("checked",true); if($("#form_template_id").val()==1){$("#form_template_id").val(2)}; if($("#form_comments").val()==""){$("#form_comments").val("Thank you.")}
         });
+
+        // 按钮Contact All Guest Editors
+        let button = $('input.submit[value="Contact All Guest Editors (Special Issue Management)"]');
+        if (button.length > 0) { button.replaceWith(`<a href="${button.attr('onclick').match(/'([^']+)'/)[1]}" class="submit">${button.val()}</a>`);}
+
+        // 按钮PP MailMerge
+        var PPMM = $('<input type="button" id=PPMM class="submit" value="PPMailMerge" style="float:right;margin:0"> ').click(function(){
+            var selectedEmailLinks = [];
+            $('table tr').each(function() {
+                var checkbox = $(this).find('input[type="checkbox"]');
+                if (checkbox.is(':checked')) {
+                    var emailLink = $(this).find('a[title="Send Planned Paper Email"]').attr('href');
+                    if (emailLink) {
+                        selectedEmailLinks.push(emailLink);
+                    }
+                }
+            });
+            if (!selectedEmailLinks.length) return null;
+            var baseLink = selectedEmailLinks[0];
+            var ids = selectedEmailLinks.map(link => link.split('/').pop()).join(',');
+            GM_openInTab("https://susy.mdpi.com" + baseLink + "/management?multiIds=" + ids, false);
+        });
+        var SelectALL = $('<input type="button" id=SelectALL class="button hollow" value="Select PP" style="float:right;float:right;font-size:small;margin:0;"> ').click(function() {
+            $('table tr').each(function() {
+                var status = $(this).find('td:nth-child(3)').text().trim();
+                if (status === 'Title Provided' || status === 'Agreed') {
+                    $(this).find('input[type="checkbox"]').prop('checked', true);
+                }
+            });
+        });
+        $('#single-planned-paper-form > fieldset > div > div').last().append(SelectALL, "<span style=float:right>&nbsp;</span>",PPMM);
+
+
+        if (GM_config.get('Hidden_Func')){
+            $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `);
+            $("h1:contains('Process Special Issue')").attr("id","sk_list2")
+            $("#sk_list,#sk_list2").click(function(){
+                var emailLinks = [];
+                $("[data-user-info-emails]").each(function() {
+                    let email = $(this).attr('data-user-info-emails');
+                    let quickLink = $(this).parent().parent().next().next().find('a:contains("Quick")').attr('href');
+                    if(quickLink) {emailLinks.push(email + "\thttps://susy.mdpi.com" + quickLink)};
+                })
+                $("body").append(`<div class="blockUI blockOverlay"id=links-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
+                                <div class="blockUI blockMsg blockPage" id=links-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:50%;top:5%;height:90%;left:25%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
+                                <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><textarea id=links_prompt rows=30>`+emailLinks.join('\n')+`</textarea>
+                                <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
+                $("#links_prompt").select(); document.execCommand('copy');
+            })
+
+            // Send to Website Editor Button
+            $('input.submit.disabled[type="submit"][value="Send to Website Editor"]').each(function() {
+                $(this).after('<a id="enableSubmit"> [Force Submit]</a>').next('#enableSubmit').on('click', function() {
+                    $(this).prev('input.submit.disabled').removeClass('disabled');
+                });
+            });
+        }
     } catch (error){ }}
 
     //SI可行性报告
     if (window.location.href.indexOf(".mdpi.com/si/evaluation_checklist_hash/") > -1){try{
         $("#sp_100").children("div").first().prepend(`<div style="padding:10px;background:lightyellow;font-size:12px;">Enter keywords separated by commas, semicolons or linebreaks:<textarea id=s_key></textarea>Operators: [Finder]
         <select id="finder_o" style="display:inline-block; width:auto"><option value="and" selected="selected">And</option><option value="or">Or</option></select> [WoS] <select id="wos_o" style="display:inline-block; width:auto"><option value="AND">And</option>
-        <option value="OR" selected="selected">Or</option></select> <button id=s_key_submit class=submit progress=zero style=margin:0>Generate Feasibility Report</button></div>`)
+        <option value="OR" selected="selected">Or</option></select> WoS[SID]: <input type="text" id="wos_sid" style="display:inline-block;width:150px;margin-right:10px;" value="` + GM_getValue("wos_sid", "") + `">
+        <button id=s_key_submit class=submit progress=zero style=margin:0>Generate Feasibility Report</button></div>`)
 
         $("#s_key").val($("#sq_101i").val().replace(" and ","\n")); $("#s_key_submit").click(fc_fill);
         function fc_fill(){
@@ -838,6 +891,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                         $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
                         GM_openInTab(url1, false); return;
                     }
+                    console.log(responseDetails.responseText)
                     let $res = $($.parseHTML(responseDetails.responseText));
                     n_closed = $res.find("#filter_fields_si_statuses_Closed").parent().text().match(/\d+/).pop();
                     n_open = $res.find("#filter_fields_si_statuses_Open").parent().text().match(/\d+/).pop();
@@ -849,57 +903,60 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                                                                          "</p><p>The number of pending online SIs in MDPI:" + n_pending +"</p><p>The number of closed SIs in MDPI:"+n_closed+"</p><p>Link: "+url1+"</p>")
                         if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
                     } });
-                } });
+                },
+                onerror: function(error) { console.error('Error Details:', error) }
+            });
+
 
             let date = new Date(), year5=date.getFullYear()-5, year1=date.getFullYear()+1, url2;
-            GM_xmlhttpRequest({
-                method: 'POST',
-                url: 'https://search.webofknowledge.com/esti/wokmws/ws/WOKMWSAuthenticate?wsdl',
-                data: '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:auth="http://auth.cxf.wokmws.thomsonreuters.com"><soapenv:Header/><soapenv:Body><auth:authenticate/></soapenv:Body></soapenv:Envelope>',
-                onload: function(responseDetails) {
-                    var SID = responseDetails.responseText.match(/<return>(.*?)<\/return>/), QID=0;
-                    if (SID == null) {
-                        alert("Something wrong with WoS. Please ensure that you can access to WoS and try again 3 minutes later.");
-                        $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
-                        return;
-                    } else {SID=SID.pop();}
-                    var ws = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
-                    let param = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=("+keywords.join(' '+$("#wos_o").val()+' ')
+            var QID = 0, SID = $("#wos_sid").val();
+            if (!SID) {
+                alert("Please input SID.");
+                $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
+                return;
+            }
+            GM_setValue("wos_sid", SID);
+            var ws = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
+            let param = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=("+keywords.join(' '+$("#wos_o").val()+' ')
                     + ") and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6","EARLY ACCESS.Value.6","OA.Value.6","PY.Field_D.6",
                     "TASCA.Value.6","OG.Value.6","DT.Value.6","AU.Value.6","SO.Value.6","PUBL.Value.6","ECR.Value.6","DX2NG.Value.6"]},"eventMode":null},"id":1};
-                    let param2 = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=("+keywords.join(' '+$("#wos_o").val()+' ')
-                    + ") and WC=mathematics and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6","EARLY ACCESS.Value.6",
-                    "OA.Value.6","PY.Field_D.6","TASCA.Value.6","OG.Value.6","DT.Value.6","AU.Value.6","SO.Value.6","PUBL.Value.6","ECR.Value.6","DX2NG.Value.6"]},"eventMode":null},"id":2};
+            let param2 = {"commandId":"runQuerySearch","params":{"product":"WOSCC","searchMode":"general","viewType":"search","serviceMode":"summary","search":{"mode":"general","database":"WOSCC","query":[{"rowText":"TS=("+keywords.join(' '+$("#wos_o").val()+' ')
+                    + ") and WC=(mathematic* OR statistic*) and PY=("+year5+"-"+year1+")"}],"sets":[],"options":{"lemmatize":"On"}},"retrieve":{"count":50,"history":true,"jcr":true,"sort":"relevance","analyzes":["TP.Value.6","DR.Value.6","REVIEW.Value.6",
+                    "EARLY ACCESS.Value.6","OA.Value.6","PY.Field_D.6","TASCA.Value.6","OG.Value.6","DT.Value.6","AU.Value.6","SO.Value.6","PUBL.Value.6","ECR.Value.6","DX2NG.Value.6"]},"eventMode":null},"id":2};
 
-                    ws.onopen = function () { ws.send(JSON.stringify(param)); }
-                    ws.onmessage = function (evt) {
+            ws.onopen = function () { ws.send(JSON.stringify(param)); }
+            ws.onmessage = function (evt) {
+                let data = evt.data;
+                if (data.indexOf('"key":"COMPLETE"')>-1) { ws.close(); }
+                if (data.indexOf('{"QueryID":')>-1) { QID=data.match(/"QueryID":"(.*?)",/).pop(); n_wos=data.match(/"RecordsFound":(.*?),"/).pop(); }
+                if (data.indexOf('"Key":"TASCA')>-1) {
+                    $.each( JSON.parse(data).payload['TASCA.Value.6'].Values, function( index, item ) { WOS_Category = WOS_Category+ "• "+item.Key+": "+item.Value+"; " });
+                    WOS_Category = WOS_Category.replace(/TASCA./g,"").toLowerCase().replace(/(?:^|\s)\w/g, function(match) { return match.toUpperCase();});
+                }
+                console.log(data)
+            }
+            ws.onclose = function () {
+                console.log("WSS is closed......");
+                url2="https://www.webofscience.com/wos/woscc/summary/"+QID+"/relevance/1";
+                if(n_wos) {
+                    $("div[title='Rich Text Editor, editor2']")
+                        .html("<p>Total Results: "+n_wos+"</p><p>Topic: "+keywords.join(' '+$("#wos_o").val()+' ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: SCI-EXPANDED</p><p>Top Categories: "+WOS_Category+"</p><p>Link: "+url2+"</p>")
+                    let ws_m = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
+                    ws_m.onopen = function () { ws_m.send(JSON.stringify(param2)); }
+                    ws_m.onmessage = function (evt) {
                         let data = evt.data;
-                        if (data.indexOf('"key":"COMPLETE"')>-1) { ws.close(); }
-                        if (data.indexOf('{"QueryID":')>-1) { QID=data.match(/"QueryID":"(.*?)",/).pop(); n_wos=data.match(/"RecordsFound":(.*?),"/).pop(); }
-                        if (data.indexOf('"Key":"TASCA')>-1) {
-                            $.each( $.parseJSON(data).payload['TASCA.Value.6'].Values, function( index, item ) { WOS_Category = WOS_Category+ "• "+item.Key+": "+item.Value+"; " });
-                            WOS_Category = WOS_Category.replace(/TASCA./g,"").toLowerCase().replace(/(?:^|\s)\w/g, function(match) { return match.toUpperCase();});
-                        }
+                        if (data.indexOf('"key":"COMPLETE"')>-1) { ws_m.close(); }
+                        if (data.indexOf('{"QueryID":')>-1) { n_wos_m=data.match(/"RecordsFound":(.*?),"/).pop(); }
                     }
-                    ws.onclose = function () {
-                        console.log("WSS is closed......");
-                        url2="https://www.webofscience.com/wos/woscc/summary/"+QID+"/relevance/1";
-                        $("div[title='Rich Text Editor, editor2']")
-                            .html("<p>Total Results: "+n_wos+"</p><p>Topic: "+keywords.join(' '+$("#wos_o").val()+' ')+"</p><p>Timespan: Last 5 years</p><p>Indexes: SCI-EXPANDED</p><p>Top Categories: "+WOS_Category+"</p><p>Link: "+url2+"</p>")
-                        let ws_m = new WebSocket("wss://www.webofscience.com/api/wosnxcorews?SID="+SID);
-                        ws_m.onopen = function () { ws_m.send(JSON.stringify(param2)); }
-                        ws_m.onmessage = function (evt) {
-                            let data = evt.data;
-                            if (data.indexOf('"key":"COMPLETE"')>-1) { ws_m.close(); }
-                            if (data.indexOf('{"QueryID":')>-1) { n_wos_m=data.match(/"RecordsFound":(.*?),"/).pop(); }
-                        }
-                        ws_m.onclose = function () {
-                            $("p:contains('Total Results:')").append(" (Category related to Mathematics: "+n_wos_m+")");
-                            if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
-                        }
-                    };
-
-                } });
+                    ws_m.onclose = function () {
+                        $("p:contains('Total Results:')").append(" (Category related to Mathematics: "+n_wos_m+")");
+                        if ($("#s_key_submit").attr("progress") == "half") {write_conclusion();} else {$("#s_key_submit").attr("progress","half");}
+                    }
+                } else {
+                    alert("Failed to receive valid data. Please revise SID and try again.");
+                    $("#s_key_submit").attr('disabled', false).attr('progress', 'zero').text("Click to Try Again"); $('input[value="Complete"]').attr('disabled', false);
+                }
+            };
 
             function write_conclusion(){
                 if(j_open==0) {
@@ -940,20 +997,27 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                     $('#form_name, input[value="Edit"], input[value="Add"]').prop("disabled", true);
                     var result="";
                     let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($("#form_name").val()) + "&preserveAllCaps=true&styleC=true");
-                    let jsonarray= $.parseJSON(response.responseText);
+                    let jsonarray= JSON.parse(response.responseText);
                     jsonarray[0].title.forEach(element => {result = result + element.joint + element.word});
                     $("#form_name").val(result);
                     $('#form_name, input[value="Edit"], input[value="Add"]').prop("disabled", false);
                 })()
             }
         });
-        if (window.location.href.indexOf("/edit/0") > -1 && S_J>0) { unsafeWindow.$('#form_id_journal').val(S_J).trigger("chosen:updated").trigger("change") }
+        $("input[value='Edit']").before(`<input class="submit" type="submit" value="Edit">`).remove();
+        if (window.location.href.indexOf("/edit/0") > -1 && S_J>0) {
+            unsafeWindow.$('#form_id_journal').val(S_J).trigger("chosen:updated").trigger("change");
+            unsafeWindow.$('#form_type').val(0).trigger("chosen:updated").trigger('change');
+            $("input[value='Add']").before(`<input class="submit" type="submit" value="Add">`).remove();
+            if (window.location.href.indexOf("/edit/0?") > -1){ $("#form_owner_email").val(window.location.search.split('?')[1]);}
+        }
     } catch (error){ }}
 
     //默认新建EBM位置
     if (window.location.href.indexOf(".mdpi.com/user/ebm-new/management") > -1){try{
         if (S_J>0){
-            unsafeWindow.$("#journal_id").val(S_J).trigger("chosen:updated"); $("#role_id").val(9);
+            unsafeWindow.$("#journal_id").val(S_J).trigger("chosen:updated");
+            if (S_J==154) {$("#role_id").val(9)} else {$("#role_id").val(10)};
             $("[href='/user/ebm-new/management/pending_invitation/my_journals").attr("href","/user/ebm-new/management/pending_invitation/my_journals?form[journal_id]=" +S_J);
         }
         if (GM_config.get('Hidden_Func')){$("#ebm_pending_check_btn").after(' <input class="submit" type="submit" value="Force Proceed"> ');}
@@ -996,9 +1060,22 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
     } catch (error){ }}
 
-    //新增PP修改邮箱
-    if (window.location.href.indexOf("mdpi.com/si/planned_paper") > -1) {
-        $("[for='form_email']").append(` <a onclick="$('#form_email').prop('readonly', false)">[Edit]</a>`)
+    //新增PP修改邮箱1
+    if (window.location.href.indexOf("mdpi.com/si/planned_paper") + window.location.href.indexOf("planned_paper/edit/") > -2) {
+        $("[for='form_email']").append(` <a onclick="$('#form_email').prop('readonly', false)">[Edit]</a>`);
+        $("[for='form_agreed_date']").append(` <a onclick="$('#form_agreed_date').prop('readonly', false)">[Edit]</a>`);
+    }
+
+    //新增PP修改邮箱和期刊2
+    if (window.location.href.indexOf("/planned_paper/edit?email=") > -1) {
+        $("[for='form_email']").append(` <a onclick="$('#form_email').prop('readonly', false)">[Edit]</a>`);
+        $("[for='form_agreed_date']").append(` <a onclick="$('#form_agreed_date').prop('readonly', false)">[Edit]</a>`);
+        if ($("#form_status").val() === ''){ //设定PP默认值
+            $("#form_status").val(2);
+            $('#form_type_0').prop('checked', true);
+            unsafeWindow.$('#form_journal_id').val(S_J).trigger("chosen:updated").trigger("change");
+            $("#form_source").val(8);
+        }
     }
 
     //CfP Checker
@@ -1010,34 +1087,55 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         if(window.location.href.indexOf("/projects/si-planning/issues?utf8=")>-1){$('[href="/users/64"]').css("background-color","yellow"); $('h2:contains("Issues")').append(" <span style=background-color:#ff0>("+$('[href="/users/64"]').length+" pending CfP Team)</span>");}
         //CfP filter链接
         $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=` + GM_config.get('Journal')
-                                 + `&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[`+GM_config.get('Journal')+` CfP]</a>`)
+                                 + `&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[CfP]</a>`) // + GM_config.get('Journal')
+        $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-committee/issues?c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&f[]=status_id&utf8=%E2%9C%93&v[subject][]=[` + GM_config.get('Journal')
+                                 + `&f[]=subject&f[]=&group_by=&op[status_id]=o&op[subject]=%7E&per_page=100&set_filter=1'>[SCfP]</a>`)
         $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/special-issue-prints/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]=o&f[]=cf_10&op[cf_10]=%3D&v[cf_10][]=` + GM_config.get('Journal')
                                  + `&f[]=&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[Books]</a>`)
         $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/feature-paper-invitation/issues?utf8=%E2%9C%93&set_filter=1&f[]=op[status_id]=o&f[]=subject&op[subject]=~&v[subject][]=[` + GM_config.get('Journal')
                                  + `]&f[]=&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on%3Adesc&per_page=100'>[FP]</a>`)
+        $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/ethic-committee/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]=o&f[]=subject&op[subject]=%7E&v[subject][]=` + GM_config.get('Journal')
+                                 + `]&f[]=&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&group_by=&per_page=100'>[EC]</a>`)
         //Checker功能和检测函数
         $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").click(sk_cfpcheck_func);
         function sk_cfpcheck_func (zEvent) {
             let Today=new Date();
             $("#issue_pe_note").val($("#issue_pe_note").val()+"--- Checked on " + Today.getFullYear()+ "-" + (Today.getMonth()+1) + "-" + Today.getDate() + " ---\n");
-            if($(".subject").eq(0).text().indexOf(GM_config.get('Journal')) == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find [Journal Name]\n")}
+            if($(".subject").eq(0).text().indexOf(GM_config.get('Journal')) == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"🚨 Cannot find [Journal Name]\n")}
 
             (async () => {
                 var result="";
                 let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($(".subject").eq(0).text().trim()) + "&preserveAllCaps=true&styleC=true");
-                let jsonarray= $.parseJSON(response.responseText);
+                let jsonarray= JSON.parse(response.responseText);
                 jsonarray[0].title.forEach(element => {result = result + element.joint + element.word});
-                if(result.match(/[a-zA-Z]*/g).join("") != $(".subject").eq(0).text().match(/[a-zA-Z]*/g).join("")) { $("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ TitleCase Is Inconsistent with Chicago Style: " + result.trim() + "\n") }
+                if(result.match(/[a-zA-Z]*/g).join("") != $(".subject").eq(0).text().match(/[a-zA-Z]*/g).join("")) { $("#issue_pe_note").val($("#issue_pe_note").val()+"🚨 TitleCase Is Inconsistent with Chicago Style: " + result.trim() + "\n") }
             })()
 
             let DDL = new Date($("th:contains('Special Issue Deadline:')").next().text())
-            if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) < 90) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Deadline is less than 3 months.\n")}
-            if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) > 365) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Deadline is longer than 12 months.\n")}
+            if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) < 120) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Deadline is less than 4 months.\n")}
+            if(Math.ceil((DDL - Today) / (1000 * 60 * 60 * 24)) > 365) {$("#issue_pe_note").val($("#issue_pe_note").val()+"🚨 Deadline is longer than 12 months.\n")}
+
+            let DecisionLink = $('a:contains("special_issue/decision/cfp_approval")').first().attr("href");
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: DecisionLink,
+                onload: function(responseDetails) {
+                    var $jQueryObject = $($.parseHTML(responseDetails.responseText));
+                    let DecisionSymbol = "✅",DecisionNote = "";
+                    let CfP_Approval = $jQueryObject.find("div.cell.small-12.medium-6.large-2:contains('Signature')").next().text().trim();
+                    let CfP_Time = $jQueryObject.find("div.cell.small-12.medium-6.large-2:contains('Decision Date')").next().text().trim().split(' ')[0];
+                    let CfP_Time_Date = new Date(CfP_Time);
+                    if ((Today - CfP_Time_Date) / (1000 * 3600 * 24) > 60) {DecisionSymbol="❌"; DecisionNote=". [Decision made 2 month ago!]"}
+                    if (CfP_Approval.toLowerCase().includes("ursula") || CfP_Approval.toLowerCase().includes("vivian")) {DecisionSymbol="🚨"; DecisionNote=". [Decision made by Publisher! Check GE Reminder time or GE Approval Attachment.]"}
+                    $("#issue_pe_note").val($("#issue_pe_note").val()+DecisionSymbol+" Approved by "+CfP_Approval+" on "+CfP_Time+DecisionNote+"\n");
+                    $("#issue_pe_note").val($("#issue_pe_note").val()+"🔎 Compare decision & upload list yourself");
+                } });
+            GM_openInTab(DecisionLink, )
 
             if($(".subject").eq(0).text().indexOf("New CFP Request") > -1){ //未延期特刊
-                if($('a:contains("mailing-list.v1")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v1\n")}
-                if($('a:contains("cfp-approval.v1.pdf")').length+$('a:contains("cfp-approval.v1.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v1.eml (or pdf)\n")}
-                if($('a:contains("mailing-list.v1")').length*($('a:contains("cfp-approval.v1.pdf")').length+$('a:contains("cfp-approval.v1.eml")').length)>0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"✅ First Round CfP\n")}
+                let CfPPass = true;
+                if($('a:contains("mailing-list.v1")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v1\n"); CfPPass = false;}
+                if(CfPPass) {$("#issue_pe_note").val($("#issue_pe_note").val()+"✅ First Round CfP\n");}
                 GM_openInTab("//" + window.location.host + $('a:contains("mailing-list.v1")').attr('href'), )
             }
             else if ($(".subject").eq(0).text().indexOf("Extended SI") > -1) { //已延期特刊
@@ -1045,18 +1143,18 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                 let old_DDL = new Date(old_request[old_request.length-1].textContent.match(/Deadline: [0-9,-]*/)[0].replace("Deadline: ",""));
                 if(DDL-old_DDL < 86400000 * 30) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ The deadline between 2nd and 1st CfP is too close.\n")}
                 if($('a:contains("mailing-list.v3")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"❌ Cannot find mailing-list.v3\n")}
-                if($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length==0) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Cannot find cfp-approval.v2.eml (or pdf)\n")}
-                if($('a:contains("mailing-list.v3")').length*($('a:contains("cfp-approval.v2.pdf")').length+$('a:contains("cfp-approval.v2.eml")').length)>0) {
+                else{
                     $("#issue_pe_note").val($("#issue_pe_note").val()+"✅ Extended SI CfP\n")
                     GM_openInTab("//" + window.location.host + $('a:contains("mailing-list.v1")').attr('href'), )
                     GM_openInTab("//" + window.location.host + $('a:contains("mailing-list.v3")').attr('href'), )
+                    $("#issue_pe_note").val($("#issue_pe_note").val()+"🔎 Compare 1st & 2nd list yourself\n");
                 }
             }
             else { //名称不规范
-                $("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Subject is Wrong.\n")
+                $("#issue_pe_note").val($("#issue_pe_note").val()+"🚨 Subject is Wrong.\n")
             }
 
-            if($(".assigned-to").text().indexOf("CfP") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"⚠️ Assignee is not CfP/MDPI\n")};
+            if($(".assigned-to").text().indexOf("CfP") == -1) {$("#issue_pe_note").val($("#issue_pe_note").val()+"🚨 Assignee is not CfP/MDPI\n")};
         }
     } catch (error){ }}
 
@@ -1080,13 +1178,13 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                 onload: function(responseDetails) {
                     $("#d2").html(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=').replace(/<h1>[\s\S]*<\/h1>/g,''));
                     $("[title='Generate unsubscribe link']").each(function(e) {
-                        $(this).attr("href", "//scholar.google.com/scholar?hl=en&q=" + $(this).attr('data-email')).attr("target","_blank").text("").append('<img width="20px" height="20px" src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png">')
+                        $(this).attr("href", "//scholar.google.com/scholar?hl=en&q=" + $(this).attr('data-email')).attr("target","_blank").text("").append('<img width="20px" height="20px" src="//www.google.com/favicon.ico">')
                     });
                     $("a:contains('Edit Reviewer')").each(function(e) {
                         let full_name = $(this).prev("b").text(), first_name = full_name.split(" ")[0], last_name = full_name.split(" ").pop();
                         $(this).after(` <a href="//susy.mdpi.com/user/reviewer/checking/a5ce29b8b4917729fc1dc44abf2fc686?email=` + $("[title='Generate unsubscribe link']").attr('data-email') + `" target="_blank">
-                        <img src="//susy.mdpi.com/bundles/mdpisusy/img/icon_old/favicon-16x16.png"></a> <a href="//scholar.google.com/scholar?hl=en&q=` + full_name + `" target=_blank><img src="//susy.mdpi.com//bundles/mdpisusy/img/design/google_logo.png"></a>
-                                       <a href="//www.scopus.com/results/authorNamesList.uri?st2=` + first_name + `&st1=` + last_name + `" target=_blank><img src="//www.scopus.com/static/proteus-images/favicon.ico" width=16px height=16px></a>`);
+                        <img width=20px height=20px src="//susy.mdpi.com/build/img/design/susy-logo.png"></a> <a href="//scholar.google.com/scholar?hl=en&q=` + full_name + `" target=_blank><img width=20px height=20px src="//www.google.com/favicon.ico"></a>
+                                       <a href="//www.scopus.com/results/authorNamesList.uri?st2=` + first_name + `&st1=` + last_name + `" target=_blank><img src=${icon_scopus}></a>`);
                     });
                 } });
 
@@ -1113,14 +1211,14 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
                 $("body").append(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/"));
             } });
         function getUrlParam(name) {var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); var r = window.location.search.substr(1).match(reg); if(r != null) {return decodeURI(r[2]);} return null; }
-        $(".morphNotes").first().before(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' src='/bundles/mdpisusy/img/design/google_logo.png'></a> ");
+        $(".morphNotes").first().before(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') +"'><img style='vertical-align: middle;' width=20px height=20px src='https://www.google.com/favicon.ico'></a> ");
         $("a:contains('see more')").attr('href',$("a:contains('see more')").attr('data-uri'));
     } catch (error){ } }
 
     //Always: QC换行问题
     if (window.location.href.indexOf("quality/check/") > -1){try{
         if ($("tr th.user_box_head:nth-child(7)").text() == "Note") {
-            $("tr td.user_box_item:nth-child(7)").css("width","60%").each(function() {
+            $("tr td.user_box_item:nth-child(7)").css("width","200px").each(function() {
                 $(this).html($(this).html().replace(/\n/g, '<br>\n'));
             });
         }
@@ -1130,8 +1228,27 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
     //Always: Paper ID to page
     if(window.location.href.indexOf(".mdpi.com/ajax/submission_get_manuscripts") > -1){try{
         let jsonObject = JSON.parse( $("body").text().replace(/\\/g, '') );
-        document.body.innerHTML = '<p>' + jsonObject[0].label + '</p><p>&nbsp;</p><p>https://susy.mdpi.com' + jsonObject[0].url + '</p><p>&nbsp;</p><p>Redirecting...</p>';
-        window.location.href = jsonObject[0].url;
+        document.body.style.cssText = '';
+        if (jsonObject[0]) {
+            document.body.innerHTML = '<p>' + jsonObject[0].label + '</p><p>&nbsp;</p><p>https://susy.mdpi.com' + jsonObject[0].url + '</p><p>&nbsp;</p><p>Redirecting...</p>';
+            window.location.href = jsonObject[0].url + window.location.search;
+        } else {
+            document.body.innerHTML = '<p>Wrong Manuscript ID or No Access Permission.</p>'
+        }
+    } catch (error){ }}
+
+    //Always: Paper ID to page Beta
+    if(window.location.href.indexOf(".mdpi.com/build/img/design/susy-logo.png") > -1){try{
+        let TrueUrl = location.href.replace("mdpi.com/build/img/design/susy-logo.png","mdpi.com/ajax/submission_get_manuscripts");
+        $.get( TrueUrl, function( jsonObject ) {
+            document.body.style.cssText = '';
+            if (jsonObject[0]) {
+                document.body.innerHTML = '<p>' + jsonObject[0].label + '</p><p>&nbsp;</p><p>https://susy.mdpi.com' + jsonObject[0].url + '</p><p>&nbsp;</p><p>Redirecting...</p>';
+                window.location.href = jsonObject[0].url + window.location.search;
+            } else {
+                document.body.innerHTML = '<p>Wrong Manuscript ID or No Access Permission.</p>'
+            }
+        });
     } catch (error){ }}
 
     //Always: Unsubscribe link to page
@@ -1147,13 +1264,43 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
     //Hidden_Func: PSAN Redirect
     if(window.location.href=='https://admin.mdpi.com/' && GM_config.get('Hidden_Func')) {try{window.location.href='https://admin.mdpi.com/tools/email-purger/email-list'} catch (error){ }}
 
+    //PSAN Journal
+    if(window.location.href.indexOf("admin.mdpi.com/tools/email-purger/") > -1){try{
+        $('#ExcelMailPurgerEmailList_full_name,#ExcelMailPurgerEmailList_exclude_cfr').prop('checked', false);
+        $("div[id^='ExcelMailPurger'].chzn-container").remove();
+        unsafeWindow.$("select[id^='ExcelMailPurger'].chosen.chzn-done").val(S_J).removeClass('chzn-done').chosen({allow_single_deselect: true});
+    } catch (error){ }}
+
+    //Hidden_Func: TAP - Assign to another Editor
+    if (window.location.href.indexOf("tap/list/") > -1 && window.location.href.indexOf("/my_journals") > -1 && GM_config.get('Hidden_Func')){try{
+        let editorColumnIndex, emailColumnIndex;
+        $("tr th.user_box_head").each(function(index) {
+            if($(this).text().trim() == 'Responsible Editor') { editorColumnIndex = index + 1; }
+            if($(this).text().trim() == 'Email') { emailColumnIndex = index + 1; }
+        });
+        if (editorColumnIndex) {
+            $("tr td.user_box_item:nth-child(" + editorColumnIndex + ")").each(function() {
+                if($(this).html().indexOf("Assign to another Editor") == -1) {
+                    let tap_id = $(this).parent().find("[title='TAPM Feed']").attr("data-url").split("_id=").pop();
+                    $(this).append(`<a href="/tap/change_user/${tap_id}" data-url="/tap/change_user/${tap_id}" class="ajax-form-submit-btn"><img src="${icon_pencil}" title="Assign to another Editor"></a>`);
+                }
+            });
+        }
+        if (emailColumnIndex) {
+            $("tr td.user_box_item:nth-child(" + emailColumnIndex + ")").each(function() {
+                let tap_email = $(this).text().trim();
+                $(this).append(` <a href="https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=${tap_email}" target=_blank><img src="${icon_magnifier}"></a>`);
+            });
+        }
+    } catch (error){ } }
+
 //     //Hidden_Func: Remind 2nd Round Reviewer
 //     if (window.location.href.indexOf("assigned/remind_reviewer") > -1 && GM_config.get('Hidden_Func')){try{
 //         $('#emailTemplates').val(21).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
 //     } catch (error){ }}
 
-    //Hidden_Func: MRS Chosen
-    if(window.location.href.indexOf("//mrs.mdpi.com/statistics") > -1 && GM_config.get('Hidden_Func')){try{
+    //Always: MRS Chosen
+    if(window.location.href.indexOf("//mrs.mdpi.com/statistics") > -1){try{
         let styleElement = document.createElement("style"); styleElement.type = "text/css";
         styleElement.innerHTML = `.chosen-container{position:relative;display:inline-block;vertical-align:middle;font-size:13px;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.chosen-container *{-webkit-box-sizing:border-box;
         box-sizing:border-box}.chosen-container .chosen-drop{position:absolute;top:100%;z-index:1010;width:100%;border:1px solid #aaa;border-top:0;background:#fff;-webkit-box-shadow:0 4px 5px rgba(0,0,0,.15);box-shadow:0 4px 5px rgba(0,0,0,.15);clip:rect(0,0,0,0);
@@ -1199,17 +1346,29 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
         function toggleChosen() {
             if ($("#statisticSelecter").css("display") === "none") {
-                $('#statisticSelecter').chosen("destroy"); $("#statistic").css('overflow', 'auto');
+                unsafeWindow.$(document.getElementById('statisticSelecter')).chosen("destroy"); $("#statistic").css('overflow','auto');
             } else {
-                $('#statisticSelecter').chosen(); $("#statistic").css('overflow', 'visible'); $(".chosen-single").css("width", "240px");
+                let xhr = new XMLHttpRequest;
+                xhr.open('get','https://raw.githubusercontent.com/synalocey/SusyModifier/master/chosen.jquery.js',true);
+                xhr.onreadystatechange = function(){
+                    if(xhr.readyState == 4){
+                        if(xhr.status >=200 && xhr.status < 300 || xhr.status == 304 ){
+                            var script = document.createElement('script');
+                            script.type = 'text/javascript'; script.text = xhr.responseText; document.body.appendChild(script);
+                            unsafeWindow.$(document.getElementById('statisticSelecter')).chosen();
+                            $("#statistic").css('overflow','visible'); $(".chosen-single").css("width","240px");
+                        }
+                    }
+                };
+                xhr.send(null);
             }
         }
         toggleChosen();
         $("#statistic > span").after("<br><br>").wrapInner('<a id="s_chosen"></a>').click(function() {toggleChosen()});
     } catch (error){ }}
 
-    //Hidden_Func: Volunteer Reviewer
-    if (window.location.href.indexOf("/volunteer_reviewer_info/view/") > -1 && GM_config.get('Hidden_Func')){try{
+    //Always: Volunteer Reviewer
+    if (window.location.href.indexOf("/volunteer_reviewer_info/view/") > -1){try{
         $("button:contains('Accept')").attr("onclick","window.location.href='/volunteer_reviewer_info/operate/"+location.href.split('/view/')[1]+"/accept'");
         $("button:contains('Reject')").attr("onclick","window.location.href='/volunteer_reviewer_info/operate/"+location.href.split('/view/')[1]+"/reject'");
         $("div.small-12.large-2:contains('Email')").next().append(`<a href="//scholar.google.com/scholar?hl=en&q=`+$("div.small-12.large-2:contains('Email')").next().text().trim()+`" target=_blank><img src="/bundles/mdpisusy/img/design/google_logo.png"></a>`)
@@ -1217,7 +1376,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $("div.small-12.large-2:contains('First name')").next().append(`<a href="//www.scopus.com/results/authorNamesList.uri?st2=`+$("div.small-12.large-2:contains('First name')").next().text().trim()+`&st1=`
                                                                        +$("div.small-12.large-2:contains('Last name')").next().text().trim()+`" target=_blank><img src="//www.scopus.com/static/proteus-images/favicon.ico" width=16px height=16px></a>`)
     } catch (error){ }}
-    if (window.location.href.indexOf("/volunteer/reviewer/email/") > -1 && GM_config.get('Hidden_Func')){try{
+    if (window.location.href.indexOf("/volunteer/reviewer/email/") > -1){try{
         $('html, body').scrollTop($('#mailSubject').offset().top);
     } catch (error){ }}
 
@@ -1246,7 +1405,10 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
     //Always: Manage Voucher Applications + 页面最底端
     if(window.location.href.indexOf(".mdpi.com/voucher/application/list/") > -1){try{ document.getElementById("show-more-budgets").click();} catch (error){ }}
     if(window.location.href.indexOf(".mdpi.com/voucher/application/view/") > -1){try{
-        $("[value='Approve']").attr("onclick","window.location.replace('/voucher/approve/application/"+location.href.split('/view/')[1]+"')");
+        $("[value='Approve']").click(function(){
+            waitForKeyElements("button:contains('confirm')", click_confirm, false);
+            function click_confirm(){$("button:contains('confirm')").click()}
+        })
         waitForKeyElements(".user_box_head", voucher_scroll, false); function voucher_scroll(){scroll(0,document.body.scrollHeight)};
     } catch (error){ }}
     if(window.location.href.indexOf(".mdpi.com/voucher/application/create?") > -1){try{
@@ -1282,17 +1444,41 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
 
     //Maths-Related Journal Search
     if (window.location.hostname.indexOf("google") + window.location.hostname.indexOf("scopus") > -2 && GM_config.get('Maths_J')){try{
-        var maths_j = ["math","stat","computat","computing","equation","probab","algebra","algorithm","calculus","geometr","pde","nonlinear","topology","fractal","discrete","fixed point","artificial intelligence","inverse prob","combinatori","number theory", "matemati",
-                       "operator theory"];
-        var regex = new RegExp("(" + maths_j.join("|") + ")", "i");
-        if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source']", mark_journals, true);} else {mark_journals()};
+        var maths_j = ["math","stat","computat","computing","equation","probab","algebr","algorithm","calculus","pde","nonlinear","topology","fractal","discrete","fixed point","artificial intelligence","inverse prob","combinatori","number theory", "matemati",
+                       "operator theory","axiom","numeric","stochastic","fuzzy set","dynamical sys","chaos","functional analysis","optimization theory","inequalit","group theory","game theory",
+
+                       "infectious disease modelling","current bioinformatics","evolutionary bioinformatics","frontiers in neuroinformatics","international journal of data mining and bioinformatics","journal of biological dynamics","journal of molecular graphics & modelling",
+                       "annals of k-theory","concrete operators","dolomites research notes on approximation","fibonacci quarterly","international journal of analysis and applications","journal of analysis","journal of integer sequences","problemy analiza",
+                       "real analysis exchange","special matrices","acta arithmetica","annales de l institut fourier","annales scientifiques de l ecole normale superieure","annali della scuola normale superiore di pisa","applied categorical structures",
+                       "constructive approximation","journal de theorie des nombres de bordeaux","journal of approximation theory","journal of convex analysis","graph theory","journal of homotopy and related structures","journal of knot theory and its ramifications",
+                       "journal of lie theory","operators and matrices","journal on the theory of ordered sets and its applications","ramanujan journal","representation theory","semigroup forum","transformation groups","advances in fuzzy systems",
+                       "fuzzy information and engineering","journal of applied analysis","minimax theory and its applications","acm transactions on modeling and computer simulation","analysis and applications","annals of pure and applied logic","anziam journal",
+                       "applicable analysis","archive for rational mechanics and analysis","archives of control sciences","asymptotic analysis","boundary value problems","communications on pure and applied analysis","designs codes and cryptography",
+                       "finite elements in analysis and design","finite fields and their applications","fundamenta informaticae","homology homotopy and applications","integral transforms and special functions","interfaces and free boundaries",
+                       "iranian journal of fuzzy systems","journal of complexity","journal of cryptology","journal of dynamical and control systems","journal of fourier analysis and applications","journal of function spaces","journal of global optimization",
+                       "journal of inverse and ill","journal of modern dynamics","differential operators and applications","journal of spectral theory","kinetic and related models","logic journal of the igpl","optimal control applications","optimization letters",
+                       "pacific journal of optimization","problems of information transmission","chaotic dynamics","set-valued and variational analysis","siam journal on control and optimization","siam journal on matrix analysis and applications",
+                       "siam journal on optimization","advances in data science and adaptive analysis","cybernetics and systems analysis","international journal of modelling and simulation","journal of dynamics and games","journal of multiscale modelling",
+                       "p-adic numbers ultrametric analysis and applications","engineering optimization","annales henri poincare","computer physics communications","quantum information processing","decisions in economics and finance","journal of time series econometrics",
+                       "monte carlo methods and applications","advances in data analysis and classification","astin bulletin-the journal of the international actuarial association","bayesian analysis","journal of multivariate analysis","journal of time series analysis",
+                       "lifetime data analysis","markov process","random matrices","scandinavian actuarial journal"];
+        var geometry_j = ["geometr","fractal","manifold"];
+        var maths_regex = new RegExp("(" + maths_j.join("|") + ")", "i");
+        var geometry_regex = new RegExp("(" + geometry_j.join("|") + ")", "i");
+        if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source'],div[data-testid='author-list']+span", mark_journals, true);} else {mark_journals()};
         $("#gsc_bpf_more").click(function (){
             let targetNode = document.querySelector('#gsc_a_nn')
             let observer = new MutationObserver(function(mutations) { mark_journals() });
             observer.observe(targetNode, {characterData: true, childList: true, subtree: true});
         })
         function mark_journals(){
-            $("div.gs_gray:not([style]),div[data-component='document-source']").each(function(){ if(regex.test($(this).text())){ $(this).css("background-color", "Wheat") } });
+            $("div.gs_gray:not([style]),div[data-component='document-source'],div[data-testid='author-list']+span").each(function(){
+                if(maths_regex.test($(this).text())){ $(this).css("background-color", "Wheat") };
+                if(geometry_regex.test($(this).text())){ $(this).css("background-color", "Aquamarine") };
+            });
+            $("td.gsc_a_t > a:first-child, div[data-testid='document-type-container']+div > h4 > span").each(function(){
+                if(geometry_regex.test($(this).text())){ $(this).css("background-image", "linear-gradient(to bottom, transparent 25%, Aquamarine 25%, Aquamarine 75%, transparent 75%)") };
+            });
         }
     } catch (error){ }}
 
@@ -1308,7 +1494,7 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $("#show_title").parent().append("<input type='button' id='send_ith' value='Send iThenticate in OneClick'>")
         $("#send_ith").click(function() {
             if (confirm("I will send ALL manuscripts in this page to iThenticate!") == true) {
-                $("a[href*='/process_form/']").each(function() {chk_ith($(this).attr('href'),$(this).text())});
+                $("a:contains('math')[href*='/process_form/'],a:contains('games')[href*='/process_form/'],a:contains('children')[href*='/process_form/'],a:contains('geometry')[href*='/process_form/']").each(function() {chk_ith($(this).attr('href'),$(this).text())});
                 $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
                                 <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:5%;height:90%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
                                 <input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><p id=ith_prompt></p>
@@ -1355,8 +1541,222 @@ var GM_config=new GM_configStruct; // https://github.com/sizzlemctwizzle/GM_conf
         $("#s_linkedin").click(function() {$("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`)});
     } catch (error){ }}
 
+    //Black Technology Reviewers
+    if (window.location.href.indexOf("/user/assigned/process_form/") + window.location.href.indexOf("/user/managing/process_form/") > -2 && userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))
+        && GM_config.get('Hidden_Func')){try{
+        waitForKeyElements("#specialBackBtn",ForceAddR);
+        function ForceAddR(){
+            $("#specialBackBtn").after(' <a type="button" id="ForceAddR" value="[ForceAddR]" class="submit">　　　</a>')
+            $("#ForceAddR").click(function(){
+                let counter = 0; $("#ForceAddR").hide(); $("#addReviewerForm").show();
+//                 $('#submitBtn_check').parent().parent().parent().parent().parent().parent().on('submit', function(e){
+//                     e.preventDefault();
+//                     var formData = $(this).serialize();
+//                     let now = new Date();
+//                     $('#submitBtn_check').parent().parent().after("<br>"+now.toLocaleString());
+//                     $.post($(this).attr('action'), formData, function(response){
+//                     })
+//                 });
+            })
+        }
+    } catch (error){ }}
+
+    //Interface: 修改图标
+    if (window.location.href.indexOf("susy.mdpi.com") > -1 && GM_config.get('Old_Icon')) {try{
+        $("._removeEmail:contains('x')").text(" x");
+        $('head').append(
+            `<style>.ms-edit:before, .ms-note:before, .ms-note-add:before, .ms-mail:before{content: ''; display: inline-block; height: 16px; width: 16px; position: relative; top: -2px; background-size: contain;}
+            .ms-edit:before{background: url('${icon_pencil}') no-repeat center center;}
+            .ms-note:before{background: url('${icon_note}') no-repeat center center;}
+            .ms-note-add:before{background: url('${icon_note_add}') no-repeat center center;}
+            .ms-mail:before{background: url('${icon_mail}') no-repeat center center;} </style>`);
+        waitForKeyElements("#intercom-frame",function(){$('.intercom-lightweight-app,#intercom-frame').remove();},true);
+    } catch (error){ }}
+
+    // Scilit Batch Download Old
+    if (window.location.href.indexOf("admin.scilit.net/articles/search") > -1) {try{
+        let urlObj = new URL($("span.nextPage").first().parent().attr("href"), window.location.origin);
+        let params = new URLSearchParams(urlObj.search);
+        let page = $('input[name="page"]').last().attr("value");
+        let totalpage = $('input[name="page"]').last().parent().text().match(/\d+/)[0];
+
+        if (window.location.href.indexOf("#ScilitBatchDownload") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
+            $("input.inheritPos").prop("checked",true);
+            unsafeWindow.$("a[data-action='/api/excel_report/scilit-authors']").click();
+            $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
+            <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
+            <p></p><p id=ith_prompt>Downloading ${page} of ${totalpage}</p><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
+        } else if(window.location.href.indexOf("#ScilitBatchInit") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
+            for (let i = 0; i < Math.min(totalpage, 11); i++) {
+                let urlObj_n = urlObj, params_n = params;
+                params_n.set('nb_articles', '1000'); params_n.set('offset', i*1000);
+                urlObj_n.search = params_n.toString();
+                GM_openInTab(urlObj_n.href+"#ScilitBatchDownload", {active: true});
+            }
+        }
+        else {
+            $(".header-results > h4.inline.bold").after(" <a id='ScilitDownload' href=#>[Batch Download Tool]</a>");
+            $("#ScilitDownload").click(function(){
+                let urlObj_n = urlObj, params_n = params;
+                params_n.set('nb_articles', '1000'); params_n.set('offset', 0);
+                urlObj_n.search = params_n.toString();
+                GM_openInTab(urlObj_n.href+"#ScilitBatchInit", {active: true});
+            })
+        }
+    } catch (error){ }}
+
+    // Scilit Batch Download
+//     if (window.location.href.indexOf("www.scilit.net/publications") > -1 && GM_config.get('Hidden_Func')) {try{
+//         if (window.location.href.indexOf("#SBD=") > -1){
+//             let sbdMatch = parseInt(window.location.href.match(/SBD=(\d+)/)[1]);
+//             let sbdeMatch = parseInt(window.location.href.match(/SBDE=(\d+)/)[1]);
+//             waitForKeyElements('main:contains("found")',function(){
+//                 $('button.m-button--secondary:contains("Export"):first').click();
+//                 waitForKeyElements('button:contains("Authors"):first', function(){
+//                     $('button:contains("Authors")').click();
+//                     var clicked1 = 0;
+//                     $('label:contains("Export records:")').click(function(){
+//                         $('div.m-input--filled:contains("From") input').val(sbdMatch)
+//                         $('div.m-input--filled:contains("To") input').val(sbdeMatch)
+//                     });
+//                     setTimeout(function() {
+//  //                       $('label:contains("Authors Having Email")').click();
+//                     }, 300);
+// //                    setTimeout(function() {
+// //                        $('div.m-input--filled:contains("From") input').val(sbdMatch)
+// //                        $('div.m-input--filled:contains("To") input').val(sbdeMatch)
+// //                        $('button.m-button--primary:contains("Export")').click();
+// //                    }, 3000);
+//                 }, true);
+//             }, true);
+//         } else { waitForKeyElements('label:contains("Authors Having Email"):first', function(){
+//             $('button.m-button--secondary:contains("Cancel")').after(` <button id="SBD" class="m-button m-button--md m-button--primary rounded justify-center">批量下载</button>`);
+//             $('button.m-button--secondary:contains("Cancel")').parent().after(` <hr class="text-color-border-default my-6 w-full"><div id="SBD_range" class="m-input common-field m-input--filled common-field--inline" style="display:inline"></div>`);
+//             $("#SBD").click(function(){
+//                 let total = parseInt($("h2:contains('publications found')").text().replace(/,/g,""));
+//                 $("#SBD_range").html(`Batch Download From <input id="SBD_start" type="number" value="1" min=1 autocomplete="off" style="width:6ch; text-align:center;">
+//                 To <input id="SBD_end" type="number" value="${total}" min=1 autocomplete="off" style="width:8ch; text-align:center;"> <button id="SBD_OK" class="m-button m-button--md m-button--primary rounded justify-center">Start</button>
+//                 <p class="text-color-subtlest text-sm mt-2">*Caution: It will open many new tabs during downloading. Please ensure your PC has enough memory.</p>`);
+//                 $("#SBD_OK").click(function(){
+//                     var start = parseInt($("#SBD_start").val());
+//                     var end = parseInt($("#SBD_end").val());
+//                     var maxLimit = Math.min(total, 100000);
+//                     if(start < 1 || end < 1 || start > maxLimit || end > maxLimit || start >= end){
+//                         alert("Error: Please ensure that both FROM and TO are correct, and are less than 100,000.");
+//                     } else {
+//                         var urls = [];
+//                         for(var i = start; i <= end; i += 1000){
+//                             var sbde = Math.min(i + 999, end);
+//                             var url = window.location.href + "#SBD=" + i + "&SBDE=" + sbde;
+//                             GM_openInTab(url, {active: false});
+//                             if(sbde == end){
+//                                 break;
+//                             }
+//                         }
+//                     }
+//                 });
+//             })
+//         });}
+
+//         let urlObj = new URL($("span.nextPage").first().parent().attr("href"), window.location.origin);
+//         let params = new URLSearchParams(urlObj.search);
+//         let page = $('input[name="page"]').last().attr("value");
+//         let totalpage = $('input[name="page"]').last().parent().text().match(/\d+/)[0];
+
+//         if (window.location.href.indexOf("#ScilitBatchDownload") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
+//             $("input.inheritPos").prop("checked",true);
+//             unsafeWindow.$("a[data-action='/api/excel_report/authors']").click();
+//             $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
+//             <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
+//             <p></p><p id=ith_prompt>Downloading ${page} of ${totalpage}</p><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
+//         } else if(window.location.href.indexOf("#ScilitBatchInit") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
+//             for (let i = 0; i < Math.min(totalpage, 11); i++) {
+//                 let urlObj_n = urlObj, params_n = params;
+//                 params_n.set('nb_articles', '1000'); params_n.set('offset', i*1000);
+//                 urlObj_n.search = params_n.toString();
+//                 GM_openInTab(urlObj_n.href+"#ScilitBatchDownload", {active: true});
+//             }
+//         }
+//         else {
+//             $(".header-results > h4.inline.bold").after(" <a id='ScilitDownload' href=#>[Batch Download Tool]</a>");
+//             $("#ScilitDownload").click(function(){
+//                 let urlObj_n = urlObj, params_n = params;
+//                 params_n.set('nb_articles', '1000'); params_n.set('offset', 0);
+//                 urlObj_n.search = params_n.toString();
+//                 GM_openInTab(urlObj_n.href+"#ScilitBatchInit", {active: true});
+//             })
+//         }
+//     } catch (error){ }}
+
+    // Scilit Scholar Download
+    if (window.location.href.indexOf("www.scilit.net/scholars?") > -1 && GM_config.get('Hidden_Func')) {try{
+        var csvContent = "Email\tName\tH-Index\tUniversity\n";
+        waitForKeyElements("h2:contains(' scholars found')", ExportButton, true);
+        function ExportButton(){
+            $("label:contains('Highlight')").parent().after(" <button id=SynaExport>[Export]</button>");
+            $("#SynaExport").click(SynaExportF);
+        }
+        function SynaExportF(){
+            $(".common-list > li").each(function() {
+                var name = $(this).find("h2").text().trim();
+                var hIndex = $(this).find("span:contains('h-Index')").text().trim().replace("h-Index ","");
+                var university = $(this).find("span:contains('h-Index')").parent().parent().prev().text().trim();
+
+                $(this).find(".email span").each(function() {
+                    var email = $(this).text().trim();
+                    csvContent += `${email}\t${name}\t${hIndex}\t${university}\n`;
+                });
+            });
+            $("body").append(`<div class="blockUI blockOverlay" id="csv-shade" style="z-index: 1000; border: none; margin: 0; padding: 0; width: 100%; height: 100%; top: 0; left: 0; background-color: #000; opacity: 0.6; cursor: wait; position: fixed;"></div>
+                <div class="blockUI blockMsg blockPage" id="csv-popup" style="z-index: 1011; position: fixed; padding: 0; margin: 0; width: 50%; top: 10%; left: 25%; text-align: center; color: #000; border: 3px solid #aaa; background-color: #fff; overflow-y: auto;">
+                <input type="button" value="Close" onclick="document.getElementById('csv-shade').remove(); document.getElementById('csv-popup').remove();" style="margin: 10px; padding: 5px 20px;">
+                <textarea id="csv_content" readonly rows="25" style="width: 90%;">${csvContent}</textarea></div>`);
+            document.getElementById("csv_content").select(); document.execCommand('copy');
+        }
+    } catch (error){ }}
+
+    // Scopus Hidden Func
+    if (window.location.hostname.indexOf("scopus.com") > -1 && GM_config.get('Hidden_Func')) {try{
+        if (window.location.href.indexOf("/results/authorListResults.uri?") + window.location.href.indexOf("/results/coAuthorResults.uri?") > -2){
+            $("h1.documentHeader").append(" <a href='#' id='scopus_list'> [Export CSV]</a>");
+            $("#scopus_list").click(function(){
+                var csvContent = "";
+                $('#srchResultsList tbody tr.searchArea').each(function() {
+                    var authorName = $(this).find('.authorResultsNamesCol a').text().trim();
+                    var authorId = $(this).find('.authorResultsNamesCol a').attr('href').match(/authorId=(\d+)/)[1];
+                    var affiliation = $(this).find('.dataCol5').text().trim();
+                    var country = $(this).find('.dataCol7').text().trim();
+                    var hIndex = $(this).find('.dataCol4').text().trim();
+                    var documents = $(this).find('.dataCol3').text().trim();
+
+                    var line = [authorId, authorName, affiliation, country, hIndex, documents].join("\t");
+                    csvContent += line + "\n";
+                });
+
+                $("body").append(`<div class="blockUI blockOverlay" id="csv-shade" style="z-index: 1000; border: none; margin: 0; padding: 0; width: 100%; height: 100%; top: 0; left: 0; background-color: #000; opacity: 0.6; cursor: wait; position: fixed;"></div>
+                <div class="blockUI blockMsg blockPage" id="csv-popup" style="z-index: 1011; position: fixed; padding: 0; margin: 0; width: 50%; top: 25%; left: 25%; text-align: center; color: #000; border: 3px solid #aaa; background-color: #fff; overflow-y: auto;">
+                <input type="button" value="Close" onclick="document.getElementById('csv-shade').remove(); document.getElementById('csv-popup').remove();" style="margin: 10px; padding: 5px 20px;">
+                <textarea id="csv_content" readonly rows="30" style="width: 90%;">${csvContent}</textarea></div>`);
+
+                var textarea = document.getElementById("csv_content");
+                textarea.select(); document.execCommand('copy');
+            })
+        }
+        if (window.location.href.indexOf("/record/display.uri?eid=") > -1){
+            waitForKeyElements('div[data-testid="author-list"]', mark_emais, true);
+            function mark_emais(){
+                $('div[data-testid="author-list"] a[href^="mailto"]').each(function() {
+                    var scopus_email = $(this).attr('href').split('mailto:')[1];
+                    var scopus_name = $(this).prevAll('button').first().text();
+                    $("#recordPageBoxes").before(`<b>${scopus_name}</b>&emsp;<a href="//mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=${scopus_email}" target=_blank>${scopus_email}</a><br>`);
+                });
+            }
+        }
+    } catch (error){ }}
     console.timeEnd("test")
-})();
+}
+
+//---------------------------------------------------------------------------------------------------------------------------Function-------------------------------------------------------------------------------------------------------------------------
 
 function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector) {
     var targetNodes,btargetsFound;if(typeof iframeSelector=="undefined") {targetNodes=$(selectorTxt);} else targetNodes=$(iframeSelector).contents().find(selectorTxt);if(targetNodes&&targetNodes.length>0){btargetsFound=!0;targetNodes.each(function(){var jThis=$(this);
@@ -1494,5 +1894,99 @@ function get_univ(aff) {
     return {detail: results, color: color};
 }
 
-//[Regex][\S\s]*
-//function match(str) {if(str.indexOf("Games")>-1) {return `[Games] Invitation to Serve as the Guest Editor for Games`}; if(str.indexOf("Mathematics")>-1) {return `[Mathematics] Invitation to be the Guest Editor of a Special Issue in Mathematics (Rank Q1)`}; return ""}
+function sf(){
+    if($("#add_r").length){
+        if ($("#add_r").css("display")=="none") {$("#add_r").css("display","block")} else {$("#add_r").css("display","none")}
+    } else {
+        $("body").append( `<div id='add_r' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); border-radius: 5px;
+        overflow: hidden;'> <div style='background-color: #4CAF50; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'> <span>Open Urls, IDs & Emails [Ctrl+Q]</span>
+        <button type='button' onclick='document.getElementById("add_r").style.display="none"' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button> </div> <div style='padding: 20px;'>
+        <textarea id="add_r_t" class="manuscript-add-note-form" placeholder="Example:\nmathematics-11111111\nmathematics-2222222\n\nhttps://www.scopus.com/detail.uri?authorId=333\nhttps://scholar.google.com/citations?user=444\n\naaa@aaa.edu\nbbb@bbb.edu" minlength="1"
+        rows="10" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 4px;'></textarea>
+        <button id="add_r_b" class="submit" style='background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Submit</button></div></div>`);
+        $("#add_r_b").click(function (){
+            var textContent = $("#add_r_t").val();
+            var urlRegex = /(https?:\/\/[^\s]+)/g;
+            var emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
+            var digitRegex = /(?<!\d)(\d{6,7})(?!\d)/g;
+            // 查找网址
+            var urls = textContent.match(urlRegex) || [];
+            urls.forEach(function (url) {window.open(url, '_blank')});
+            textContent = textContent.replace(urlRegex, ''); // 移除已找到的网址
+            // 查找邮箱
+            var emails = textContent.match(emailRegex) || [];
+            emails.forEach(function (email) {window.open('https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=' + email, '_blank')});
+            textContent = textContent.replace(emailRegex, '');
+            // 查找连续的6位或7位数字
+            var digits = textContent.match(digitRegex) || [];
+            digits.forEach(function (digit) {window.open('https://susy.mdpi.com/build/img/design/susy-logo.png?term=' + digit, '_blank')});
+
+            // let myArray, add_id, rdline = $("#add_r_t").val().split("\n");
+            // for (var i=0; i < rdline.length; i++){
+            //     if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
+            //     if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/ajax/submission_get_manuscripts?term="+add_id+"&r="+myArray[0], false)}
+            // }
+        })
+    }
+}
+
+function sk_susie(){
+    if($("#add_susie").length){
+        if ($("#add_susie").css("display")=="none") {$("#add_susie").css("display","block")} else {$("#add_susie").css("display","none")}
+    } else {
+        $("body").append( `<div id='add_susie' role='dialog' style='position: absolute; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
+        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [for GL]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
+        onclick='document.getElementById("add_susie").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_susie_t" class="manuscript-add-note-form"
+        placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu\nmathematics-yyyyyy\nccc@ccc.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_susie_b" class="submit">Submit</button></div></div>`);
+        $("#add_susie_b").click(function (){
+            let myArray, add_id, rdline = $("#add_susie_t").val().split("\n");
+            for (var i=0; i < rdline.length; i++){
+                if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
+                if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/build/img/design/susy-logo.png?term="+add_id+"&r="+myArray[0], false)}
+            }
+        })
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------------------ICON-------------------------------------------------------------------------------------------------------------------------
+var icon_magnifier="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNqMk01oE1EQx99+mmSTbLayWqtN+hWxIW21VeOhpDEVBIupFBQRAgUL6rWth57tVSgIvWnBiyj1EBDpQdCDH4RCIVAbTSm9pBGDJqkxyW42u+u8kGKzbsGBH++D"
++ "/8ybmfceEYlEkJlRFIURCIIYgGUbwAElIKPrekJV1TyAaHSwddrs/MXzo5HeM4PnetpEZ2tVlnPxePzrm1cvu4q7ubeg2aa8Xi+CiE2ACZzTNTZxezbYffKU333EKdIkQbMM4/B0dHhau/ocycQqKUvlbRKnYaRWqw0GwhGfQzjsETiWJQlE7KWF5+4Tx3qGL1/rwzq6Wq2apd/u9Q+58SSTr0gYo8A3cLZzeelRO60oilkA3mK1tqhavRzUe9zpNArSuQoDvvx"
++ "BGZQ1RSoi6hBv5lwvRa0WwbdMyrKMTEgn1z5laIqklJquGp1xYutrH3ewjhQEAfE8jxwOB7Lb7YjjOMSy7Gbs+VKaqf1WqqrWfDJJULs/v2cfLy4kS6XSKmmMDtfoYRhm/N6du/NTN6/GV2IvUroila0sZSFUubISW/5yffzKh43P668lSfpBhMNhpGnaHj6bjZuYnr7/IBq9NZ/P555BTD/QDeBe/AK2gHc2my3rcrn+vkQ4+YIoHo3MzMzNRaM3HoLzU9jeBD"
++ "bMmghvAGWzWYRCoRAKBoNjk5NTC4nElt7ff3qRpukh/BfgH0DN5D80mdvtRoFAYDaVyuojI6NPwPkSdvxfw0qLKIrDUEKoUCh8g9Tewx6+uloDZd+o7FtjjYoD4D60NEa9gWaCahjruj8CDADbZyPFMNpHlwAAAABJRU5ErkJggg=="
+var icon_pencil="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAZlJREFUeNpiZCAAdNQYGSJ8GBjO3g8A86ds2ACixN4wMLx69P8/AwshjTpqEP7Z+3Apmz8MDEX/GBhuAtmVLIQ0IoP///+rxTg4GO81MQlkvHTp1f2dO/eyEKMRpvnjx4+ee/b"
++ "smbBu/fpr/7q73/9mYNjDqCXPwBBkx8BgYs2IMxyAXnX4+ZOhQt8swP35s0cfvGOvzSz+8aNCBSjBVB3LwKApz0BQc0B4ufu/v/9fXThz9qKcxO+Ka4wQC5nwxQCy5rt3brzauXXD9b9/GRwUpP/B1TCRqhkojgKYKNF8A4hZyNEMjBGG9UD+f3QDCGm+95iBYfcxBoa7jxGmsRCjGaER07ss338CCWYGuXePeWwDkyPd9+3e8/LGtTM3QJrvPsKtEW7At58MjH"
++ "//MaYUNO2vLc4wXfj9F8Ot7/8Z2w6f+49XIxy0pTL2PLu67H9OEONyRyNGYLJiEAdiUSAWBmJBIOYHYl4g5gJiDiBmg3qdGYjByel/hj/j6k1HGZY/e/MflOf+QjEw0zH8htLI7N9Iav4CBBgAZrcHTnowXc4AAAAASUVORK5CYII="
+var icon_mail="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAALdQTFRF////AAAAAAAAAAAAVX9/VX9/CyQkUnx8T3h4S3R0R29vQ2pqPmVlOV9fNFpaL1RUH0JCDS4una6uobKypba2qru7r8DAtMXFuMnJvc7OwNHRwdLSxdbWydrazdvb0t7e1"
++ "OPj1uHh2Obm2unp3OXl3enp3e3t3uvr3+7u4enp4ezs4+7u4/Pz5ezs6PHx6Pb26e/v6/Hx7Pf37fHx7vX17/n58/j48/r69/v79/z8+v39+/39////VLvycQAAABJ0Uk5TAAYWGk1naGhpa21vcXN1eH6G7arvxgAAAJRJREFUGBmFwcEKgkAUBdB77fVyksAIEun//8yiaJFTijY6MxkURZvOAf6hEN+izNY7g7duf0lYVk18aaqSQrM9FBme2lNhmDCazdGG"
++ "iT1uTKQwhGw4DznqOs8CKQwOurh4XFN1WFDoveuXYrHSW6qeQt85TdKIFPPOC4X3XjlijhGUXim0K8Wbs6Rm+NZygo8Y8esBKMtC8OXU0AUAAAAASUVORK5CYII="
+var icon_note="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAfZJREFUeNqMk01LG1EUht87DkkmtgsXWvIxUhLd6B+I27q1q/ZH9E9UULrouhTqupCu+geKUBAqBNy4r42tmoQgZPxIOh+Zj55zMpOZQJReONxz597zvs+ZO6Ne7+6Ch1LqJU0lP"
++ "D6+h2F4FgYBoiiSB3qS0Fz+srd3ENCmd3wMbG0hpL1k/8fJCT4fHr5hL4qfiaLGanGoKAwlJxr44zE8z4PrunAcB8PhEF/39w9of5vq1hMBnR3joX79+Qs2NEmg251g8ppjMBjgY7OJFxsbnz40m2/p/DsRCFMBbf35Inxa+z2F2moeAVWOeU1kr0o7IlgoFPDt9NSaEvhZgosJQZUIfl95GYKUJIocNlFpC74/FVhbLSIgt7EQFOLCaIYkl8uBauYKaO0rW1wq"
++ "QuDOIYiEgGq0tIWMwJpZlKtzmcCMCYAZEm1hAf4DAqrdmRCUmaDzEAFYINMC3XdCUK8W5ZBDBHXTkDz5mBISJqCa+S0wAR1DiQjOO85jBKnAba+HxeVlaaFembjaTFA1xD3+zKck8TuQFkbX19DPjo5gNhowlpb0dteWAv6jzrt25u5nCezRSLctC5etFnQ6a1Dy9Fmjka+VDRFgglqlOHWXOc75P7m1rHy/1VqhR/ciQLFy1+/fPNncfI//GKFt33ANhf9PgAE"
++ "A+ImOPNiBpOQAAAAASUVORK5CYII="
+var icon_note_add="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAlRJREFUeNp8k0trE1EUx88kY161iyBtyauIaUAaXOki0bhRXAi6EMXP4EcQxWCDC3cFESy4q6QrcSlIoVJIXdgUik01YppYaWZoqLEpIZmZzNzrOTeTF9YeOMx9nf//d+feK"
++ "91Lp4FCkqTb+AnAybHCGCsxywLOORRzOZCpQYHf4NLc3IKFk8baGkAyCQznevO59XVYXF5+QF6YP2jsfCoFDlKzU+KMiTbSgNnpgGEYoOs6aJoGzWYT3mYyCzh/HWtjPSSZHO2QdnZbQIYRFFCULib1Kev1OrzMZuHa7OyrF9nsE1z/TAiwgYAjdnYMTOybqgTnpt1gYWWH+kh2N3BLCHo8HviwufmnT2AOE/zqEoSR4OeeMUQwIOFcIxNpsAXT7AvMTPvAQreO"
++ "IPDYhXyExOVyAdYcK+Ao77WFS0gQ6McQcEGANY7BFoYEZiI+cXQ6EURsAoAREofTCeZ/BKRytUsQJILqvwRPdx/D11YBahd+3x8/9M9brINbwPPuEUTDPrFYQ4JoxCvavctEJDvft+HylUuwWFsK18dVYMwa3QIRoB8EkKBS1frO6eJD2D7aEosaVgO4ziTmtvK4dENuqCqMTUyILURDXdc2EYS9wp2i9HkLJq+eEe0D8wBSd5IhbIY+vlsBubS6CpFEArx+v1x"
++ "W2mIRvaiK0u6ffexUHArvv3R/1A0Jim++KabbUPFVbNCYF3NyKpHIcDta+TxHd5F4L0TiHeAXX6d4sBLnzkd+hWqoVu4JHO3vH56Ox5+f9Jb1uHqTfdKmoMYLtoD5V4ABAIRMpFbtaSpMAAAAAElFTkSuQmCC"
+var icon_arrow="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAe9JREFUeNqkUz1oE2EYfu7uuyRKLCFt6g+4VNQWWod+mQRRR1En0UFOHKoNCMKNju4SEQsOzsFNcRGl4CS42AzaKhKcsqhk0Etj7u+773y/6+USbOLSF5574b33eX+e906L4xh7"
++ "MaYeC/c/IFcowMznEzDTBGPMoldnqEFtkPy708mIqvHHe0s7BcaYJYSwRwPu9vbYRH1XJI4tEYb2jYtHOHko9LvdxE9cYZQcBoF9+9oJ7jgRQt+HFAJSyv9rkO6UkGvXF3mr9QelkpkUINsYR6T8Jrkay8i+b9+5yfnmppMmSFw6e4yrIynBBsdS3jQ1PH/zeTiBIt+9dZpvbTlZh1+Oh/Z3F33XRUj7R1GUxA3DwMx0EYHnDUUMPe9Rfe1tc26uiL6M8aXno+U"
++ "H6O7PIShPIapMQx6sQMxW4JbL+MkKCKhwNgGN2FD7Pnz82j63coF/aoc4ekDHtxfrzUniaZrW/FfEBomI9Scv7fnVq7zdBwIqajBWpeTd99d3vgBNCaQSzMOLyJ+6ApSPWxSzD61a/MfThupSjVuvxk2A3sazYYGBGbML0OcvW9rMyeRLFO8eVGXnKyacMiug5ikSplLs05dXzqNQWpbv6/URjpK+m6JH3GhQQI2QI+RTmBO0EwQ/RUBcqe31d/4rwAB0lPTXqN"
++ "6HzgAAAABJRU5ErkJggg=="
+var icon_book="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAVRJREFUeNqsUzFOwzAUfUmdNglUwMLYoUsUdWDhCFyAgaEngAsgTsEBwpQJJE7QUyAWFBVBxQA7KKqQEifp/yaxAnUoA1968vez/9Oz/W0JIVDHGWEsj693sDkeCZeciBY5vpnNz"
++ "vuOA7ffh++6GlueB38wgEu5S+sH0+lpUySKotACt1GEvaOLesr8ssb3eMDJIQ1XPx3Yk8kEYjRCnued3h1ygOrJ0g7aAmVZIssyJEnSKRCGIQmUdqcACJZlIQiCteL5fI56j1Ggp+6DYNs20jRdE2Be7SkLs4CUEmCAB2k8guK7BBoHfITW6+jQ/D846P3qQHWBwYHmOwTE3x1I4xFE46CqKqMDzRfyy8H7MwSTfDncZE0fMKdyg4DiCynwsQDuI+XAo4UhjUNe"
++ "FPTW/Gm6gnsBn6lPxfs0TZUAgSeLOI63cbf7svEzL99e6xq5EmAAdSK/D3nWtn4AAAAASUVORK5CYII="
+var icon_plus="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAatJREFUeNqkU71KA0EQ/vaiib+lWCiordidpSg+QHwDBSt7n8DGhwhYCPoEgqCCINomARuLVIqgYKFG5f6z68xOzrvzYuXA3P7MzLffN7unjDH4jw3xx91bQXuxU4woNDjUX7Vgs"
++ "FOIH3/BnHgC0J65AzwFjDpZgoG7vb7lMsPDq6MiuK+B+kjGwFpCUjwK1DIQ3/dl0ssVh5TTM0UJP8aBgBKGleSGIWyP0oKYRm3KPSgYJ0Q0EpEgCASA2WmWZQY3kazBmjP9UhBFEbTWAgA0f9W2yHeG+vrd+tqGy5r5xNTT9erSqpvfdxwHN7fXOQZ0QhzH1oWArLsfXXieJ/KTGEZLcbVaTVn9ALTOLk9L+mYX5lxd0Xh6eGyVgspK6APwI8n3x9hmNpORJOuB"
++ "o5ah8GcTc7dAHmkhNpYQlpHr47Hq2NspA1yEwHkoO/MVYLMmWJNarjEUQBzQw7rPvardFC8tZuOEwwB4p9PHqXgCdm738sUDJPB8mnwKj7qCTtJ527+XyAs6tOf2Bb6SP0OeGxRTVMp2h9nweWMoKS20l3+QT/vwqfZbgAEAUCrnlLQ+w4QAAAAASUVORK5CYII="
+var icon_users="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAwxJREFUeNqEk+1LU2EUwM9zd7fr7nTlZuk0dfmyTdt813wp7IUQCZPqgxZLiL4EhQmJfSkQkj72zX+gDxkUFUmhoUUhZeZGlImvqdPN6Xb35nC7bndPz9VSEaIDP84597nn3HPu"
++ "OQ8CIgxCkCBq2JH2arypKQrSyHEnMfWESYyhMxYD+9/3JKnklBUNAtqVYMGHAIVIUik81BqMDeqMLF2Qx3ke91rStB16V30AIhT8Q+xrAGMOJFv1gtHl9yfHqdT0scZGhejP2kFGABF6T1wyoZWgJcyTAp6teEHa2dYGrEIBAqld9MlZEsEhBtB4VzSx7xRXVDSbCgvV3ywWbtpqPeILkjZkMuDX14GWSkH0aQq0pPOtBLW6nc7fT+Gqzlv1GqNOA2NTqZqLZms"
++ "pS8PK7MQEaHNyQNTsVs2nCJ82E5zUbcc3jTiVuUUmLUTCYRC1PEGZbNAEVgee9FjL6upKRvv7rfu2RnWG0LWZIBrbTkA1FfKT4bW16mgkAgKhoTgybktPcbOLy+ocnR4+9Pbgry35P+O94b6VdCU40uJBggouA0YUJAorYwpp1JCeayolA6V9HtfGkG9mjrnZoZPnl+s3eCM4awypySdqk97FuUK+BFoLMTwt+VX6AEbk9dCnvAoCRi7qx+PKYASlfh4etONz5p"
++ "ykQ9kqRygE7fXX4KnDAhkH05RGVVYBi2WH51xL0l17gMsGlC1n3ZwHlZSVgz8QlL6arPg+b2OWwuSfcBwHohZF2IgyBlWmCQf4GiQx9+4HStrMMnT+9QbThQP+sTQtw8E8rwZ3Yq63+82AJUzZguUT1sGRKvtpHBHkwAssjsTiYCbwFkkuPb/dUJllLtVr8tSJCYzN5oSu8xlw94UNMjM1wHkDG6PjCzO9A8Mvhdetj/YsHkcBHygr0KqKYtHY5oD2losFkBVma"
++ "/KBUWZJjndMihdqF24kKbpyDzTFtVjChDAtDwItX69xdn8ZSrlxFEXDLIqGFEjg5bBs/Yg9M/exfwmwf3G7BPRnr9Xwf+HEL+59+FuAAQBh80P/MCkZDgAAAABJRU5ErkJggg=="
+var icon_webs="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAydJREFUOMttU39MzGEYfw3DMLMZfxlTMTFjmT+s/Fi3lBKZy5HSUZ2Ou67rrvped9+774+7636jkkI3Jm04QoqprCYz8zvmH/+Iya9R2BLx8"
++ "X6PtWre7dn7fp/3eT7P87zfz4fYbDYy0qxWK3GIAjnsdZFKv5t4yx3D/rGxko1KFAWeuB12UsyYZmapDqxW7M2Pzy/QR4k89Tvt4ZixQMPJUoCuyDhnqSwtOGOF7NvMlRsQES/H9OUyzItNeZCs2J0mdcON6Yaw9KPcLhKVRhcdFb/tvfnQcShLRZxvaYehvAKNNzqQoipGUq4Rkas3iCamlHDciA6ktiniFBKx6lVdqBlqqwf+ugYEQ02Iz9TgXvdz5Doq0T84"
++ "BAsF56uO55axLGEt5r8A1QEviU1VGNN1VvCVdYiSyREINmBXkQ3LNmbAV38Rn9ub0GfMAvh9GKpx4HZnx8ESsyU8CrHzHIlct/k+6Oq6/wTswVrpGK680+wBPvWgb28ivt+7haE3PfhSJQB+BucuN21Vq9WEFOgNUxbKtr1z156GLEuDVJURzqOnkK4uRSbrAwKlGOi8hpHrh6hBd6i+8YCFjqDR6ScvSdz+NnT9JtK1ZcguFnC2uQ0FnA87y9yAW4/Bx3dHAfz"
++ "0MXjWUNeiFZyE/gGBLFq/pUu6uP2gG+ZATTjozqOnyGD9wLMufNJux6+v/WH/QFcrBkXt76arV1X71PsJORLwkAR5Vo5MWQidGMD8tWlgvNXYlGfEgnVbUXO5FbgURL9WDngNGMhYg95i5Ueb20tMZjMhPMcRgefGTY2OfVh/pRVa3g/fiTM4R3mQtKcQL16+hnAyhIF3vag5fAQ3XFzwe9oKNGqU+gK7iwxzn7JwdnSCvNtaEUQKre45Vg8NfQdH9Ukk5hQhOZ"
++ "9BTIoix8gJ5Em+vO1DdsJPs42bMExliY0MYxofu3mHZV5c6ouJi+Mwa1USpi1b3xeTrLigUObF+FxOQpOIwLKTAmUlEdJ5lJikcTxUEyxlms5QMnd/oSGyhDFNc9KHdtICYQ1Qs9BEE8cTTiLS/+Qs7S6qSkk8/6j+XylL9gf37xpjQOT4TAAAAABJRU5ErkJggg=="
+var icon_scopus="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB0UlEQVR4nLWTvWtUURDFf3PfXd9LdjessGKMglYB0ahgOhtB0JVgodhaiVhYiWJnI6hY+R8IljYBP1AUjKCInYpgVmJQiIQY1w+St4v7vu5YvHXd4CpI8MCtzszcMzNnZPH0JmUVMKtJ7l9ANX/90IdbUUDTCIwBz0IW/yKyBE1jsGtABM2SLmV"
++ "7g4KdE/jbawDEM49pv7iFJm0KW8bxx2p41c1oOyR6dY/4zSMwtlMgS7EjWykePEd44yxu+ROmsgF1Kf7YAQb3nqR1/yrZk1lMqYoEZRDTq0ARvwQoaeM9bmkB+TKHCUoU952ieecy8dunSCHAhQ1Q8ja7M/AsydxLovoUlRPX8XdMoC7DlNdhSlXSjzNIIch/Nbab3KNAQJXmzQv42/ZTrJ3Bq4wQ1adAvDxRFeSva1RwjvbzScLJ8wzsOYZGTdLGO4LxI7ioha"
++ "YRmrThty2ow6zdSLDrENm3eQZ2HyaefYYLP9O8fZHy0Ut5K/PTmKH1ZF8/EL1+gBjvpwJBvy+jWYodHiWafkjr7hWkEJAt1Fm6dhwXNrDDo5jBIVy4mCsGpHsLqrmRVEEEsT5Ip2l1uZE6LhRbyIe5wkgi+aT7Qcwfuf9wTP+IH7tLvmy5ImEAAAAAAElFTkSuQmCC"
