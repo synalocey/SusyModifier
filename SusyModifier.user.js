@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.4.20
+// @version       4.4.28
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
-// @icon64          https://susy.mdpi.com/build/img/design/susy-logo.png
+// @icon64        https://susy.mdpi.com/build/img/design/susy-logo.png
 // @updateURL     https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @downloadURL   https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @match         *://*.mdpi.com/*
@@ -1549,14 +1549,14 @@ function onInit() {
             $("#specialBackBtn").after(' <a type="button" id="ForceAddR" value="[ForceAddR]" class="submit">　　　</a>')
             $("#ForceAddR").click(function(){
                 let counter = 0; $("#ForceAddR").hide(); $("#addReviewerForm").show();
-                $('#submitBtn_check').parent().parent().parent().parent().parent().parent().on('submit', function(e){
-                    e.preventDefault();
-                    var formData = $(this).serialize();
-                    let now = new Date();
-                    $('#submitBtn_check').parent().parent().after("<br>"+now.toLocaleString());
-                    $.post($(this).attr('action'), formData, function(response){
-                    })
-                });
+//                 $('#submitBtn_check').parent().parent().parent().parent().parent().parent().on('submit', function(e){
+//                     e.preventDefault();
+//                     var formData = $(this).serialize();
+//                     let now = new Date();
+//                     $('#submitBtn_check').parent().parent().after("<br>"+now.toLocaleString());
+//                     $.post($(this).attr('action'), formData, function(response){
+//                     })
+//                 });
             })
         }
     } catch (error){ }}
