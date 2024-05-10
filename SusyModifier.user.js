@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.4.28
+// @version       4.5.9
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -147,7 +147,8 @@
             'Old_Icon': {'label': '使用旧图标', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Regular_Color': {'label': '橙色标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Maths_J': {'label': 'Scopus标记Maths期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Hidden_Func': {'section': [], 'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Hidden_Func': {'section': [], 'label': 'Experimental (!Caution)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'My_Account_Only': {'label': 'Use My Account Only:', 'labelPos': 'left', 'type': 'text', 'default': ""},
         },
         'events': {
             'save': function() {location.reload();},
@@ -200,10 +201,11 @@
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
         #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label,#SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_field_Report_Notes,
-        #SusyModifierConfig_Old_Icon_field_label{width:140px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label,#SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;}
-        #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;}
-        #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);grid-template-rows:auto auto;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;}
-        #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,#SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3}`
+        #SusyModifierConfig_Old_Icon_field_label,#SusyModifierConfig_Hidden_Func_field_label{width:140px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label,
+        #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,
+        #SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);grid-template-rows:auto auto;}
+        #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,#SusyModifierConfig_Report_TemplateB1_var,
+        #SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3}`
     });
 })();
 
@@ -328,6 +330,7 @@ function onInit() {
 
     //GE Invitation✏️ + Quick
     if (window.location.href.indexOf("/invite/guest_editor") > -1){try{
+        sk_MyAccountOnly();
         unsafeWindow.$(document.getElementById('emailTemplates')).append('<option value>*Guest Editor - SI Mentor Program</option>').trigger("chosen:updated").change(function(){
             if($("#emailTemplates option:selected").text() == "*Guest Editor - SI Mentor Program") {
                 $.ajax({url:$("#emailTemplates").attr("data-url"), dataType:"json", type:"post", async:"true", data:{id:"269",placeholders:$("#placeholders").val()}, success:function(data){
@@ -367,6 +370,7 @@ function onInit() {
 
     //GE Reminder✏️ + Quick
     if (window.location.href.indexOf("/remind/guest_editor") > -1){try{
+        sk_MyAccountOnly();
         $("#emailTemplates > option:contains('"+GM_config.get('GE_ReminderID')+"')").prop('selected', true);
         unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
         function init() {let t1 = RegExptest(GM_config.get('GE_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_ReminderS2'))) );
@@ -402,6 +406,7 @@ function onInit() {
 
     //GE Monthly Report
     if (window.location.href.indexOf("/email/acknowledge/") > -1){try{
+        sk_MyAccountOnly();
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
 
         if (window.location.href.indexOf("guest_editor") > -1){
@@ -652,6 +657,7 @@ function onInit() {
 
     //特刊列表免翻页⚙️
     if (window.location.href.indexOf(".mdpi.com/special_issue_pending/list") > -1 && !window.location.href.match(/page=(?!1\b)[0-9]+/)){try{
+        sk_MyAccountOnly();
         if(GM_config.get('SInote')) { waitForKeyElements(".special-issue-note-box",SidebarSize);}
         if(GM_config.get('SIpages')){
             let maxpage = 10, totalpage = Math.min(maxpage,parseInt($('li:contains("Next")').first().prev().text())), counter, Placeholder="";
@@ -675,6 +681,7 @@ function onInit() {
 
     //特刊页面➕按钮、Note
     if (window.location.href.indexOf(".mdpi.com/submission/topic/view")+window.location.href.indexOf(".mdpi.com/special_issue/process") > -2){try{
+        sk_MyAccountOnly();
         if (window.location.href.indexOf("?pagesection=AddGuestEditor") > -1 && GM_config.get('Hidden_Func')){
             if ($("#guestNextBtn").length === 0) {
                 $("#form_email").after(`<input id="process-special-issue-guest-editor" type="submit" value="Force Add (Info must be pre-filled)" class="submit is-psme-assessment">`)
@@ -1945,6 +1952,16 @@ function sk_susie(){
                 if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/build/img/design/susy-logo.png?term="+add_id+"&r="+myArray[0], false)}
             }
         })
+    }
+}
+
+function sk_MyAccountOnly(){
+    let My_Account_Only = GM_config.get('My_Account_Only');
+    let Current_Account = $("#topmenu span:contains('@mdpi.com')").text();
+    if(My_Account_Only.length > 0 && Current_Account != My_Account_Only){
+        $('body').append(`<div id="overlay" style="position: fixed; width: 100%; height: 100%; top: 0px; left: 0px; background: rgba(0, 0, 0, 0.5); z-index: 1000;"></div>
+        <div id="alertBox" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; background: white; border: 1px solid black; z-index: 1001;"><p>You are now using: ${Current_Account}</p><button id="okBtn">[OK]</button></div>`);
+        $('#okBtn').click(function() {$('#overlay, #alertBox').remove()});
     }
 }
 
