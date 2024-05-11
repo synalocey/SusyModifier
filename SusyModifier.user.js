@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.5.9
+// @version       4.5.10
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -34,6 +34,7 @@
 // @match         *://*.google.com.tw/*
 // @match         *://*.google.co.id/*
 // @match         *://*.google.com.my/*
+// @match         *://i.mdpi.cn/team/dinner*
 // @require       https://unpkg.com/jquery@4.0.0-beta/dist/jquery.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.js
@@ -1760,6 +1761,12 @@ function onInit() {
             }
         }
     } catch (error){ }}
+
+    //Dinner
+    if (window.location.href.indexOf("i.mdpi.cn/team/dinner") > -1 && userNames.some(userName => $("a.nav-link:contains('@mdpi.com')").text().trim().includes(userName + "@mdpi.com"))){try{
+        $('#appbundle_dinner_dinnerRestaurant option:contains("江城快点")').prop('selected', true);
+    } catch (error){ }}
+
     console.timeEnd("test")
 }
 
