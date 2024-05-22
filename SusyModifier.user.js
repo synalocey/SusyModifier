@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.5.13
+// @version       4.5.19
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -129,8 +129,8 @@
             'Topic_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*"},
             'Topic_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () { let $topic_name= $('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().text().trim(); return \`[MDPI Topics] Monthly Report `
                                  + `(\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – \${$topic_name}\`; }`},
-            'Topic_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ''},
-            'Topic_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ''},
+            'Topic_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': '[Regex]Dear Editor,[\\s\\S]*Kind regards,'},
+            'Topic_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (){\n let \$topic_name=\$('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().text().trim(); let \$topic_link=\$('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().children().attr("href"); let \$arr=\$('div.cell.small-12.medium-6.large-2:contains("Manuscripts(")').first().next().text().split("/");\n let \$process=\$arr[0].trim(),\$pub=\$arr[1].trim(),\$reject=\$arr[2].trim(),\$instruct; if (\$process+\$pub+\$reject>0) {\$instruct="You can view all manuscripts submitted to the Topic by logging in with your email at the link provided. Please note that your own submissions will not be visible.\\nhttps://susy.mdpi.com/"} else {\$instruct="This is a new Topic and hasn't received submissions yet."} return \`I am writing to update you on the status of our Topic "\${\$topic_name}".\n\${\$topic_link}\n\n1. Status of Submissions\n\nPublished: \${\$pub}; Under Processing: \${\$process}; Rejected: \${\$reject}\n\n\${\$instruct}\n\n2. Status of Planned Papers\n\nSeveral authors have committed to contributing feature papers to the Special Issue. If there are any missing papers, please let me know.\n\n%pp_list%\n\nMay you continue to explore the unknown and lead the forefront of academia. Wishing you continuous breakthroughs and inspiration in your scholarly endeavors!\n--\nBest regards,\n\`;\n}`},
 
             'Con_Template': {'section': [,"Conference Pages"], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Con_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
@@ -420,7 +420,8 @@ function onInit() {
 
         let result = "", headers = {};
         if(GM_config.get('Report_TemplateB2').indexOf("%pp_list%") > -1) {
-            let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id"), false); xhr.send();
+            let SI_Topic_Link = $("#special_issue_id").attr("data-special-issue-id") ? "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id") : "/submission/topic/view/" + $("#submission_topic_id").attr("data-topic-id");
+            let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', SI_Topic_Link, false); xhr.send();
             let $form = $($.parseHTML(xhr.responseText)).find('#single-planned-paper-form');
             let emailIndex=1, statusIndex=2, sourceIndex=3, discountIndex=4, agreedDateIndex=6;
             $form.find('table').each(function(index) {
@@ -468,6 +469,7 @@ function onInit() {
                 GetNoteUrl = "/submission/topic/show_notes/" + $("#submission_topic_id").attr("data-topic-id");
                 let t1 = RegExptest(GM_config.get('Topic_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('Topic_TemplateS2'))) );
                 let t2 = RegExptest(GM_config.get('Topic_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('Topic_TemplateB2'))) );
+                $("#mailBody").val( $("#mailBody").val().replace("%pp_list%", result.trim()) );
             }
             $("#maincol").after('<div id="special_issue_note_offcanvas" class="hide-note-offcanvas"></div>');
             $.get(GetNoteUrl, function(res) {
@@ -690,16 +692,17 @@ function onInit() {
                 $("#form_email").after(`<input id="process-special-issue-guest-editor" type="submit" value="Force Add (Info must be pre-filled)" class="submit is-psme-assessment">`)
             }
         }
-
         if (GM_config.get('SInote')) {waitForKeyElements(".special-issue-note-box",SidebarSize)}
         if ($("a:contains('Edit at backend')").length) {$('#si-update-emphasized').parent().children("a").first().attr("href", $("a:contains('Edit at backend')").attr("href").replace(/.*\//,"https://mdpi.com/si/") )};
         $('#si-update-emphasized').before(`<a href="?pagesection=AddGuestEditor" title="Add Guest Editor"><img border="0" src="${icon_plus}"></a> `);
-        $("a:contains('SI manuscripts')").after(" <a href=" + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/academic-editor/special_issues/process/") + ">[AcE Interface]</a>");
+        $('#si-update-emphasized').attr("data-uri") && $("a:contains('SI manuscripts')").after(" <a href=" + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/academic-editor/special_issues/process/") + ">[AcE Interface]</a>");
         $("[for='form_name_system']").append(` <a onclick="$('#form_name_system').prop('readonly', false)">[Edit]</a>`);
         if(GM_config.get('Hidden_Func')) {
-            $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+`" title="Reset"><img border="0" src="${icon_arrow}"></a> `);
-            $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+`" title="Close"><img border="0" src="${icon_book}"></a> `);
-            $("button[data-title='Import']").before('<input type="button" class="submit add-planned-paper-btn" value="Force Add">&nbsp; ');
+            if ($('#si-update-emphasized').attr("data-uri")) {
+                $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+`" title="Reset"><img border="0" src="${icon_arrow}"></a> `);
+                $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+`" title="Close"><img border="0" src="${icon_book}"></a> `);
+                $("button[data-title='Import']").before('<input type="button" class="submit add-planned-paper-btn" value="Force Add">&nbsp; ');
+            }
             SpecialFunc();
         } else if(userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {
             SpecialFunc();
