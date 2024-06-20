@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.5.19
+// @version       4.6.19
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -141,7 +141,7 @@
             'Interface_SME': {'section': [GM_config.create('Interface Modification')],'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
                               ['','Algebra, Geometry and Topology','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
                                'Fuzzy Sets, Systems and Decision Making','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics'], 'default': ''},
-            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Children','Games','Mathematics','Risks','Geometry','None'], 'default': 'Mathematics'},
+            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Mathematics','Risks','Geometry','IJT','None'], 'default': 'Mathematics'},
             'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
             'MathBatch': {'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function() {window.location.href="https://skday.eu.org/math.html"}},
             'Interface_sidebar': {'section': [], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
@@ -233,6 +233,7 @@ function onInit() {
         case 'AppliedMath': S_J=517; break;
         case 'Geometry': S_J=599; break;
         case 'Games': S_J=25; break;
+        case 'IJT': S_J=598; break;
         case 'None': S_J=-1; break;
     }
 
@@ -1067,6 +1068,7 @@ function onInit() {
 
     //PP提醒模板
     if (window.location.href.indexOf("mdpi.com/special_issue/email/planned_paper") > -1 && GM_config.get('PP_Template')){try{
+        unsafeWindow.$("#emailTemplates > option:contains('After a Few Month')").prop('selected', true).trigger("change");
         function init() {let t1 = RegExptest(GM_config.get('PP_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('PP_TemplateS2')) );
                          let t2 = RegExptest(GM_config.get('PP_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('PP_TemplateB2')) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init, 1000);
