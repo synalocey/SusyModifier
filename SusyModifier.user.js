@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.6.19
+// @version       4.7.1
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -844,11 +844,16 @@ function onInit() {
             GM_openInTab("https://susy.mdpi.com" + baseLink + "/management?multiIds=" + ids, false);
         });
         var SelectALL = $('<input type="button" id=SelectALL class="button hollow" value="Select PP" style="float:right;float:right;font-size:small;margin:0;"> ').click(function() {
+            this.toggle = !this.toggle;
+            var statusesToCheck = this.toggle ? ['Title Provided', 'Agreed'] : ['Title Provided', 'Agreed', 'Interested'];
+            let statusIndex=0;
+            $('#single-planned-paper-form').find('thead th').each(function(index) {
+                let text = $(this).text().trim();
+                if (text == "Status") {statusIndex = index + 1};
+            });
             $('table tr').each(function() {
-                var status = $(this).find('td:nth-child(3)').text().trim();
-                if (status === 'Title Provided' || status === 'Agreed') {
-                    $(this).find('input[type="checkbox"]').prop('checked', true);
-                }
+                var status = $(this).find('td:nth-child('+statusIndex+')').text().trim();
+                $(this).find('input[type="checkbox"]').prop('checked', statusesToCheck.includes(status));
             });
         });
         $('#single-planned-paper-form > fieldset > div > div').last().append(SelectALL, "<span style=float:right>&nbsp;</span>",PPMM);
