@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.7.1
+// @version       4.7.10
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -130,7 +130,13 @@
             'Topic_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () { let $topic_name= $('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().text().trim(); return \`[MDPI Topics] Monthly Report `
                                  + `(\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – \${$topic_name}\`; }`},
             'Topic_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': '[Regex]Dear Editor,[\\s\\S]*Kind regards,'},
-            'Topic_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (){\n let \$topic_name=\$('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().text().trim(); let \$topic_link=\$('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().children().attr("href"); let \$arr=\$('div.cell.small-12.medium-6.large-2:contains("Manuscripts(")').first().next().text().split("/");\n let \$process=\$arr[0].trim(),\$pub=\$arr[1].trim(),\$reject=\$arr[2].trim(),\$instruct; if (\$process+\$pub+\$reject>0) {\$instruct="You can view all manuscripts submitted to the Topic by logging in with your email at the link provided. Please note that your own submissions will not be visible.\\nhttps://susy.mdpi.com/"} else {\$instruct="This is a new Topic and hasn't received submissions yet."} return \`I am writing to update you on the status of our Topic "\${\$topic_name}".\n\${\$topic_link}\n\n1. Status of Submissions\n\nPublished: \${\$pub}; Under Processing: \${\$process}; Rejected: \${\$reject}\n\n\${\$instruct}\n\n2. Status of Planned Papers\n\nSeveral authors have committed to contributing feature papers to the Special Issue. If there are any missing papers, please let me know.\n\n%pp_list%\n\nMay you continue to explore the unknown and lead the forefront of academia. Wishing you continuous breakthroughs and inspiration in your scholarly endeavors!\n--\nBest regards,\n\`;\n}`},
+            'Topic_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (){\n let \$topic_name=\$('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().text().trim(); let \$topic_link=\$('div.cell.small-12.medium-6.`
+                                 + `large-2:contains("Topic Name")').next().children().attr("href"); let \$arr=\$('div.cell.small-12.medium-6.large-2:contains("Manuscripts(")').first().next().text().split("/");\n let \$process=\$arr[0].trim(),\$pub=\$arr[1].trim(),`
+                                 + `\$reject=\$arr[2].trim(),\$instruct; if (\$process+\$pub+\$reject>0) {\$instruct="You can view all manuscripts submitted to the Topic by logging in with your email at the link provided. Please note that your own submissions will `
+                                 + `not be visible.\\nhttps://susy.mdpi.com/"} else {\$instruct="This is a new Topic and hasn't received submissions yet."} return \`Dear Editor,\n\nI am writing to update you on the status of our Topic "\${\$topic_name}".\n\${\$topic_link}`
+                                 + `\n\n1. Status of Submissions\n\nPublished: \${\$pub}; Under Processing: \${\$process}; Rejected: \${\$reject}\n\n\${\$instruct}\n\n2. Status of Planned Papers\n\nSeveral authors have committed to contributing feature papers to the `
+                                 + `Special Issue. If there are any missing papers, please let me know.\n\n%pp_list%\n\nMay you continue to explore the unknown and lead the forefront of academia. Wishing you continuous breakthroughs and inspiration in your scholarly `
+                                 + `endeavors!\n--\nBest regards,\n\`;\n}`},
 
             'Con_Template': {'section': [,"Conference Pages"], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Con_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
@@ -141,7 +147,7 @@
             'Interface_SME': {'section': [GM_config.create('Interface Modification')],'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
                               ['','Algebra, Geometry and Topology','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
                                'Fuzzy Sets, Systems and Decision Making','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics'], 'default': ''},
-            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Mathematics','Risks','Geometry','IJT','None'], 'default': 'Mathematics'},
+            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Games','Mathematics','Risks','Geometry','IJT','None'], 'default': 'Mathematics'},
             'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
             'MathBatch': {'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function() {window.location.href="https://skday.eu.org/math.html"}},
             'Interface_sidebar': {'section': [], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
@@ -436,19 +442,25 @@ function onInit() {
                 });
 
                 $(this).find('tbody tr').each(function() {
-                    let $td = $(this).find('td'), email = $td.eq(emailIndex).text().trim(), status = $td.eq(statusIndex).text().trim(), invitedByGE = $td.eq(sourceIndex).text().trim(),
-                        discount = parseFloat($td.eq(discountIndex).text().trim().replace(/ /g, '').replace(/CHF/g, '')), agreedDate = new Date($td.eq(agreedDateIndex).text().trim());
-                    console.log(email); console.log(status); console.log(invitedByGE); console.log(discount);
+                    let $td = $(this).find('td'), email = $td.eq(emailIndex).text().replace(/\s\*/g,"").trim(), status = $td.eq(statusIndex).text().trim(), invitedByGE = $td.eq(sourceIndex).text().trim(),
+                        discountText = $td.eq(discountIndex).text().trim(), agreedDate = new Date($td.eq(agreedDateIndex).text().trim());
                     if (status === "Title Provided" || status === "Agreed" || status === "Approved") {
                         counter++;
-                        if (invitedByGE.indexOf("by GE") > -1 && discount > 0) {
-                            let discountRatio = 0;
+                        let discountRatio = 0;
+                        if (discountText.includes('%')) {
+                            discountRatio = parseFloat(discountText.replace(/%/g, '')) / 100;
+                        } else {
+                            let discount = parseFloat(discountText.replace(/ /g, '').replace(/CHF/g, ''));
                             switch (agreedDate.getFullYear()) {
                                 case 2021: discountRatio = discount / 1600; break;
                                 case 2022: discountRatio = discount / 1800; break;
                                 case 2023: if(agreedDate.getMonth() < 6) {discountRatio = discount / 2100} else {discountRatio = discount / 2600}; break;
                                 case 2024: discountRatio = discount / 2600; break;
                                 default: discountRatio = 8;
+                            }
+                        }
+                        if (invitedByGE.indexOf("by GE") > -1 && discountRatio > 0) {
+                            switch (agreedDate.getFullYear()) {
                             }
                             result += `(${counter}) ${email} (${(discountRatio * 100).toFixed(0)}% discount)\n`;
                         } else {
@@ -546,14 +558,17 @@ function onInit() {
                                                                     $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('redo');} });
 
         $("#addAttachment").after(` <input type="text" id="addnote" value="${GM_config.get('Report_Notes')}" style="width: 150px; display:inline-block">`); // $("#sendingEmail").after(`<a class="submit" type="button" id="SKsendingEmail">Send email</a>`).hide();
-        $("#sendingCustomEmail").click(function(){
+        $("#sendingCustomEmail, #sendingEmail").click(function(){
             if ($("#addnote").val().length) {
                 $("div.click-to-edit-manuscript").last().click();
                 let $textarea = $("div.manuscript-input-note-group textarea").last();
                 let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear().toString().slice(-2);
                 let today = yy + '-' + mm + '-' + dd;
-                $textarea.val($textarea.val().replace(/(GE contact:\s*)/, "$1" + today + " " + $("#addnote").val() + " / "));
-                waitForKeyElements("button[data-url*='/user/edit/si_morph_notes/']",function(){$("button[data-url*='/user/edit/si_morph_notes/']").last().click()});
+                $textarea.val($textarea.val().replace(/(E contact:\s*)/, "$1" + today + " " + $("#addnote").val() + " / "));
+
+                let isCustom = $(this).attr("id") === "sendingCustomEmail";
+                let buttonSelector = isCustom ? "button[data-url*='/user/edit/si_morph_notes/']" : "button[data-url*='/submission/topic/update_followup_notes/']";
+                waitForKeyElements(buttonSelector, function() {$(buttonSelector).last().click()});
             }
         });
     } catch (error){ }}
@@ -659,6 +674,11 @@ function onInit() {
 
         //Always QC 换行
         $('a[data-title="Quality Check"]').click(LineBreak);
+
+        $('h1').each(function() { if ($(this).text().includes('403 - Permission denied')) {
+            let summary_link = window.location.href.replace(/.*_form/,"//susy.mdpi.com/manuscript/summary");
+            $(this).before(`<h1>Process Manuscript &nbsp;&nbsp;|&nbsp;&nbsp; Finalize Manuscript &nbsp;&nbsp;|&nbsp;&nbsp; <a href="${summary_link}">Manuscript Summary</a></h1><br>`); return false;
+        } });
     } catch (error){ }}
 
     //特刊列表免翻页⚙️
@@ -1187,16 +1207,25 @@ function onInit() {
                     background:#fefefe} #user-info table tr td span.msid{color:#4e6c88;font-weight:400}#user-info table tr td.title{width:50%}#user-info table tr td.journal{width:10%;text-align:center}#user-info table tr td.status{width:10%;text-align:center}
                     #user-info table tr td.submission-date{width:10%;text-align:center}#user-info table tr td.invoice-info{width:10%;text-align:center}#user-info table tr td.invoice-payment-info{width:10%;text-align:center}</style>`);
         document.body.innerHTML = document.body.innerHTML.replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=');
-        var susycheck = "https://susy.mdpi.com/user/info?emails="+ window.location.href.match(/search_content=(\S*)/)[1];
+        var mailsdb_email = window.location.href.match(/search_content=(\S*)/)[1], susycheck;
 
-        $("body").prepend("<div style='margin:10px;'><div id='d1'>Loading Invitation Record...</div><p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p><div id='d2'>Loading Overview...</div><p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p><div>");
+        if (/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(mailsdb_email)){
+            $("body").prepend(`<div style='margin:10px;'><div id='d1'>Loading Invitation Record...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div id='d2'>Loading Overview...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a>
+            <div id='d3'>Loading Review History...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div>`);
+            $('.scroll-icon').click(function() {
+                let currentIndex = $('.scroll-icon').index(this);
+                let nextIcon = $('.scroll-icon').eq(currentIndex + 1);
+                if (nextIcon.length > 0) {$('html, body').animate({scrollTop: nextIcon.offset().top}, 300);}
+                else {$('html, body').animate({scrollTop: $(document).height()}, 300);}
+            });
 
-        if (susycheck.indexOf("@") > -1){
+            susycheck = "https://susy.mdpi.com/user/info?emails="+ mailsdb_email;
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: susycheck,
                 onload: function(responseDetails) {
-                    $("#d2").html(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=').replace(/<h1>[\s\S]*<\/h1>/g,''));
+                    var $jQueryObject = $($.parseHTML(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=').replace(/<h1>[\s\S]*<\/h1>/g,'')));
+                    $("#d2").html($jQueryObject);
                     $("[title='Generate unsubscribe link']").each(function(e) {
                         $(this).attr("href", "//scholar.google.com/scholar?hl=en&q=" + $(this).attr('data-email')).attr("target","_blank").text("").append('<img width="20px" height="20px" src="//www.google.com/favicon.ico">')
                     });
@@ -1206,27 +1235,39 @@ function onInit() {
                         <img width=20px height=20px src="//susy.mdpi.com/build/img/design/susy-logo.png"></a> <a href="//scholar.google.com/scholar?hl=en&q=` + full_name + `" target=_blank><img width=20px height=20px src="//www.google.com/favicon.ico"></a>
                                        <a href="//www.scopus.com/results/authorNamesList.uri?st2=` + first_name + `&st1=` + last_name + `" target=_blank><img src=${icon_scopus}></a>`);
                     });
+
+                    if ($jQueryObject.find("a:contains('Edit Reviewer')").length){
+                        let ReviewerHistory=$jQueryObject.find("a:contains('Edit Reviewer')").attr("href").replace('//susy.mdpi.com/reivewer/managment/edit', 'https://susy.mdpi.com/list/reviewer/invitations-history');
+                        GM_xmlhttpRequest({
+                            method: 'GET',
+                            url: ReviewerHistory,
+                            onload: function(responseDetails) {
+                                var $jQueryObject2 = $($.parseHTML(responseDetails.responseText.replace(/data-load-url="\/user/g,'data-load-url="//susy.mdpi.com/user')));
+                                $("#d3").html($jQueryObject2);
+                            } });
+                    } else {
+                        $("#d3").html("No Review Record");
+                    }
                 } });
 
-            susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1139163";
+            susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ mailsdb_email +"&special_issue_id=1139163";
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: susycheck,
                 onload: function(responseDetails) {
                     var $jQueryObject = $($.parseHTML(responseDetails.responseText.replace(/data-load-url="\/user/g,'data-load-url="//susy.mdpi.com/user')));
                     $("#d1").html($jQueryObject);
-                    $("[data-title='Blocked Info']").attr("href","//susy.mdpi.com" + $("[data-title='Blocked Info']").attr("data-uri"))
+                    $("[data-title='Blocked Info']").attr("href","//susy.mdpi.com" + $("[data-title='Blocked Info']").attr("data-uri"));
                 } });
-        } else {
-            $("#d2").parent().remove();
         }
     } catch (error){ }}
 
     //Always: Reviewer checking样式⚙️
     if (window.location.href.indexOf("reviewer/checking/") > -1){try{
+        let Reviewer_ID=$(".morphNotes").attr("data-load-url").match(/morph_notes\/(\d+)/)[1];
         GM_xmlhttpRequest({
             method: 'GET',
-            url: $("a:contains('Edit Reviewer')").attr("href").replace(/reivewer\/managment\/edit/g, 'list/reviewer/invitations-history'),
+            url: "/list/reviewer/invitations-history/" + Reviewer_ID,
             onload: function(responseDetails) {
                 $("body").append(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/"));
             } });
