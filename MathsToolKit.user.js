@@ -1,15 +1,15 @@
 // ==UserScript==
 // @name          Maths ToolKit
-// @version       4.1.20
+// @version       4.7.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Maths ToolKit
 // @author        Syna
-// @icon          https://pub.mdpi-res.com/img/journals/mathematics-logo-sq.png
+// @icon64        https://pub.mdpi-res.com/img/journals/mathematics-logo-sq.png
 // @updateURL     https://raw.githubusercontent.com/synalocey/SusyModifier/master/MathsToolKit.user.js
 // @downloadURL   https://raw.githubusercontent.com/synalocey/SusyModifier/master/MathsToolKit.user.js
 // @match         *://*.mdpi.com/*
 // @match         *://skday.eu.org/*
-// @require       https://unpkg.com/jquery@3.7.0/dist/jquery.js
+// @require       https://unpkg.com/jquery@4.0.0-beta/dist/jquery.js
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM.getValue
