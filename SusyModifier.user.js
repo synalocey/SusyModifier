@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.7.17
+// @version       4.7.18
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -59,13 +59,6 @@
         'id': 'SusyModifierConfig',
         'title': 'Settings of SusyModifier v'+GM_info.script.version,
         'fields':  {
-            'Interface_SME': {'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
-                              ['','Algebra, Geometry and Topology','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
-                               'Fuzzy Sets, Systems and Decision Making','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics'], 'default': ''},
-            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Games','Mathematics','Risks','Geometry','IJT','None'], 'default': 'Mathematics'},
-            'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
-            'MathBatch': {'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function() {window.location.href="https://skday.eu.org/math.html"}},
-
             'Manuscriptnote': {'section': [GM_config.create('Function Modification'),'Manuscript Pages'],'label': 'Manuscript Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Assign_Assistant': {'label': '派稿助手', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'ManuscriptFunc': {'label': '申请优惠券和发推广信', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
@@ -151,7 +144,14 @@
             'Con_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex] and within the journal newsletter.* website and newsletter."},
             'Con_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website."},
 
-            'Interface_sidebar': {'section': [GM_config.create('Interface Modification')], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Interface_SME': {'section': [GM_config.create('Interface Modification')],'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
+                              ['','Algebra, Geometry and Topology','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
+                               'Fuzzy Sets, Systems and Decision Making','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics'], 'default': ''},
+            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Games','Mathematics','Risks','Geometry','IJT','Telecom','None'], 'default': 'Mathematics'},
+            'Easy_Journal': {'label': '置顶期刊列表', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
+            'MathBatch': {'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function() {window.location.href="https://skday.eu.org/math.html"}},
+            'Interface_sidebar': {'section': [], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Old_Icon': {'label': '使用旧图标', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Regular_Color': {'label': '橙色标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Maths_J': {'label': 'Scopus标记Maths期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
@@ -159,7 +159,7 @@
             'My_Account_Only': {'label': 'Use My Account Only:', 'labelPos': 'left', 'type': 'text', 'default': ""},
         },
         'events': {
-            'save': function() {location.reload();},
+            'save': function() {if($("#SusyModifierConfig").length>0){location.reload()};},
             'open': function(doc) {
                 var f_settings = $("#SusyModifierConfig").contents();
                 //Experimental警告
@@ -213,17 +213,16 @@
         #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,
         #SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);grid-template-rows:auto auto;}
         #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,#SusyModifierConfig_Report_TemplateB1_var,
-        #SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3}`
+        #SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_field_Journal{width:auto}`
     });
 })();
 
 
 function onInit() {
     const date_v = new Date('202'+GM_info.script.version);
-    if ((Date.now() - date_v)/86400000 > 75) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
+    if ((Date.now() - date_v)/86400000 > 75) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return false;}
     else {
-        $("#topmenu > ul").append("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
-
+        $("#topmenu > ul").append(`<li><a id='susymodifier_config'>SusyModifier</a></li>`); $("#susymodifier_config").click(function(e) {GM_config.open()});
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'q') {
                 e.preventDefault();
@@ -241,7 +240,33 @@ function onInit() {
         case 'Geometry': S_J=599; break;
         case 'Games': S_J=25; break;
         case 'IJT': S_J=598; break;
+        case 'Telecom': S_J=276; break;
         case 'None': S_J=-1; break;
+    }
+
+    if(GM_config.get('Easy_Journal')){
+        $("#topmenu > ul").append(`<li><select id="SusyModifier_Journal_Easy"><option value="517">AppliedMath</option><option value="25">Games</option><option value="154">Mathematics</option><option value="162">Risks</option>
+                                   <option value="599">Geometry</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select></li>`);
+        $("#SusyModifier_Journal_Easy").val(S_J).change(function() {
+            let J_old=S_J, J_new=$(this).find('option:selected').val(); S_J=J_new;
+            GM_config.set('Journal',$(this).find('option:selected').text());
+            GM_config.save();
+
+            $('a[href*="id]=' + J_old + '"]').each(function() {
+                $(this).attr('href', $(this).attr('href').replace('id]=' + J_old, 'id]=' + J_new));
+                let link = $(this); //高亮和闪烁效果
+                link.css({'background-color': 'yellow', 'transition': 'background-color 0.5s ease'});
+                link.animate({opacity: 0.5}, 500).animate({opacity: 1}, 500);
+                setTimeout(function() {link.css('background-color', ''); }, 10000);
+            });
+
+            $('select').each(function() {
+                let selectedOption = $(this).find('option:selected');
+                if (selectedOption.val() == J_old) {
+                    unsafeWindow.$(this).val(J_new).change().trigger("chosen:updated");
+                }
+            });
+        });
     }
 
     function decode(input) {const decoded = atob(input);return decoded.slice(3, -3);}
@@ -689,7 +714,7 @@ function onInit() {
                 });
             }
 
-            if (S_J==154 || S_J==517) {
+            if ([154, 159, 162, 517, 599, 25, 598, 276].includes(S_J)) {
                 $("table [title|='Google Scholar']").each(function() {
                     let ranking = get_univ( $(this).parent().nextAll(":last-child").text().trim() );
                     if(ranking.color){
