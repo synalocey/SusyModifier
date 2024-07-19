@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.7.11
+// @version       4.7.17
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -59,6 +59,13 @@
         'id': 'SusyModifierConfig',
         'title': 'Settings of SusyModifier v'+GM_info.script.version,
         'fields':  {
+            'Interface_SME': {'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
+                              ['','Algebra, Geometry and Topology','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
+                               'Fuzzy Sets, Systems and Decision Making','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics'], 'default': ''},
+            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Games','Mathematics','Risks','Geometry','IJT','None'], 'default': 'Mathematics'},
+            'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
+            'MathBatch': {'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function() {window.location.href="https://skday.eu.org/math.html"}},
+
             'Manuscriptnote': {'section': [GM_config.create('Function Modification'),'Manuscript Pages'],'label': 'Manuscript Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Assign_Assistant': {'label': '派稿助手', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'ManuscriptFunc': {'label': '申请优惠券和发推广信', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
@@ -144,13 +151,7 @@
             'Con_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex] and within the journal newsletter.* website and newsletter."},
             'Con_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website."},
 
-            'Interface_SME': {'section': [GM_config.create('Interface Modification')],'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
-                              ['','Algebra, Geometry and Topology','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
-                               'Fuzzy Sets, Systems and Decision Making','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics'], 'default': ''},
-            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Games','Mathematics','Risks','Geometry','IJT','None'], 'default': 'Mathematics'},
-            'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
-            'MathBatch': {'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function() {window.location.href="https://skday.eu.org/math.html"}},
-            'Interface_sidebar': {'section': [], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
+            'Interface_sidebar': {'section': [GM_config.create('Interface Modification')], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Old_Icon': {'label': '使用旧图标', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Regular_Color': {'label': '橙色标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Maths_J': {'label': 'Scopus标记Maths期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
@@ -635,20 +636,46 @@ function onInit() {
                 let $link = $(this);
                 let pubpeer_search = new URLSearchParams(new URL($link.attr("href")).search);
                 let pubpeer_name = pubpeer_search.get("q");
-                $(this).attr("href","https://pubpeer.com/search?q=authors%3A%22"+pubpeer_name+"%22")
-                GM_xmlhttpRequest({
-                    method: "GET", url: 'https://pubpeer.com/api/search?q=authors%3A%22'+pubpeer_name+'%22',
-                    onload: function(response) {
-                        let pub_num = JSON.parse(response.responseText).meta.total;
-                        $link.append("["+pub_num+"]");
-                        if(pub_num > 0) {$link.css('background-color', 'gold');}
-                    }
-                });
-
+                $link.attr("href", "https://pubpeer.org/search?q=authors%3A%22" + pubpeer_name + "%22");
                 let firstName = $link.parent().contents().filter(function() {return this.nodeType === 3;}).first().text().trim();
                 let lastName = $link.parent().find('b').first().text().trim();
                 $(this).before(` <a href="//www.scopus.com/results/authorNamesList.uri?st2=${firstName}&st1=${lastName}" title="Scopus" target="_blank" rel="noopener noreferrer"><img src=${icon_scopus}></a> `);
+
             });
+
+            let hasBeenClicked = false;
+            $("[title='PubPeer']").on("click", function(event) {
+                if (!hasBeenClicked) {
+                    event.preventDefault(); hasBeenClicked = true;
+                    let $link = $(this);
+                    GM_xmlhttpRequest({
+                        method: "GET",
+                        url: $link.attr("href").replace("pubpeer.org/","pubpeer.com/api/"),
+                        onload: function(response) {
+                            let pub_num = JSON.parse(response.responseText).meta.total;
+                            $link.append("["+pub_num+"]");
+                            if(pub_num > 0) {
+                                $link.css('background-color', 'gold');
+                            }
+                        }
+                    });
+                    $("[title='PubPeer']").each(function() {
+                        let $link = $(this);
+                        GM_xmlhttpRequest({
+                            method: "GET",
+                            url: $link.attr("href").replace("pubpeer.org/","pubpeer.com/api/"),
+                            onload: function(response) {
+                                let pub_num = JSON.parse(response.responseText).meta.total;
+                                $link.append("["+pub_num+"]");
+                                if(pub_num > 0) {
+                                    $link.css('background-color', 'gold');
+                                }
+                            }
+                        });
+                    });
+                }
+            });
+
         }
 
         if (GM_config.get('Assign_Assistant')) { //派稿助手
@@ -679,7 +706,8 @@ function onInit() {
 
         $('h1').each(function() { if ($(this).text().includes('403 - Permission denied')) {
             let summary_link = window.location.href.replace(/.*_form/,"//susy.mdpi.com/manuscript/summary");
-            $(this).before(`<h1>Process Manuscript &nbsp;&nbsp;|&nbsp;&nbsp; Finalize Manuscript &nbsp;&nbsp;|&nbsp;&nbsp; <a href="${summary_link}">Manuscript Summary</a></h1><br>`); return false;
+            $(this).before(`<h1>Process Manuscript &nbsp;&nbsp;|&nbsp;&nbsp; Finalize Manuscript &nbsp;&nbsp;|&nbsp;&nbsp; <a href="${summary_link}">Manuscript Summary</a></h1><br>`);
+            window.location.href = window.location.href.replace(/.*_form/,"//susy.mdpi.com/manuscript/summary"); return false;
         } });
     } catch (error){ }}
 
