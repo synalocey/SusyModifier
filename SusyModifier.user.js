@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.7.18
+// @version       4.7.25
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -35,7 +35,8 @@
 // @match         *://*.google.co.id/*
 // @match         *://*.google.com.my/*
 // @match         *://i.mdpi.cn/team/dinner*
-// @require       https://unpkg.com/jquery@4.0.0-beta/dist/jquery.js
+// @require       https://unpkg.com/jquery@4.0.0-beta.2/dist/jquery.js
+// @require       https://releases.jquery.com/git/jquery-migrate-git.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.js
 // @grant         GM_getValue
@@ -222,7 +223,7 @@ function onInit() {
     const date_v = new Date('202'+GM_info.script.version);
     if ((Date.now() - date_v)/86400000 > 75) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return false;}
     else {
-        $("#topmenu > ul").append(`<li><a id='susymodifier_config'>SusyModifier</a></li>`); $("#susymodifier_config").click(function(e) {GM_config.open()});
+        $("#topmenu > ul").append(`<li><a id='susymodifier_config'>SusyModifier</a></li>`); $("#susymodifier_config").on("click", function(e) {GM_config.open()});
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'q') {
                 e.preventDefault();
@@ -247,7 +248,7 @@ function onInit() {
     if(GM_config.get('Easy_Journal')){
         $("#topmenu > ul").append(`<li><select id="SusyModifier_Journal_Easy"><option value="517">AppliedMath</option><option value="25">Games</option><option value="154">Mathematics</option><option value="162">Risks</option>
                                    <option value="599">Geometry</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select></li>`);
-        $("#SusyModifier_Journal_Easy").val(S_J).change(function() {
+        $("#SusyModifier_Journal_Easy").val(S_J).on("change", function() {
             let J_old=S_J, J_new=$(this).find('option:selected').val(); S_J=J_new;
             GM_config.set('Journal',$(this).find('option:selected').text());
             GM_config.save();
@@ -257,13 +258,13 @@ function onInit() {
                 let link = $(this); //高亮和闪烁效果
                 link.css({'background-color': 'yellow', 'transition': 'background-color 0.5s ease'});
                 link.animate({opacity: 0.5}, 500).animate({opacity: 1}, 500);
-                setTimeout(function() {link.css('background-color', ''); }, 10000);
+                //取消高亮 setTimeout(function() {link.css('background-color', ''); }, 10000);
             });
 
             $('select').each(function() {
                 let selectedOption = $(this).find('option:selected');
                 if (selectedOption.val() == J_old) {
-                    unsafeWindow.$(this).val(J_new).change().trigger("chosen:updated");
+                    unsafeWindow.$(this).val(J_new).trigger("change").trigger("chosen:updated");
                 }
             });
         });
@@ -335,14 +336,14 @@ function onInit() {
         $(".menu [href='/planned_paper/my/list']").after(" <a href='/planned_paper/my/list?form[submission_topic_id]=-1&form[special_issue_id]=-1'>[R]</a>");
         $(".menu [href='/user/ebm-new/management']").after(`<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='${icon_magnifier}'></a> </div> `);
 
-        $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_webs}'></a></div>`); $("#sf_b").click(sf)
+        $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_webs}'></a></div>`); $("#sf_b").on("click", sf)
 
         $(".menu [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=" + S_J);
         $(".menu [href='/manuscript/quality/check/list']").attr("href",'/manuscript/quality/check/list?form[journal_id]=' + S_J);
-        $("#owner").click(function(){ $.getJSON("/user/ajax/search_manuscript_owner?term="+$("#topmenu span:contains('@mdpi.com')").text(), function(data){window.location.href ='/user/managing/status/submitted?form[owner_id]=' + data[0].value}); });
+        $("#owner").on("click", function(){ $.getJSON("/user/ajax/search_manuscript_owner?term="+$("#topmenu span:contains('@mdpi.com')").text(), function(data){window.location.href ='/user/managing/status/submitted?form[owner_id]=' + data[0].value}); });
 
         if (GM_config.get('Assign_Assistant')) { //派稿助手
-            $(".menu [href='/user/manage/crosscheck']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").click(sk_susie);
+            $(".menu [href='/user/manage/crosscheck']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").on("click", sk_susie);
         }
     } catch (error){ }}
 
@@ -367,7 +368,7 @@ function onInit() {
     //GE Invitation✏️ + Quick
     if (window.location.href.indexOf("/invite/guest_editor") > -1){try{
         sk_MyAccountOnly();
-        unsafeWindow.$(document.getElementById('emailTemplates')).append('<option value>*Guest Editor - SI Mentor Program</option>').trigger("chosen:updated").change(function(){
+        unsafeWindow.$(document.getElementById('emailTemplates')).append('<option value>*Guest Editor - SI Mentor Program</option>').trigger("chosen:updated").on("change", function(){
             if($("#emailTemplates option:selected").text() == "*Guest Editor - SI Mentor Program") {
                 $.ajax({url:$("#emailTemplates").attr("data-url"), dataType:"json", type:"post", async:"true", data:{id:"269",placeholders:$("#placeholders").val()}, success:function(data){
                     let SI_mentor_body = data.body.replace(
@@ -398,7 +399,7 @@ function onInit() {
         unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
         function init() {let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_TemplateS2'))) );
                          let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_TemplateB2'))) );
-                         if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").click()},500);}
+                         if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").trigger("click")},500);}
                         }
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
@@ -411,12 +412,12 @@ function onInit() {
         unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
         function init() {let t1 = RegExptest(GM_config.get('GE_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_ReminderS2'))) );
                          let t2 = RegExptest(GM_config.get('GE_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_ReminderB2'))) );
-                         if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").click()},500);}
+                         if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").trigger("click")},500);}
                         }
         waitForText(document.querySelector('#mailSubject'), ' ', init);
 
         $('#mailSubject').parent().after(`<a id="Awaiting"><img src="${icon_pencil}"></a>`);
-        $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
+        $('#Awaiting').on("click", function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
         $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
     } catch (error){ }}
 
@@ -427,7 +428,7 @@ function onInit() {
                          let t2 = RegExptest(GM_config.get('EB_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_TemplateB2'))) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         $('#mailSubject').parent().after('<a id="No_Discount">[No Discount]</a>');
-        $('#No_Discount').click(function(e) {$('#mailBody').val($('#mailBody').val().replace(/you will have the opportunity to publish one paper free of charge in .* per year, and can also publish extra papers with special discounts.\n\n/,'').replace(
+        $('#No_Discount').on("click", function(e) {$('#mailBody').val($('#mailBody').val().replace(/you will have the opportunity to publish one paper free of charge in .* per year, and can also publish extra papers with special discounts.\n\n/,'').replace(
             'Additionally, we would like to invite you to publish one paper per year—this will be free of charge once accepted for publication. ','').replace(/\nPlease click on the following link .*?\nhttp.*?\n/g,''))});
         $('html, body').scrollTop($('#emailTemplates').offset().top);
     } catch (error){ }}
@@ -515,11 +516,11 @@ function onInit() {
             $("#maincol").after('<div id="special_issue_note_offcanvas" class="hide-note-offcanvas"></div>');
             $.get(GetNoteUrl, function(res) {
                 $('#special_issue_note_offcanvas').html(res.note_html); $('#special_issue_note_offcanvas').removeClass('hide-note-offcanvas');
-                $('#close-offcanvas-note').parent().click(function(){$("#special_issue_note_offcanvas").toggleClass("hide-note-offcanvas");});
+                $('#close-offcanvas-note').parent().on("click", function(){$("#special_issue_note_offcanvas").toggleClass("hide-note-offcanvas");});
                 let OtherEmails = res.note_html.match(/GE Other Emails:(.*?)[\n<]/), Appellation = res.note_html.match(/GEs:(.*?)[\n<]/);
-                if (OtherEmails) {$("#mailTo").val(OtherEmails[1]); $("#mailTo").focus();}
+                if (OtherEmails) {$("#mailTo").val(OtherEmails[1]); $("#mailTo").trigger("focus");}
                 if (Appellation) {$("#mailBody").val( $("#mailBody").val().replace(/(?<=^Dear ).*/, Appellation[1].trim()+",") )}
-                $("#mailBody").prop('selectionStart', 0).prop('selectionEnd', 0).focus(); $("#mailTo").focus();
+                $("#mailBody").prop('selectionStart', 0).prop('selectionEnd', 0).trigger("focus"); $("#mailTo").trigger("focus");
                 waitForKeyElements(".special-issue-note-box",SidebarSize);
             });
         }
@@ -531,7 +532,7 @@ function onInit() {
         [CfP Approval]</a></p><p><a id="cfpremind" style="display:none">[CfP Remind]</a></p><p><a id="cfpsent">[CfP Sent]</a></p><p><a id="personalcfp">[Personal CfP]</a></p><p><a id="book">[SI Book]</a></p><p><a id="certificate">[Certificate]</a></p><p><a id="conference">
         [Conference]</a></p><p><a id="deadline">[Deadline Ext.]</a></p><p><a id="deadline2">[Deadline Ext. 2]</a></p><p><a id="LinkedIn">[LinkedIn]</a></p><p><a id="review">[Review Article]</a></p><p><a id="meeting">[Online Meeting]</a></p></div></div>`);
         let undoStack = [], redoStack = [], insert_text = "";
-        $('#insert a').click(function() {
+        $('#insert a').on("click", function() {
             switch ($(this).attr("id")) {
                 case 'cfpapproval': insert_text=`\n3. Approval of Call for Paper List\n\nI'd like to inquire about the appropriateness of using the attached list of email addresses to send out calls for papers for our special issue. These addresses were collected from our `
                     + `database using an AI system, and I wanted to confirm that they are suitable for receiving calls for papers for our special issue. If you believe that any of the addresses on the list are not suitable, please let me know and I will remove them from `
@@ -580,15 +581,15 @@ function onInit() {
             $('#mailBody')[0].setSelectionRange(selectionStart + insert_text.length, selectionStart + insert_text.length);
         });
 
-        $('#undoBtn').click(function() { if (undoStack.length > 0) {redoStack.push($('#mailBody').val()); $('#mailBody').val(undoStack.pop());
+        $('#undoBtn').on("click", function() { if (undoStack.length > 0) {redoStack.push($('#mailBody').val()); $('#mailBody').val(undoStack.pop());
                                                                     $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('undo');} });
-        $('#redoBtn').click(function() { if (redoStack.length > 0) {undoStack.push($('#mailBody').val()); $('#mailBody').val(redoStack.pop());
+        $('#redoBtn').on("click", function() { if (redoStack.length > 0) {undoStack.push($('#mailBody').val()); $('#mailBody').val(redoStack.pop());
                                                                     $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('redo');} });
 
         $("#addAttachment").after(` <input type="text" id="addnote" value="${GM_config.get('Report_Notes')}" style="width: 150px; display:inline-block">`); // $("#sendingEmail").after(`<a class="submit" type="button" id="SKsendingEmail">Send email</a>`).hide();
-        $("#sendingCustomEmail, #sendingEmail").click(function(){
+        $("#sendingCustomEmail, #sendingEmail").on("click", function(){
             if ($("#addnote").val().length) {
-                $("div.click-to-edit-manuscript").last().click();
+                $("div.click-to-edit-manuscript").last().trigger("click");
                 let $textarea = $("div.manuscript-input-note-group textarea").last();
                 let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear().toString().slice(-2);
                 let today = yy + '-' + mm + '-' + dd;
@@ -596,7 +597,7 @@ function onInit() {
 
                 let isCustom = $(this).attr("id") === "sendingCustomEmail";
                 let buttonSelector = isCustom ? "button[data-url*='/user/edit/si_morph_notes/']" : "button[data-url*='/submission/topic/update_followup_notes/']";
-                waitForKeyElements(buttonSelector, function() {$(buttonSelector).last().click()});
+                waitForKeyElements(buttonSelector, function() {$(buttonSelector).last().trigger("click")});
             }
         });
     } catch (error){ }}
@@ -620,7 +621,7 @@ function onInit() {
 
             $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=['+ m_journal +'] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Social Media&body=' + GM_config.get('Template_Linkedin')
                                                          .replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
-            if (window.location.href.indexOf("?linkedin") > -1) {$("#linkedin")[0].click(); history.back();}
+            if (window.location.href.indexOf("?linkedin") > -1) {$("#linkedin")[0].trigger("click"); history.back();}
             $("[title='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query='+$("[title='Google']").prev().text()+
                                          '" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="https://c5.rgstatic.net/m/41542880220916/images/favicon/favicon-16x16.png"></a> ');
 
@@ -630,13 +631,13 @@ function onInit() {
             <a id="v_invited" reason="Feature paper invited by guest editor" style="display:block;padding: 8px 12px;text-decoration: none;color:black;">FP invited by GE</a><a id="v_ge" reason="Paper by guest editor" style
             ="display:block;padding: 8px 12px;text-decoration:none;color:black;">Paper by GE</a><a id="v_ebm" reason="Paper by editorial board member" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Paper by EBM</a>
             <a id="v_other" reason="Others" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Others</a></div></div>`);
-            $("#voucher").mouseover(function(){ $(this).children("div").show() });
-            $("#voucher").mouseout(function(){ $(this).children("div").hide() });
+            $("#voucher").on("mouseover", function(){ $(this).children("div").show() });
+            $("#voucher").on("mouseout", function(){ $(this).children("div").hide() });
             $('head').append('<style>#voucher a:hover {background-color: #ddd;}</style>');
             if (!m_si) {$("#v_invited, #v_ge").remove()};
 
             let d_reason="";
-            $("#voucher>div>a").click(function(){
+            $("#voucher>div>a").on("click", function(){
                 if ($("[data-invoice_id]").length == 0) {alert("There is no APC form on the page. Please change the manuscript status."); return;}
 
                 let xhr = new XMLHttpRequest(); xhr.open('GET', "https://susy.mdpi.com/apply/voucher/on_ms_page/" + $("[data-rel]").attr("data-rel") + "/" + $("[data-invoice_id]").attr("data-invoice_id") + "/", false); xhr.send();
@@ -670,6 +671,7 @@ function onInit() {
 
             let hasBeenClicked = false;
             $("[title='PubPeer']").on("click", function(event) {
+                $('body').append('<div id="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; cursor: wait; z-index: 10000;"></div>');
                 if (!hasBeenClicked) {
                     event.preventDefault(); hasBeenClicked = true;
                     let $link = $(this);
@@ -679,9 +681,8 @@ function onInit() {
                         onload: function(response) {
                             let pub_num = JSON.parse(response.responseText).meta.total;
                             $link.append("["+pub_num+"]");
-                            if(pub_num > 0) {
-                                $link.css('background-color', 'gold');
-                            }
+                            if(pub_num > 0) { $link.css('background-color', 'gold');}
+                            $('#overlay').remove();
                         }
                     });
                     $("[title='PubPeer']").each(function() {
@@ -692,12 +693,11 @@ function onInit() {
                             onload: function(response) {
                                 let pub_num = JSON.parse(response.responseText).meta.total;
                                 $link.append("["+pub_num+"]");
-                                if(pub_num > 0) {
-                                    $link.css('background-color', 'gold');
-                                }
+                                if(pub_num > 0) { $link.css('background-color', 'gold');}
                             }
                         });
                     });
+                    setTimeout(function() { $('#overlay').remove();}, 1000);
                 }
             });
 
@@ -705,7 +705,7 @@ function onInit() {
 
         if (GM_config.get('Assign_Assistant')) { //派稿助手
             try {let params = new window.URLSearchParams(window.location.search); let reviewer = params.get('r');
-                 if (reviewer.indexOf("@") > -1) {$("#form_email").val(reviewer); $("#nextBtn").click(); waitForKeyElements('#specialBackBtn', scrolldown, true); function scrolldown() {$('html, body').scrollTop($('#form_email').offset().top)} }
+                 if (reviewer.indexOf("@") > -1) {$("#form_email").val(reviewer); $("#nextBtn").trigger("click"); waitForKeyElements('#specialBackBtn', scrolldown, true); function scrolldown() {$('html, body').scrollTop($('#form_email').offset().top)} }
                 } catch (error){ }
 
             if ($("strong.margin-horizontal-1").text().indexOf("decision") > -1) {
@@ -727,7 +727,7 @@ function onInit() {
         }
 
         //Always QC 换行
-        $('a[data-title="Quality Check"]').click(LineBreak);
+        $('a[data-title="Quality Check"]').on("click", LineBreak);
 
         $('h1').each(function() { if ($(this).text().includes('403 - Permission denied')) {
             let summary_link = window.location.href.replace(/.*_form/,"//susy.mdpi.com/manuscript/summary");
@@ -788,8 +788,8 @@ function onInit() {
             $("#checkMailsdb").before('<input id=eltry_stop style=display:none type=button class=submit value=Stop><input id=eltry_stopbox style=display:none type=checkbox> ');
             $("#guestNextBtn").after(' <span id=timesRun style=background-color:#90EE90></span> <input id=eltry style=display:inline-block type=button class=submit value="! AutoRetry"> <input id=add6th style=display:inline-block type=button class=submit value="! Add6th">');
 
-            $("#eltry_stop").click(eltry_stop); function eltry_stop (zEvent) {$("#eltry_stopbox").prop('checked',true)};
-            $("#eltry").click(sk_eltry); function sk_eltry (zEvent) {
+            $("#eltry_stop").on("click", eltry_stop); function eltry_stop (zEvent) {$("#eltry_stopbox").prop('checked',true)};
+            $("#eltry").on("click", sk_eltry); function sk_eltry (zEvent) {
                 $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>`);
                 GM_xmlhttpRequest({
                     method: "GET",
@@ -806,14 +806,14 @@ function onInit() {
                 <form onsubmit="return false;"><br>E-Mail <input type="text" id="sk_eltry_email" style="display:inline-block; width:65%;" value="`+$("#form_email").val()+`" required> <br>Interval <input type="number" id="sk_eltry_interval" min=`+p1+` max=10000 step=50
                 style="display:inline-block; width:7em;" value=`+p1+` onkeydown="return false;" required> ms <br>Start Time <input type="time" id="sk_eltry_startt" style="display:inline-block; width:10em;" required><br><input type=submit id=sk_eltry_submit
                 value=Start style="margin:10px;padding:5px 20px"><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></form></div>`)
-                $("#sk_eltry_submit").click(function(e){
+                $("#sk_eltry_submit").on("click", function(e){
                     var eltry_email = $("#sk_eltry_email").val();
                     var interval_time = $("#sk_eltry_interval").val();
                     let today = new Date();
                     var start_time = new Date(today.getFullYear() + '/' + (today.getMonth()+1 < 10 ? '0'+(today.getMonth()+1) : today.getMonth()+1) + '/'+today.getDate() + ' ' + $("#sk_eltry_startt").val());
                     var today_string = today.getFullYear() + '-' + (today.getMonth()+1 < 10 ? '0'+(today.getMonth()+1) : today.getMonth()+1) + '-'+today.getDate() + ' ';
                     $("#eltry_stop").css("display","inline-block"); $("#eltry").css("display","none"); $("#add6th").css("display","none"); $("#ith-shade1").remove(); $("#ith-shade2").remove();
-                    $("#form_email").val(eltry_email); $("#guestNextBtn").click();
+                    $("#form_email").val(eltry_email); $("#guestNextBtn").trigger("click");
 
                     waitForKeyElements("#specialBackBtn", sk_eltry_check2, true);
                     function sk_eltry_check2() {
@@ -832,7 +832,7 @@ function onInit() {
                                     notifyMe('Starting', notify_options);
                                 }
                                 timesRun += 1; $("#timesRun").text(timesRun + " attempts auto trying. ");
-                                $("#guestNextBtn").click();
+                                $("#guestNextBtn").trigger("click");
                                 if ($("p:contains('on "+today_string+"')").length) {
                                     clearInterval(interval); $("#timesRun").text("The GE is already invited by others. Stopped.");
                                 } else if ($("#eltry_stopbox").prop("checked")) {
@@ -841,15 +841,15 @@ function onInit() {
                                     // do nothing
                                 } else if (document.getElementById('process-special-issue-guest-editor') !=null) {
                                     clearInterval(interval);
-                                    document.getElementById("process-special-issue-guest-editor").click();
+                                    document.getElementById("process-special-issue-guest-editor").trigger("click");
                                     $("body").append(`<div class="blockUI blockOverlay" style=z-index:1000;border:none;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div><div class="blockUI blockMsg blockPage" style=
                                     "z-index:1011;position:fixed;width:30%;top:45%;height:50px;line-height:40px;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:none;background-color:#fff;vertical-align:middle">Proceeding... Please wait.</div>`)
-                                    $("#process-special-issue-guest-editor").click();
+                                    $("#process-special-issue-guest-editor").trigger("click");
                                 } else {
                                     // do nothing
                                 }
                             } else if (Math.round((start_time-Date.now())/1000) % 120 == 0) {
-                                $("#guestNextBtn").click();
+                                $("#guestNextBtn").trigger("click");
                                 $("#timesRun").text("Autotry will start in [" + Math.round((start_time-Date.now())/1000/60) + " min]: " + start_time );
                             }
                         }, interval_time);
@@ -878,9 +878,9 @@ function onInit() {
                 });
             }
 
-            $("#add6th").click(sk_add6th); function sk_add6th (zEvent) {
+            $("#add6th").on("click", sk_add6th); function sk_add6th (zEvent) {
                 $("#eltry").css("display","none"); $("#add6th").css("display","none");
-                $("#guestNextBtn").click();
+                $("#guestNextBtn").trigger("click");
                 waitForKeyElements("#specialBackBtn", sk_add6th_check, true);
                 function sk_add6th_check() {
                     $("#specialBackBtn").after(` <input id="process-special-issue-guest-editor" type="submit" value="Force Add" class="submit is-psme-assessment">`);
@@ -890,10 +890,10 @@ function onInit() {
 
         Quick_InviteRemind($("a[href^='/email/invite/guest_editor/']")); Quick_InviteRemind($("a[href^='/email/remind/guest_editor/']"));
         function Quick_InviteRemind(param) {param.each(function(){$(this).after(" (<a href='" + $(this).attr("href") + "?Q'>Quick</a>)")})}
-        $('a[data-title="Extend Deadline"]').click(function(e){waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly(){$("#form_deadline").attr("readonly",false)};})
-        $('a[data-title="Change special issue deadline"]').click(function(e){waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2(){$("#form_date").attr("readonly",false)};})
+        $('a[data-title="Extend Deadline"]').on("click", function(e){waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly(){$("#form_deadline").attr("readonly",false)};})
+        $('a[data-title="Change special issue deadline"]').on("click", function(e){waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2(){$("#form_date").attr("readonly",false)};})
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
-        $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").click(function(){
+        $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").on("click", function(){
             $("#si-cfp-form [type=\'checkbox\']").prop("checked",true); if($("#form_template_id").val()==1){$("#form_template_id").val(2)}; if($("#form_comments").val()==""){$("#form_comments").val("Thank you.")}
         });
 
@@ -902,7 +902,7 @@ function onInit() {
         if (button.length > 0) { button.replaceWith(`<a href="${button.attr('onclick').match(/'([^']+)'/)[1]}" class="submit">${button.val()}</a>`);}
 
         // 按钮PP MailMerge
-        var PPMM = $('<input type="button" id=PPMM class="submit" value="PPMailMerge" style="float:right;margin:0"> ').click(function(){
+        var PPMM = $('<input type="button" id=PPMM class="submit" value="PPMailMerge" style="float:right;margin:0"> ').on("click", function(){
             var selectedEmailLinks = [];
             $('table tr').each(function() {
                 var checkbox = $(this).find('input[type="checkbox"]');
@@ -918,7 +918,7 @@ function onInit() {
             var ids = selectedEmailLinks.map(link => link.split('/').pop()).join(',');
             GM_openInTab("https://susy.mdpi.com" + baseLink + "/management?multiIds=" + ids, false);
         });
-        var SelectALL = $('<input type="button" id=SelectALL class="button hollow" value="Select PP" style="float:right;float:right;font-size:small;margin:0;"> ').click(function() {
+        var SelectALL = $('<input type="button" id=SelectALL class="button hollow" value="Select PP" style="float:right;float:right;font-size:small;margin:0;"> ').on("click", function() {
             this.toggle = !this.toggle;
             var statusesToCheck = this.toggle ? ['Title Provided', 'Agreed'] : ['Title Provided', 'Agreed', 'Interested'];
             let statusIndex=0;
@@ -937,7 +937,7 @@ function onInit() {
         if (GM_config.get('Hidden_Func')){
             $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `);
             $("h1:contains('Process Special Issue')").attr("id","sk_list2")
-            $("#sk_list,#sk_list2").click(function(){
+            $("#sk_list,#sk_list2").on("click", function(){
                 var emailLinks = [];
                 $("[data-user-info-emails]").each(function() {
                     let email = $(this).attr('data-user-info-emails');
@@ -967,7 +967,7 @@ function onInit() {
         <option value="OR" selected="selected">Or</option></select> WoS[SID]: <input type="text" id="wos_sid" style="display:inline-block;width:150px;margin-right:10px;" value="` + GM_getValue("wos_sid", "") + `">
         <button id=s_key_submit class=submit progress=zero style=margin:0>Generate Feasibility Report</button></div>`)
 
-        $("#s_key").val($("#sq_101i").val().replace(" and ","\n")); $("#s_key_submit").click(fc_fill);
+        $("#s_key").val($("#sq_101i").val().replace(" and ","\n")); $("#s_key_submit").on("click", fc_fill);
         function fc_fill(){
             let keywords=$("#s_key").val().split(/[.:;,|\n/\\]+/), keyword_num = keywords.length, url1 = "https://finder.susy.mdpi.com/topic/special_issue?", n_closed,n_open,n_pending,j_open,n_wos,n_wos_m,wss_fin,conclusion=0;
             let fc_journal_name=$("h4:contains('Journal:')").find("i").text(); let fc_j_id = get_jid(fc_journal_name.toLowerCase());
@@ -1085,7 +1085,7 @@ function onInit() {
     //默认新建特刊位置和Title Case
     if (window.location.href.indexOf(".mdpi.com/user/special_issue/edit/") > -1){try{
         $("#form_name").after("<a id='TitleCaseChicago'>🔡(Chicago)🔠</a> ");
-        $("#TitleCaseChicago").click(function () {
+        $("#TitleCaseChicago").on("click", function () {
             if ($("#form_name").val().length > 1) {
                 (async () => {
                     $('#form_name, input[value="Edit"], input[value="Add"]').prop("disabled", true);
@@ -1142,8 +1142,8 @@ function onInit() {
                          let t2 = RegExptest(GM_config.get('Con_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('Con_TemplateB2')) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         $('#mailSubject').parent().after('<div><a id="First_Line">[First Line]</a><br><br><a id="Del_Proceedings">[Del Proceedings]</a></div>');
-        $('#First_Line').click(function() {$('#mailBody').val("Dear Conference Committee,\nTo Whom It May Concern,\n"+$('#mailBody').val()) });
-        $('#Del_Proceedings').click(function() {$('#mailBody').val($('#mailBody').val().replace(/\n(.*?)https:\/\/www.mdpi.com\/about\/proceedings(.*?)\n/g,'')) });
+        $('#First_Line').on("click", function() {$('#mailBody').val("Dear Conference Committee,\nTo Whom It May Concern,\n"+$('#mailBody').val()) });
+        $('#Del_Proceedings').on("click", function() {$('#mailBody').val($('#mailBody').val().replace(/\n(.*?)https:\/\/www.mdpi.com\/about\/proceedings(.*?)\n/g,'')) });
     } catch (error){ }}
 
     //PP提醒模板
@@ -1192,7 +1192,7 @@ function onInit() {
         $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/ethic-committee/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]=o&f[]=subject&op[subject]=%7E&v[subject][]=` + GM_config.get('Journal')
                                  + `]&f[]=&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&group_by=&per_page=100'>[EC]</a>`)
         //Checker功能和检测函数
-        $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").click(sk_cfpcheck_func);
+        $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").on("click", sk_cfpcheck_func);
         function sk_cfpcheck_func (zEvent) {
             let Today=new Date();
             $("#issue_pe_note").val($("#issue_pe_note").val()+"--- Checked on " + Today.getFullYear()+ "-" + (Today.getMonth()+1) + "-" + Today.getDate() + " ---\n");
@@ -1267,7 +1267,7 @@ function onInit() {
         if (/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(mailsdb_email)){
             $("body").prepend(`<div style='margin:10px;'><div id='d1'>Loading Invitation Record...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div id='d2'>Loading Overview...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a>
             <div id='d3'>Loading Review History...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div>`);
-            $('.scroll-icon').click(function() {
+            $('.scroll-icon').on("click", function() {
                 let currentIndex = $('.scroll-icon').index(this);
                 let nextIcon = $('.scroll-icon').eq(currentIndex + 1);
                 if (nextIcon.length > 0) {$('html, body').animate({scrollTop: nextIcon.offset().top}, 300);}
@@ -1338,7 +1338,7 @@ function onInit() {
                 $(this).html($(this).html().replace(/\n/g, '<br>\n'));
             });
         }
-        $('a[data-title="Quality Check"]').click(LineBreak);
+        $('a[data-title="Quality Check"]').on("click", LineBreak);
     } catch (error){ } }
 
     //Always: Paper ID to page
@@ -1412,7 +1412,7 @@ function onInit() {
 
 //     //Hidden_Func: Remind 2nd Round Reviewer
 //     if (window.location.href.indexOf("assigned/remind_reviewer") > -1 && GM_config.get('Hidden_Func')){try{
-//         $('#emailTemplates').val(21).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
+//         $('#emailTemplates').val(21).trigger("change"); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
 //     } catch (error){ }}
 
     //Always: MRS Chosen
@@ -1480,7 +1480,7 @@ function onInit() {
             }
         }
         toggleChosen();
-        $("#statistic > span").after("<br><br>").wrapInner('<a id="s_chosen"></a>').click(function() {toggleChosen()});
+        $("#statistic > span").after("<br><br>").wrapInner('<a id="s_chosen"></a>').on("click", function() {toggleChosen()});
     } catch (error){ }}
 
     //Always: Volunteer Reviewer
@@ -1519,11 +1519,11 @@ function onInit() {
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/login") > -1){try{ $("[name=p_s]").attr('checked',true); $("#check-rem").attr('checked',true); } catch (error){ }}
 
     //Always: Manage Voucher Applications + 页面最底端
-    if(window.location.href.indexOf(".mdpi.com/voucher/application/list/") > -1){try{ document.getElementById("show-more-budgets").click();} catch (error){ }}
+    if(window.location.href.indexOf(".mdpi.com/voucher/application/list/") > -1){try{ document.getElementById("show-more-budgets").trigger("click");} catch (error){ }}
     if(window.location.href.indexOf(".mdpi.com/voucher/application/view/") > -1){try{
-        $("[value='Approve']").click(function(){
+        $("[value='Approve']").on("click", function(){
             waitForKeyElements("button:contains('confirm')", click_confirm, false);
-            function click_confirm(){$("button:contains('confirm')").click()}
+            function click_confirm(){$("button:contains('confirm')").trigger("click")}
         })
         waitForKeyElements(".user_box_head", voucher_scroll, false); function voucher_scroll(){scroll(0,document.body.scrollHeight)};
     } catch (error){ }}
@@ -1533,7 +1533,7 @@ function onInit() {
             let observer = new MutationObserver(function(mutations) {
                 if ($("#field-form_emails:contains('[Edit]')").length) {return;}
                 $("#field-form_emails fieldset>div:contains('Name:')").children().last().append("<a id='update_reviewer'>[Edit]</a>");
-                $("#update_reviewer").click(function(){
+                $("#update_reviewer").on("click", function(){
                     $("body").css('cursor', 'wait');
                     $.get("/list/reviewers/by-email-query?showName=1&term="+$("#form_emails").val(), function(res) {
                         GM_openInTab("https://susy.mdpi.com/reivewer/managment/edit/"+res[0].id, {active: true});
@@ -1582,7 +1582,7 @@ function onInit() {
         var maths_regex = new RegExp("(" + maths_j.join("|") + ")", "i");
         var geometry_regex = new RegExp("(" + geometry_j.join("|") + ")", "i");
         if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source'],div[data-testid='author-list']+span", mark_journals, true);} else {mark_journals()};
-        $("#gsc_bpf_more").click(function (){
+        $("#gsc_bpf_more").on("click", function (){
             let targetNode = document.querySelector('#gsc_a_nn')
             let observer = new MutationObserver(function(mutations) { mark_journals() });
             observer.observe(targetNode, {characterData: true, childList: true, subtree: true});
@@ -1608,7 +1608,7 @@ function onInit() {
     //派稿助手: iThenticate AUTO
     if (window.location.href.indexOf("managing/status/submitted") + window.location.href.indexOf("sme/status/submitted") > -2 && GM_config.get('Assign_Assistant')){try{
         $("#show_title").parent().append("<input type='button' id='send_ith' value='Send iThenticate in OneClick'>")
-        $("#send_ith").click(function() {
+        $("#send_ith").on("click", function() {
             if (confirm("I will send ALL manuscripts in this page to iThenticate!") == true) {
                 $("a:contains('math')[href*='/process_form/'],a:contains('games')[href*='/process_form/'],a:contains('children')[href*='/process_form/'],a:contains('geometry')[href*='/process_form/']").each(function() {chk_ith($(this).attr('href'),$(this).text())});
                 $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
@@ -1633,7 +1633,7 @@ function onInit() {
                 }
             }
         });
-        $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align","center").bind("contextmenu",function(e){return false;}).each(function() {
+        $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align","center").on("bind", "contextmenu",function(e){return false;}).each(function() {
             $(this).append("<a class='sk_reject' style='font-style:italic' href='//susy.mdpi.com/user/assigned/reject-manuscript/"+$(this).parents("tr").find("td:nth-child(4) >> a").attr("href").split("/").pop()+"'>[Reject]</a>");} );
         $(".sk_reject").on('mouseup', function (e){switch (e.which) {
             case 3: // Right click.
@@ -1644,17 +1644,17 @@ function onInit() {
 
     //派稿助手: Paper Rejection
     if(window.location.href.indexOf("assigned/reject-manuscript/") > -1 && GM_config.get('Assign_Assistant')){try{
-        $('#emailTemplates').val(77).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); window.scrollTo(0, document.body.scrollHeight);
+        $('#emailTemplates').val(77).trigger("change"); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); window.scrollTo(0, document.body.scrollHeight);
         if(window.location.search == "?quickreject"){
             waitForText(document.querySelector('#mailSubject'), ' ', init);
-            function init() {$("#sendingEmail").click();}
+            function init() {$("#sendingEmail").trigger("click");}
         }
     } catch (error){ }}
 
     //ManuscriptFunc: 文章页面加[Linkedin]
     if (window.location.href.indexOf("www.mdpi.com/2227-7390/") > -1 && GM_config.get('ManuscriptFunc')){try{
         $("a:contains('Peer-Reviewed')").parent().after('<a id="s_linkedin" href="' + $("a:contains('Peer-Reviewed')").attr("href") +'?linkedin"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a"></a>');
-        $("#s_linkedin").click(function() {$("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`)});
+        $("#s_linkedin").on("click", function() {$("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`)});
     } catch (error){ }}
 
     //Black Technology Reviewers
@@ -1663,7 +1663,7 @@ function onInit() {
         waitForKeyElements("#specialBackBtn",ForceAddR);
         function ForceAddR(){
             $("#specialBackBtn").after(' <a type="button" id="ForceAddR" value="[ForceAddR]" class="submit">　　　</a>')
-            $("#ForceAddR").click(function(){
+            $("#ForceAddR").on("click", function(){
                 let counter = 0; $("#ForceAddR").hide(); $("#addReviewerForm").show();
 //                 $('#submitBtn_check').parent().parent().parent().parent().parent().parent().on('submit', function(e){
 //                     e.preventDefault();
@@ -1698,7 +1698,7 @@ function onInit() {
 
         if (window.location.href.indexOf("#ScilitBatchDownload") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
             $("input.inheritPos").prop("checked",true);
-            unsafeWindow.$("a[data-action='/api/excel_report/scilit-authors']").click();
+            unsafeWindow.$("a[data-action='/api/excel_report/scilit-authors']").trigger("click");
             $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
             <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
             <p></p><p id=ith_prompt>Downloading ${page} of ${totalpage}</p><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
@@ -1712,7 +1712,7 @@ function onInit() {
         }
         else {
             $(".header-results > h4.inline.bold").after(" <a id='ScilitDownload' href=#>[Batch Download Tool]</a>");
-            $("#ScilitDownload").click(function(){
+            $("#ScilitDownload").on("click", function(){
                 let urlObj_n = urlObj, params_n = params;
                 params_n.set('nb_articles', '1000'); params_n.set('offset', 0);
                 urlObj_n.search = params_n.toString();
@@ -1727,33 +1727,33 @@ function onInit() {
 //             let sbdMatch = parseInt(window.location.href.match(/SBD=(\d+)/)[1]);
 //             let sbdeMatch = parseInt(window.location.href.match(/SBDE=(\d+)/)[1]);
 //             waitForKeyElements('main:contains("found")',function(){
-//                 $('button.m-button--secondary:contains("Export"):first').click();
+//                 $('button.m-button--secondary:contains("Export"):first').trigger("click");
 //                 waitForKeyElements('button:contains("Authors"):first', function(){
-//                     $('button:contains("Authors")').click();
+//                     $('button:contains("Authors")').trigger("click");
 //                     var clicked1 = 0;
-//                     $('label:contains("Export records:")').click(function(){
+//                     $('label:contains("Export records:")').on("click", function(){
 //                         $('div.m-input--filled:contains("From") input').val(sbdMatch)
 //                         $('div.m-input--filled:contains("To") input').val(sbdeMatch)
 //                     });
 //                     setTimeout(function() {
-//  //                       $('label:contains("Authors Having Email")').click();
+//  //                       $('label:contains("Authors Having Email")').trigger("click");
 //                     }, 300);
 // //                    setTimeout(function() {
 // //                        $('div.m-input--filled:contains("From") input').val(sbdMatch)
 // //                        $('div.m-input--filled:contains("To") input').val(sbdeMatch)
-// //                        $('button.m-button--primary:contains("Export")').click();
+// //                        $('button.m-button--primary:contains("Export")').trigger("click");
 // //                    }, 3000);
 //                 }, true);
 //             }, true);
 //         } else { waitForKeyElements('label:contains("Authors Having Email"):first', function(){
 //             $('button.m-button--secondary:contains("Cancel")').after(` <button id="SBD" class="m-button m-button--md m-button--primary rounded justify-center">批量下载</button>`);
 //             $('button.m-button--secondary:contains("Cancel")').parent().after(` <hr class="text-color-border-default my-6 w-full"><div id="SBD_range" class="m-input common-field m-input--filled common-field--inline" style="display:inline"></div>`);
-//             $("#SBD").click(function(){
+//             $("#SBD").on("click", function(){
 //                 let total = parseInt($("h2:contains('publications found')").text().replace(/,/g,""));
 //                 $("#SBD_range").html(`Batch Download From <input id="SBD_start" type="number" value="1" min=1 autocomplete="off" style="width:6ch; text-align:center;">
 //                 To <input id="SBD_end" type="number" value="${total}" min=1 autocomplete="off" style="width:8ch; text-align:center;"> <button id="SBD_OK" class="m-button m-button--md m-button--primary rounded justify-center">Start</button>
 //                 <p class="text-color-subtlest text-sm mt-2">*Caution: It will open many new tabs during downloading. Please ensure your PC has enough memory.</p>`);
-//                 $("#SBD_OK").click(function(){
+//                 $("#SBD_OK").on("click", function(){
 //                     var start = parseInt($("#SBD_start").val());
 //                     var end = parseInt($("#SBD_end").val());
 //                     var maxLimit = Math.min(total, 100000);
@@ -1781,7 +1781,7 @@ function onInit() {
 
 //         if (window.location.href.indexOf("#ScilitBatchDownload") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
 //             $("input.inheritPos").prop("checked",true);
-//             unsafeWindow.$("a[data-action='/api/excel_report/authors']").click();
+//             unsafeWindow.$("a[data-action='/api/excel_report/authors']").trigger("click");
 //             $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
 //             <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
 //             <p></p><p id=ith_prompt>Downloading ${page} of ${totalpage}</p><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
@@ -1795,7 +1795,7 @@ function onInit() {
 //         }
 //         else {
 //             $(".header-results > h4.inline.bold").after(" <a id='ScilitDownload' href=#>[Batch Download Tool]</a>");
-//             $("#ScilitDownload").click(function(){
+//             $("#ScilitDownload").on("click", function(){
 //                 let urlObj_n = urlObj, params_n = params;
 //                 params_n.set('nb_articles', '1000'); params_n.set('offset', 0);
 //                 urlObj_n.search = params_n.toString();
@@ -1810,7 +1810,7 @@ function onInit() {
         waitForKeyElements("h2:contains(' scholars found')", ExportButton, true);
         function ExportButton(){
             $("label:contains('Highlight')").parent().after(" <button id=SynaExport>[Export]</button>");
-            $("#SynaExport").click(SynaExportF);
+            $("#SynaExport").on("click", SynaExportF);
         }
         function SynaExportF(){
             $(".common-list > li").each(function() {
@@ -1835,7 +1835,7 @@ function onInit() {
     if (window.location.hostname.indexOf("scopus.com") > -1 && GM_config.get('Hidden_Func')) {try{
         if (window.location.href.indexOf("/results/authorListResults.uri?") + window.location.href.indexOf("/results/coAuthorResults.uri?") > -2){
             $("h1.documentHeader").append(" <a href='#' id='scopus_list'> [Export CSV]</a>");
-            $("#scopus_list").click(function(){
+            $("#scopus_list").on("click", function(){
                 var csvContent = "";
                 $('#srchResultsList tbody tr.searchArea').each(function() {
                     var authorName = $(this).find('.authorResultsNamesCol a').text().trim();
@@ -2026,7 +2026,7 @@ function sf(){
         <textarea id="add_r_t" class="manuscript-add-note-form" placeholder="Example:\nmathematics-11111111\nmathematics-2222222\n\nhttps://www.scopus.com/detail.uri?authorId=333\nhttps://scholar.google.com/citations?user=444\n\naaa@aaa.edu\nbbb@bbb.edu" minlength="1"
         rows="10" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 4px;'></textarea>
         <button id="add_r_b" class="submit" style='background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Submit</button></div></div>`);
-        $("#add_r_b").click(function (){
+        $("#add_r_b").on("click", function (){
             var textContent = $("#add_r_t").val();
             var urlRegex = /(https?:\/\/[^\s]+)/g;
             var emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
@@ -2060,7 +2060,7 @@ function sk_susie(){
         <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [for GL]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
         onclick='document.getElementById("add_susie").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_susie_t" class="manuscript-add-note-form"
         placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu\nmathematics-yyyyyy\nccc@ccc.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_susie_b" class="submit">Submit</button></div></div>`);
-        $("#add_susie_b").click(function (){
+        $("#add_susie_b").on("click", function (){
             let myArray, add_id, rdline = $("#add_susie_t").val().split("\n");
             for (var i=0; i < rdline.length; i++){
                 if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
@@ -2076,7 +2076,7 @@ function sk_MyAccountOnly(){
     if(My_Account_Only.length > 0 && Current_Account != My_Account_Only){
         $('body').append(`<div id="overlay" style="position: fixed; width: 100%; height: 100%; top: 0px; left: 0px; background: rgba(0, 0, 0, 0.5); z-index: 1000;"></div>
         <div id="alertBox" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; background: white; border: 1px solid black; z-index: 1001;"><p>You are now using: ${Current_Account}</p><button id="okBtn">[OK]</button></div>`);
-        $('#okBtn').click(function() {$('#overlay, #alertBox').remove()});
+        $('#okBtn').on("click", function() {$('#overlay, #alertBox').remove()});
     }
 }
 
