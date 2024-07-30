@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.7.25
+// @version       4.7.27
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -328,11 +328,13 @@ function onInit() {
             $(".menu [href='/user/manuscript/special_approval_list']").attr("href",'/user/manuscript/special_approval_list/my_journal');
             $(".menu [href='/user/list/editors']").after(" <a href='/user/ebm/contract?form[journal_id]=" + S_J + "'>[R]</a>");
             $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a> <a href='/user/pubpeer_case/list?form[journal_id]=" + S_J + "'>[P]</a>");
+            $(".menu [href='/publisher/manuscripts']").attr("href","/publisher/manuscripts?form[journal_id]=" + S_J);
         }
         $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC&page_limit=100'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
         $(".menu [href='/special_issue_pending/list']").text("Manage").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC&page_limit=100")
         $(".menu [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[M]</a>");
         $(".menu [href='/submission/topic/list']").attr("href","/submission/topic/list/online");
+        $(".menu [href='/user/manuscript/approval/manage']").attr("href","/user/manuscript/special_approval_list/my_journal");
         $(".menu [href='/planned_paper/my/list']").after(" <a href='/planned_paper/my/list?form[submission_topic_id]=-1&form[special_issue_id]=-1'>[R]</a>");
         $(".menu [href='/user/ebm-new/management']").after(`<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='${icon_magnifier}'></a> </div> `);
 
@@ -671,8 +673,8 @@ function onInit() {
 
             let hasBeenClicked = false;
             $("[title='PubPeer']").on("click", function(event) {
-                $('body').append('<div id="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; cursor: wait; z-index: 10000;"></div>');
                 if (!hasBeenClicked) {
+                    $('body').append('<div id="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; cursor: wait; z-index: 10000;"></div>');
                     event.preventDefault(); hasBeenClicked = true;
                     let $link = $(this);
                     GM_xmlhttpRequest({
@@ -1548,6 +1550,13 @@ function onInit() {
     //Always: Editor Decision 返回处理界面
     if (window.location.href.indexOf("decision/process_form/") > -1){try{
         $("div.cell.small-12.medium-6.large-2:contains('Manuscript ID')").next().append(`<a href="/user/assigned/process_form/`+$("a:contains('Download Manuscript')").attr("href").match("displayFile/(.*?)(/|$)")[1]+`">[Back to Manuscript]</a>`)
+    } catch (error){ }}
+
+    //Always: 自动填写签名
+    if (window.location.href.indexOf("special_issue/eic_decision/") > -1){try{
+        let str = $("#topmenu span:contains('@mdpi.com')").text().replace("@mdpi.com","").replace("."," ");
+        let sk_signature = str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        $("#form_signature").val(sk_signature);
     } catch (error){ }}
 
     //Always: Google Scholar 校正
