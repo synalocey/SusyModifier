@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.7.27
+// @version       4.7.30
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -148,7 +148,7 @@
             'Interface_SME': {'section': [GM_config.create('Interface Modification')],'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
                               ['','Algebra, Geometry and Topology','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
                                'Fuzzy Sets, Systems and Decision Making','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics'], 'default': ''},
-            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Games','Mathematics','Risks','Geometry','IJT','Telecom','None'], 'default': 'Mathematics'},
+            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics','AppliedMath','Games','Geometry','Mathematics','Risks','IJT','Telecom','None'], 'default': 'Mathematics'},
             'Easy_Journal': {'label': '置顶期刊列表', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
             'MathBatch': {'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function() {window.location.href="https://skday.eu.org/math.html"}},
@@ -242,12 +242,13 @@ function onInit() {
         case 'Games': S_J=25; break;
         case 'IJT': S_J=598; break;
         case 'Telecom': S_J=276; break;
+        case 'Analytics': S_J=555; break;
         case 'None': S_J=-1; break;
     }
 
     if(GM_config.get('Easy_Journal')){
-        $("#topmenu > ul").append(`<li><select id="SusyModifier_Journal_Easy"><option value="517">AppliedMath</option><option value="25">Games</option><option value="154">Mathematics</option><option value="162">Risks</option>
-                                   <option value="599">Geometry</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select></li>`);
+        $("#topmenu > ul").append(`<li><select id="SusyModifier_Journal_Easy"><option value="555">Analytics</option><option value="517">AppliedMath</option><option value="25">Games</option><option value="599">Geometry</option><option value="154">Mathematics</option>
+                                   <option value="162">Risks</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select></li>`);
         $("#SusyModifier_Journal_Easy").val(S_J).on("change", function() {
             let J_old=S_J, J_new=$(this).find('option:selected').val(); S_J=J_new;
             GM_config.set('Journal',$(this).find('option:selected').text());
