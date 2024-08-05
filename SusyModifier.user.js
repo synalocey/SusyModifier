@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.7.30
+// @version       4.8.3
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -108,7 +108,7 @@
             'Report_Notes': {'label': '', 'labelPos': 'left', 'type': 'text', 'default': "月报"},
             'Report_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=] )\\(.* – monthly report"},
             'Report_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () {\n let $si_name = $('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();\n`
-                                  + ` return \`Monthly Report (\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – Special Issue: \${$si_name}\`;\n}`},
+                                  + ` return \`Monthly Report (\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – \${$si_name}\`;\n}`},
             'Report_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=Dear[\\s\\S]*?,\\n\\n)I hope this finds you well. I have included,[\\S\\s]*Kind regards,"},
             'Report_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (){\n let $si_name=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();`
                                   + ` let $si_link=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().children().attr("href").replace(/journal\\/(.*)\\/special_issues/,"si/$1");`
@@ -924,10 +924,12 @@ function onInit() {
         var SelectALL = $('<input type="button" id=SelectALL class="button hollow" value="Select PP" style="float:right;float:right;font-size:small;margin:0;"> ').on("click", function() {
             this.toggle = !this.toggle;
             var statusesToCheck = this.toggle ? ['Title Provided', 'Agreed'] : ['Title Provided', 'Agreed', 'Interested'];
-            let statusIndex=0;
+            let statusIndex=0, found = false;
             $('#single-planned-paper-form').find('thead th').each(function(index) {
-                let text = $(this).text().trim();
-                if (text == "Status") {statusIndex = index + 1};
+                if (!found) {
+                    let text = $(this).text().trim();
+                    if (text === "Status") { statusIndex = index + 1; found = true; }
+                }
             });
             $('table tr').each(function() {
                 var status = $(this).find('td:nth-child('+statusIndex+')').text().trim();
