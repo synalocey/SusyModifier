@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.8.3
+// @version       4.8.18
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -77,24 +77,25 @@
             'LinkShort': {'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
-                              ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)','Guest Editor Invitation-Why a Special Issue',
-                               '*Guest Editor - SI Mentor Program'], default: 'Guest Editor - Invite Free'},
+                              ['Guest Editor-Invite with Responsibility','Guest Editor-Invite with Benefits','Guest Editor-One Free Paper for GE team','Guest Editor-Why a Special Issue','Guest Editor-Optional','Guest Editor – Invite with Responsibilities and Benefits',
+                               '*Guest Editor - SI Mentor Program'], default: 'Guest Editor-Invite with Responsibility'},
             'GE_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*Mathematics.*Guest Editor"},
             'GE_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation to Serve as the Guest Editor"},
             'GE_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderID': {'section': [], 'label': '默认 GE Reminder Template', 'type': 'select', 'labelPos': 'left', 'options':
-                              ['Guest Editor Invitation – 1st Reminder','Guest Editor Invitation – 2nd Reminder','Guest Editor Invitation – 3rd Reminder'], default: 'Guest Editor Invitation – 1st Reminder'},
+                              ['Reminder (GE responsibility)','Reminder (video call)','Reminder (general)','Reminder (with benefits)'], default: 'Reminder (GE responsibility)'},
             'GE_ReminderS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'EB_TemplateID': {'section': [], 'label': '默认 EB Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Editorial Board Member – Invite Version 1']},
+            'EB_TemplateID': {'section': [], 'label': '默认 EB Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['Invite Version 1','Invite Version 2','Invite Version 3','Invite Version 4'], default: 'Invite Version 1'},
             'EB_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation"},
             'EB_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation"},
             'EB_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'EB_ReminderID': {'section': [], 'label': '默认 EB Reminder Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Editorial Board Member – Reminder']},
+            'EB_ReminderID': {'section': [], 'label': '默认 EB Reminder Template', 'type': 'select', 'labelPos': 'left', 'options': ['Reminder (Responsibilities and Benefits)','Reminder (General)','Reminder (Numerous Benefits)'],
+                              default: 'Reminder(Responsibilities and Benefits)'},
             'EB_ReminderS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation"},
             'EB_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation"},
             'EB_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
@@ -426,7 +427,10 @@ function onInit() {
 
     //EB invitation✏️
     if (window.location.href.indexOf("present_editor_ebm/invite_email") > -1){try{
-        if ($('#emailTemplates option').length > 1) { $('#emailTemplates').prop('selectedIndex', 1).trigger('change'); document.getElementById('emailTemplates').dispatchEvent(new CustomEvent('change'))}
+        if ($('#emailTemplates option').length > 1) {
+            $("#emailTemplates > option:contains('"+GM_config.get('EB_TemplateID')+"')").prop('selected', true);
+            document.getElementById('emailTemplates').dispatchEvent(new CustomEvent('change'));
+        }
         function init() {let t1 = RegExptest(GM_config.get('EB_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('EB_TemplateS2'))) );
                          let t2 = RegExptest(GM_config.get('EB_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_TemplateB2'))) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
@@ -438,6 +442,14 @@ function onInit() {
 
     //EB Reminder✏️
     if (window.location.href.indexOf("present_editor_ebm/remind_email") > -1){try{
+        let detail = GM_config.get('EB_ReminderID').match(/\(([^)]+)\)/);
+        if (detail) {
+            let a = $("#emailTemplates > option:contains('" + detail[1] + "')").prop('selected', true);
+            if (a.length==0) {$("#emailTemplates > option:contains('Responsibilities and Benefits')").prop('selected', true)}
+            document.getElementById('emailTemplates').dispatchEvent(new CustomEvent('change'));
+        }
+
+
         function init() {let t1 = RegExptest(GM_config.get('EB_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('EB_ReminderS2'))) );
                          let t2 = RegExptest(GM_config.get('EB_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_ReminderB2'))) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
@@ -577,7 +589,7 @@ function onInit() {
                     + `topic. We believe that your expertise and experience in these fields would make a valuable contribution to our Special Issue. Furthermore, we will waive all the fees associated with the review paper publication, which we hope will encourage you to `
                     + `participate in this opportunity.\n`; $("#addnote").val("邀请review"); break;
                 case 'meeting': insert_text=`\n3. Online Meeting\n\nWould you be interested in a 30-minute online meeting with us? We can introduce our journal, the editorial process, details about our Special Issue, the submission platform functionalities, `
-                    + `article processing charges, or any other topics you wish to explore. If you are interested, please let me know a convenient date and time for you; I am based in China and available on working hours.\n`; $("#addnote").val("询问Online Meeting"); break;
+                    + `article processing charges, or any other topics you wish to explore. If you are interested, please let me know a convenient date and time for you. I'm currently in China and available on working hours.\n`; $("#addnote").val("询问Online Meeting"); break;
             }
             let selectionStart = $('#mailBody')[0].selectionStart, selectionEnd = $('#mailBody')[0].selectionEnd, text = $('#mailBody').val(); let newText = text.substring(0, selectionStart) + insert_text + text.substring(selectionEnd);
             undoStack.push(text); redoStack = []; $('#mailBody').val(newText);
@@ -742,7 +754,10 @@ function onInit() {
     //特刊列表免翻页⚙️
     if (window.location.href.indexOf(".mdpi.com/special_issue_pending/list") > -1 && !window.location.href.match(/page=(?!1\b)[0-9]+/)){try{
         sk_MyAccountOnly();
-        if(GM_config.get('SInote')) { waitForKeyElements(".special-issue-note-box",SidebarSize);}
+        if(GM_config.get('SInote')) {waitForKeyElements(".special-issue-note-box",function(){
+            SidebarSize();
+            $("span.note-title:contains('SI Section Notes')").trigger("click");
+        })}
         if(GM_config.get('SIpages')){
             let maxpage = 10, totalpage = Math.min(maxpage,parseInt($('li:contains("Next")').first().prev().text())), counter, Placeholder="";
             for (counter = 2; counter<=Math.min(maxpage,totalpage); counter++) {
@@ -771,7 +786,12 @@ function onInit() {
                 $("#form_email").after(`<input id="process-special-issue-guest-editor" type="submit" value="Force Add (Info must be pre-filled)" class="submit is-psme-assessment">`)
             }
         }
-        if (GM_config.get('SInote')) {waitForKeyElements(".special-issue-note-box",SidebarSize)}
+        if (GM_config.get('SInote')) {
+            waitForKeyElements(".special-issue-note-box",function(){
+                SidebarSize();
+                $("span.note-title:contains('SI Section Notes')").trigger("click");
+            });
+        }
         if ($("a:contains('Edit at backend')").length) {$('#si-update-emphasized').parent().children("a").first().attr("href", $("a:contains('Edit at backend')").attr("href").replace(/.*\//,"https://mdpi.com/si/") )};
         $('#si-update-emphasized').before(`<a href="?pagesection=AddGuestEditor" title="Add Guest Editor"><img border="0" src="${icon_plus}"></a> `);
         $('#si-update-emphasized').attr("data-uri") && $("a:contains('SI manuscripts')").after(" <a href=" + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/academic-editor/special_issues/process/") + ">[AcE Interface]</a>");
@@ -1556,7 +1576,7 @@ function onInit() {
     } catch (error){ }}
 
     //Always: 自动填写签名
-    if (window.location.href.indexOf("special_issue/eic_decision/") > -1){try{
+    if (window.location.href.indexOf("special_issue/eic_decision/") + window.location.href.indexOf("special_issue/si_decision/") > -2){try{
         let str = $("#topmenu span:contains('@mdpi.com')").text().replace("@mdpi.com","").replace("."," ");
         let sk_signature = str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
         $("#form_signature").val(sk_signature);
