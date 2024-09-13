@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.8.18
+// @version       4.9.13
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -348,6 +348,7 @@ function onInit() {
 
         if (GM_config.get('Assign_Assistant')) { //派稿助手
             $(".menu [href='/user/manage/crosscheck']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").on("click", sk_susie);
+            document.addEventListener('keydown', function(e) {if (e.ctrlKey && e.key === 'e') {e.preventDefault(); sk_susie();}});
         }
     } catch (error){ }}
 
@@ -1173,7 +1174,7 @@ function onInit() {
 
     //PP提醒模板
     if (window.location.href.indexOf("mdpi.com/special_issue/email/planned_paper") > -1 && GM_config.get('PP_Template')){try{
-        unsafeWindow.$("#emailTemplates > option:contains('After a Few Month')").prop('selected', true).trigger("change");
+        unsafeWindow.$("#emailTemplates > option:contains('Follow up on Interested Authors')").prop('selected', true).trigger("change");
         function init() {let t1 = RegExptest(GM_config.get('PP_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('PP_TemplateS2')) );
                          let t2 = RegExptest(GM_config.get('PP_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('PP_TemplateB2')) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init, 1000);
@@ -1753,115 +1754,32 @@ function onInit() {
         }
     } catch (error){ }}
 
-    // Scilit Batch Download
-//     if (window.location.href.indexOf("www.scilit.net/publications") > -1 && GM_config.get('Hidden_Func')) {try{
-//         if (window.location.href.indexOf("#SBD=") > -1){
-//             let sbdMatch = parseInt(window.location.href.match(/SBD=(\d+)/)[1]);
-//             let sbdeMatch = parseInt(window.location.href.match(/SBDE=(\d+)/)[1]);
-//             waitForKeyElements('main:contains("found")',function(){
-//                 $('button.m-button--secondary:contains("Export"):first').trigger("click");
-//                 waitForKeyElements('button:contains("Authors"):first', function(){
-//                     $('button:contains("Authors")').trigger("click");
-//                     var clicked1 = 0;
-//                     $('label:contains("Export records:")').on("click", function(){
-//                         $('div.m-input--filled:contains("From") input').val(sbdMatch)
-//                         $('div.m-input--filled:contains("To") input').val(sbdeMatch)
-//                     });
-//                     setTimeout(function() {
-//  //                       $('label:contains("Authors Having Email")').trigger("click");
-//                     }, 300);
-// //                    setTimeout(function() {
-// //                        $('div.m-input--filled:contains("From") input').val(sbdMatch)
-// //                        $('div.m-input--filled:contains("To") input').val(sbdeMatch)
-// //                        $('button.m-button--primary:contains("Export")').trigger("click");
-// //                    }, 3000);
-//                 }, true);
-//             }, true);
-//         } else { waitForKeyElements('label:contains("Authors Having Email"):first', function(){
-//             $('button.m-button--secondary:contains("Cancel")').after(` <button id="SBD" class="m-button m-button--md m-button--primary rounded justify-center">批量下载</button>`);
-//             $('button.m-button--secondary:contains("Cancel")').parent().after(` <hr class="text-color-border-default my-6 w-full"><div id="SBD_range" class="m-input common-field m-input--filled common-field--inline" style="display:inline"></div>`);
-//             $("#SBD").on("click", function(){
-//                 let total = parseInt($("h2:contains('publications found')").text().replace(/,/g,""));
-//                 $("#SBD_range").html(`Batch Download From <input id="SBD_start" type="number" value="1" min=1 autocomplete="off" style="width:6ch; text-align:center;">
-//                 To <input id="SBD_end" type="number" value="${total}" min=1 autocomplete="off" style="width:8ch; text-align:center;"> <button id="SBD_OK" class="m-button m-button--md m-button--primary rounded justify-center">Start</button>
-//                 <p class="text-color-subtlest text-sm mt-2">*Caution: It will open many new tabs during downloading. Please ensure your PC has enough memory.</p>`);
-//                 $("#SBD_OK").on("click", function(){
-//                     var start = parseInt($("#SBD_start").val());
-//                     var end = parseInt($("#SBD_end").val());
-//                     var maxLimit = Math.min(total, 100000);
-//                     if(start < 1 || end < 1 || start > maxLimit || end > maxLimit || start >= end){
-//                         alert("Error: Please ensure that both FROM and TO are correct, and are less than 100,000.");
-//                     } else {
-//                         var urls = [];
-//                         for(var i = start; i <= end; i += 1000){
-//                             var sbde = Math.min(i + 999, end);
-//                             var url = window.location.href + "#SBD=" + i + "&SBDE=" + sbde;
-//                             GM_openInTab(url, {active: false});
-//                             if(sbde == end){
-//                                 break;
-//                             }
-//                         }
-//                     }
-//                 });
-//             })
-//         });}
-
-//         let urlObj = new URL($("span.nextPage").first().parent().attr("href"), window.location.origin);
-//         let params = new URLSearchParams(urlObj.search);
-//         let page = $('input[name="page"]').last().attr("value");
-//         let totalpage = $('input[name="page"]').last().parent().text().match(/\d+/)[0];
-
-//         if (window.location.href.indexOf("#ScilitBatchDownload") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
-//             $("input.inheritPos").prop("checked",true);
-//             unsafeWindow.$("a[data-action='/api/excel_report/authors']").trigger("click");
-//             $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
-//             <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
-//             <p></p><p id=ith_prompt>Downloading ${page} of ${totalpage}</p><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
-//         } else if(window.location.href.indexOf("#ScilitBatchInit") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
-//             for (let i = 0; i < Math.min(totalpage, 11); i++) {
-//                 let urlObj_n = urlObj, params_n = params;
-//                 params_n.set('nb_articles', '1000'); params_n.set('offset', i*1000);
-//                 urlObj_n.search = params_n.toString();
-//                 GM_openInTab(urlObj_n.href+"#ScilitBatchDownload", {active: true});
-//             }
+//     // Scilit Scholar Download
+//     if (window.location.href.indexOf("www.scilit.net/scholars?") > -1 && GM_config.get('Hidden_Func')) {try{
+//         var csvContent = "Email\tName\tH-Index\tUniversity\n";
+//         waitForKeyElements("h2:contains(' scholars found')", ExportButton, true);
+//         function ExportButton(){
+//             $("label:contains('Highlight')").parent().after(" <button id=SynaExport>[Export]</button>");
+//             $("#SynaExport").on("click", SynaExportF);
 //         }
-//         else {
-//             $(".header-results > h4.inline.bold").after(" <a id='ScilitDownload' href=#>[Batch Download Tool]</a>");
-//             $("#ScilitDownload").on("click", function(){
-//                 let urlObj_n = urlObj, params_n = params;
-//                 params_n.set('nb_articles', '1000'); params_n.set('offset', 0);
-//                 urlObj_n.search = params_n.toString();
-//                 GM_openInTab(urlObj_n.href+"#ScilitBatchInit", {active: true});
-//             })
+//         function SynaExportF(){
+//             $(".common-list > li").each(function() {
+//                 var name = $(this).find("h2").text().trim();
+//                 var hIndex = $(this).find("span:contains('h-Index')").text().trim().replace("h-Index ","");
+//                 var university = $(this).find("span:contains('h-Index')").parent().parent().prev().text().trim();
+
+//                 $(this).find(".email span").each(function() {
+//                     var email = $(this).text().trim();
+//                     csvContent += `${email}\t${name}\t${hIndex}\t${university}\n`;
+//                 });
+//             });
+//             $("body").append(`<div class="blockUI blockOverlay" id="csv-shade" style="z-index: 1000; border: none; margin: 0; padding: 0; width: 100%; height: 100%; top: 0; left: 0; background-color: #000; opacity: 0.6; cursor: wait; position: fixed;"></div>
+//                 <div class="blockUI blockMsg blockPage" id="csv-popup" style="z-index: 1011; position: fixed; padding: 0; margin: 0; width: 50%; top: 10%; left: 25%; text-align: center; color: #000; border: 3px solid #aaa; background-color: #fff; overflow-y: auto;">
+//                 <input type="button" value="Close" onclick="document.getElementById('csv-shade').remove(); document.getElementById('csv-popup').remove();" style="margin: 10px; padding: 5px 20px;">
+//                 <textarea id="csv_content" readonly rows="25" style="width: 90%;">${csvContent}</textarea></div>`);
+//             document.getElementById("csv_content").select(); document.execCommand('copy');
 //         }
 //     } catch (error){ }}
-
-    // Scilit Scholar Download
-    if (window.location.href.indexOf("www.scilit.net/scholars?") > -1 && GM_config.get('Hidden_Func')) {try{
-        var csvContent = "Email\tName\tH-Index\tUniversity\n";
-        waitForKeyElements("h2:contains(' scholars found')", ExportButton, true);
-        function ExportButton(){
-            $("label:contains('Highlight')").parent().after(" <button id=SynaExport>[Export]</button>");
-            $("#SynaExport").on("click", SynaExportF);
-        }
-        function SynaExportF(){
-            $(".common-list > li").each(function() {
-                var name = $(this).find("h2").text().trim();
-                var hIndex = $(this).find("span:contains('h-Index')").text().trim().replace("h-Index ","");
-                var university = $(this).find("span:contains('h-Index')").parent().parent().prev().text().trim();
-
-                $(this).find(".email span").each(function() {
-                    var email = $(this).text().trim();
-                    csvContent += `${email}\t${name}\t${hIndex}\t${university}\n`;
-                });
-            });
-            $("body").append(`<div class="blockUI blockOverlay" id="csv-shade" style="z-index: 1000; border: none; margin: 0; padding: 0; width: 100%; height: 100%; top: 0; left: 0; background-color: #000; opacity: 0.6; cursor: wait; position: fixed;"></div>
-                <div class="blockUI blockMsg blockPage" id="csv-popup" style="z-index: 1011; position: fixed; padding: 0; margin: 0; width: 50%; top: 10%; left: 25%; text-align: center; color: #000; border: 3px solid #aaa; background-color: #fff; overflow-y: auto;">
-                <input type="button" value="Close" onclick="document.getElementById('csv-shade').remove(); document.getElementById('csv-popup').remove();" style="margin: 10px; padding: 5px 20px;">
-                <textarea id="csv_content" readonly rows="25" style="width: 90%;">${csvContent}</textarea></div>`);
-            document.getElementById("csv_content").select(); document.execCommand('copy');
-        }
-    } catch (error){ }}
 
     // Scopus Hidden Func
     if (window.location.hostname.indexOf("scopus.com") > -1 && GM_config.get('Hidden_Func')) {try{
@@ -2089,7 +2007,7 @@ function sk_susie(){
         if ($("#add_susie").css("display")=="none") {$("#add_susie").css("display","block")} else {$("#add_susie").css("display","none")}
     } else {
         $("body").append( `<div id='add_susie' role='dialog' style='position: absolute; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
-        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [for GL]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
+        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [Ctrl+E]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
         onclick='document.getElementById("add_susie").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_susie_t" class="manuscript-add-note-form"
         placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu\nmathematics-yyyyyy\nccc@ccc.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_susie_b" class="submit">Submit</button></div></div>`);
         $("#add_susie_b").on("click", function (){
