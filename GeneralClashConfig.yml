@@ -261,12 +261,6 @@ cfw-conn-break-strategy:
 # System proxy will ignore these domains(or ipnet)
 cfw-bypass:
   # 原有字段不用删除
-  - qq.com
-  - 'music.163.com' # 网易云域名1
-  - '*.music.126.net' # 网易云域名2
-  - mail-internal.mdpi.com
-  - mail.mdpi.com
-  - 212.243.204.39
   - localhost
   - 127.*
   - 10.*
