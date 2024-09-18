@@ -261,6 +261,8 @@ cfw-conn-break-strategy:
 # System proxy will ignore these domains(or ipnet)
 cfw-bypass:
   # 原有字段不用删除
+  - "mail.mdpi.com"
+  - "mail-internal.mdpi.com"
   - localhost
   - 127.*
   - 10.*
