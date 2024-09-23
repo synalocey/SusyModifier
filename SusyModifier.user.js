@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.9.13
+// @version       4.9.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1507,6 +1507,42 @@ function onInit() {
         }
         toggleChosen();
         $("#statistic > span").after("<br><br>").wrapInner('<a id="s_chosen"></a>').on("click", function() {toggleChosen()});
+
+        if(GM_config.get('Hidden_Func')){
+            function syncCheckboxes(checkbox1, checkbox2) { // 同步两个复选框的状态
+                checkbox1.on('change', function() {
+                    checkbox2.prop('checked', $(this).prop('checked'));
+                });
+            }
+            const checkboxes = [
+                { id: '555', label: 'Analytics' },
+                { id: '25', label: 'Games' },
+                { id: '599', label: 'Geometry' },
+                { id: '154', label: 'Mathematics' },
+                { id: '162', label: 'Risks' },
+                { id: '598', label: 'IJT' },
+                { id: '276', label: 'Telecom' },
+            ];
+            $('#filter').append(`<div style="display: block;" id="SynaAdd">&emsp;&emsp;&emsp;</div>`);
+
+            checkboxes.forEach(function(checkbox) {
+                let originalCheckbox = $('#journal_' + checkbox.id);
+                if (originalCheckbox.length) {
+                    let isChecked = originalCheckbox.prop('checked');
+                    let newCheckbox = $('<input>', {
+                        type: 'checkbox',
+                        id: 'new_' + checkbox.id,
+                        class: 'journals_selected',
+                        value: originalCheckbox.val(),
+                        'data-name': originalCheckbox.data('name')
+                    }).prop('checked', isChecked);
+                    let label = `<label for="new_${checkbox.id}">${checkbox.label}</label>&emsp;&#9;`
+                    $('#SynaAdd').append(newCheckbox).append(label);
+                    syncCheckboxes(originalCheckbox, newCheckbox);
+                    syncCheckboxes(newCheckbox, originalCheckbox);
+                }
+            });
+        }
     } catch (error){ }}
 
     //Always: Volunteer Reviewer
@@ -1722,65 +1758,6 @@ function onInit() {
         waitForKeyElements("#intercom-frame",function(){$('.intercom-lightweight-app,#intercom-frame').remove();},true);
     } catch (error){ }}
 
-    // Scilit Batch Download Old
-    if (window.location.href.indexOf("admin.scilit.net/articles/search") > -1) {try{
-        let urlObj = new URL($("span.nextPage").first().parent().attr("href"), window.location.origin);
-        let params = new URLSearchParams(urlObj.search);
-        let page = $('input[name="page"]').last().attr("value");
-        let totalpage = $('input[name="page"]').last().parent().text().match(/\d+/)[0];
-
-        if (window.location.href.indexOf("#ScilitBatchDownload") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
-            $("input.inheritPos").prop("checked",true);
-            unsafeWindow.$("a[data-action='/api/excel_report/scilit-authors']").trigger("click");
-            $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
-            <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
-            <p></p><p id=ith_prompt>Downloading ${page} of ${totalpage}</p><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
-        } else if(window.location.href.indexOf("#ScilitBatchInit") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
-            for (let i = 0; i < Math.min(totalpage, 11); i++) {
-                let urlObj_n = urlObj, params_n = params;
-                params_n.set('nb_articles', '1000'); params_n.set('offset', i*1000);
-                urlObj_n.search = params_n.toString();
-                GM_openInTab(urlObj_n.href+"#ScilitBatchDownload", {active: true});
-            }
-        }
-        else {
-            $(".header-results > h4.inline.bold").after(" <a id='ScilitDownload' href=#>[Batch Download Tool]</a>");
-            $("#ScilitDownload").on("click", function(){
-                let urlObj_n = urlObj, params_n = params;
-                params_n.set('nb_articles', '1000'); params_n.set('offset', 0);
-                urlObj_n.search = params_n.toString();
-                GM_openInTab(urlObj_n.href+"#ScilitBatchInit", {active: true});
-            })
-        }
-    } catch (error){ }}
-
-//     // Scilit Scholar Download
-//     if (window.location.href.indexOf("www.scilit.net/scholars?") > -1 && GM_config.get('Hidden_Func')) {try{
-//         var csvContent = "Email\tName\tH-Index\tUniversity\n";
-//         waitForKeyElements("h2:contains(' scholars found')", ExportButton, true);
-//         function ExportButton(){
-//             $("label:contains('Highlight')").parent().after(" <button id=SynaExport>[Export]</button>");
-//             $("#SynaExport").on("click", SynaExportF);
-//         }
-//         function SynaExportF(){
-//             $(".common-list > li").each(function() {
-//                 var name = $(this).find("h2").text().trim();
-//                 var hIndex = $(this).find("span:contains('h-Index')").text().trim().replace("h-Index ","");
-//                 var university = $(this).find("span:contains('h-Index')").parent().parent().prev().text().trim();
-
-//                 $(this).find(".email span").each(function() {
-//                     var email = $(this).text().trim();
-//                     csvContent += `${email}\t${name}\t${hIndex}\t${university}\n`;
-//                 });
-//             });
-//             $("body").append(`<div class="blockUI blockOverlay" id="csv-shade" style="z-index: 1000; border: none; margin: 0; padding: 0; width: 100%; height: 100%; top: 0; left: 0; background-color: #000; opacity: 0.6; cursor: wait; position: fixed;"></div>
-//                 <div class="blockUI blockMsg blockPage" id="csv-popup" style="z-index: 1011; position: fixed; padding: 0; margin: 0; width: 50%; top: 10%; left: 25%; text-align: center; color: #000; border: 3px solid #aaa; background-color: #fff; overflow-y: auto;">
-//                 <input type="button" value="Close" onclick="document.getElementById('csv-shade').remove(); document.getElementById('csv-popup').remove();" style="margin: 10px; padding: 5px 20px;">
-//                 <textarea id="csv_content" readonly rows="25" style="width: 90%;">${csvContent}</textarea></div>`);
-//             document.getElementById("csv_content").select(); document.execCommand('copy');
-//         }
-//     } catch (error){ }}
-
     // Scopus Hidden Func
     if (window.location.hostname.indexOf("scopus.com") > -1 && GM_config.get('Hidden_Func')) {try{
         if (window.location.href.indexOf("/results/authorListResults.uri?") + window.location.href.indexOf("/results/coAuthorResults.uri?") > -2){
@@ -1823,6 +1800,16 @@ function onInit() {
     //Dinner
     if (window.location.href.indexOf("i.mdpi.cn/team/dinner") > -1 && userNames.some(userName => $("a.nav-link:contains('@mdpi.com')").text().trim().includes(userName + "@mdpi.com"))){try{
         $('#appbundle_dinner_dinnerRestaurant option:contains("江城快点")').prop('selected', true);
+    } catch (error){ }}
+
+    //
+
+    //send_cfp_form_susy
+    if (window.location.href.indexOf("email/send_cfp_form_susy") > -1 && GM_config.get('Hidden_Func')){try{
+        $(".mailBody").each(function() {
+            let newVal = $(this).val().replace("We suggest compiling a list of potential contributors alongside myself as your MDPI in-house Editor. I will help to ensure that the excel file is formatted correctly and that the appropriate scholars are contacted. ", "");
+            $(this).val(newVal);
+        });
     } catch (error){ }}
 
     console.timeEnd("test")
