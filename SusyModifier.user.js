@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.9.20
+// @version       4.9.25
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -474,7 +474,7 @@ function onInit() {
         if(GM_config.get('Report_TemplateB2').indexOf("%pp_list%") > -1) {
             let SI_Topic_Link = $("#special_issue_id").attr("data-special-issue-id") ? "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id") : "/submission/topic/view/" + $("#submission_topic_id").attr("data-topic-id");
             let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', SI_Topic_Link, false); xhr.send();
-            let $form = $($.parseHTML(xhr.responseText)).find('#single-planned-paper-form');
+            let $form = $($.parseHTML(xhr.responseText)).find('#add-planned-paper-section');
             let emailIndex=1, statusIndex=2, sourceIndex=3, discountIndex=4, agreedDateIndex=6;
             $form.find('table').each(function(index) {
                 $(this).find('thead th').each(function(index) {
@@ -946,7 +946,7 @@ function onInit() {
             this.toggle = !this.toggle;
             var statusesToCheck = this.toggle ? ['Title Provided', 'Agreed'] : ['Title Provided', 'Agreed', 'Interested'];
             let statusIndex=0, found = false;
-            $('#single-planned-paper-form').find('thead th').each(function(index) {
+            $('#add-planned-paper-section').find('thead th').each(function(index) {
                 if (!found) {
                     let text = $(this).text().trim();
                     if (text === "Status") { statusIndex = index + 1; found = true; }
@@ -957,7 +957,7 @@ function onInit() {
                 $(this).find('input[type="checkbox"]').prop('checked', statusesToCheck.includes(status));
             });
         });
-        $('#single-planned-paper-form > fieldset > div > div').last().append(SelectALL, "<span style=float:right>&nbsp;</span>",PPMM);
+        $('#add-planned-paper-section > fieldset > div > div').last().append(SelectALL, "<span style=float:right>&nbsp;</span>",PPMM);
 
 
         if (GM_config.get('Hidden_Func')){
