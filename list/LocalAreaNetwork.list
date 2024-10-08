@@ -44,5 +44,6 @@ DOMAIN-SUFFIX,mailsdb.i.mdpi.com
 DOMAIN-SUFFIX,mdpi.test
 DOMAIN-SUFFIX,mdpi.intra
 DOMAIN-SUFFIX,mail.mdpi.com
+DOMAIN-SUFFIX,mail-internal.mdpi.com
 IP-CIDR,188.188.10.88/24,no-resolve
 IP-CIDR,188.188.1.88/24,no-resolve
