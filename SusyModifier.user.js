@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.9.25
+// @version       4.10.08
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1152,7 +1152,7 @@ function onInit() {
     } catch (error){ }}
 
     //特刊网页短链接
-    if (window.location.href.indexOf("mdpi.com/journal/") > -1 && window.location.href.indexOf("/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 && GM_config.get('LinkShort')){try{
+    if (window.location.href.indexOf("mdpi.com/journal/") > -1 && window.location.href.indexOf("/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 && window.location.href.indexOf("/ge_instructions") == -1 && GM_config.get('LinkShort')){try{
         window.location.href=window.location.href.replace(/\/journal\/(.*)\/special_issues\//,"/si/$1/");
     } catch (error){ }}
 
