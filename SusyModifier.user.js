@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.10.08
+// @version       4.10.24
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -46,6 +46,7 @@
 // @grant         GM_xmlhttpRequest
 // @grant         GM_openInTab
 // @connect       mdpi.com
+// @connect       i.mdpi.cn
 // @connect       titlecaseconverter.com
 // @connect       google.com
 // @connect       webofknowledge.com
@@ -158,6 +159,7 @@
             'Regular_Color': {'label': '橙色标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Maths_J': {'label': 'Scopus标记Maths期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Hidden_Func': {'section': [], 'label': 'Experimental (!Caution)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Remind_Dinner': {'label': '提醒点餐', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'My_Account_Only': {'label': 'Use My Account Only:', 'labelPos': 'left', 'type': 'text', 'default': ""},
         },
         'events': {
@@ -1810,6 +1812,44 @@ function onInit() {
             let newVal = $(this).val().replace("We suggest compiling a list of potential contributors alongside myself as your MDPI in-house Editor. I will help to ensure that the excel file is formatted correctly and that the appropriate scholars are contacted. ", "");
             $(this).val(newVal);
         });
+    } catch (error){ }}
+
+    //Remind_Dinner
+    if (GM_config.get('Remind_Dinner') && window.location.href.indexOf("mdpi.com/") > -1 ){try{
+        let now = new Date();
+        let todayDateString = now.toISOString().slice(0, 10); // 获取YYYY-MM-DD格式的日期字符串
+        let lastDinnerDate = GM_getValue("lastDinnerDate", "");
+        if (todayDateString !== lastDinnerDate) {
+            let start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0); // 13:00
+            let end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 15, 30, 0); // 15:30
+            if (now >= start && now <= end) {
+                GM_xmlhttpRequest({
+                    method: "GET",
+                    url: "https://i.mdpi.cn/team/dinner",
+                    onload: function(response) {
+                        let parser = new DOMParser();
+                        let doc = parser.parseFromString(response.responseText, "text/html");
+                        let inputExists = doc.querySelector('#appbundle_dinner_dish') !== null;
+                        let linkExists = doc.querySelector('a[href="/team/dinner/list/export"]') !== null;
+                        if (!inputExists && linkExists) {
+                            GM_setValue("lastPromptDate", todayDateString);
+                        } else {
+                            $("body").append(`<div class="blockUI blockOverlay" id=dinner-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
+                                      <div class="blockUI blockMsg blockPage" id=dinner-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
+                                      <p></p><p id=dinner_prompt><a href="https://i.mdpi.cn/team/dinner" target="_blank">亲，今天的晚餐似乎还没有点喔~</a></p><p id=dinner_prompt2>&nbsp;</p>
+                                      <input id="cancelDinnerBtn" type="button" value="不吃晚餐" style="margin:10px;padding:5px 20px"></div>`)
+                            if ([4, 5].includes(new Date().getDay())) {
+                                $("#dinner_prompt2").html(`<a href="https://i.mdpi.cn/team/admin/duty" target="_blank" style="background-color: yellow;">【周末值班嘛？记得点值班午餐！】</a>`);
+                            }
+                            $('#cancelDinnerBtn').on('click', function() {
+                                let userInput = prompt("确认不吃？输入：今天不吃晚餐");
+                                if (userInput === "今天不吃晚餐") { $('#dinner-shade1, #dinner-shade2').remove(); GM_setValue("lastDinnerDate", new Date().toISOString().slice(0, 10)) };
+                            });
+                        }
+                    }
+                });
+            }
+        }
     } catch (error){ }}
 
     console.timeEnd("test")
