@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.10.24
+// @version       4.10.30
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1692,11 +1692,19 @@ function onInit() {
                         method: 'GET',
                         url: ith_chkurl,
                         onload: function(responseDetails) {
-                            if(responseDetails.responseText.indexOf("log can not be found") != -1) {
-                                GM_xmlhttpRequest({method: 'GET',url: window.location.origin + "/ajax/upload_manuscript_file_to_ithenticate/"+url.split("/").pop(),
+                            if(responseDetails.responseText.indexOf("iThenticate result found.") == -1) {
+                                GM_xmlhttpRequest({method: 'GET',url: window.location.origin + "/ajax/upload_manuscript_file_to_ithenticate/"+url.split("/").pop()+"?file_name=manuscript.v1.pdf",
                                                    onload: function(responseDetails) {
                                                        if(responseDetails.responseText.indexOf("success") != -1) {$("#ith_prompt").html($("#ith_prompt").html() + mid + " is sending to iThenticate... Done<br/>")}
-                                                       else {$("#ith_prompt").html($("#ith_prompt").html() + mid + " sent failed! Maybe wrong file extension<br/>")}
+                                                       else {
+                                                           GM_xmlhttpRequest({method: 'GET',url: window.location.origin + "/ajax/upload_manuscript_file_to_ithenticate/"+url.split("/").pop()+"?file_name=manuscript.v1.docx",
+                                                                              onload: function(responseDetails) {
+                                                                                  if(responseDetails.responseText.indexOf("success") != -1) {$("#ith_prompt").html($("#ith_prompt").html() + mid + " is sending to iThenticate... Done<br/>")}
+                                                                                  else {
+                                                                                      $("#ith_prompt").html($("#ith_prompt").html() + mid + " sent failed! Maybe wrong file extension<br/>")
+                                                                                  }
+                                                                              } })
+                                                       }
                                                    } })
                             }
                             else {$("#ith_prompt").html($("#ith_prompt").html() + mid + " already has iThenticate report<br/>")}
