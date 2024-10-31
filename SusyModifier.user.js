@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.10.30
+// @version       4.10.31
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -790,10 +790,40 @@ function onInit() {
             }
         }
         if (GM_config.get('SInote')) {
+            let done = false;
             waitForKeyElements(".special-issue-note-box",function(){
-                SidebarSize();
-                $("span.note-title:contains('SI Section Notes')").trigger("click");
-            });
+                if(!done){
+                    SidebarSize();
+                    $("span.note-title:contains('SI Section Notes')").trigger("click");
+
+                    //Always: SI QC QuickAdd
+                    let prependContent = GM_getValue("SI_QC", "⭐ - SME按QC要求完成&自己做的其他事情\n✅ - 已做\n❌ - 未做\n————————————————\n$YYYY$.$MM$\nQC comment(Linn):\n1. \n2. \nQC 复查意见\n1. \n2. \n⭐ ：xxxx+完成时间\n————————————————");
+                    $("div.special-issue-note-box").last().on("mousedown", function(event) { if (event.which === 2) { // 中键点击
+                        event.preventDefault();
+                        $("body").append(`<div id='si_qc' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                        border-radius: 5px; overflow: hidden;'> <div style='background-color: #FFA500; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'> <span>SI QC Settings</span>
+                        <button type='button' onclick='document.getElementById("si_qc").remove()' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button> </div> <div style='padding: 20px;'>
+                        <textarea id="si_qc_t" class="manuscript-add-note-form" minlength="1" rows="10" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 4px;'>${prependContent}</textarea>
+                        <button id="si_qc_save" class="submit" style='background-color: #FFA500; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Save</button></div></div>`);
+                        $("#si_qc_save").on("click", function (){
+                            prependContent = $("#si_qc_t").val();
+                            GM_setValue("SI_QC", prependContent);
+                            $("#si_qc").remove();
+                        });
+                        return false;
+                    }});
+                    $("div.special-issue-note-box").last().on("contextmenu", function(event) { // 右键菜单
+                        event.preventDefault();
+                        let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear().toString().slice(-2), yyyy = new Date().getFullYear().toString();
+                        $("div.click-to-edit-manuscript").last().trigger("click");
+                        let $textarea = $("div.manuscript-input-note-group textarea").last();
+                        $textarea.val(prependContent.replace(/\$YYYY\$/g,yyyy).replace(/\$YY\$/g,yy).replace(/\$MM\$/g,mm).replace(/\$DD\$/g,dd) + $textarea.val());
+                        $textarea.scrollTop(0); $textarea[0].setSelectionRange(0, 0);
+                        return false;
+                    });
+                    done = true;
+                }
+            }, true);
         }
         if ($("a:contains('Edit at backend')").length) {$('#si-update-emphasized').parent().children("a").first().attr("href", $("a:contains('Edit at backend')").attr("href").replace(/.*\//,"https://mdpi.com/si/") )};
         $('#si-update-emphasized').before(`<a href="?pagesection=AddGuestEditor" title="Add Guest Editor"><img border="0" src="${icon_plus}"></a> `);
@@ -959,8 +989,7 @@ function onInit() {
                 $(this).find('input[type="checkbox"]').prop('checked', statusesToCheck.includes(status));
             });
         });
-        $('#add-planned-paper-section > fieldset > div > div').last().append(SelectALL, "<span style=float:right>&nbsp;</span>",PPMM);
-
+        $('#add-planned-paper-section>fieldset>div>div, #single-planned-paper-form>fieldset>div>div').last().append(SelectALL, "<span style=float:right>&nbsp;</span>",PPMM);
 
         if (GM_config.get('Hidden_Func')){
             $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `);
@@ -1807,19 +1836,17 @@ function onInit() {
         }
     } catch (error){ }}
 
-    //Dinner
-    if (window.location.href.indexOf("i.mdpi.cn/team/dinner") > -1 && userNames.some(userName => $("a.nav-link:contains('@mdpi.com')").text().trim().includes(userName + "@mdpi.com"))){try{
-        $('#appbundle_dinner_dinnerRestaurant option:contains("江城快点")').prop('selected', true);
-    } catch (error){ }}
-
-    //
-
     //send_cfp_form_susy
     if (window.location.href.indexOf("email/send_cfp_form_susy") > -1 && GM_config.get('Hidden_Func')){try{
         $(".mailBody").each(function() {
             let newVal = $(this).val().replace("We suggest compiling a list of potential contributors alongside myself as your MDPI in-house Editor. I will help to ensure that the excel file is formatted correctly and that the appropriate scholars are contacted. ", "");
             $(this).val(newVal);
         });
+    } catch (error){ }}
+
+    //Dinner
+    if (window.location.href.indexOf("i.mdpi.cn/team/dinner") > -1 && userNames.some(userName => $("a.nav-link:contains('@mdpi.com')").text().trim().includes(userName + "@mdpi.com"))){try{
+        $('#appbundle_dinner_dinnerRestaurant option:contains("江城快点")').prop('selected', true);
     } catch (error){ }}
 
     //Remind_Dinner
@@ -1840,7 +1867,7 @@ function onInit() {
                         let inputExists = doc.querySelector('#appbundle_dinner_dish') !== null;
                         let linkExists = doc.querySelector('a[href="/team/dinner/list/export"]') !== null;
                         if (!inputExists && linkExists) {
-                            GM_setValue("lastPromptDate", todayDateString);
+                            GM_setValue("lastDinnerDate", todayDateString);
                         } else {
                             $("body").append(`<div class="blockUI blockOverlay" id=dinner-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
                                       <div class="blockUI blockMsg blockPage" id=dinner-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
