@@ -797,7 +797,7 @@ function onInit() {
                     $("span.note-title:contains('SI Section Notes')").trigger("click");
 
                     //Always: SI QC QuickAdd
-                    let prependContent = GM_getValue("SI_QC", "⭐ - SME按QC要求完成&自己做的其他事情\n✅ - 已做\n❌ - 未做\n————————————————\n$YYYY$.$MM$\nQC comment(Linn):\n1. \n2. \nQC 复查意见\n1. \n2. \n⭐ ：xxxx+完成时间\n————————————————");
+                    let prependContent = GM_getValue("SI_QC", "⭐ - SME按QC要求完成&自己做的其他事情\n✅ - 已做\n❌ - 未做\n————————————————\n$YYYY$.$MM$\nQC comment:\n1. \n2. \nQC 复查意见\n1. \n2. \n⭐ ：xxxx+完成时间\n————————————————");
                     $("div.special-issue-note-box").last().on("mousedown", function(event) { if (event.which === 2) { // 中键点击
                         event.preventDefault();
                         $("body").append(`<div id='si_qc' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
