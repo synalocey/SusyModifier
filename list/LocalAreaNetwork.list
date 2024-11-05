@@ -40,7 +40,7 @@ DOMAIN-SUFFIX,zte.home
 DOMAIN-SUFFIX,tplogin.cn
 
 # MDPI
-DOMAIN-SUFFIX,mailsdb.i.mdpi.com
+DOMAIN-SUFFIX,i.mdpi.com
 DOMAIN-SUFFIX,mdpi.test
 DOMAIN-SUFFIX,mdpi.intra
 DOMAIN-SUFFIX,mail.mdpi.com
