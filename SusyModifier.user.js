@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.10.31
+// @version       4.11.26
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -459,6 +459,12 @@ function onInit() {
         $('html, body').scrollTop($('#emailTemplates').offset().top);
     } catch (error){ }}
 
+    //xxxxxxxxxxx
+    if(window.location.href.indexOf("/list_volunteer_reviewers/all") > -1){try{
+        location.href=$("a[href*='/volunteer_reviewer_info/view/']").attr("href").replace("/view/","/update/")
+    } catch (error){ }}
+
+
     //GE Monthly Report
     if (window.location.href.indexOf("/email/acknowledge/") > -1){try{
         sk_MyAccountOnly();
@@ -723,8 +729,31 @@ function onInit() {
 
         if (GM_config.get('Assign_Assistant')) { //派稿助手
             try {let params = new window.URLSearchParams(window.location.search); let reviewer = params.get('r');
-                 if (reviewer.indexOf("@") > -1) {$("#form_email").val(reviewer); $("#nextBtn").trigger("click"); waitForKeyElements('#specialBackBtn', scrolldown, true); function scrolldown() {$('html, body').scrollTop($('#form_email').offset().top)} }
-                } catch (error){ }
+                 if (reviewer.indexOf("@") > -1) {
+                     $("#form_email").val(reviewer); $("#nextBtn").trigger("click");
+
+                     waitForKeyElements('#specialBackBtn', function() {
+                         $('html, body').scrollTop($('#form_email').offset().top);
+                         $("#keepRviewer").hide().before(` <input type="button" id="keepReviewer2" value="Proceed2" class="submit"> `);
+                         $("#keepReviewer2").on("click", function(){
+                             document.querySelector("#specialBackBtn").click();
+                             document.querySelector("#nextBtn").click();
+                             waitForKeyElements('#specialBackBtn', function() {
+                                 $("#keepRviewer").before(` <input type="button" id="keepReviewer3" value="Proceed2" class="submit"> `);
+                                 $("#keepReviewer3").on("click", function(){
+                                     document.querySelector("#specialBackBtn").click();
+                                     document.querySelector("#nextBtn").click();
+                                     waitForKeyElements('#specialBackBtn', function() {document.querySelector("#keepRviewer").click();}, true);
+                                 })
+                                 document.querySelector("#keepRviewer").click();
+                             }, true);
+                         });
+                     }, true);
+                 }
+                } catch (error){}
+            if ($("div:contains('The CSRF token is invalid. Please try to resubmit the form')").length > 0){
+                $("header").append('<div data-animation="drop" class="notify notify-dismissible notify-danger center top"><div class="message">The CSRF token is invalid.</div><button type="button" class="close" data-close="notify" data-animation="drop">×</button></div>')
+            }
 
             if ($("strong.margin-horizontal-1").text().indexOf("decision") > -1) {
                 $.get("/user/assigned/production_form/" + window.location.href.match("process_form/(\\w*)")[1], function(res) {
@@ -833,7 +862,8 @@ function onInit() {
             if ($('#si-update-emphasized').attr("data-uri")) {
                 $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+`" title="Reset"><img border="0" src="${icon_arrow}"></a> `);
                 $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+`" title="Close"><img border="0" src="${icon_book}"></a> `);
-                $("button[data-title='Import']").before('<input type="button" class="submit add-planned-paper-btn" value="Force Add">&nbsp; ');
+                $("button[data-title='Import']").before('<input id="forceadd" type="button" class="submit" value="Force Add">&nbsp; ');
+                $("#forceadd").on("click",function (){ window.location.href = "//susy.mdpi.com/planned_paper/edit?email=" + $("#add-planned-paper-section input[name='email']").val() });
             }
             SpecialFunc();
         } else if(userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {
@@ -2038,6 +2068,7 @@ function sf(){
         <textarea id="add_r_t" class="manuscript-add-note-form" placeholder="Example:\nmathematics-11111111\nmathematics-2222222\n\nhttps://www.scopus.com/detail.uri?authorId=333\nhttps://scholar.google.com/citations?user=444\n\naaa@aaa.edu\nbbb@bbb.edu" minlength="1"
         rows="10" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 4px;'></textarea>
         <button id="add_r_b" class="submit" style='background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Submit</button></div></div>`);
+        $("#add_r_t").focus();
         $("#add_r_b").on("click", function (){
             var textContent = $("#add_r_t").val();
             var urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -2068,17 +2099,20 @@ function sk_susie(){
     if($("#add_susie").length){
         if ($("#add_susie").css("display")=="none") {$("#add_susie").css("display","block")} else {$("#add_susie").css("display","none")}
     } else {
-        $("body").append( `<div id='add_susie' role='dialog' style='position: absolute; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
+        $("body").append( `<div id='add_susie' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
         <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [Ctrl+E]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
         onclick='document.getElementById("add_susie").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_susie_t" class="manuscript-add-note-form"
         placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu\nmathematics-yyyyyy\nccc@ccc.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_susie_b" class="submit">Submit</button></div></div>`);
+        $("#add_susie_t").focus();
         $("#add_susie_b").on("click", function (){
+            $(this).prop('disabled', true);
             let myArray, add_id, rdline = $("#add_susie_t").val().split("\n");
-            for (var i=0; i < rdline.length; i++){
-                if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
-                if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/build/img/design/susy-logo.png?term="+add_id+"&r="+myArray[0], false)}
-            }
-        })
+            rdline.forEach((line, index) => {
+                if ((myArray = /\w+-\d+/.exec(line)) !== null) {add_id=myArray[0]}
+                if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(line)) !== null) {GM_openInTab(window.location.origin+"/build/img/design/susy-logo.png?term="+add_id+"&r="+myArray[0], false)}
+                if (index === rdline.length - 1) { $('#add_susie_b').prop('disabled', false); } //当最后一行被处理时，重新启用按钮
+            });
+        });
     }
 }
 
