@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.11.26
+// @version       4.11.29
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -350,7 +350,8 @@ function onInit() {
 
         if (GM_config.get('Assign_Assistant')) { //派稿助手
             $(".menu [href='/user/manage/crosscheck']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").on("click", sk_susie);
-            document.addEventListener('keydown', function(e) {if (e.ctrlKey && e.key === 'e') {e.preventDefault(); sk_susie();}});
+            document.addEventListener('keydown', function(e) {if (e.ctrlKey && e.key === 'e') {e.preventDefault(); sk_susie(); $("#add_susie_t").val('');}});
+            document.addEventListener('keydown', function(e) {if (e.ctrlKey && e.key === '3') {e.preventDefault(); sk_susie();}});
         }
     } catch (error){ }}
 
@@ -2097,20 +2098,30 @@ function sf(){
 
 function sk_susie(){
     if($("#add_susie").length){
-        if ($("#add_susie").css("display")=="none") {$("#add_susie").css("display","block")} else {$("#add_susie").css("display","none")}
+        if ($("#add_susie").css("display")=="none") {$("#add_susie").css("display","block");} else {$("#add_susie").css("display","none")}
     } else {
         $("body").append( `<div id='add_susie' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
-        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [Ctrl+E]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
+        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [Ctrl+E/Ctrl+3]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
         onclick='document.getElementById("add_susie").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_susie_t" class="manuscript-add-note-form"
-        placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu\nmathematics-yyyyyy\nccc@ccc.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_susie_b" class="submit">Submit</button></div></div>`);
+        placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu (in USA now)\nhttps://susy.mdpi.com/user/xxxxxxxxxxxx\nccc@ccc.edu ddd@ddd.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_susie_b" class="submit">
+        Submit</button></div></div>`);
         $("#add_susie_t").focus();
         $("#add_susie_b").on("click", function (){
-            $(this).prop('disabled', true);
-            let myArray, add_id, rdline = $("#add_susie_t").val().split("\n");
+            let myArray, add_id, emailArray, rdline = $("#add_susie_t").val().split("\n");
             rdline.forEach((line, index) => {
-                if ((myArray = /\w+-\d+/.exec(line)) !== null) {add_id=myArray[0]}
-                if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(line)) !== null) {GM_openInTab(window.location.origin+"/build/img/design/susy-logo.png?term="+add_id+"&r="+myArray[0], false)}
-                if (index === rdline.length - 1) { $('#add_susie_b').prop('disabled', false); } //当最后一行被处理时，重新启用按钮
+                if ((myArray = /(https:\/\/susy\.mdpi\.com\/user.+|\w+-\d{6,})/.exec(line)) !== null) {
+                    add_id = myArray[0];
+                }
+                const emailPattern = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/g;
+                while ((emailArray = emailPattern.exec(line)) !== null) {
+                    if (add_id.startsWith("https://")) {
+                        // 如果 add_id 是网址，则以这种方式构建 URL 并打开
+                        GM_openInTab(add_id + "?r=" + emailArray[0], true);
+                    } else {
+                        // 如果 add_id 是字母数字-数字模式，则以原有方式构建 URL 并打开
+                        GM_openInTab(window.location.origin + "/build/img/design/susy-logo.png?term=" + add_id + "&r=" + emailArray[0], true);
+                    }
+                }
             });
         });
     }
