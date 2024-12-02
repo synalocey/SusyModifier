@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.11.29
+// @version       4.12.02
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -825,35 +825,86 @@ function onInit() {
                 if(!done){
                     SidebarSize();
                     $("span.note-title:contains('SI Section Notes')").trigger("click");
+                    $('.fold-note-list').last().before('<button id="qcButton" style="background-color: orange; border: none; color: white; padding: 5px;">Add Note</button>');
 
                     //Always: SI QC QuickAdd
                     let prependContent = GM_getValue("SI_QC", "⭐ - SME按QC要求完成&自己做的其他事情\n✅ - 已做\n❌ - 未做\n————————————————\n$YYYY$.$MM$\nQC comment:\n1. \n2. \nQC 复查意见\n1. \n2. \n⭐ ：xxxx+完成时间\n————————————————");
+                    let AddPlace = GM_getValue("SI_QC_AddPlace", "❌ - 未做");
                     $("div.special-issue-note-box").last().on("mousedown", function(event) { if (event.which === 2) { // 中键点击
                         event.preventDefault();
-                        $("body").append(`<div id='si_qc' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-                        border-radius: 5px; overflow: hidden;'> <div style='background-color: #FFA500; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'> <span>SI QC Settings</span>
-                        <button type='button' onclick='document.getElementById("si_qc").remove()' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button> </div> <div style='padding: 20px;'>
-                        <textarea id="si_qc_t" class="manuscript-add-note-form" minlength="1" rows="10" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 4px;'>${prependContent}</textarea>
+                        $("body").append(`<div id='si_qc' role='dialog' style='position: fixed; height: 400px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                        border-radius: 5px; overflow: hidden;'><div style='background-color: #FFA500; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'><span>Note Settings</span><button type='button'
+                        onclick='document.getElementById("si_qc").remove()' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div><div style='padding: 20px;'><textarea id="si_qc_t"
+                        class="manuscript-add-note-form" minlength="1" rows="8" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius:4px;'>${prependContent}</textarea><div style='margin-top: 10px;font-size:14px;'>
+                        Text will append after the location specified below, or at the beginning if not found:</div><input type="text" id="si_qc_addplace" value="${AddPlace}" style='width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;'>
                         <button id="si_qc_save" class="submit" style='background-color: #FFA500; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Save</button></div></div>`);
                         $("#si_qc_save").on("click", function (){
                             prependContent = $("#si_qc_t").val();
+                            AddPlace = $("#si_qc_addplace").val();
                             GM_setValue("SI_QC", prependContent);
+                            GM_setValue("SI_QC_AddPlace", AddPlace);
                             $("#si_qc").remove();
                         });
                         return false;
                     }});
-                    $("div.special-issue-note-box").last().on("contextmenu", function(event) { // 右键菜单
+                    $("div.special-issue-note-box div.note-list-container div.click-to-edit-manuscript").last().on("contextmenu", AddQCNote);
+                    $('#qcButton').on('click', AddQCNote);
+
+                    function AddQCNote(event) {
                         event.preventDefault();
-                        let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear().toString().slice(-2), yyyy = new Date().getFullYear().toString();
-                        $("div.click-to-edit-manuscript").last().trigger("click");
+                        event.stopPropagation();
+                        let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"),
+                            dd = new Date().getDate().toString().padStart(2, "0"),
+                            yy = new Date().getFullYear().toString().slice(-2),
+                            yyyy = new Date().getFullYear().toString();
+
                         let $textarea = $("div.manuscript-input-note-group textarea").last();
-                        $textarea.val(prependContent.replace(/\$YYYY\$/g,yyyy).replace(/\$YY\$/g,yy).replace(/\$MM\$/g,mm).replace(/\$DD\$/g,dd) + $textarea.val());
-                        $textarea.scrollTop(0); $textarea[0].setSelectionRange(0, 0);
+                        let initiallyVisible = $textarea.is(':visible');
+
+                        if (!initiallyVisible) {
+                            $("div.click-to-edit-manuscript").last().trigger("click");
+                            $textarea = $("div.manuscript-input-note-group textarea").last(); // Re-acquire the textarea after UI update
+                        }
+
+                        let currentVal = $textarea.val();
+                        let prependContentFormatted = prependContent.replace(/\$YYYY\$/g, yyyy)
+                        .replace(/\$YY\$/g, yy)
+                        .replace(/\$MM\$/g, mm)
+                        .replace(/\$DD\$/g, dd);
+
+                        if (initiallyVisible) {
+                            let cursorPos = $textarea[0].selectionStart;
+                            let beforeCursor = currentVal.substring(0, cursorPos);
+                            let afterCursor = currentVal.substring(cursorPos);
+                            $textarea.val(beforeCursor + prependContentFormatted + afterCursor);
+                            let newCursorPos = cursorPos + prependContentFormatted.length;
+                            $textarea.focus(); // Set focus back to the textarea
+                            $textarea[0].setSelectionRange(newCursorPos, newCursorPos);
+                        } else {
+                            let addPlaceIndex = currentVal.indexOf(AddPlace);
+                            if (addPlaceIndex > 0) {
+                                let positionAfterAddPlace = addPlaceIndex + AddPlace.length;
+                                let beforeAddPlace = currentVal.substring(0, positionAfterAddPlace);
+                                let afterAddPlace = currentVal.substring(positionAfterAddPlace);
+                                $textarea.val(beforeAddPlace + "\n" + prependContentFormatted + afterAddPlace);
+                                let newCursorPos = beforeAddPlace.length + prependContentFormatted.length + 1; // +1 for the newline character
+                                $textarea.focus(); // Set focus back to the textarea
+                                $textarea[0].setSelectionRange(newCursorPos, newCursorPos);
+                            } else {
+                                $textarea.val(prependContentFormatted + "\n" + currentVal);
+                                let newCursorPos = prependContentFormatted.length + 1; // +1 for the newline character
+                                $textarea.focus(); // Set focus back to the textarea
+                                $textarea[0].setSelectionRange(newCursorPos, newCursorPos);
+                            }
+                        }
+
+                        $textarea.scrollTop(0);
                         return false;
-                    });
+                    }
                     done = true;
                 }
             }, true);
+
         }
         if ($("a:contains('Edit at backend')").length) {$('#si-update-emphasized').parent().children("a").first().attr("href", $("a:contains('Edit at backend')").attr("href").replace(/.*\//,"https://mdpi.com/si/") )};
         $('#si-update-emphasized').before(`<a href="?pagesection=AddGuestEditor" title="Add Guest Editor"><img border="0" src="${icon_plus}"></a> `);
