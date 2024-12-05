@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.12.02
+// @version       4.12.05
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -349,7 +349,7 @@ function onInit() {
         $("#owner").on("click", function(){ $.getJSON("/user/ajax/search_manuscript_owner?term="+$("#topmenu span:contains('@mdpi.com')").text(), function(data){window.location.href ='/user/managing/status/submitted?form[owner_id]=' + data[0].value}); });
 
         if (GM_config.get('Assign_Assistant')) { //派稿助手
-            $(".menu [href='/user/manage/crosscheck']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").on("click", sk_susie);
+            $(".menu [href*='/list/list_volunteer_reviewers']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").on("click", sk_susie);
             document.addEventListener('keydown', function(e) {if (e.ctrlKey && e.key === 'e') {e.preventDefault(); sk_susie(); $("#add_susie_t").val('');}});
             document.addEventListener('keydown', function(e) {if (e.ctrlKey && e.key === '3') {e.preventDefault(); sk_susie();}});
         }
