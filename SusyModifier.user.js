@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.12.05
+// @version       4.12.16
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -886,12 +886,12 @@ function onInit() {
                                 let positionAfterAddPlace = addPlaceIndex + AddPlace.length;
                                 let beforeAddPlace = currentVal.substring(0, positionAfterAddPlace);
                                 let afterAddPlace = currentVal.substring(positionAfterAddPlace);
-                                $textarea.val(beforeAddPlace + "\n" + prependContentFormatted + afterAddPlace);
+                                $textarea.val(beforeAddPlace + prependContentFormatted + afterAddPlace);
                                 let newCursorPos = beforeAddPlace.length + prependContentFormatted.length + 1; // +1 for the newline character
                                 $textarea.focus(); // Set focus back to the textarea
                                 $textarea[0].setSelectionRange(newCursorPos, newCursorPos);
                             } else {
-                                $textarea.val(prependContentFormatted + "\n" + currentVal);
+                                $textarea.val(prependContentFormatted + currentVal);
                                 let newCursorPos = prependContentFormatted.length + 1; // +1 for the newline character
                                 $textarea.focus(); // Set focus back to the textarea
                                 $textarea[0].setSelectionRange(newCursorPos, newCursorPos);
@@ -1995,7 +1995,7 @@ function SidebarSize() {
     $(".note-list-container").css("padding","0"); $(".note-box-component").css("margin-bottom","10px");
     if ($(".section-note-box .manuscript-note-item-content").height() > 200) {$(".section-note-box .manuscript-note-item-content").height(200).css("overflow-y","auto")}
     if ($(".apc-container .manuscript-note-item-content").height() > 200) {$(".apc-container .manuscript-note-item-content").height(200).css("overflow-y","auto")}
-    if ($('.special-issue-note-box').length > 1) {$(".special-issue-note-box .manuscript-add-note-form").eq(1).prop("rows",20)}
+    if ($('.special-issue-note-box').length > 1) {$(".special-issue-note-box .manuscript-add-note-form").slice(1).prop("rows",22)}
     else if ($('.special-issue-note-box').length > 0) {$(".manuscript-note-box .manuscript-note-item-content").height(200).css("overflow-y","auto")}
 }
 function LineBreak() {
