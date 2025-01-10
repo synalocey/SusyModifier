@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.12.16
+// @version       5.1.9
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -111,7 +111,7 @@
             'Report_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=] )\\(.* – monthly report"},
             'Report_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () {\n let $si_name = $('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();\n`
                                   + ` return \`Monthly Report (\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – \${$si_name}\`;\n}`},
-            'Report_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=Dear[\\s\\S]*?,\\n\\n)I hope this finds you well. I have included,[\\S\\s]*Kind regards,"},
+            'Report_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=Dear[\\s\\S]*?,\\n\\n)[\\S\\s]*Kind regards,"},
             'Report_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (){\n let $si_name=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();`
                                   + ` let $si_link=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().children().attr("href").replace(/journal\\/(.*)\\/special_issues/,"si/$1");`
                                   + ` let $arr=$('div.cell.small-12.medium-6.large-2:contains("Manuscripts(")').first().next().text().split("/");\n let $process=$arr[0].trim(),$pub=$arr[1].trim(),$reject=$arr[2].trim(),$instruct;`
@@ -331,7 +331,7 @@ function onInit() {
             $(".menu [href='/user/manuscript/list/owner']").attr("href",'/user/manuscript/list/owner/my_journal');
             $(".menu [href='/user/manuscript/special_approval_list']").attr("href",'/user/manuscript/special_approval_list/my_journal');
             $(".menu [href='/user/list/editors']").after(" <a href='/user/ebm/contract?form[journal_id]=" + S_J + "'>[R]</a>");
-            $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a> <a href='/user/pubpeer_case/list?form[journal_id]=" + S_J + "'>[P]</a>");
+            $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a> <a href='/user/public_forum/list?form[journal_id]=" + S_J + "'>[P]</a>");
             $(".menu [href='/publisher/manuscripts']").attr("href","/publisher/manuscripts?form[journal_id]=" + S_J);
         }
         $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC&page_limit=100'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
@@ -460,11 +460,10 @@ function onInit() {
         $('html, body').scrollTop($('#emailTemplates').offset().top);
     } catch (error){ }}
 
-    //xxxxxxxxxxx
+    //list_volunteer_reviewers
     if(window.location.href.indexOf("/list_volunteer_reviewers/all") > -1){try{
         location.href=$("a[href*='/volunteer_reviewer_info/view/']").attr("href").replace("/view/","/update/")
     } catch (error){ }}
-
 
     //GE Monthly Report
     if (window.location.href.indexOf("/email/acknowledge/") > -1){try{
@@ -483,7 +482,7 @@ function onInit() {
         if(GM_config.get('Report_TemplateB2').indexOf("%pp_list%") > -1) {
             let SI_Topic_Link = $("#special_issue_id").attr("data-special-issue-id") ? "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id") : "/submission/topic/view/" + $("#submission_topic_id").attr("data-topic-id");
             let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', SI_Topic_Link, false); xhr.send();
-            let $form = $($.parseHTML(xhr.responseText)).find('#add-planned-paper-section');
+            let $form = $($.parseHTML(xhr.responseText)).find('#add-planned-paper-section, #single-planned-paper-form');
             let emailIndex=1, statusIndex=2, sourceIndex=3, discountIndex=4, agreedDateIndex=6;
             $form.find('table').each(function(index) {
                 $(this).find('thead th').each(function(index) {
@@ -1060,7 +1059,7 @@ function onInit() {
             this.toggle = !this.toggle;
             var statusesToCheck = this.toggle ? ['Title Provided', 'Agreed'] : ['Title Provided', 'Agreed', 'Interested'];
             let statusIndex=0, found = false;
-            $('#add-planned-paper-section').find('thead th').each(function(index) {
+            $('#add-planned-paper-section, #single-planned-paper-form').find('thead th').each(function(index) {
                 if (!found) {
                     let text = $(this).text().trim();
                     if (text === "Status") { statusIndex = index + 1; found = true; }
@@ -1072,6 +1071,10 @@ function onInit() {
             });
         });
         $('#add-planned-paper-section>fieldset>div>div, #single-planned-paper-form>fieldset>div>div').last().append(SelectALL, "<span style=float:right>&nbsp;</span>",PPMM);
+
+        $("div.special-issue-invite-div a[href$='/unresponsive'], div.special-issue-invite-div a[href$='/to_be_contacted']").attr("href", function() {
+            return this.href + "?page=1&page_limit=100";
+        });
 
         if (GM_config.get('Hidden_Func')){
             $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `);
@@ -1244,6 +1247,15 @@ function onInit() {
             $("input[value='Add']").before(`<input class="submit" type="submit" value="Add">`).remove();
             if (window.location.href.indexOf("/edit/0?") > -1){ $("#form_owner_email").val(window.location.search.split('?')[1]);}
         }
+    } catch (error){ }}
+
+    //Susy CfP
+    if (window.location.href.indexOf("/paper_invitations/") > -1){try{
+            $('#mailBody').parent().after(`&nbsp;<a id="SpecialDiscount">📉</a>`);
+            $('#SpecialDiscount').on("click", function (){
+                document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/\(20%/g, '(with special').replace(/\nThis invitation entitles you.* after peer review.\n/g,"").replace(/20% discount/g,'*special discount*');
+                document.getElementById('mailSubject').value=document.getElementById('mailSubject').value.replace(/20%/g, 'Special');
+            });
     } catch (error){ }}
 
     //默认新建EBM位置
@@ -1969,6 +1981,107 @@ function onInit() {
         }
     } catch (error){ }}
 
+    if (window.location.href.indexOf("susy.mdpi.com/user/settings#reviewer") > -1 ) {
+        $("#container").html(`<div class="quickform"><form><div><fieldset><legend>[Mathematics] Batch Add Reviewers</legend><div><div class="cell small-12 medium-6 large-8"><textarea id="inputArea" rows="10" cols="50"></textarea>
+        <input type="button" value="Start" id="reviewer_button" class="submit"><span id="spinner" style="display: none; vertical-align: middle; margin-left: 10px;"><div class="loader"></div></span><iframe id="processFrame" style="width:100%; height:1500px;" src="about:blank">
+        </iframe></div></div></fieldset></div></form></div>`);
+
+        $("<style type='text/css'> " +
+          ".loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 2s linear infinite; } " +
+          "#spinner { display: inline-flex; align-items: center; } " +
+          "@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } " +
+          "</style>").appendTo("head");
+
+        $("#reviewer_button").on("click", function (){
+            $("#inputArea,#reviewer_button").prop('disabled', true);
+            $("#spinner").show();
+            var lines = $('#inputArea').val().split('\n');
+            var tasks = [];
+            var currentUrl = null;
+            lines.forEach(line => {
+                let urlMatch = /(https:\/\/susy\.mdpi\.com\/user.+|\w+-\d{6,})/.exec(line);
+                if (urlMatch) {
+                    currentUrl = urlMatch[0]; // 当匹配到URL时更新currentUrl
+                }
+                let emailMatch = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(line);
+                if (currentUrl && emailMatch) {
+                    tasks.push({ url: currentUrl, email: emailMatch[0] });
+                }
+            });
+
+            var i = 0;
+            async function loadNextURL() {
+                if (i >= tasks.length) {
+                    $("#inputArea,#reviewer_button").prop('disabled', false);
+                    $("#spinner").hide();
+                    return;
+                }
+
+                function updateFrameAndLoad(url) {
+                    $('#processFrame').on('load', function() {
+                        try {
+                            var iframeDoc = this.contentDocument || this.contentWindow.document;
+                            var cemail = tasks[i].email;
+                            $(iframeDoc).find('#form_email').val(cemail);
+                            $(iframeDoc).find('#nextBtn').trigger('click');
+                            waitForKeyElements('#specialBackBtn', process, true, '#processFrame');
+                            function process(){
+                                if($(iframeDoc).find('#keepRviewer').length > 0) {
+                                    $(iframeDoc).find('#keepRviewer').trigger('click');
+                                    waitForKeyElements('#nextBtn', function(){
+                                        $('#inputArea').val($('#inputArea').val().replace(cemail, "✅"+ cemail));
+                                        setTimeout(loadNextURL, 1000);
+                                    }, true, '#processFrame');
+                                } else {
+                                    $('#inputArea').val($('#inputArea').val().replace(cemail, "❌"+ cemail));
+                                    setTimeout(loadNextURL, 100);
+                                }
+                            }
+                            $('#processFrame').off('load');
+                        } catch (e) {
+                            console.error("Error processing iframe contents:", e);
+                        }
+                        i++;
+                    }).show().attr('src', url);
+                }
+
+                if (!tasks[i].url.startsWith("http")) {
+                    try {
+                        let jsonObject = await $.ajax({
+                            url: "//susy.mdpi.com/ajax/submission_get_manuscripts?term=" + tasks[i].url,
+                            type: 'GET',
+                            dataType: 'json'
+                        });
+                        if (jsonObject[0]) {
+                            tasks[i].url = jsonObject[0].url; // 更新URL
+                            updateFrameAndLoad(tasks[i].url); // 更新iframe的src属性
+                        }
+                        else{
+                            $('#inputArea').val($('#inputArea').val().replace(tasks[i].email, "⛓️‍💥"+ tasks[i].email));
+                            i++;
+                            setTimeout(loadNextURL, 100);
+                        }
+                    } catch (error) {
+                        $('#inputArea').val($('#inputArea').val().replace(tasks[i].email, "⛓️‍💥"+ tasks[i].email));
+                        i++;
+                        setTimeout(loadNextURL, 100);
+                    }
+                } else {
+                    updateFrameAndLoad(tasks[i].url); // 直接加载HTTP URL
+                }
+            }
+            loadNextURL();
+        })
+
+        // Extract query parameter after #
+        const hashDetails = window.location.hash.split('?');
+        if (hashDetails.length > 1) {
+                const decodedReviewerId = decodeURIComponent(hashDetails[1]);
+                $('#inputArea').val(decodedReviewerId);
+                $('#reviewer_button').click();
+        }
+    }
+
     console.timeEnd("test")
 }
 
@@ -2152,10 +2265,10 @@ function sk_susie(){
         if ($("#add_susie").css("display")=="none") {$("#add_susie").css("display","block");} else {$("#add_susie").css("display","none")}
     } else {
         $("body").append( `<div id='add_susie' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
-        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [Ctrl+E/Ctrl+3]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
-        onclick='document.getElementById("add_susie").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_susie_t" class="manuscript-add-note-form"
-        placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu (in USA now)\nhttps://susy.mdpi.com/user/xxxxxxxxxxxx\nccc@ccc.edu ddd@ddd.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_susie_b" class="submit">
-        Submit</button></div></div>`);
+        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [Ctrl+E] <a href='/user/settings#reviewer' target=_blank>[Full Version]</a></span>
+        <button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close' onclick='document.getElementById("add_susie").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div>
+        <div class='ui-dialog-content ui-widget-content'><textarea id="add_susie_t" class="manuscript-add-note-form" placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu (in USA now)\nhttps://susy.mdpi.com/user/xxxxxxxxxxxx\nccc@ccc.edu ddd@ddd.edu"
+        minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_susie_b" class="submit">Submit</button></div></div>`);
         $("#add_susie_t").focus();
         $("#add_susie_b").on("click", function (){
             let myArray, add_id, emailArray, rdline = $("#add_susie_t").val().split("\n");
