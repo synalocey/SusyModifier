@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.1.9
+// @version       5.1.16
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -35,8 +35,8 @@
 // @match         *://*.google.co.id/*
 // @match         *://*.google.com.my/*
 // @match         *://i.mdpi.cn/team/dinner*
-// @require       https://unpkg.com/jquery@4.0.0-beta.2/dist/jquery.js
-// @require       https://releases.jquery.com/git/jquery-migrate-git.js
+// @require       https://gcore.jsdelivr.net/npm/jquery@4.0.0-beta.2/dist/jquery.js
+// @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.js
 // @grant         GM_getValue
@@ -352,6 +352,21 @@ function onInit() {
             $(".menu [href*='/list/list_volunteer_reviewers']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").on("click", sk_susie);
             document.addEventListener('keydown', function(e) {if (e.ctrlKey && e.key === 'e') {e.preventDefault(); sk_susie(); $("#add_susie_t").val('');}});
             document.addEventListener('keydown', function(e) {if (e.ctrlKey && e.key === '3') {e.preventDefault(); sk_susie();}});
+        }
+
+        if (GM_config.get('Maths_J')) {
+            $('.submit.show-user-info-btn.user-overview').on("click",function(){
+                waitForKeyElements('.get-unsubscribe-link-btn',function(){
+                    $("a:contains('Edit Reviewer')").parent().find('td').each(function() {
+                        let ranking = get_univ( $(this).text().trim() );
+                        if(ranking.color){
+                            if (!$('#tooltipster-style').length) {$('head').append(css_tooltipster)}
+                            $(this).css("background-color",ranking.color).attr("title",ranking.detail.replace(/^<br\s*\/?>/i, ''))
+                                .tooltipster({functionInit: function(instance, helper){var content = $(helper.origin).attr('title');instance.content(content);}, contentAsHTML:true, theme:'tooltipster-noir'});
+                        }
+                    });
+                },true)
+            });
         }
     } catch (error){ }}
 
@@ -690,7 +705,7 @@ function onInit() {
                 let firstName = $link.parent().contents().filter(function() {return this.nodeType === 3;}).first().text().trim();
                 let lastName = $link.parent().find('b').first().text().trim();
                 $(this).before(` <a href="//www.scopus.com/results/authorNamesList.uri?st2=${firstName}&st1=${lastName}" title="Scopus" target="_blank" rel="noopener noreferrer"><img src=${icon_scopus}></a> `);
-
+                $(this).after(` <a href="//retractiondatabase.org/RetractionSearch.aspx?auth%3d${firstName}+${lastName}" title="retractiondatabase" target="_blank" rel="noopener noreferrer"><img src=${icon_retractiondatabase}></a> `)
             });
 
             let hasBeenClicked = false;
@@ -1100,6 +1115,42 @@ function onInit() {
                 });
             });
         }
+
+        if(GM_config.get('Maths_J')){
+            $("a.display_present_editor").on("click",function(){
+                waitForKeyElements('span:contains("Guest Editor Information"):visible',function(){
+                    $('span:contains("Guest Editor Information"):visible').parent().parent().find("div.cell.small-12").each(function() {
+                        let ranking = get_univ( $(this).text().trim() );
+                        if(ranking.color){
+                            if (!$('#tooltipster-style').length) {$('head').append(css_tooltipster)}
+                            $(this).css("background-color",ranking.color).attr("title",ranking.detail.replace(/^<br\s*\/?>/i, ''))
+                                .tooltipster({functionInit: function(instance, helper){var content = $(helper.origin).attr('title');instance.content(content);}, contentAsHTML:true, theme:'tooltipster-noir'});
+                        }
+                    });
+                },true)
+            });
+            $("#guestNextBtn").on("click",function(){
+                waitForKeyElements('#specialBackBtn',function(){
+                    $('#checkMailsdb').parent().find("br").each(function() {
+                        var nextNode = this.nextSibling;
+                        if (nextNode && nextNode.nodeType === 3 && nextNode.nodeValue.includes('Affiliation:')) {
+                            let ranking = get_univ( $(nextNode).text().trim() );
+                            if(ranking.color){
+                                if (!$('#tooltipster-style').length) {$('head').append(css_tooltipster)}
+                                $(nextNode).replaceWith($('<span>').text(nextNode.nodeValue).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
+                                                        .tooltipster({functionInit: function(instance, helper){var content = $(helper.origin).attr('title');instance.content(content);}, contentAsHTML:true, theme:'tooltipster-noir'}));
+                            }
+                        }
+                        let ranking = get_univ( $(this).text().trim() );
+                        if(ranking.color){
+                            if (!$('#tooltipster-style').length) {$('head').append(css_tooltipster)}
+                            $(this).css("background-color",ranking.color).attr("title",ranking.detail.replace(/^<br\s*\/?>/i, ''))
+                                .tooltipster({functionInit: function(instance, helper){var content = $(helper.origin).attr('title');instance.content(content);}, contentAsHTML:true, theme:'tooltipster-noir'});
+                        }
+                    });
+                },true)
+            });
+        }
     } catch (error){ }}
 
     //SI可行性报告
@@ -1444,6 +1495,15 @@ function onInit() {
 
                     if ($jQueryObject.find("a:contains('Edit Reviewer')").length){
                         let ReviewerHistory=$jQueryObject.find("a:contains('Edit Reviewer')").attr("href").replace('//susy.mdpi.com/reivewer/managment/edit', 'https://susy.mdpi.com/list/reviewer/invitations-history');
+                        $jQueryObject.find("a:contains('Edit Reviewer')").parent().find('td').each(function() {
+                            let ranking = get_univ( $(this).text().trim() );
+                            if(ranking.color){
+                                if (!$('#tooltipster-style').length) {$('head').append(css_tooltipster)}
+                                $(this).css("background-color",ranking.color).attr("title",ranking.detail.replace(/^<br\s*\/?>/i, ''))
+                                    .tooltipster({functionInit: function(instance, helper){var content = $(helper.origin).attr('title');instance.content(content);}, contentAsHTML:true, theme:'tooltipster-noir'});
+                            }
+                        })
+
                         GM_xmlhttpRequest({
                             method: 'GET',
                             url: ReviewerHistory,
@@ -1752,11 +1812,22 @@ function onInit() {
         if(searchParams.has('user')) {window.location.href="https://scholar.google.com/citations?hl=en&user="+searchParams.get('user')}
     } catch (error){ }}
 
-    //Maths-Related Journal Search
+    //Experimental: CN Rank标记
+    if (window.location.href.indexOf("projects/journal-mathematics/wiki/SI_Manage") > -1 && GM_config.get('Hidden_Func')){try{
+        $('head').append(css_tooltipster);
+        $("td").each(function() {
+            let ranking = get_univ( $(this).text().trim() );
+            if(ranking.color){
+                $(this).css("background-color",ranking.color).attr("title",ranking.detail.replace(/^<br\s*\/?>/i, ''))
+                    .tooltipster({functionInit: function(instance, helper){var content = $(helper.origin).attr('title');instance.content(content);}, contentAsHTML:true, theme:'tooltipster-noir'});
+            }
+        });
+    } catch (error){ }}
+
+    //Maths-Related Journal Search + Rank ABC
     if (window.location.hostname.indexOf("google") + window.location.hostname.indexOf("scopus") > -2 && GM_config.get('Maths_J')){try{
         var maths_j = ["math","stat","computat","computing","equation","probab","algebr","algorithm","calculus","pde","nonlinear","topology","fractal","discrete","fixed point","artificial intelligence","inverse prob","combinatori","number theory", "matemati",
                        "operator theory","axiom","numeric","stochastic","fuzzy set","dynamical sys","chaos","functional analysis","optimization theory","inequalit","group theory","game theory",
-
                        "infectious disease modelling","current bioinformatics","evolutionary bioinformatics","frontiers in neuroinformatics","international journal of data mining and bioinformatics","journal of biological dynamics","journal of molecular graphics & modelling",
                        "annals of k-theory","concrete operators","dolomites research notes on approximation","fibonacci quarterly","international journal of analysis and applications","journal of analysis","journal of integer sequences","problemy analiza",
                        "real analysis exchange","special matrices","acta arithmetica","annales de l institut fourier","annales scientifiques de l ecole normale superieure","annali della scuola normale superiore di pisa","applied categorical structures",
@@ -1775,12 +1846,34 @@ function onInit() {
         var geometry_j = ["geometr","fractal","manifold"];
         var maths_regex = new RegExp("(" + maths_j.join("|") + ")", "i");
         var geometry_regex = new RegExp("(" + geometry_j.join("|") + ")", "i");
-        if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source'],div[data-testid='author-list']+span", mark_journals, true);} else {mark_journals()};
-        $("#gsc_bpf_more").on("click", function (){
-            let targetNode = document.querySelector('#gsc_a_nn')
-            let observer = new MutationObserver(function(mutations) { mark_journals() });
-            observer.observe(targetNode, {characterData: true, childList: true, subtree: true});
-        })
+        if (window.location.hostname.indexOf("scopus") > -1) {
+            waitForKeyElements("div[data-component='document-source'],div[data-testid='author-list']+span", function(){
+                mark_journals();
+                $('span[data-testid="authorInstitution"]').each(function() {
+                    let ranking = get_univ( $(this).text().trim() );
+                    if(ranking.color){
+                        if (!$('#tooltipster-style').length) {$('head').append(css_tooltipster)}
+                        $(this).css("background-color",ranking.color).attr("title",ranking.detail.replace(/^<br\s*\/?>/i, ''))
+                            .tooltipster({functionInit: function(instance, helper){var content = $(helper.origin).attr('title');instance.content(content);}, contentAsHTML:true, theme:'tooltipster-noir'});
+                    }
+                });
+            }, true);
+        } else { //Google Scholar
+            mark_journals();
+            $("#gsc_bpf_more").on("click", function (){
+                let targetNode = document.querySelector('#gsc_a_nn')
+                let observer = new MutationObserver(function(mutations) { mark_journals() });
+                observer.observe(targetNode, {characterData: true, childList: true, subtree: true});
+            })
+            $("div.gsc_prf_il").each(function() {
+                let ranking = get_univ( $(this).text().trim() );
+                if(ranking.color){
+                    if (!$('#tooltipster-style').length) {$('head').append(css_tooltipster)}
+                    let markup = $(this).css("background-color",ranking.color).attr("title",ranking.detail.replace(/^<br\s*\/?>/i, ''))
+                        .tooltipster({functionInit: function(instance, helper){var content = $(helper.origin).attr('title');instance.content(content);}, contentAsHTML:true, theme:'tooltipster-noir'});
+                }
+            });
+        };
         function mark_journals(){
             $("div.gs_gray:not([style]),div[data-component='document-source'],div[data-testid='author-list']+span").each(function(){
                 if(maths_regex.test($(this).text())){ $(this).css("background-color", "Wheat") };
@@ -2085,7 +2178,7 @@ function onInit() {
     console.timeEnd("test")
 }
 
-//---------------------------------------------------------------------------------------------------------------------------Function-------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------Functions-------------------------------------------------------------------------------------------------------------------------
 
 function waitForKeyElements(selectorTxt,actionFunction,bWaitOnce,iframeSelector) {
     var targetNodes,btargetsFound;if(typeof iframeSelector=="undefined") {targetNodes=$(selectorTxt);} else targetNodes=$(iframeSelector).contents().find(selectorTxt);if(targetNodes&&targetNodes.length>0){btargetsFound=!0;targetNodes.each(function(){var jThis=$(this);
@@ -2164,38 +2257,62 @@ function get_jid(sysname) {return[
 
 function get_univ(aff) {
     let results = "", color = "", i, len;
-    var u_QP = ["tsinghua","peking"];
-    var u_QPr =["24 Tsinghua University","25 Peking University"];
-    var u_A = ["shanghai jiao","fudan univ","university of science and technology of china","sci & technol china","zhejiang univ","sun yat-sen","harbin institute","nanjing univ","beijing normal","nankai univ","tongji univ"];
+    var u_QP = ["tsinghua","peking","北京大学","清华大学"];
+    var u_QPr =["24 Tsinghua University","25 Peking University","北京大学","清华大学"];
+    var u_A = ["shanghai jiao","fudan univ","university of science and technology of china","sci & technol china","zhejiang univ","sun yat-sen","harbin institute","nanjing univ","beijing normal","nankai univ","tongji univ","wuhan univ","shandong univ","an jiao",
+               "sichuan univ","jilin univ",
+               "复旦大学","中国科学技术大学","山东大学","南开大学","浙江大学","北京师范大学","上海交通大学","西安交通大学","四川大学","南京大学","中山大学","吉林大学","哈尔滨工业大学","武汉大学","同济大学"];
     var u_Ar =["50 Shanghai Jiao Tong University","53 Fudan University","74 University of Science and Technology of China","74 University of Science and Technology of China","89 Zhejiang University","151+ Sun Yat-sen University","151+ Harbin Institute of Technology",
-               "136 Nanjing University","151+ Beijing Normal University","151+ Nankai University","201+ Tongji University"];
-    var u_B = ["beihang univ","an jiao","shandong univ","beijing institute of technology","wuhan univ","shanghai univ","sichuan univ","huazhong university of science","huazhong univ sci ","tianjin univ","east china normal","university of electronic science",
-               "national university of defense technology","central south","xiamen univ","southeast univ","chinese academy of science","beijing jiao","renmin university of","nanjing university of aeronautics","southern university of science","shenzhen univ"];
-    var u_Br =["201+ Beihang University","201+ Xi’an Jiaotong University","251+ Shandong University","201+ Beijing Institute of Technology","151+ Wuhan University","251+ Shanghai University","301+ Sichuan University","251+ Huazhong University of Science and Technology",
-               "251+ Huazhong University of Science and Technology","Tianjin University","East China Normal University","University of Electronic Science and Technology","National University of Defense Technology","Central South University","251+ Xiamen University",
-               "251+ Southeast University","Chinese Academy of Sciences<br>(Please further check its institute and decide)","301+ Beijing Jiaotong University","Renmin University of China","Nanjing University of Aeronautics and Astronautics",
-               "Southern University of Science and Technology","451+ Shenzhen University"];
-    var u_C = ["jilin univ","dalian university of technology","northwestern polytechnical","south china university of","china agricultural univ","lanzhou univ","hunan univ","chongqing univ","northeast normal","zhengzhou univ","university of science and technology beijing",
-               "shanghai university of finance and economics","beijing university of technology","xidian univ","nanchang univ","south china normal","huazhong normal","nanjing normal","shandong university of science","northeastern univ","southwest univ","shaanxi normal",
-               "hunan normal","nanjing university of science","northwest a&f","northwest a f","ocean university of china"];
-    var u_Cr =["Jilin University","Dalian University of Technology","Northwestern Polytechnical University","South China University of Technology","China Agricultural University","Lanzhou University","Hunan University","Chongqing University","Northeast Normal University",
-               "Zhengzhou University","University of Science and Technology Beijing","Shanghai University of Finance and Economics","Beijing University of Technology","Xidian University","Nanchang University","South China Normal University","Huazhong Normal University",
-               "Nanjing Normal University","Shandong University of Science and Technology","Northeastern University","Southwest University","Shaanxi Normal University","Hunan Normal University","Nanjing University of Science and Technology","Northwest A&F University",
-               "Ocean University of China"];
-    var u_D = ["nanjing agr","university of chinese academy","east china university of sci","wuhan university of technology","china university of mining and technology","fuzhou univ","china university of geosciences","china university of petroleum","suzhou univ",
-               "beijing university of chemical technology","jiangsu univ","minzu university of china","central university of finance and economics","mongolian univ","dalian maritime univ","donghua univ","hohai univ","hefei university of technology","huazhong agr",
-               "jinan univ","hainan univ","sichuan agr","guizhou univ","qinghai univ","beijing university of posts","university of international business and economics","china university of political science and law","tianjin med","liaoning univ","harbin engineering univ",
-               "jiangnan univ","southwestern university of finance and economics","yunnan univ","ningxia univ","north china elect","hebei university of technology","yanbian univ","northeast agricultural univ","shanghai international studies univ","anhui univ",
-               "zhongnan university of economics and law","southwest jiao","tibet univ","xinjiang univ","beijing forestry univ","communication university of china","taiyuan university of technology","northeast forestry univ","china pharmaceut","guangxi univ",
-               "northwest univ","changan univ","shihezi univ","zhejiang normal","chongqing normal","capital normal","xiangtan univ","qufu normal","jiangsu normal","guangzhou univ","shandong normal","soochow univ"];
-    var u_Dr =["Nanjing Agricultural University","University of Chinese Academy of Sciences","East China University of Science and Technology","Wuhan University of Technology","China University of Mining and Technology","Fuzhou University","China University of Geosciences",
-               "China University of Petroleum","Soochow University","Beijing University of Chemical Technology","Jiangsu University","Minzu University of China","Central University of Finance and Economics","Mongolian University","Dalian Maritime University",
-               "Donghua University","Hohai University","Hefei University of Technology","Huazhong Agricultural University","Jinan University","Hainan University","Sichuan Agricultural University","Guizhou University","Qinghai University",
-               "Beijing University of Posts and Telecommunications","University of International Business and Economics","China University of Political Science and Law","Tianjin Medical University","Liaoning University","Harbin Engineering University","Jiangnan University",
-               "Southwestern University of Finance and Economics","Yunnan University","Ningxia University","North China Electric Power University","Hebei University of Technology","Yanbian University","Northeast Agricultural University",
-               "Shanghai International Studies University","Anhui University","Zhongnan University of Economics and Law","Southwest Jiaotong University","Tibet University","Xinjiang University","Beijing Forestry University","Communication University of China",
-               "Taiyuan University of Technology","Northeast Forestry University","China Pharmaceutical University","Guangxi University","Northwest University","Changan University","Shihezi University","Zhejiang Normal University","Chongqing Normal University",
-               "Capital Normal University","Xiangtan University","Qufu Normal University","Jiangsu Normal University","GuangZhou University","Shandong Normal University","Soochow University"];
+               "136 Nanjing University","151+ Beijing Normal University","151+ Nankai University","201+ Tongji University","151+ Wuhan University","251+ Shandong University","201+ Xi’an Jiaotong University","301+ Sichuan University","Jilin University",
+              "复旦大学","中国科学技术大学","山东大学","南开大学","浙江大学","北京师范大学","上海交通大学","西安交通大学","四川大学","南京大学","中山大学","吉林大学","哈尔滨工业大学","武汉大学","同济大学"];
+    var u_B = ["beihang univ","beijing institute of technology","shanghai univ","huazhong university of science","huazhong univ sci ","tianjin univ","east china normal","central south","xiamen univ","chinese academy of science","renmin university of",
+               "beijing university of aeronautics","capital normal","northeast normal","lanzhou univ","xiangtan univ","dalian university of technology","south china university of","soochow univ","suzhou univ","chongqing univ","hunan univ","hunan normal","southwest univ",
+               "northwestern polytechnical","institute of applied physics and computational mathematics","institute of computational mathematics and scientific engineering computing","beijing institute of mathematical sciences and applications",
+               "华东师范大学","中国科学院大学","厦门大学","首都师范大学","华中科技大学","东北师范大学","兰州大学","中南大学","湘潭大学","华南理工大学","苏州大学","北京航空航天大学","中国人民大学","重庆大学","湖南大学","西南大学","湖南师范大学","天津大学","上海大学","北京理工大学",
+               "中国科学院","北京应用物理与计算数学研究所","计算数学与科学工程计算研究所","北京雁栖湖应用数学研究所","西北工业大学","大连理工大学"];
+    var u_Br =["201+ Beihang University","201+ Beijing Institute of Technology","251+ Shanghai University","251+ Huazhong University of Science and Technology","251+ Huazhong University of Science and Technology","Tianjin University","East China Normal University",
+               "Central South University","251+ Xiamen University","Chinese Academy of Sciences<br>(Please further check its institute and decide)","Renmin University of China","Beijing University of Aeronautics and Astronautics","Capital Normal University",
+               "Northeast Normal University","Lanzhou University","Xiangtan University","Dalian University of Technology","South China University of Technology","Soochow University","Soochow University","Chongqing University","Hunan University","Hunan Normal University",
+               "Southwest University","Northwestern Polytechnical University","Institute of Applied Physics and Computational Mathematics","Institute of Computational Mathematics and Scientific Engineering Computing",
+               "Beijing Institute of Mathematical Sciences and Applications",
+               "华东师范大学","中国科学院大学","厦门大学","首都师范大学","华中科技大学","东北师范大学","兰州大学","中南大学","湘潭大学","华南理工大学","苏州大学","北京航空航天大学","中国人民大学","重庆大学","湖南大学","西南大学","湖南师范大学","天津大学","上海大学","北京理工大学",
+               "中国科学院","北京应用物理与计算数学研究所","计算数学与科学工程计算研究所","北京雁栖湖应用数学研究所","西北工业大学","大连理工大学"];
+    var u_C = ["china agricultural univ","zhengzhou univ","university of science and technology beijing","shanghai university of finance","beijing university of technology","xidian univ","nanchang univ","south china normal","huazhong normal","nanjing normal",
+               "shandong university of science","northeastern univ","shaanxi normal","nanjing university of science","northwest a&f","northwest agriculture","ocean university of china","central china normal","fujian normal","northwest normal","xinjiang univ","nanjing agr",
+               "east china university of sci","wuhan university of technology","china university of mining and technology","fuzhou univ","china university of geosciences","china university of petroleum","beijing university of chemical technology","jiangsu univ",
+               "beijing jiao","southeast univ","university of electronic science","southern university of science","central university of finance","dalian maritime univ","hohai univ","hefei university of technology","huazhong agr","jinan univ","hainan univ","guizhou univ",
+               "qinghai univ","beijing university of posts","university of international business","liaoning univ","harbin engineering univ","jiangnan univ","southwestern university of finance","yunnan univ","ningxia univ","north china elect","hebei university of technology",
+               "yanbian univ","anhui univ","zhongnan university of economics and law","southwest jiao","tibet univ","beijing forestry univ","taiyuan university of technology","northeast forestry univ","guangxi univ","northwest univ","changan univ","chang'an univ",
+               "shihezi univ","guangzhou univ","ningbo univ","yangzhou univ","mongolia univ","shanxi univ","donghua univ","henan univ","hubei univ","nanjing university of information science","nanjing univ informat sci","zhejiang sci-tech","shantou univ",
+               "university of shanghai for science","univ shanghai sci","zhejiang university of technology","zhejiang univ technol","changsha university of science","changsha univ sci","qingdao univ","yantai univ","guilin university of electronic technology",
+               "guilin univ elect technol","north china univ water resources","north china university of water resources","nanjing university of posts","nanjing univ posts","westlake univ","nanjing forestry univ","new york university shanghai","nyu shanghai",
+               "duke kunshan univ","guangdong technion-israel","nottingham","wenzhou-kean univ","shenzhen univ","nanjing university of aeronautics",
+               "华中师范大学","陕西师范大学","华南师范大学","南京师范大学","福建师范大学","西北师范大学","新疆大学","中国矿业大学","郑州大学","云南大学","扬州大学","福州大学","安徽大学","西北大学","内蒙古大学","北京科技大学","华东理工大学","合肥工业大学","东北大学","北京工业大学","宁波大学",
+               "北京交通大学","广州大学","暨南大学","南昌大学","贵州大学","山西大学","东华大学","中国海洋大学","西南交通大学","南京理工大学","江苏大学","河南大学","湖北大学","广西大学","南京信息工程大学","浙江理工大学","汕头大学","河海大学","西安电子科技大学","电子科技大学","东南大学",
+               "上海理工大学","宁夏大学","南方科技大学","浙江工业大学","长沙理工大学","哈尔滨工程大学","青岛大学","上海财经大学","西南财经大学","烟台大学","桂林电子科技大学","长安大学","华北水利水电大学","北京邮电大学","南京邮电大学","河南大学","上海纽约大学","西交利物浦大学","昆山杜克大学",
+               "广东以色列理工学院","南京林业大学","西湖大学","南京航空航天","温州肯恩大学","宁波大学","中国农业大学","山东科技大学","武汉理工大学","中国地质大学","中国石油大学","北京化工大学","大连海事大学","河北工业大学","太原理工大学","西北农林大学","南京农业大学","中央财经大学",
+               "华中农业大学","海南大学","青海大学","对外经济贸易大学","辽宁大学","江南大学","华北电力大学","延边大学","中南财经政法大学","西藏大学","北京林业大学","东北林业大学","石河子大学","深圳大学"];
+    var u_Cr =["China Agricultural University","Zhengzhou University","University of Science and Technology Beijing","Shanghai University of Finance and Economics","Beijing University of Technology","Xidian University","Nanchang University","South China Normal University",
+               "Huazhong Normal University","Nanjing Normal University","Shandong University of Science and Technology","Northeastern University","Shaanxi Normal University","Nanjing University of Science and Technology","Northwest A&F University","Northwest A&F University",
+               "Ocean University of China","Central China Normal University","Fujian Normal University","Northwest Normal University","Xinjiang University","Nanjing Agricultural University","East China University of Science and Technology","Wuhan University of Technology",
+               "China University of Mining and Technology","Fuzhou University","China University of Geosciences","China University of Petroleum","Beijing University of Chemical Technology","Jiangsu University","301+ Beijing Jiaotong University","251+ Southeast University",
+               "University of Electronic Science and Technology","Southern University of Science and Technology","Central University of Finance and Economics","Dalian Maritime University","Hohai University","Hefei University of Technology","Huazhong Agricultural University",
+               "Jinan University","Hainan University","Guizhou University","Qinghai University","Beijing University of Posts and Telecommunications","University of International Business and Economics","Liaoning University","Harbin Engineering University",
+               "Jiangnan University","Southwestern University of Finance and Economics","Yunnan University","Ningxia University","North China Electric Power University","Hebei University of Technology","Yanbian University","Anhui University","Zhongnan University of Economics",
+               "Southwest Jiaotong University","Tibet University","Beijing Forestry University","Taiyuan University of Technology","Northeast Forestry University","Guangxi University","Northwest University","Changan University","Changan University","Shihezi University",
+               "GuangZhou University","Ningbo Univ","Yangzhou Univ","Mongolia University","Shanxi University","Donghua University","Henan University","Hubei University","Nanjing University of Information Science and Technology",
+               "Nanjing University of Information Science and Technology","Zhejiang Sci-Tech University","Shantou University","University of Shanghai for Science and Technology","University of Shanghai for Science and Technology","Zhejiang University of Technology",
+               "Zhejiang University of Technology","Changsha University of Science and Technology","Changsha University of Science and Technology","Qingdao University","Yantai University","Guilin University of Electronic Technology",
+               "Guilin University of Electronic Technology","North China University of Water Resources and Electric Power","North China University of Water Resources and Electric Power","Nanjing University of Posts and Telecommunications",
+               "Nanjing University of Posts and Telecommunications","Westlake University","Nanjing Forestry University","New York University Shanghai","New York University Shanghai","Duke Kunshan University","Guangdong Technion-Israel Institute of Technology",
+               "University of Nottingham Ningbo China","Wenzhou-Kean University","Shenzhen University","Nanjing University of Aeronautics and Astronautics",
+               "华中师范大学","陕西师范大学","华南师范大学","南京师范大学","福建师范大学","西北师范大学","新疆大学","中国矿业大学","郑州大学","云南大学","扬州大学","福州大学","安徽大学","西北大学","内蒙古大学","北京科技大学","华东理工大学","合肥工业大学","东北大学","北京工业大学","宁波大学",
+               "北京交通大学","广州大学","暨南大学","南昌大学","贵州大学","山西大学","东华大学","中国海洋大学","西南交通大学","南京理工大学","江苏大学","河南大学","湖北大学","广西大学","南京信息工程大学","浙江理工大学","汕头大学","河海大学","西安电子科技大学","电子科技大学","东南大学",
+               "上海理工大学","宁夏大学","南方科技大学","浙江工业大学","长沙理工大学","哈尔滨工程大学","青岛大学","上海财经大学","西南财经大学","烟台大学","桂林电子科技大学","长安大学","华北水利水电大学","北京邮电大学","南京邮电大学","河南大学","上海纽约大学","西交利物浦大学","昆山杜克大学",
+               "广东以色列理工学院","南京林业大学","西湖大学","南京航空航天","温州肯恩大学","宁波大学","中国农业大学","山东科技大学","武汉理工大学","中国地质大学","中国石油大学","北京化工大学","大连海事大学","河北工业大学","太原理工大学","西北农林大学","南京农业大学","中央财经大学",
+               "华中农业大学","海南大学","青海大学","对外经济贸易大学","辽宁大学","江南大学","华北电力大学","延边大学","中南财经政法大学","西藏大学","北京林业大学","东北林业大学","石河子大学","深圳大学"];
+    var u_D = ["of hong kong","hong kong university of","of nottingham"];
+    var u_Dr =["Hong Kong","Hong Kong","University of Nottingham"];
     var u_2 = ["king abdulaziz","king abdul aziz","king abdul-aziz","de são paulo","of são paulo","de sao paulo","of sao paulo","de buenos aires","universidad nacional autónoma de méxico","national autonomous university of mexico",
                "indian institute of technology bombay","universidade estadual de campinas","state university of campinas","indian institute of technology delhi","indian institute of technology kanpur","universidad de chile","university of chile",
                "indian institute of science","universiti malaya","university of malaya","indian institute of technology madras"];
@@ -2212,14 +2329,22 @@ function get_univ(aff) {
     aff = aff.toLowerCase();
     for (i = 0, len = u_2.length; i < len ; i++){ if (aff.indexOf(u_2[i]) > -1){results += "<br><span style='background-color:lightblue;font-weight:bold'>Top150: "+u_2r[i]+"</span>"; color="lightblue";break;}}
     for (i = 0, len = u_D.length; i < len ; i++){
-        if (aff.indexOf(u_D[i]) > -1 && (u_D[i].indexOf("of") > -1 || (u_D[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){results += "<br><span style='background-color:thistle;font-weight:bold'>Zone D: "+u_Dr[i]+"</span>"; color="thistle";break;} }
+        if (aff.indexOf(u_D[i]) > -1 && (u_D[i].indexOf("of") > -1 || (u_D[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){
+            results += "<br><span style='background-color:thistle;font-weight:bold'>Rank HK: "+u_Dr[i]+"</span>"; color="thistle";}
+    }
     for (i = 0, len = u_C.length; i < len ; i++){
-        if (aff.indexOf(u_C[i]) > -1 && (u_C[i].indexOf("of") > -1 || (u_C[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){results += "<br><span style='background-color:lightgreen;font-weight:bold'>Zone C: "+u_Cr[i]+"</span>"; color="lightgreen";break;} }
+        if (aff.indexOf(u_C[i]) > -1 && (u_C[i].indexOf("of") > -1 || (u_C[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){
+            results += "<br><span style='background-color:lightgreen;font-weight:bold'>Rank C: "+u_Cr[i]+"</span>"; color="lightgreen";}
+    }
     for (i = 0, len = u_B.length; i < len ; i++){
-        if (aff.indexOf(u_B[i]) > -1 && (u_B[i].indexOf("of") > -1 || (u_B[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){results += "<br><span style='background-color:wheat;font-weight:bold'>Zone B: "+u_Br[i]+"</span>"; color="wheat";break;} }
+        if (aff.indexOf(u_B[i]) > -1 && (u_B[i].indexOf("of") > -1 || (u_B[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){
+            results += "<br><span style='background-color:wheat;font-weight:bold'>Rank B: "+u_Br[i]+"</span>"; color="wheat";}
+    }
     for (i = 0, len = u_A.length; i < len ; i++){
-        if (aff.indexOf(u_A[i]) > -1 && (u_A[i].indexOf("of") > -1 || (u_A[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){results += "<br><span style='background-color:lightblue;font-weight:bold'>Zone A: "+u_Ar[i]+"</span>"; color="lightblue";break;} }
-    for (i = 0, len = u_QP.length; i < len ; i++){ if (aff.indexOf(u_QP[i]) > -1){results += "<br><span style='background-color:cyan;font-weight:bold'>Zone QP: "+u_QPr[i]+"</span>"; color="cyan";}}
+        if (aff.indexOf(u_A[i]) > -1 && (u_A[i].indexOf("of") > -1 || (u_A[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){
+            results += "<br><span style='background-color:lightblue;font-weight:bold'>Rank A: "+u_Ar[i]+"</span>"; color="lightblue";}
+    }
+    for (i = 0, len = u_QP.length; i < len ; i++){ if (aff.indexOf(u_QP[i]) > -1){results += "<br><span style='background-color:cyan;font-weight:bold'>Rank Top: "+u_QPr[i]+"</span>"; color="cyan";}}
     return {detail: results, color: color};
 }
 
@@ -2301,6 +2426,38 @@ function sk_MyAccountOnly(){
     }
 }
 
+//---------------------------------------------------------------------------------------------------------------------------CSS-------------------------------------------------------------------------------------------------------------------------
+var css_tooltipster=`<style id="tooltipster-style">.tooltipster-fall,.tooltipster-grow.tooltipster-show{-webkit-transition-timing-function:cubic-bezier(.175,.885,.32,1);-moz-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);-ms-transition-timing-function:
+cubic-bezier(.175,.885,.32,1.15);-o-transition-timing-function:cubic-bezier(.175,.885,.32,1.15)}.tooltipster-base{display:flex;pointer-events:none;position:absolute}.tooltipster-box{flex:1 1 auto}.tooltipster-content{box-sizing:border-box;max-height:100%;max-width:100%;
+overflow:auto}.tooltipster-ruler{bottom:0;left:0;overflow:hidden;position:fixed;right:0;top:0;visibility:hidden}.tooltipster-fade{opacity:0;-webkit-transition-property:opacity;-moz-transition-property:opacity;-o-transition-property:opacity;-ms-transition-property:opacity;
+transition-property:opacity}.tooltipster-fade.tooltipster-show{opacity:1}.tooltipster-grow{-webkit-transform:scale(0,0);-moz-transform:scale(0,0);-o-transform:scale(0,0);-ms-transform:scale(0,0);transform:scale(0,0);-webkit-transition-property:-webkit-transform;
+-moz-transition-property:-moz-transform;-o-transition-property:-o-transform;-ms-transition-property:-ms-transform;transition-property:transform;-webkit-backface-visibility:hidden}.tooltipster-grow.tooltipster-show{-webkit-transform:scale(1,1);-moz-transform:scale(1,1);
+-o-transform:scale(1,1);-ms-transform:scale(1,1);transform:scale(1,1);-webkit-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);transition-timing-function:cubic-bezier(.175,.885,.32,1.15)}.tooltipster-swing{opacity:0;-webkit-transform:rotateZ(4deg);
+-moz-transform:rotateZ(4deg);-o-transform:rotateZ(4deg);-ms-transform:rotateZ(4deg);transform:rotateZ(4deg);-webkit-transition-property:-webkit-transform,opacity;-moz-transition-property:-moz-transform;-o-transition-property:-o-transform;-ms-transition-property:
+-ms-transform;transition-property:transform}.tooltipster-swing.tooltipster-show{opacity:1;-webkit-transform:rotateZ(0);-moz-transform:rotateZ(0);-o-transform:rotateZ(0);-ms-transform:rotateZ(0);transform:rotateZ(0);-webkit-transition-timing-function:cubic-bezier(.23,
+.635,.495,1);-webkit-transition-timing-function:cubic-bezier(.23,.635,.495,2.4);-moz-transition-timing-function:cubic-bezier(.23,.635,.495,2.4);-ms-transition-timing-function:cubic-bezier(.23,.635,.495,2.4);-o-transition-timing-function:cubic-bezier(.23,.635,.495,2.4);
+transition-timing-function:cubic-bezier(.23,.635,.495,2.4)}.tooltipster-fall{-webkit-transition-property:top;-moz-transition-property:top;-o-transition-property:top;-ms-transition-property:top;transition-property:top;-webkit-transition-timing-function:cubic-bezier(.175,
+.885,.32,1.15);transition-timing-function:cubic-bezier(.175,.885,.32,1.15)}.tooltipster-fall.tooltipster-initial{top:0!important}.tooltipster-fall.tooltipster-dying{-webkit-transition-property:all;-moz-transition-property:all;-o-transition-property:all;
+-ms-transition-property:all;transition-property:all;top:0!important;opacity:0}.tooltipster-slide{-webkit-transition-property:left;-moz-transition-property:left;-o-transition-property:left;-ms-transition-property:left;transition-property:left;
+-webkit-transition-timing-function:cubic-bezier(.175,.885,.32,1);-webkit-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);-moz-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);-ms-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);
+-o-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);transition-timing-function:cubic-bezier(.175,.885,.32,1.15)}.tooltipster-slide.tooltipster-initial{left:-40px!important}.tooltipster-slide.tooltipster-dying{-webkit-transition-property:all;
+-moz-transition-property:all;-o-transition-property:all;-ms-transition-property:all;transition-property:all;left:0!important;opacity:0}@keyframes tooltipster-fading{0%{opacity:0}100%{opacity:1}}.tooltipster-update-fade{animation:tooltipster-fading .4s}
+@keyframes tooltipster-rotating{25%{transform:rotate(-2deg)}75%{transform:rotate(2deg)}100%{transform:rotate(0)}}.tooltipster-update-rotate{animation:tooltipster-rotating .6s}@keyframes tooltipster-scaling{50%{transform:scale(1.1)}100%{transform:scale(1)}}
+.tooltipster-update-scale{animation:tooltipster-scaling .6s}.tooltipster-sidetip .tooltipster-box{background:#565656;border:2px solid #000;border-radius:4px}.tooltipster-sidetip.tooltipster-bottom .tooltipster-box{margin-top:8px}.tooltipster-sidetip.tooltipster-left
+.tooltipster-box{margin-right:8px}.tooltipster-sidetip.tooltipster-right .tooltipster-box{margin-left:8px}.tooltipster-sidetip.tooltipster-top.tooltipster-box{margin-bottom:8px}.tooltipster-sidetip .tooltipster-content{color:#fff;line-height:18px;padding:6px 14px}
+.tooltipster-sidetip .tooltipster-arrow{overflow:hidden;position:absolute}.tooltipster-sidetip.tooltipster-bottom .tooltipster-arrow{height:10px;margin-left:-10px;top:0;width:20px}.tooltipster-sidetip.tooltipster-left .tooltipster-arrow{height:20px;margin-top:-10px;
+right:0;top:0;width:10px}.tooltipster-sidetip.tooltipster-right .tooltipster-arrow{height:20px;margin-top:-10px;left:0;top:0;width:10px}.tooltipster-sidetip.tooltipster-top.tooltipster-arrow{bottom:0;height:10px;margin-left:-10px;width:20px}.tooltipster-sidetip
+.tooltipster-arrow-background,.tooltipster-sidetip .tooltipster-arrow-border{height:0;position:absolute;width:0}.tooltipster-sidetip .tooltipster-arrow-background{border:10px solid transparent}.tooltipster-sidetip.tooltipster-bottom .tooltipster-arrow-background{
+border-bottom-color:#565656;left:0;top:3px}.tooltipster-sidetip.tooltipster-left .tooltipster-arrow-background{border-left-color:#565656;left:-3px;top:0}.tooltipster-sidetip.tooltipster-right.tooltipster-arrow-background{border-right-color:#565656;left:3px;top:0}
+.tooltipster-sidetip.tooltipster-top .tooltipster-arrow-background{border-top-color:#565656;left:0;top:-3px}.tooltipster-sidetip .tooltipster-arrow-border{border:10px solid transparent;left:0;top:0}.tooltipster-sidetip.tooltipster-bottom .tooltipster-arrow-border{
+border-bottom-color:#000}.tooltipster-sidetip.tooltipster-left .tooltipster-arrow-border{border-left-color:#000}.tooltipster-sidetip.tooltipster-right .tooltipster-arrow-border{border-right-color:#000}.tooltipster-sidetip.tooltipster-top .tooltipster-arrow-border{
+border-top-color:#000}.tooltipster-sidetip .tooltipster-arrow-uncropped{position:relative}.tooltipster-sidetip.tooltipster-bottom .tooltipster-arrow-uncropped{top:-10px}.tooltipster-sidetip.tooltipster-right.tooltipster-arrow-uncropped{left:-10px}
+.tooltipster-sidetip.tooltipster-noir .tooltipster-box{border-radius:0;border:3px solid #000;background:#fff}.tooltipster-sidetip.tooltipster-noir .tooltipster-content{color:#000}.tooltipster-sidetip.tooltipster-noir.tooltipster-arrow{height:11px;margin-left:-11px;
+width:22px}.tooltipster-sidetip.tooltipster-noir.tooltipster-left .tooltipster-arrow,.tooltipster-sidetip.tooltipster-noir.tooltipster-right .tooltipster-arrow{height:22px;margin-left:0;margin-top:-11px;width:11px}.tooltipster-sidetip.tooltipster-noir
+.tooltipster-arrow-background{border:11px solid transparent}.tooltipster-sidetip.tooltipster-noir.tooltipster-bottom .tooltipster-arrow-background{border-bottom-color:#fff;top:4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-left.tooltipster-arrow-background{
+border-left-color:#fff;left:-4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-right .tooltipster-arrow-background{border-right-color:#fff;left:4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-top .tooltipster-arrow-background{border-top-color:#fff;top:-4px}
+.tooltipster-sidetip.tooltipster-noir .tooltipster-arrow-border{border-width:11px}.tooltipster-sidetip.tooltipster-noir.tooltipster-bottom .tooltipster-arrow-uncropped{top:-11px}.tooltipster-sidetip.tooltipster-noir.tooltipster-right.tooltipster-arrow-uncropped{
+left:-11px}</style>`
 //---------------------------------------------------------------------------------------------------------------------------ICON-------------------------------------------------------------------------------------------------------------------------
 var icon_magnifier="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNqMk01oE1EQx99+mmSTbLayWqtN+hWxIW21VeOhpDEVBIupFBQRAgUL6rWth57tVSgIvWnBiyj1EBDpQdCDH4RCIVAbTSm9pBGDJqkxyW42u+u8kGKzbsGBH++D"
 + "/8ybmfceEYlEkJlRFIURCIIYgGUbwAElIKPrekJV1TyAaHSwddrs/MXzo5HeM4PnetpEZ2tVlnPxePzrm1cvu4q7ubeg2aa8Xi+CiE2ACZzTNTZxezbYffKU333EKdIkQbMM4/B0dHhau/ocycQqKUvlbRKnYaRWqw0GwhGfQzjsETiWJQlE7KWF5+4Tx3qGL1/rwzq6Wq2apd/u9Q+58SSTr0gYo8A3cLZzeelRO60oilkA3mK1tqhavRzUe9zpNArSuQoDvvx"
@@ -2343,3 +2500,4 @@ var icon_webs="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9
 var icon_scopus="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB0UlEQVR4nLWTvWtUURDFf3PfXd9LdjessGKMglYB0ahgOhtB0JVgodhaiVhYiWJnI6hY+R8IljYBP1AUjKCInYpgVmJQiIQY1w+St4v7vu5YvHXd4CpI8MCtzszcMzNnZPH0JmUVMKtJ7l9ANX/90IdbUUDTCIwBz0IW/yKyBE1jsGtABM2SLmV"
 + "7g4KdE/jbawDEM49pv7iFJm0KW8bxx2p41c1oOyR6dY/4zSMwtlMgS7EjWykePEd44yxu+ROmsgF1Kf7YAQb3nqR1/yrZk1lMqYoEZRDTq0ARvwQoaeM9bmkB+TKHCUoU952ieecy8dunSCHAhQ1Q8ja7M/AsydxLovoUlRPX8XdMoC7DlNdhSlXSjzNIIch/Nbab3KNAQJXmzQv42/ZTrJ3Bq4wQ1adAvDxRFeSva1RwjvbzScLJ8wzsOYZGTdLGO4LxI7ioha"
 + "YRmrThty2ow6zdSLDrENm3eQZ2HyaefYYLP9O8fZHy0Ut5K/PTmKH1ZF8/EL1+gBjvpwJBvy+jWYodHiWafkjr7hWkEJAt1Fm6dhwXNrDDo5jBIVy4mCsGpHsLqrmRVEEEsT5Ip2l1uZE6LhRbyIe5wkgi+aT7Qcwfuf9wTP+IH7tLvmy5ImEAAAAAAElFTkSuQmCC"
+var icon_retractiondatabase="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQAAAAA3iMLMAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAACxMAAAsTAQCanBgAAAA4SURBVAjXY/jxn+FTPcPy/QxdzQwnuxk4mhme72f4UM/w357h/34Gk/kMCv4Mvf4ME9IZ/n8HIgD7ARTNr5OwGQAAAABJRU5ErkJggg=="
