@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       4.4.28
+// @version       5.1.16
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
-// @icon64          https://susy.mdpi.com/build/img/design/susy-logo.png
+// @icon64        https://susy.mdpi.com/build/img/design/susy-logo.png
 // @updateURL     https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @downloadURL   https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @match         *://*.mdpi.com/*
@@ -34,7 +34,9 @@
 // @match         *://*.google.com.tw/*
 // @match         *://*.google.co.id/*
 // @match         *://*.google.com.my/*
-// @require       https://unpkg.com/jquery@4.0.0-beta/dist/jquery.js
+// @match         *://i.mdpi.cn/team/dinner*
+// @require       https://gcore.jsdelivr.net/npm/jquery@4.0.0-beta.2/dist/jquery.js
+// @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.js
 // @grant         GM_getValue
@@ -44,6 +46,7 @@
 // @grant         GM_xmlhttpRequest
 // @grant         GM_openInTab
 // @connect       mdpi.com
+// @connect       i.mdpi.cn
 // @connect       titlecaseconverter.com
 // @connect       google.com
 // @connect       webofknowledge.com
@@ -75,24 +78,25 @@
             'LinkShort': {'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Cfp_checker': {'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'GE_TemplateID': {'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
-                              ['!Guest Editor – invite Version 1','Guest Editor - Invite with Benefits and Planned Papers','Guest Editor - Invite Free','Guest Editor - Invite with Discounts','Guest Editor-Invite (Optional)','Guest Editor Invitation-Why a Special Issue',
-                               '*Guest Editor - SI Mentor Program'], default: 'Guest Editor - Invite Free'},
+                              ['Guest Editor-Invite with Responsibility','Guest Editor-Invite with Benefits','Guest Editor-One Free Paper for GE team','Guest Editor-Why a Special Issue','Guest Editor-Optional','Guest Editor – Invite with Responsibilities and Benefits',
+                               '*Guest Editor - SI Mentor Program'], default: 'Guest Editor-Invite with Responsibility'},
             'GE_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*Mathematics.*Guest Editor"},
             'GE_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation to Serve as the Guest Editor"},
             'GE_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderID': {'section': [], 'label': '默认 GE Reminder Template', 'type': 'select', 'labelPos': 'left', 'options':
-                              ['Guest Editor Invitation – 1st Reminder','Guest Editor Invitation – 2nd Reminder','Guest Editor Invitation – 3rd Reminder'], default: 'Guest Editor Invitation – 1st Reminder'},
+                              ['Reminder (GE responsibility)','Reminder (video call)','Reminder (general)','Reminder (with benefits)'], default: 'Reminder (GE responsibility)'},
             'GE_ReminderS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'GE_ReminderB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'EB_TemplateID': {'section': [], 'label': '默认 EB Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Editorial Board Member – Invite Version 1']},
+            'EB_TemplateID': {'section': [], 'label': '默认 EB Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['Invite Version 1','Invite Version 2','Invite Version 3','Invite Version 4'], default: 'Invite Version 1'},
             'EB_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation"},
             'EB_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation"},
             'EB_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
             'EB_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
-            'EB_ReminderID': {'section': [], 'label': '默认 EB Reminder Template', 'type': 'select', 'labelPos': 'left', 'options': ['!Editorial Board Member – Reminder']},
+            'EB_ReminderID': {'section': [], 'label': '默认 EB Reminder Template', 'type': 'select', 'labelPos': 'left', 'options': ['Reminder (Responsibilities and Benefits)','Reminder (General)','Reminder (Numerous Benefits)'],
+                              default: 'Reminder(Responsibilities and Benefits)'},
             'EB_ReminderS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation"},
             'EB_ReminderS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation"},
             'EB_ReminderB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ""},
@@ -106,8 +110,8 @@
             'Report_Notes': {'label': '', 'labelPos': 'left', 'type': 'text', 'default': "月报"},
             'Report_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=] )\\(.* – monthly report"},
             'Report_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () {\n let $si_name = $('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();\n`
-                                  + ` return \`Monthly Report (\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – Special Issue: \${$si_name}\`;\n}`},
-            'Report_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=Dear[\\s\\S]*?,\\n\\n)I hope this finds you well. I have included,[\\S\\s]*Kind regards,"},
+                                  + ` return \`Monthly Report (\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – \${$si_name}\`;\n}`},
+            'Report_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=Dear[\\s\\S]*?,\\n\\n)[\\S\\s]*Kind regards,"},
             'Report_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (){\n let $si_name=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();`
                                   + ` let $si_link=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().children().attr("href").replace(/journal\\/(.*)\\/special_issues/,"si/$1");`
                                   + ` let $arr=$('div.cell.small-12.medium-6.large-2:contains("Manuscripts(")').first().next().text().split("/");\n let $process=$arr[0].trim(),$pub=$arr[1].trim(),$reject=$arr[2].trim(),$instruct;`
@@ -128,8 +132,14 @@
             'Topic_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*"},
             'Topic_TemplateS2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () { let $topic_name= $('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().text().trim(); return \`[MDPI Topics] Monthly Report `
                                  + `(\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – \${$topic_name}\`; }`},
-            'Topic_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': ''},
-            'Topic_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ''},
+            'Topic_TemplateB1': {'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': '[Regex]Dear Editor,[\\s\\S]*Kind regards,'},
+            'Topic_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (){\n let \$topic_name=\$('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().text().trim(); let \$topic_link=\$('div.cell.small-12.medium-6.`
+                                 + `large-2:contains("Topic Name")').next().children().attr("href"); let \$arr=\$('div.cell.small-12.medium-6.large-2:contains("Manuscripts(")').first().next().text().split("/");\n let \$process=\$arr[0].trim(),\$pub=\$arr[1].trim(),`
+                                 + `\$reject=\$arr[2].trim(),\$instruct; if (\$process+\$pub+\$reject>0) {\$instruct="You can view all manuscripts submitted to the Topic by logging in with your email at the link provided. Please note that your own submissions will `
+                                 + `not be visible.\\nhttps://susy.mdpi.com/"} else {\$instruct="This is a new Topic and hasn't received submissions yet."} return \`Dear Editor,\n\nI am writing to update you on the status of our Topic "\${\$topic_name}".\n\${\$topic_link}`
+                                 + `\n\n1. Status of Submissions\n\nPublished: \${\$pub}; Under Processing: \${\$process}; Rejected: \${\$reject}\n\n\${\$instruct}\n\n2. Status of Planned Papers\n\nSeveral authors have committed to contributing feature papers to the `
+                                 + `Special Issue. If there are any missing papers, please let me know.\n\n%pp_list%\n\nMay you continue to explore the unknown and lead the forefront of academia. Wishing you continuous breakthroughs and inspiration in your scholarly `
+                                 + `endeavors!\n--\nBest regards,\n\`;\n}`},
 
             'Con_Template': {'section': [,"Conference Pages"], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Con_TemplateS1': {'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)"},
@@ -140,17 +150,20 @@
             'Interface_SME': {'section': [GM_config.create('Interface Modification')],'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
                               ['','Algebra, Geometry and Topology','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
                                'Fuzzy Sets, Systems and Decision Making','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics'], 'default': ''},
-            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['AppliedMath','Children','Games','Mathematics','Risks','Geometry','None'], 'default': 'Mathematics'},
+            'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics','AppliedMath','Games','Geometry','Mathematics','Risks','IJT','Telecom','None'], 'default': 'Mathematics'},
+            'Easy_Journal': {'label': '置顶期刊列表', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
             'MathBatch': {'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function() {window.location.href="https://skday.eu.org/math.html"}},
             'Interface_sidebar': {'section': [], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
             'Old_Icon': {'label': '使用旧图标', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Regular_Color': {'label': '橙色标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Maths_J': {'label': 'Scopus标记Maths期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true},
-            'Hidden_Func': {'section': [], 'label': 'Experimental (Default: OFF)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Hidden_Func': {'section': [], 'label': 'Experimental (!Caution)', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'Remind_Dinner': {'label': '提醒点餐', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
+            'My_Account_Only': {'label': 'Use My Account Only:', 'labelPos': 'left', 'type': 'text', 'default': ""},
         },
         'events': {
-            'save': function() {location.reload();},
+            'save': function() {if($("#SusyModifierConfig").length>0){location.reload()};},
             'open': function(doc) {
                 var f_settings = $("#SusyModifierConfig").contents();
                 //Experimental警告
@@ -200,20 +213,20 @@
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
         #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label,#SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_field_Report_Notes,
-        #SusyModifierConfig_Old_Icon_field_label{width:140px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label,#SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;}
-        #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;}
-        #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);grid-template-rows:auto auto;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;}
-        #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,#SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3}`
+        #SusyModifierConfig_Old_Icon_field_label,#SusyModifierConfig_Hidden_Func_field_label{width:140px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label,
+        #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,
+        #SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);grid-template-rows:auto auto;}
+        #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,#SusyModifierConfig_Report_TemplateB1_var,
+        #SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_field_Journal{width:auto}`
     });
 })();
 
 
 function onInit() {
     const date_v = new Date('202'+GM_info.script.version);
-    if ((Date.now() - date_v)/86400000 > 75) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return;}
+    if ((Date.now() - date_v)/86400000 > 75) {$("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return false;}
     else {
-        $("#topmenu > ul").append("<li><a id='susymodifier_config'>SusyModifier Settings</a></li>"); $("#susymodifier_config").click(function(e) {GM_config.open()});
-
+        $("#topmenu > ul").append(`<li><a id='susymodifier_config'>SusyModifier</a></li>`); $("#susymodifier_config").on("click", function(e) {GM_config.open()});
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'q') {
                 e.preventDefault();
@@ -230,7 +243,35 @@ function onInit() {
         case 'AppliedMath': S_J=517; break;
         case 'Geometry': S_J=599; break;
         case 'Games': S_J=25; break;
+        case 'IJT': S_J=598; break;
+        case 'Telecom': S_J=276; break;
+        case 'Analytics': S_J=555; break;
         case 'None': S_J=-1; break;
+    }
+
+    if(GM_config.get('Easy_Journal')){
+        $("#topmenu > ul").append(`<li><select id="SusyModifier_Journal_Easy"><option value="555">Analytics</option><option value="517">AppliedMath</option><option value="25">Games</option><option value="599">Geometry</option><option value="154">Mathematics</option>
+                                   <option value="162">Risks</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select></li>`);
+        $("#SusyModifier_Journal_Easy").val(S_J).on("change", function() {
+            let J_old=S_J, J_new=$(this).find('option:selected').val(); S_J=J_new;
+            GM_config.set('Journal',$(this).find('option:selected').text());
+            GM_config.save();
+
+            $('a[href*="id]=' + J_old + '"]').each(function() {
+                $(this).attr('href', $(this).attr('href').replace('id]=' + J_old, 'id]=' + J_new));
+                let link = $(this); //高亮和闪烁效果
+                link.css({'background-color': 'yellow', 'transition': 'background-color 0.5s ease'});
+                link.animate({opacity: 0.5}, 500).animate({opacity: 1}, 500);
+                //取消高亮 setTimeout(function() {link.css('background-color', ''); }, 10000);
+            });
+
+            $('select').each(function() {
+                let selectedOption = $(this).find('option:selected');
+                if (selectedOption.val() == J_old) {
+                    unsafeWindow.$(this).val(J_new).trigger("change").trigger("chosen:updated");
+                }
+            });
+        });
     }
 
     function decode(input) {const decoded = atob(input);return decoded.slice(3, -3);}
@@ -268,6 +309,8 @@ function onInit() {
         if (S_S>0 && S_J>0){
             $(".menu [href='/special_issue_pending/list']").after("<a href='/special_issue_pending/list/online?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[S]</a>");
             $(".menu [href='/user/assigned/status/ongoing']").after(" <a href='/user/managing/status/submitted?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "'>[S]</a>");
+        } else {
+            $(".menu [href='/special_issue_pending/list']").after("<a href='/special_issue_pending/list/online?form[journal_id]=" + S_J + "&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[J]</a>");
         }
         if ($("#topmenu span:contains('@mdpi.com')").text() === 'syna.mu@mdpi.com') {
             $(".menu [href='/voucher/application/list']").after("<div style='float:right;'><a href='//skday.com/task/susylog.php' target=_black>[Log]</a> </div> ");
@@ -288,23 +331,27 @@ function onInit() {
             $(".menu [href='/user/manuscript/list/owner']").attr("href",'/user/manuscript/list/owner/my_journal');
             $(".menu [href='/user/manuscript/special_approval_list']").attr("href",'/user/manuscript/special_approval_list/my_journal');
             $(".menu [href='/user/list/editors']").after(" <a href='/user/ebm/contract?form[journal_id]=" + S_J + "'>[R]</a>");
-            $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a> <a href='/user/pubpeer_case/list?form[journal_id]=" + S_J + "'>[P]</a>");
+            $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a> <a href='/user/public_forum/list?form[journal_id]=" + S_J + "'>[P]</a>");
+            $(".menu [href='/publisher/manuscripts']").attr("href","/publisher/manuscripts?form[journal_id]=" + S_J);
         }
         $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC&page_limit=100'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
         $(".menu [href='/special_issue_pending/list']").text("Manage").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC&page_limit=100")
         $(".menu [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[M]</a>");
         $(".menu [href='/submission/topic/list']").attr("href","/submission/topic/list/online");
+        $(".menu [href='/user/manuscript/approval/manage']").attr("href","/user/manuscript/special_approval_list/my_journal");
         $(".menu [href='/planned_paper/my/list']").after(" <a href='/planned_paper/my/list?form[submission_topic_id]=-1&form[special_issue_id]=-1'>[R]</a>");
         $(".menu [href='/user/ebm-new/management']").after(`<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='${icon_magnifier}'></a> </div> `);
 
-        $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_webs}'></a></div>`); $("#sf_b").click(sf)
+        $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_webs}'></a></div>`); $("#sf_b").on("click", sf)
 
         $(".menu [href='/user/managing/status/submitted']").attr("href","/user/managing/status/submitted?form[journal_id]=" + S_J);
         $(".menu [href='/manuscript/quality/check/list']").attr("href",'/manuscript/quality/check/list?form[journal_id]=' + S_J);
-        $("#owner").click(function(){ $.getJSON("/user/ajax/search_manuscript_owner?term="+$("#topmenu span:contains('@mdpi.com')").text(), function(data){window.location.href ='/user/managing/status/submitted?form[owner_id]=' + data[0].value}); });
+        $("#owner").on("click", function(){ $.getJSON("/user/ajax/search_manuscript_owner?term="+$("#topmenu span:contains('@mdpi.com')").text(), function(data){window.location.href ='/user/managing/status/submitted?form[owner_id]=' + data[0].value}); });
 
         if (GM_config.get('Assign_Assistant')) { //派稿助手
-            $(".menu [href='/user/manage/crosscheck']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").click(sk_susie);
+            $(".menu [href*='/list/list_volunteer_reviewers']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").on("click", sk_susie);
+            document.addEventListener('keydown', function(e) {if (e.ctrlKey && e.key === 'e') {e.preventDefault(); sk_susie(); $("#add_susie_t").val('');}});
+            document.addEventListener('keydown', function(e) {if (e.ctrlKey && e.key === '3') {e.preventDefault(); sk_susie();}});
         }
     } catch (error){ }}
 
@@ -328,7 +375,8 @@ function onInit() {
 
     //GE Invitation✏️ + Quick
     if (window.location.href.indexOf("/invite/guest_editor") > -1){try{
-        unsafeWindow.$(document.getElementById('emailTemplates')).append('<option value>*Guest Editor - SI Mentor Program</option>').trigger("chosen:updated").change(function(){
+        sk_MyAccountOnly();
+        unsafeWindow.$(document.getElementById('emailTemplates')).append('<option value>*Guest Editor - SI Mentor Program</option>').trigger("chosen:updated").on("change", function(){
             if($("#emailTemplates option:selected").text() == "*Guest Editor - SI Mentor Program") {
                 $.ajax({url:$("#emailTemplates").attr("data-url"), dataType:"json", type:"post", async:"true", data:{id:"269",placeholders:$("#placeholders").val()}, success:function(data){
                     let SI_mentor_body = data.body.replace(
@@ -359,7 +407,7 @@ function onInit() {
         unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
         function init() {let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_TemplateS2'))) );
                          let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_TemplateB2'))) );
-                         if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").click()},500);}
+                         if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").trigger("click")},500);}
                         }
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
@@ -367,41 +415,59 @@ function onInit() {
 
     //GE Reminder✏️ + Quick
     if (window.location.href.indexOf("/remind/guest_editor") > -1){try{
+        sk_MyAccountOnly();
         $("#emailTemplates > option:contains('"+GM_config.get('GE_ReminderID')+"')").prop('selected', true);
         unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
         function init() {let t1 = RegExptest(GM_config.get('GE_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_ReminderS2'))) );
                          let t2 = RegExptest(GM_config.get('GE_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_ReminderB2'))) );
-                         if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").click()},500);}
+                         if(window.location.search == "?Q") {setTimeout(function(){$("#sendingEmail").trigger("click")},500);}
                         }
         waitForText(document.querySelector('#mailSubject'), ' ', init);
 
         $('#mailSubject').parent().after(`<a id="Awaiting"><img src="${icon_pencil}"></a>`);
-        $('#Awaiting').click(function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
+        $('#Awaiting').on("click", function(e) {if ($('#mailSubject').val().indexOf("Awaiting Your Reply")==-1) {$('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val())}});
         $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
     } catch (error){ }}
 
     //EB invitation✏️
     if (window.location.href.indexOf("present_editor_ebm/invite_email") > -1){try{
-        if ($('#emailTemplates option').length > 1) { $('#emailTemplates').prop('selectedIndex', 1).trigger('change'); document.getElementById('emailTemplates').dispatchEvent(new CustomEvent('change'))}
+        if ($('#emailTemplates option').length > 1) {
+            $("#emailTemplates > option:contains('"+GM_config.get('EB_TemplateID')+"')").prop('selected', true);
+            document.getElementById('emailTemplates').dispatchEvent(new CustomEvent('change'));
+        }
         function init() {let t1 = RegExptest(GM_config.get('EB_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('EB_TemplateS2'))) );
                          let t2 = RegExptest(GM_config.get('EB_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_TemplateB2'))) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         $('#mailSubject').parent().after('<a id="No_Discount">[No Discount]</a>');
-        $('#No_Discount').click(function(e) {$('#mailBody').val($('#mailBody').val().replace(/you will have the opportunity to publish one paper free of charge in .* per year, and can also publish extra papers with special discounts.\n\n/,'').replace(
+        $('#No_Discount').on("click", function(e) {$('#mailBody').val($('#mailBody').val().replace(/you will have the opportunity to publish one paper free of charge in .* per year, and can also publish extra papers with special discounts.\n\n/,'').replace(
             'Additionally, we would like to invite you to publish one paper per year—this will be free of charge once accepted for publication. ','').replace(/\nPlease click on the following link .*?\nhttp.*?\n/g,''))});
         $('html, body').scrollTop($('#emailTemplates').offset().top);
     } catch (error){ }}
 
     //EB Reminder✏️
     if (window.location.href.indexOf("present_editor_ebm/remind_email") > -1){try{
+        let detail = GM_config.get('EB_ReminderID').match(/\(([^)]+)\)/);
+        if (detail) {
+            let a = $("#emailTemplates > option:contains('" + detail[1] + "')").prop('selected', true);
+            if (a.length==0) {$("#emailTemplates > option:contains('Responsibilities and Benefits')").prop('selected', true)}
+            document.getElementById('emailTemplates').dispatchEvent(new CustomEvent('change'));
+        }
+
+
         function init() {let t1 = RegExptest(GM_config.get('EB_ReminderS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('EB_ReminderS2'))) );
                          let t2 = RegExptest(GM_config.get('EB_ReminderB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_ReminderB2'))) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         $('html, body').scrollTop($('#emailTemplates').offset().top);
     } catch (error){ }}
 
+    //list_volunteer_reviewers
+    if(window.location.href.indexOf("/list_volunteer_reviewers/all") > -1){try{
+        location.href=$("a[href*='/volunteer_reviewer_info/view/']").attr("href").replace("/view/","/update/")
+    } catch (error){ }}
+
     //GE Monthly Report
     if (window.location.href.indexOf("/email/acknowledge/") > -1){try{
+        sk_MyAccountOnly();
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
 
         if (window.location.href.indexOf("guest_editor") > -1){
@@ -414,8 +480,9 @@ function onInit() {
 
         let result = "", headers = {};
         if(GM_config.get('Report_TemplateB2').indexOf("%pp_list%") > -1) {
-            let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id"), false); xhr.send();
-            let $form = $($.parseHTML(xhr.responseText)).find('#single-planned-paper-form');
+            let SI_Topic_Link = $("#special_issue_id").attr("data-special-issue-id") ? "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id") : "/submission/topic/view/" + $("#submission_topic_id").attr("data-topic-id");
+            let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', SI_Topic_Link, false); xhr.send();
+            let $form = $($.parseHTML(xhr.responseText)).find('#add-planned-paper-section, #single-planned-paper-form');
             let emailIndex=1, statusIndex=2, sourceIndex=3, discountIndex=4, agreedDateIndex=6;
             $form.find('table').each(function(index) {
                 $(this).find('thead th').each(function(index) {
@@ -428,19 +495,25 @@ function onInit() {
                 });
 
                 $(this).find('tbody tr').each(function() {
-                    let $td = $(this).find('td'), email = $td.eq(emailIndex).text().trim(), status = $td.eq(statusIndex).text().trim(), invitedByGE = $td.eq(sourceIndex).text().trim(),
-                        discount = parseFloat($td.eq(discountIndex).text().trim().replace(/ /g, '').replace(/CHF/g, '')), agreedDate = new Date($td.eq(agreedDateIndex).text().trim());
-                    console.log(email); console.log(status); console.log(invitedByGE); console.log(discount);
+                    let $td = $(this).find('td'), email = $td.eq(emailIndex).text().replace(/\s\*/g,"").trim(), status = $td.eq(statusIndex).text().trim(), invitedByGE = $td.eq(sourceIndex).text().trim(),
+                        discountText = $td.eq(discountIndex).text().trim(), agreedDate = new Date($td.eq(agreedDateIndex).text().trim());
                     if (status === "Title Provided" || status === "Agreed" || status === "Approved") {
                         counter++;
-                        if (invitedByGE.indexOf("by GE") > -1 && discount > 0) {
-                            let discountRatio = 0;
+                        let discountRatio = 0;
+                        if (discountText.includes('%')) {
+                            discountRatio = parseFloat(discountText.replace(/%/g, '')) / 100;
+                        } else {
+                            let discount = parseFloat(discountText.replace(/ /g, '').replace(/CHF/g, ''));
                             switch (agreedDate.getFullYear()) {
                                 case 2021: discountRatio = discount / 1600; break;
                                 case 2022: discountRatio = discount / 1800; break;
                                 case 2023: if(agreedDate.getMonth() < 6) {discountRatio = discount / 2100} else {discountRatio = discount / 2600}; break;
                                 case 2024: discountRatio = discount / 2600; break;
                                 default: discountRatio = 8;
+                            }
+                        }
+                        if (invitedByGE.indexOf("by GE") > -1 && discountRatio > 0) {
+                            switch (agreedDate.getFullYear()) {
                             }
                             result += `(${counter}) ${email} (${(discountRatio * 100).toFixed(0)}% discount)\n`;
                         } else {
@@ -462,15 +535,16 @@ function onInit() {
                 GetNoteUrl = "/submission/topic/show_notes/" + $("#submission_topic_id").attr("data-topic-id");
                 let t1 = RegExptest(GM_config.get('Topic_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, Functiontest(GM_config.get('Topic_TemplateS2'))) );
                 let t2 = RegExptest(GM_config.get('Topic_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, Functiontest(GM_config.get('Topic_TemplateB2'))) );
+                $("#mailBody").val( $("#mailBody").val().replace("%pp_list%", result.trim()) );
             }
             $("#maincol").after('<div id="special_issue_note_offcanvas" class="hide-note-offcanvas"></div>');
             $.get(GetNoteUrl, function(res) {
                 $('#special_issue_note_offcanvas').html(res.note_html); $('#special_issue_note_offcanvas').removeClass('hide-note-offcanvas');
-                $('#close-offcanvas-note').parent().click(function(){$("#special_issue_note_offcanvas").toggleClass("hide-note-offcanvas");});
+                $('#close-offcanvas-note').parent().on("click", function(){$("#special_issue_note_offcanvas").toggleClass("hide-note-offcanvas");});
                 let OtherEmails = res.note_html.match(/GE Other Emails:(.*?)[\n<]/), Appellation = res.note_html.match(/GEs:(.*?)[\n<]/);
-                if (OtherEmails) {$("#mailTo").val(OtherEmails[1]); $("#mailTo").focus();}
+                if (OtherEmails) {$("#mailTo").val(OtherEmails[1]); $("#mailTo").trigger("focus");}
                 if (Appellation) {$("#mailBody").val( $("#mailBody").val().replace(/(?<=^Dear ).*/, Appellation[1].trim()+",") )}
-                $("#mailBody").prop('selectionStart', 0).prop('selectionEnd', 0).focus(); $("#mailTo").focus();
+                $("#mailBody").prop('selectionStart', 0).prop('selectionEnd', 0).trigger("focus"); $("#mailTo").trigger("focus");
                 waitForKeyElements(".special-issue-note-box",SidebarSize);
             });
         }
@@ -478,11 +552,11 @@ function onInit() {
 
         $('#mailBody').parent().after(`<div style="flex-direction: column"><div style="flex-direction: row"><a id="undoBtn"><svg width="24" height="24"><path d="M6.4 8H12c3.7 0 6.2 2 6.8 5.1.6 2.7-.4 5.6-2.3 6.8a1 1 0 01-1-1.8c1.1-.6 1.8-2.7
         1.4-4.6-.5-2.1-2.1-3.5-4.9-3.5H6.4l3.3 3.3a1 1 0 11-1.4 1.4l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.4 1.4L6.4 8z" fill-rule="nonzero"></path></svg></a> <a id="redoBtn"><svg width="24" height="24"><path d="M17.6 10H12c-2.8 0-4.4 1.4-4.9 3.5-.4 2 .3 4 1.4 4.6a1 1 0 11-1
-        1.8c-2-1.2-2.9-4.1-2.3-6.8.6-3 3-5.1 6.8-5.1h5.6l-3.3-3.3a1 1 0 111.4-1.4l5 5a1 1 0 010 1.4l-5 5a1 1 0 01-1.4-1.4l3.3-3.3z" fill-rule="nonzero"></path></svg></a></div><div style="flex-direction: column" id="insert"><p><a id="cfpapproval">[CfP Approval]</a></p>
-        <p><a id="cfpremind">[CfP Remind]</a></p><p><a id="cfpsent">[CfP Sent]</a></p><p><a id="personalcfp">[Personal CfP]</a></p><p><a id="book">[SI Book]</a></p><p><a id="certificate">[Certificate]</a></p><p><a id="conference">[Conference]</a></p>
-        <p><a id="deadline">[Deadline Ext.]</a></p><p><a id="deadline2">[Deadline Ext. 2]</a></p><p><a id="LinkedIn">[LinkedIn]</a></p><p><a id="review">[Review Article]</a></p></div></div>`);
+        1.8c-2-1.2-2.9-4.1-2.3-6.8.6-3 3-5.1 6.8-5.1h5.6l-3.3-3.3a1 1 0 111.4-1.4l5 5a1 1 0 010 1.4l-5 5a1 1 0 01-1.4-1.4l3.3-3.3z" fill-rule="nonzero"></path></svg></a></div><div style="flex-direction: column" id="insert"><p><a id="cfpapproval" style="display:none">
+        [CfP Approval]</a></p><p><a id="cfpremind" style="display:none">[CfP Remind]</a></p><p><a id="cfpsent">[CfP Sent]</a></p><p><a id="personalcfp">[Personal CfP]</a></p><p><a id="book">[SI Book]</a></p><p><a id="certificate">[Certificate]</a></p><p><a id="conference">
+        [Conference]</a></p><p><a id="deadline">[Deadline Ext.]</a></p><p><a id="deadline2">[Deadline Ext. 2]</a></p><p><a id="LinkedIn">[LinkedIn]</a></p><p><a id="review">[Review Article]</a></p><p><a id="meeting">[Online Meeting]</a></p></div></div>`);
         let undoStack = [], redoStack = [], insert_text = "";
-        $('#insert a').click(function() {
+        $('#insert a').on("click", function() {
             switch ($(this).attr("id")) {
                 case 'cfpapproval': insert_text=`\n3. Approval of Call for Paper List\n\nI'd like to inquire about the appropriateness of using the attached list of email addresses to send out calls for papers for our special issue. These addresses were collected from our `
                     + `database using an AI system, and I wanted to confirm that they are suitable for receiving calls for papers for our special issue. If you believe that any of the addresses on the list are not suitable, please let me know and I will remove them from `
@@ -523,26 +597,31 @@ function onInit() {
                 case 'review': insert_text=`\n3. Invitation to Submit a Review Paper\n\nWe are pleased to invite you to submit a review paper for this Special Issue. A review paper is an article that summarizes and evaluates the current state of knowledge on a specific `
                     + `topic. We believe that your expertise and experience in these fields would make a valuable contribution to our Special Issue. Furthermore, we will waive all the fees associated with the review paper publication, which we hope will encourage you to `
                     + `participate in this opportunity.\n`; $("#addnote").val("邀请review"); break;
+                case 'meeting': insert_text=`\n3. Online Meeting\n\nWould you be interested in a 30-minute online meeting with us? We can introduce our journal, the editorial process, details about our Special Issue, the submission platform functionalities, `
+                    + `article processing charges, or any other topics you wish to explore. If you are interested, please let me know a convenient date and time for you. I'm currently in China and available on working hours.\n`; $("#addnote").val("询问Online Meeting"); break;
             }
             let selectionStart = $('#mailBody')[0].selectionStart, selectionEnd = $('#mailBody')[0].selectionEnd, text = $('#mailBody').val(); let newText = text.substring(0, selectionStart) + insert_text + text.substring(selectionEnd);
             undoStack.push(text); redoStack = []; $('#mailBody').val(newText);
             $('#mailBody')[0].setSelectionRange(selectionStart + insert_text.length, selectionStart + insert_text.length);
         });
 
-        $('#undoBtn').click(function() { if (undoStack.length > 0) {redoStack.push($('#mailBody').val()); $('#mailBody').val(undoStack.pop());
+        $('#undoBtn').on("click", function() { if (undoStack.length > 0) {redoStack.push($('#mailBody').val()); $('#mailBody').val(undoStack.pop());
                                                                     $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('undo');} });
-        $('#redoBtn').click(function() { if (redoStack.length > 0) {undoStack.push($('#mailBody').val()); $('#mailBody').val(redoStack.pop());
+        $('#redoBtn').on("click", function() { if (redoStack.length > 0) {undoStack.push($('#mailBody').val()); $('#mailBody').val(redoStack.pop());
                                                                     $('#mailBody')[0].setSelectionRange(undoStack[undoStack.length - 1].length, undoStack[undoStack.length - 1].length); document.execCommand('redo');} });
 
         $("#addAttachment").after(` <input type="text" id="addnote" value="${GM_config.get('Report_Notes')}" style="width: 150px; display:inline-block">`); // $("#sendingEmail").after(`<a class="submit" type="button" id="SKsendingEmail">Send email</a>`).hide();
-        $("#sendingCustomEmail").click(function(){
+        $("#sendingCustomEmail, #sendingEmail").on("click", function(){
             if ($("#addnote").val().length) {
-                $("div.click-to-edit-manuscript").last().click();
+                $("div.click-to-edit-manuscript").last().trigger("click");
                 let $textarea = $("div.manuscript-input-note-group textarea").last();
                 let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"), dd = new Date().getDate().toString().padStart(2, "0"), yy = new Date().getFullYear().toString().slice(-2);
                 let today = yy + '-' + mm + '-' + dd;
-                $textarea.val($textarea.val().replace(/(GE contact:\s*)/, "$1" + today + " " + $("#addnote").val() + " / "));
-                waitForKeyElements("button[data-url*='/user/edit/si_morph_notes/']",function(){$("button[data-url*='/user/edit/si_morph_notes/']").last().click()});
+                $textarea.val($textarea.val().replace(/(E contact:\s*)/, "$1" + today + " " + $("#addnote").val() + " / "));
+
+                let isCustom = $(this).attr("id") === "sendingCustomEmail";
+                let buttonSelector = isCustom ? "button[data-url*='/user/edit/si_morph_notes/']" : "button[data-url*='/submission/topic/update_followup_notes/']";
+                waitForKeyElements(buttonSelector, function() {$(buttonSelector).last().trigger("click")});
             }
         });
     } catch (error){ }}
@@ -566,7 +645,7 @@ function onInit() {
 
             $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=['+ m_journal +'] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Social Media&body=' + GM_config.get('Template_Linkedin')
                                                          .replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
-            if (window.location.href.indexOf("?linkedin") > -1) {$("#linkedin")[0].click(); history.back();}
+            if (window.location.href.indexOf("?linkedin") > -1) {$("#linkedin")[0].trigger("click"); history.back();}
             $("[title='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query='+$("[title='Google']").prev().text()+
                                          '" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="https://c5.rgstatic.net/m/41542880220916/images/favicon/favicon-16x16.png"></a> ');
 
@@ -576,13 +655,13 @@ function onInit() {
             <a id="v_invited" reason="Feature paper invited by guest editor" style="display:block;padding: 8px 12px;text-decoration: none;color:black;">FP invited by GE</a><a id="v_ge" reason="Paper by guest editor" style
             ="display:block;padding: 8px 12px;text-decoration:none;color:black;">Paper by GE</a><a id="v_ebm" reason="Paper by editorial board member" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Paper by EBM</a>
             <a id="v_other" reason="Others" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Others</a></div></div>`);
-            $("#voucher").mouseover(function(){ $(this).children("div").show() });
-            $("#voucher").mouseout(function(){ $(this).children("div").hide() });
+            $("#voucher").on("mouseover", function(){ $(this).children("div").show() });
+            $("#voucher").on("mouseout", function(){ $(this).children("div").hide() });
             $('head').append('<style>#voucher a:hover {background-color: #ddd;}</style>');
             if (!m_si) {$("#v_invited, #v_ge").remove()};
 
             let d_reason="";
-            $("#voucher>div>a").click(function(){
+            $("#voucher>div>a").on("click", function(){
                 if ($("[data-invoice_id]").length == 0) {alert("There is no APC form on the page. Please change the manuscript status."); return;}
 
                 let xhr = new XMLHttpRequest(); xhr.open('GET', "https://susy.mdpi.com/apply/voucher/on_ms_page/" + $("[data-rel]").attr("data-rel") + "/" + $("[data-invoice_id]").attr("data-invoice_id") + "/", false); xhr.send();
@@ -607,26 +686,74 @@ function onInit() {
                 let $link = $(this);
                 let pubpeer_search = new URLSearchParams(new URL($link.attr("href")).search);
                 let pubpeer_name = pubpeer_search.get("q");
-                $(this).attr("href","https://pubpeer.com/search?q=authors%3A%22"+pubpeer_name+"%22")
-                GM_xmlhttpRequest({
-                    method: "GET", url: 'https://pubpeer.com/api/search?q=authors%3A%22'+pubpeer_name+'%22',
-                    onload: function(response) {
-                        let pub_num = JSON.parse(response.responseText).meta.total;
-                        $link.append("["+pub_num+"]");
-                        if(pub_num > 0) {$link.css('background-color', 'gold');}
-                    }
-                });
-
+                $link.attr("href", "https://pubpeer.org/search?q=authors%3A%22" + pubpeer_name + "%22");
                 let firstName = $link.parent().contents().filter(function() {return this.nodeType === 3;}).first().text().trim();
                 let lastName = $link.parent().find('b').first().text().trim();
                 $(this).before(` <a href="//www.scopus.com/results/authorNamesList.uri?st2=${firstName}&st1=${lastName}" title="Scopus" target="_blank" rel="noopener noreferrer"><img src=${icon_scopus}></a> `);
+                $(this).after(` <a href="//retractiondatabase.org/RetractionSearch.aspx?auth%3d${firstName}+${lastName}" title="retractiondatabase" target="_blank" rel="noopener noreferrer"><img src=${icon_retractiondatabase}></a> `)
             });
+
+            let hasBeenClicked = false;
+            $("[title='PubPeer']").on("click", function(event) {
+                if (!hasBeenClicked) {
+                    $('body').append('<div id="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; cursor: wait; z-index: 10000;"></div>');
+                    event.preventDefault(); hasBeenClicked = true;
+                    let $link = $(this);
+                    GM_xmlhttpRequest({
+                        method: "GET",
+                        url: $link.attr("href").replace("pubpeer.org/","pubpeer.com/api/"),
+                        onload: function(response) {
+                            let pub_num = JSON.parse(response.responseText).meta.total;
+                            $link.append("["+pub_num+"]");
+                            if(pub_num > 0) { $link.css('background-color', 'gold');}
+                            $('#overlay').remove();
+                        }
+                    });
+                    $("[title='PubPeer']").each(function() {
+                        let $link = $(this);
+                        GM_xmlhttpRequest({
+                            method: "GET",
+                            url: $link.attr("href").replace("pubpeer.org/","pubpeer.com/api/"),
+                            onload: function(response) {
+                                let pub_num = JSON.parse(response.responseText).meta.total;
+                                $link.append("["+pub_num+"]");
+                                if(pub_num > 0) { $link.css('background-color', 'gold');}
+                            }
+                        });
+                    });
+                    setTimeout(function() { $('#overlay').remove();}, 1000);
+                }
+            });
+
         }
 
         if (GM_config.get('Assign_Assistant')) { //派稿助手
             try {let params = new window.URLSearchParams(window.location.search); let reviewer = params.get('r');
-                 if (reviewer.indexOf("@") > -1) {$("#form_email").val(reviewer); $("#nextBtn").click(); waitForKeyElements('#specialBackBtn', scrolldown, true); function scrolldown() {$('html, body').scrollTop($('#form_email').offset().top)} }
-                } catch (error){ }
+                 if (reviewer.indexOf("@") > -1) {
+                     $("#form_email").val(reviewer); $("#nextBtn").trigger("click");
+
+                     waitForKeyElements('#specialBackBtn', function() {
+                         $('html, body').scrollTop($('#form_email').offset().top);
+                         $("#keepRviewer").hide().before(` <input type="button" id="keepReviewer2" value="Proceed2" class="submit"> `);
+                         $("#keepReviewer2").on("click", function(){
+                             document.querySelector("#specialBackBtn").click();
+                             document.querySelector("#nextBtn").click();
+                             waitForKeyElements('#specialBackBtn', function() {
+                                 $("#keepRviewer").before(` <input type="button" id="keepReviewer3" value="Proceed2" class="submit"> `);
+                                 $("#keepReviewer3").on("click", function(){
+                                     document.querySelector("#specialBackBtn").click();
+                                     document.querySelector("#nextBtn").click();
+                                     waitForKeyElements('#specialBackBtn', function() {document.querySelector("#keepRviewer").click();}, true);
+                                 })
+                                 document.querySelector("#keepRviewer").click();
+                             }, true);
+                         });
+                     }, true);
+                 }
+                } catch (error){}
+            if ($("div:contains('The CSRF token is invalid. Please try to resubmit the form')").length > 0){
+                $("header").append('<div data-animation="drop" class="notify notify-dismissible notify-danger center top"><div class="message">The CSRF token is invalid.</div><button type="button" class="close" data-close="notify" data-animation="drop">×</button></div>')
+            }
 
             if ($("strong.margin-horizontal-1").text().indexOf("decision") > -1) {
                 $.get("/user/assigned/production_form/" + window.location.href.match("process_form/(\\w*)")[1], function(res) {
@@ -634,7 +761,7 @@ function onInit() {
                 });
             }
 
-            if (S_J==154 || S_J==517) {
+            if ([154, 159, 162, 517, 599, 25, 598, 276].includes(S_J)) {
                 $("table [title|='Google Scholar']").each(function() {
                     let ranking = get_univ( $(this).parent().nextAll(":last-child").text().trim() );
                     if(ranking.color){
@@ -647,12 +774,22 @@ function onInit() {
         }
 
         //Always QC 换行
-        $('a[data-title="Quality Check"]').click(LineBreak);
+        $('a[data-title="Quality Check"]').on("click", LineBreak);
+
+        $('h1').each(function() { if ($(this).text().includes('403 - Permission denied')) {
+            let summary_link = window.location.href.replace(/.*_form/,"//susy.mdpi.com/manuscript/summary");
+            $(this).before(`<h1>Process Manuscript &nbsp;&nbsp;|&nbsp;&nbsp; Finalize Manuscript &nbsp;&nbsp;|&nbsp;&nbsp; <a href="${summary_link}">Manuscript Summary</a></h1><br>`);
+            window.location.href = window.location.href.replace(/.*_form/,"//susy.mdpi.com/manuscript/summary"); return false;
+        } });
     } catch (error){ }}
 
     //特刊列表免翻页⚙️
     if (window.location.href.indexOf(".mdpi.com/special_issue_pending/list") > -1 && !window.location.href.match(/page=(?!1\b)[0-9]+/)){try{
-        if(GM_config.get('SInote')) { waitForKeyElements(".special-issue-note-box",SidebarSize);}
+        sk_MyAccountOnly();
+        if(GM_config.get('SInote')) {waitForKeyElements(".special-issue-note-box",function(){
+            SidebarSize();
+            $("span.note-title:contains('SI Section Notes')").trigger("click");
+        })}
         if(GM_config.get('SIpages')){
             let maxpage = 10, totalpage = Math.min(maxpage,parseInt($('li:contains("Next")').first().prev().text())), counter, Placeholder="";
             for (counter = 2; counter<=Math.min(maxpage,totalpage); counter++) {
@@ -675,21 +812,110 @@ function onInit() {
 
     //特刊页面➕按钮、Note
     if (window.location.href.indexOf(".mdpi.com/submission/topic/view")+window.location.href.indexOf(".mdpi.com/special_issue/process") > -2){try{
+        sk_MyAccountOnly();
         if (window.location.href.indexOf("?pagesection=AddGuestEditor") > -1 && GM_config.get('Hidden_Func')){
             if ($("#guestNextBtn").length === 0) {
                 $("#form_email").after(`<input id="process-special-issue-guest-editor" type="submit" value="Force Add (Info must be pre-filled)" class="submit is-psme-assessment">`)
             }
         }
+        if (GM_config.get('SInote')) {
+            let done = false;
+            waitForKeyElements(".special-issue-note-box",function(){
+                if(!done){
+                    SidebarSize();
+                    $("span.note-title:contains('SI Section Notes')").trigger("click");
+                    $('.fold-note-list').last().before('<button id="qcButton" style="background-color: orange; border: none; color: white; padding: 5px;">Add Note</button>');
 
-        if (GM_config.get('SInote')) {waitForKeyElements(".special-issue-note-box",SidebarSize)}
+                    //Always: SI QC QuickAdd
+                    let prependContent = GM_getValue("SI_QC", "⭐ - SME按QC要求完成&自己做的其他事情\n✅ - 已做\n❌ - 未做\n————————————————\n$YYYY$.$MM$\nQC comment:\n1. \n2. \nQC 复查意见\n1. \n2. \n⭐ ：xxxx+完成时间\n————————————————");
+                    let AddPlace = GM_getValue("SI_QC_AddPlace", "❌ - 未做");
+                    $("div.special-issue-note-box").last().on("mousedown", function(event) { if (event.which === 2) { // 中键点击
+                        event.preventDefault();
+                        $("body").append(`<div id='si_qc' role='dialog' style='position: fixed; height: 400px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                        border-radius: 5px; overflow: hidden;'><div style='background-color: #FFA500; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'><span>Note Settings</span><button type='button'
+                        onclick='document.getElementById("si_qc").remove()' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div><div style='padding: 20px;'><textarea id="si_qc_t"
+                        class="manuscript-add-note-form" minlength="1" rows="8" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius:4px;'>${prependContent}</textarea><div style='margin-top: 10px;font-size:14px;'>
+                        Text will append after the location specified below, or at the beginning if not found:</div><input type="text" id="si_qc_addplace" value="${AddPlace}" style='width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;'>
+                        <button id="si_qc_save" class="submit" style='background-color: #FFA500; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Save</button></div></div>`);
+                        $("#si_qc_save").on("click", function (){
+                            prependContent = $("#si_qc_t").val();
+                            AddPlace = $("#si_qc_addplace").val();
+                            GM_setValue("SI_QC", prependContent);
+                            GM_setValue("SI_QC_AddPlace", AddPlace);
+                            $("#si_qc").remove();
+                        });
+                        return false;
+                    }});
+                    $("div.special-issue-note-box div.note-list-container div.click-to-edit-manuscript").last().on("contextmenu", AddQCNote);
+                    $('#qcButton').on('click', AddQCNote);
+
+                    function AddQCNote(event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        let mm = (new Date().getMonth() + 1).toString().padStart(2, "0"),
+                            dd = new Date().getDate().toString().padStart(2, "0"),
+                            yy = new Date().getFullYear().toString().slice(-2),
+                            yyyy = new Date().getFullYear().toString();
+
+                        let $textarea = $("div.manuscript-input-note-group textarea").last();
+                        let initiallyVisible = $textarea.is(':visible');
+
+                        if (!initiallyVisible) {
+                            $("div.click-to-edit-manuscript").last().trigger("click");
+                            $textarea = $("div.manuscript-input-note-group textarea").last(); // Re-acquire the textarea after UI update
+                        }
+
+                        let currentVal = $textarea.val();
+                        let prependContentFormatted = prependContent.replace(/\$YYYY\$/g, yyyy)
+                        .replace(/\$YY\$/g, yy)
+                        .replace(/\$MM\$/g, mm)
+                        .replace(/\$DD\$/g, dd);
+
+                        if (initiallyVisible) {
+                            let cursorPos = $textarea[0].selectionStart;
+                            let beforeCursor = currentVal.substring(0, cursorPos);
+                            let afterCursor = currentVal.substring(cursorPos);
+                            $textarea.val(beforeCursor + prependContentFormatted + afterCursor);
+                            let newCursorPos = cursorPos + prependContentFormatted.length;
+                            $textarea.focus(); // Set focus back to the textarea
+                            $textarea[0].setSelectionRange(newCursorPos, newCursorPos);
+                        } else {
+                            let addPlaceIndex = currentVal.indexOf(AddPlace);
+                            if (addPlaceIndex > 0) {
+                                let positionAfterAddPlace = addPlaceIndex + AddPlace.length;
+                                let beforeAddPlace = currentVal.substring(0, positionAfterAddPlace);
+                                let afterAddPlace = currentVal.substring(positionAfterAddPlace);
+                                $textarea.val(beforeAddPlace + prependContentFormatted + afterAddPlace);
+                                let newCursorPos = beforeAddPlace.length + prependContentFormatted.length + 1; // +1 for the newline character
+                                $textarea.focus(); // Set focus back to the textarea
+                                $textarea[0].setSelectionRange(newCursorPos, newCursorPos);
+                            } else {
+                                $textarea.val(prependContentFormatted + currentVal);
+                                let newCursorPos = prependContentFormatted.length + 1; // +1 for the newline character
+                                $textarea.focus(); // Set focus back to the textarea
+                                $textarea[0].setSelectionRange(newCursorPos, newCursorPos);
+                            }
+                        }
+
+                        $textarea.scrollTop(0);
+                        return false;
+                    }
+                    done = true;
+                }
+            }, true);
+
+        }
         if ($("a:contains('Edit at backend')").length) {$('#si-update-emphasized').parent().children("a").first().attr("href", $("a:contains('Edit at backend')").attr("href").replace(/.*\//,"https://mdpi.com/si/") )};
         $('#si-update-emphasized').before(`<a href="?pagesection=AddGuestEditor" title="Add Guest Editor"><img border="0" src="${icon_plus}"></a> `);
-        $("a:contains('SI manuscripts')").after(" <a href=" + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/academic-editor/special_issues/process/") + ">[AcE Interface]</a>");
+        $('#si-update-emphasized').attr("data-uri") && $("a:contains('SI manuscripts')").after(" <a href=" + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/academic-editor/special_issues/process/") + ">[AcE Interface]</a>");
         $("[for='form_name_system']").append(` <a onclick="$('#form_name_system').prop('readonly', false)">[Edit]</a>`);
         if(GM_config.get('Hidden_Func')) {
-            $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+`" title="Reset"><img border="0" src="${icon_arrow}"></a> `);
-            $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+`" title="Close"><img border="0" src="${icon_book}"></a> `);
-            $("button[data-title='Import']").before('<input type="button" class="submit add-planned-paper-btn" value="Force Add">&nbsp; ');
+            if ($('#si-update-emphasized').attr("data-uri")) {
+                $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/reset_status/")+`" title="Reset"><img border="0" src="${icon_arrow}"></a> `);
+                $('#si-update-emphasized').before('<a href="'+$('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/","/special_issue/close_invitation/")+`" title="Close"><img border="0" src="${icon_book}"></a> `);
+                $("button[data-title='Import']").before('<input id="forceadd" type="button" class="submit" value="Force Add">&nbsp; ');
+                $("#forceadd").on("click",function (){ window.location.href = "//susy.mdpi.com/planned_paper/edit?email=" + $("#add-planned-paper-section input[name='email']").val() });
+            }
             SpecialFunc();
         } else if(userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {
             SpecialFunc();
@@ -699,8 +925,8 @@ function onInit() {
             $("#checkMailsdb").before('<input id=eltry_stop style=display:none type=button class=submit value=Stop><input id=eltry_stopbox style=display:none type=checkbox> ');
             $("#guestNextBtn").after(' <span id=timesRun style=background-color:#90EE90></span> <input id=eltry style=display:inline-block type=button class=submit value="! AutoRetry"> <input id=add6th style=display:inline-block type=button class=submit value="! Add6th">');
 
-            $("#eltry_stop").click(eltry_stop); function eltry_stop (zEvent) {$("#eltry_stopbox").prop('checked',true)};
-            $("#eltry").click(sk_eltry); function sk_eltry (zEvent) {
+            $("#eltry_stop").on("click", eltry_stop); function eltry_stop (zEvent) {$("#eltry_stopbox").prop('checked',true)};
+            $("#eltry").on("click", sk_eltry); function sk_eltry (zEvent) {
                 $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>`);
                 GM_xmlhttpRequest({
                     method: "GET",
@@ -717,14 +943,14 @@ function onInit() {
                 <form onsubmit="return false;"><br>E-Mail <input type="text" id="sk_eltry_email" style="display:inline-block; width:65%;" value="`+$("#form_email").val()+`" required> <br>Interval <input type="number" id="sk_eltry_interval" min=`+p1+` max=10000 step=50
                 style="display:inline-block; width:7em;" value=`+p1+` onkeydown="return false;" required> ms <br>Start Time <input type="time" id="sk_eltry_startt" style="display:inline-block; width:10em;" required><br><input type=submit id=sk_eltry_submit
                 value=Start style="margin:10px;padding:5px 20px"><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></form></div>`)
-                $("#sk_eltry_submit").click(function(e){
+                $("#sk_eltry_submit").on("click", function(e){
                     var eltry_email = $("#sk_eltry_email").val();
                     var interval_time = $("#sk_eltry_interval").val();
                     let today = new Date();
                     var start_time = new Date(today.getFullYear() + '/' + (today.getMonth()+1 < 10 ? '0'+(today.getMonth()+1) : today.getMonth()+1) + '/'+today.getDate() + ' ' + $("#sk_eltry_startt").val());
                     var today_string = today.getFullYear() + '-' + (today.getMonth()+1 < 10 ? '0'+(today.getMonth()+1) : today.getMonth()+1) + '-'+today.getDate() + ' ';
                     $("#eltry_stop").css("display","inline-block"); $("#eltry").css("display","none"); $("#add6th").css("display","none"); $("#ith-shade1").remove(); $("#ith-shade2").remove();
-                    $("#form_email").val(eltry_email); $("#guestNextBtn").click();
+                    $("#form_email").val(eltry_email); $("#guestNextBtn").trigger("click");
 
                     waitForKeyElements("#specialBackBtn", sk_eltry_check2, true);
                     function sk_eltry_check2() {
@@ -743,7 +969,7 @@ function onInit() {
                                     notifyMe('Starting', notify_options);
                                 }
                                 timesRun += 1; $("#timesRun").text(timesRun + " attempts auto trying. ");
-                                $("#guestNextBtn").click();
+                                $("#guestNextBtn").trigger("click");
                                 if ($("p:contains('on "+today_string+"')").length) {
                                     clearInterval(interval); $("#timesRun").text("The GE is already invited by others. Stopped.");
                                 } else if ($("#eltry_stopbox").prop("checked")) {
@@ -752,15 +978,15 @@ function onInit() {
                                     // do nothing
                                 } else if (document.getElementById('process-special-issue-guest-editor') !=null) {
                                     clearInterval(interval);
-                                    document.getElementById("process-special-issue-guest-editor").click();
+                                    document.getElementById("process-special-issue-guest-editor").trigger("click");
                                     $("body").append(`<div class="blockUI blockOverlay" style=z-index:1000;border:none;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div><div class="blockUI blockMsg blockPage" style=
                                     "z-index:1011;position:fixed;width:30%;top:45%;height:50px;line-height:40px;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:none;background-color:#fff;vertical-align:middle">Proceeding... Please wait.</div>`)
-                                    $("#process-special-issue-guest-editor").click();
+                                    $("#process-special-issue-guest-editor").trigger("click");
                                 } else {
                                     // do nothing
                                 }
                             } else if (Math.round((start_time-Date.now())/1000) % 120 == 0) {
-                                $("#guestNextBtn").click();
+                                $("#guestNextBtn").trigger("click");
                                 $("#timesRun").text("Autotry will start in [" + Math.round((start_time-Date.now())/1000/60) + " min]: " + start_time );
                             }
                         }, interval_time);
@@ -789,9 +1015,9 @@ function onInit() {
                 });
             }
 
-            $("#add6th").click(sk_add6th); function sk_add6th (zEvent) {
+            $("#add6th").on("click", sk_add6th); function sk_add6th (zEvent) {
                 $("#eltry").css("display","none"); $("#add6th").css("display","none");
-                $("#guestNextBtn").click();
+                $("#guestNextBtn").trigger("click");
                 waitForKeyElements("#specialBackBtn", sk_add6th_check, true);
                 function sk_add6th_check() {
                     $("#specialBackBtn").after(` <input id="process-special-issue-guest-editor" type="submit" value="Force Add" class="submit is-psme-assessment">`);
@@ -801,10 +1027,10 @@ function onInit() {
 
         Quick_InviteRemind($("a[href^='/email/invite/guest_editor/']")); Quick_InviteRemind($("a[href^='/email/remind/guest_editor/']"));
         function Quick_InviteRemind(param) {param.each(function(){$(this).after(" (<a href='" + $(this).attr("href") + "?Q'>Quick</a>)")})}
-        $('a[data-title="Extend Deadline"]').click(function(e){waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly(){$("#form_deadline").attr("readonly",false)};})
-        $('a[data-title="Change special issue deadline"]').click(function(e){waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2(){$("#form_date").attr("readonly",false)};})
+        $('a[data-title="Extend Deadline"]').on("click", function(e){waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly(){$("#form_deadline").attr("readonly",false)};})
+        $('a[data-title="Change special issue deadline"]').on("click", function(e){waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2(){$("#form_date").attr("readonly",false)};})
         $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({"background-color":"yellow"});
-        $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").click(function(){
+        $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").on("click", function(){
             $("#si-cfp-form [type=\'checkbox\']").prop("checked",true); if($("#form_template_id").val()==1){$("#form_template_id").val(2)}; if($("#form_comments").val()==""){$("#form_comments").val("Thank you.")}
         });
 
@@ -813,7 +1039,7 @@ function onInit() {
         if (button.length > 0) { button.replaceWith(`<a href="${button.attr('onclick').match(/'([^']+)'/)[1]}" class="submit">${button.val()}</a>`);}
 
         // 按钮PP MailMerge
-        var PPMM = $('<input type="button" id=PPMM class="submit" value="PPMailMerge" style="float:right;margin:0"> ').click(function(){
+        var PPMM = $('<input type="button" id=PPMM class="submit" value="PPMailMerge" style="float:right;margin:0"> ').on("click", function(){
             var selectedEmailLinks = [];
             $('table tr').each(function() {
                 var checkbox = $(this).find('input[type="checkbox"]');
@@ -829,21 +1055,31 @@ function onInit() {
             var ids = selectedEmailLinks.map(link => link.split('/').pop()).join(',');
             GM_openInTab("https://susy.mdpi.com" + baseLink + "/management?multiIds=" + ids, false);
         });
-        var SelectALL = $('<input type="button" id=SelectALL class="button hollow" value="Select PP" style="float:right;float:right;font-size:small;margin:0;"> ').click(function() {
-            $('table tr').each(function() {
-                var status = $(this).find('td:nth-child(3)').text().trim();
-                if (status === 'Title Provided' || status === 'Agreed') {
-                    $(this).find('input[type="checkbox"]').prop('checked', true);
+        var SelectALL = $('<input type="button" id=SelectALL class="button hollow" value="Select PP" style="float:right;float:right;font-size:small;margin:0;"> ').on("click", function() {
+            this.toggle = !this.toggle;
+            var statusesToCheck = this.toggle ? ['Title Provided', 'Agreed'] : ['Title Provided', 'Agreed', 'Interested'];
+            let statusIndex=0, found = false;
+            $('#add-planned-paper-section, #single-planned-paper-form').find('thead th').each(function(index) {
+                if (!found) {
+                    let text = $(this).text().trim();
+                    if (text === "Status") { statusIndex = index + 1; found = true; }
                 }
             });
+            $('table tr').each(function() {
+                var status = $(this).find('td:nth-child('+statusIndex+')').text().trim();
+                $(this).find('input[type="checkbox"]').prop('checked', statusesToCheck.includes(status));
+            });
         });
-        $('#single-planned-paper-form > fieldset > div > div').last().append(SelectALL, "<span style=float:right>&nbsp;</span>",PPMM);
+        $('#add-planned-paper-section>fieldset>div>div, #single-planned-paper-form>fieldset>div>div').last().append(SelectALL, "<span style=float:right>&nbsp;</span>",PPMM);
 
+        $("div.special-issue-invite-div a[href$='/unresponsive'], div.special-issue-invite-div a[href$='/to_be_contacted']").attr("href", function() {
+            return this.href + "?page=1&page_limit=100";
+        });
 
         if (GM_config.get('Hidden_Func')){
             $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `);
             $("h1:contains('Process Special Issue')").attr("id","sk_list2")
-            $("#sk_list,#sk_list2").click(function(){
+            $("#sk_list,#sk_list2").on("click", function(){
                 var emailLinks = [];
                 $("[data-user-info-emails]").each(function() {
                     let email = $(this).attr('data-user-info-emails');
@@ -873,7 +1109,7 @@ function onInit() {
         <option value="OR" selected="selected">Or</option></select> WoS[SID]: <input type="text" id="wos_sid" style="display:inline-block;width:150px;margin-right:10px;" value="` + GM_getValue("wos_sid", "") + `">
         <button id=s_key_submit class=submit progress=zero style=margin:0>Generate Feasibility Report</button></div>`)
 
-        $("#s_key").val($("#sq_101i").val().replace(" and ","\n")); $("#s_key_submit").click(fc_fill);
+        $("#s_key").val($("#sq_101i").val().replace(" and ","\n")); $("#s_key_submit").on("click", fc_fill);
         function fc_fill(){
             let keywords=$("#s_key").val().split(/[.:;,|\n/\\]+/), keyword_num = keywords.length, url1 = "https://finder.susy.mdpi.com/topic/special_issue?", n_closed,n_open,n_pending,j_open,n_wos,n_wos_m,wss_fin,conclusion=0;
             let fc_journal_name=$("h4:contains('Journal:')").find("i").text(); let fc_j_id = get_jid(fc_journal_name.toLowerCase());
@@ -991,7 +1227,7 @@ function onInit() {
     //默认新建特刊位置和Title Case
     if (window.location.href.indexOf(".mdpi.com/user/special_issue/edit/") > -1){try{
         $("#form_name").after("<a id='TitleCaseChicago'>🔡(Chicago)🔠</a> ");
-        $("#TitleCaseChicago").click(function () {
+        $("#TitleCaseChicago").on("click", function () {
             if ($("#form_name").val().length > 1) {
                 (async () => {
                     $('#form_name, input[value="Edit"], input[value="Add"]').prop("disabled", true);
@@ -1013,6 +1249,15 @@ function onInit() {
         }
     } catch (error){ }}
 
+    //Susy CfP
+    if (window.location.href.indexOf("/paper_invitations/") > -1){try{
+            $('#mailBody').parent().after(`&nbsp;<a id="SpecialDiscount">📉</a>`);
+            $('#SpecialDiscount').on("click", function (){
+                document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/\(20%/g, '(with special').replace(/\nThis invitation entitles you.* after peer review.\n/g,"").replace(/20% discount/g,'*special discount*');
+                document.getElementById('mailSubject').value=document.getElementById('mailSubject').value.replace(/20%/g, 'Special');
+            });
+    } catch (error){ }}
+
     //默认新建EBM位置
     if (window.location.href.indexOf(".mdpi.com/user/ebm-new/management") > -1){try{
         if (S_J>0){
@@ -1032,7 +1277,7 @@ function onInit() {
     } catch (error){ }}
 
     //特刊网页短链接
-    if (window.location.href.indexOf("mdpi.com/journal/") > -1 && window.location.href.indexOf("/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 && GM_config.get('LinkShort')){try{
+    if (window.location.href.indexOf("mdpi.com/journal/") > -1 && window.location.href.indexOf("/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 && window.location.href.indexOf("/ge_instructions") == -1 && GM_config.get('LinkShort')){try{
         window.location.href=window.location.href.replace(/\/journal\/(.*)\/special_issues\//,"/si/$1/");
     } catch (error){ }}
 
@@ -1048,12 +1293,13 @@ function onInit() {
                          let t2 = RegExptest(GM_config.get('Con_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('Con_TemplateB2')) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init);
         $('#mailSubject').parent().after('<div><a id="First_Line">[First Line]</a><br><br><a id="Del_Proceedings">[Del Proceedings]</a></div>');
-        $('#First_Line').click(function() {$('#mailBody').val("Dear Conference Committee,\nTo Whom It May Concern,\n"+$('#mailBody').val()) });
-        $('#Del_Proceedings').click(function() {$('#mailBody').val($('#mailBody').val().replace(/\n(.*?)https:\/\/www.mdpi.com\/about\/proceedings(.*?)\n/g,'')) });
+        $('#First_Line').on("click", function() {$('#mailBody').val("Dear Conference Committee,\nTo Whom It May Concern,\n"+$('#mailBody').val()) });
+        $('#Del_Proceedings').on("click", function() {$('#mailBody').val($('#mailBody').val().replace(/\n(.*?)https:\/\/www.mdpi.com\/about\/proceedings(.*?)\n/g,'')) });
     } catch (error){ }}
 
     //PP提醒模板
     if (window.location.href.indexOf("mdpi.com/special_issue/email/planned_paper") > -1 && GM_config.get('PP_Template')){try{
+        unsafeWindow.$("#emailTemplates > option:contains('Follow up on Interested Authors')").prop('selected', true).trigger("change");
         function init() {let t1 = RegExptest(GM_config.get('PP_TemplateS1')); $("#mailSubject").val( $("#mailSubject").val().replace(t1, GM_config.get('PP_TemplateS2')) );
                          let t2 = RegExptest(GM_config.get('PP_TemplateB1')); $("#mailBody").val( $("#mailBody").val().replace(t2, GM_config.get('PP_TemplateB2')) );}
         waitForText(document.querySelector('#mailSubject'), ' ', init, 1000);
@@ -1097,7 +1343,7 @@ function onInit() {
         $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/ethic-committee/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]=o&f[]=subject&op[subject]=%7E&v[subject][]=` + GM_config.get('Journal')
                                  + `]&f[]=&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&group_by=&per_page=100'>[EC]</a>`)
         //Checker功能和检测函数
-        $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").click(sk_cfpcheck_func);
+        $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").on("click", sk_cfpcheck_func);
         function sk_cfpcheck_func (zEvent) {
             let Today=new Date();
             $("#issue_pe_note").val($("#issue_pe_note").val()+"--- Checked on " + Today.getFullYear()+ "-" + (Today.getMonth()+1) + "-" + Today.getDate() + " ---\n");
@@ -1167,16 +1413,25 @@ function onInit() {
                     background:#fefefe} #user-info table tr td span.msid{color:#4e6c88;font-weight:400}#user-info table tr td.title{width:50%}#user-info table tr td.journal{width:10%;text-align:center}#user-info table tr td.status{width:10%;text-align:center}
                     #user-info table tr td.submission-date{width:10%;text-align:center}#user-info table tr td.invoice-info{width:10%;text-align:center}#user-info table tr td.invoice-payment-info{width:10%;text-align:center}</style>`);
         document.body.innerHTML = document.body.innerHTML.replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=');
-        var susycheck = "https://susy.mdpi.com/user/info?emails="+ window.location.href.match(/search_content=(\S*)/)[1];
+        var mailsdb_email = window.location.href.match(/search_content=(\S*)/)[1], susycheck;
 
-        $("body").prepend("<div style='margin:10px;'><div id='d1'>Loading Invitation Record...</div><p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p><div id='d2'>Loading Overview...</div><p>⬆️ ⬆️ ⬆️ ⬆️ ⬆️</p><div>");
+        if (/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(mailsdb_email)){
+            $("body").prepend(`<div style='margin:10px;'><div id='d1'>Loading Invitation Record...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div id='d2'>Loading Overview...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a>
+            <div id='d3'>Loading Review History...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div>`);
+            $('.scroll-icon').on("click", function() {
+                let currentIndex = $('.scroll-icon').index(this);
+                let nextIcon = $('.scroll-icon').eq(currentIndex + 1);
+                if (nextIcon.length > 0) {$('html, body').animate({scrollTop: nextIcon.offset().top}, 300);}
+                else {$('html, body').animate({scrollTop: $(document).height()}, 300);}
+            });
 
-        if (susycheck.indexOf("@") > -1){
+            susycheck = "https://susy.mdpi.com/user/info?emails="+ mailsdb_email;
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: susycheck,
                 onload: function(responseDetails) {
-                    $("#d2").html(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=').replace(/<h1>[\s\S]*<\/h1>/g,''));
+                    var $jQueryObject = $($.parseHTML(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/").replace(/ data-url=/g,' href=').replace(/ data-load-url=/g,' href=').replace(/<h1>[\s\S]*<\/h1>/g,'')));
+                    $("#d2").html($jQueryObject);
                     $("[title='Generate unsubscribe link']").each(function(e) {
                         $(this).attr("href", "//scholar.google.com/scholar?hl=en&q=" + $(this).attr('data-email')).attr("target","_blank").text("").append('<img width="20px" height="20px" src="//www.google.com/favicon.ico">')
                     });
@@ -1186,27 +1441,39 @@ function onInit() {
                         <img width=20px height=20px src="//susy.mdpi.com/build/img/design/susy-logo.png"></a> <a href="//scholar.google.com/scholar?hl=en&q=` + full_name + `" target=_blank><img width=20px height=20px src="//www.google.com/favicon.ico"></a>
                                        <a href="//www.scopus.com/results/authorNamesList.uri?st2=` + first_name + `&st1=` + last_name + `" target=_blank><img src=${icon_scopus}></a>`);
                     });
+
+                    if ($jQueryObject.find("a:contains('Edit Reviewer')").length){
+                        let ReviewerHistory=$jQueryObject.find("a:contains('Edit Reviewer')").attr("href").replace('//susy.mdpi.com/reivewer/managment/edit', 'https://susy.mdpi.com/list/reviewer/invitations-history');
+                        GM_xmlhttpRequest({
+                            method: 'GET',
+                            url: ReviewerHistory,
+                            onload: function(responseDetails) {
+                                var $jQueryObject2 = $($.parseHTML(responseDetails.responseText.replace(/data-load-url="\/user/g,'data-load-url="//susy.mdpi.com/user')));
+                                $("#d3").html($jQueryObject2);
+                            } });
+                    } else {
+                        $("#d3").html("No Review Record");
+                    }
                 } });
 
-            susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ window.location.href.match(/search_content=(\S*)/)[1] +"&special_issue_id=1139163";
+            susycheck = "https://susy.mdpi.com/user/guest_editor/check?email="+ mailsdb_email +"&special_issue_id=1139163";
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: susycheck,
                 onload: function(responseDetails) {
                     var $jQueryObject = $($.parseHTML(responseDetails.responseText.replace(/data-load-url="\/user/g,'data-load-url="//susy.mdpi.com/user')));
                     $("#d1").html($jQueryObject);
-                    $("[data-title='Blocked Info']").attr("href","//susy.mdpi.com" + $("[data-title='Blocked Info']").attr("data-uri"))
+                    $("[data-title='Blocked Info']").attr("href","//susy.mdpi.com" + $("[data-title='Blocked Info']").attr("data-uri"));
                 } });
-        } else {
-            $("#d2").parent().remove();
         }
     } catch (error){ }}
 
     //Always: Reviewer checking样式⚙️
     if (window.location.href.indexOf("reviewer/checking/") > -1){try{
+        let Reviewer_ID=$(".morphNotes").attr("data-load-url").match(/morph_notes\/(\d+)/)[1];
         GM_xmlhttpRequest({
             method: 'GET',
-            url: $("a:contains('Edit Reviewer')").attr("href").replace(/reivewer\/managment\/edit/g, 'list/reviewer/invitations-history'),
+            url: "/list/reviewer/invitations-history/" + Reviewer_ID,
             onload: function(responseDetails) {
                 $("body").append(responseDetails.responseText.replace(/href="\//g,"href=\"//susy.mdpi.com/"));
             } });
@@ -1222,7 +1489,7 @@ function onInit() {
                 $(this).html($(this).html().replace(/\n/g, '<br>\n'));
             });
         }
-        $('a[data-title="Quality Check"]').click(LineBreak);
+        $('a[data-title="Quality Check"]').on("click", LineBreak);
     } catch (error){ } }
 
     //Always: Paper ID to page
@@ -1296,7 +1563,7 @@ function onInit() {
 
 //     //Hidden_Func: Remind 2nd Round Reviewer
 //     if (window.location.href.indexOf("assigned/remind_reviewer") > -1 && GM_config.get('Hidden_Func')){try{
-//         $('#emailTemplates').val(21).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
+//         $('#emailTemplates').val(21).trigger("change"); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
 //     } catch (error){ }}
 
     //Always: MRS Chosen
@@ -1364,7 +1631,43 @@ function onInit() {
             }
         }
         toggleChosen();
-        $("#statistic > span").after("<br><br>").wrapInner('<a id="s_chosen"></a>').click(function() {toggleChosen()});
+        $("#statistic > span").after("<br><br>").wrapInner('<a id="s_chosen"></a>').on("click", function() {toggleChosen()});
+
+        if(GM_config.get('Hidden_Func')){
+            function syncCheckboxes(checkbox1, checkbox2) { // 同步两个复选框的状态
+                checkbox1.on('change', function() {
+                    checkbox2.prop('checked', $(this).prop('checked'));
+                });
+            }
+            const checkboxes = [
+                { id: '555', label: 'Analytics' },
+                { id: '25', label: 'Games' },
+                { id: '599', label: 'Geometry' },
+                { id: '154', label: 'Mathematics' },
+                { id: '162', label: 'Risks' },
+                { id: '598', label: 'IJT' },
+                { id: '276', label: 'Telecom' },
+            ];
+            $('#filter').append(`<div style="display: block;" id="SynaAdd">&emsp;&emsp;&emsp;</div>`);
+
+            checkboxes.forEach(function(checkbox) {
+                let originalCheckbox = $('#journal_' + checkbox.id);
+                if (originalCheckbox.length) {
+                    let isChecked = originalCheckbox.prop('checked');
+                    let newCheckbox = $('<input>', {
+                        type: 'checkbox',
+                        id: 'new_' + checkbox.id,
+                        class: 'journals_selected',
+                        value: originalCheckbox.val(),
+                        'data-name': originalCheckbox.data('name')
+                    }).prop('checked', isChecked);
+                    let label = `<label for="new_${checkbox.id}">${checkbox.label}</label>&emsp;&#9;`
+                    $('#SynaAdd').append(newCheckbox).append(label);
+                    syncCheckboxes(originalCheckbox, newCheckbox);
+                    syncCheckboxes(newCheckbox, originalCheckbox);
+                }
+            });
+        }
     } catch (error){ }}
 
     //Always: Volunteer Reviewer
@@ -1403,11 +1706,11 @@ function onInit() {
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/login") > -1){try{ $("[name=p_s]").attr('checked',true); $("#check-rem").attr('checked',true); } catch (error){ }}
 
     //Always: Manage Voucher Applications + 页面最底端
-    if(window.location.href.indexOf(".mdpi.com/voucher/application/list/") > -1){try{ document.getElementById("show-more-budgets").click();} catch (error){ }}
+    if(window.location.href.indexOf(".mdpi.com/voucher/application/list/") > -1){try{ document.getElementById("show-more-budgets").trigger("click");} catch (error){ }}
     if(window.location.href.indexOf(".mdpi.com/voucher/application/view/") > -1){try{
-        $("[value='Approve']").click(function(){
+        $("[value='Approve']").on("click", function(){
             waitForKeyElements("button:contains('confirm')", click_confirm, false);
-            function click_confirm(){$("button:contains('confirm')").click()}
+            function click_confirm(){$("button:contains('confirm')").trigger("click")}
         })
         waitForKeyElements(".user_box_head", voucher_scroll, false); function voucher_scroll(){scroll(0,document.body.scrollHeight)};
     } catch (error){ }}
@@ -1417,7 +1720,7 @@ function onInit() {
             let observer = new MutationObserver(function(mutations) {
                 if ($("#field-form_emails:contains('[Edit]')").length) {return;}
                 $("#field-form_emails fieldset>div:contains('Name:')").children().last().append("<a id='update_reviewer'>[Edit]</a>");
-                $("#update_reviewer").click(function(){
+                $("#update_reviewer").on("click", function(){
                     $("body").css('cursor', 'wait');
                     $.get("/list/reviewers/by-email-query?showName=1&term="+$("#form_emails").val(), function(res) {
                         GM_openInTab("https://susy.mdpi.com/reivewer/managment/edit/"+res[0].id, {active: true});
@@ -1434,12 +1737,33 @@ function onInit() {
         $("div.cell.small-12.medium-6.large-2:contains('Manuscript ID')").next().append(`<a href="/user/assigned/process_form/`+$("a:contains('Download Manuscript')").attr("href").match("displayFile/(.*?)(/|$)")[1]+`">[Back to Manuscript]</a>`)
     } catch (error){ }}
 
+    //Always: 自动填写签名
+    if (window.location.href.indexOf("special_issue/eic_decision/") + window.location.href.indexOf("special_issue/si_decision/") > -2){try{
+        let str = $("#topmenu span:contains('@mdpi.com')").text().replace("@mdpi.com","").replace("."," ");
+        let sk_signature = str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        $("#form_signature").val(sk_signature);
+    } catch (error){ }}
+
     //Always: Google Scholar 校正
     if (window.location.href.indexOf("&amp;") > -1 && window.location.href.indexOf("google") > -1){try{
         let new_uri, old_uri = window.location.search;
         for (let i = 1; i < 5; i++){ new_uri = $("<div />").html(old_uri).text(); if (new_uri==old_uri) {break;} else {old_uri = new_uri} }
         let searchParams = new URLSearchParams(new_uri)
         if(searchParams.has('user')) {window.location.href="https://scholar.google.com/citations?hl=en&user="+searchParams.get('user')}
+    } catch (error){ }}
+
+    //Experimental: CN Rank标记
+    if (window.location.href.indexOf("projects/journal-mathematics/wiki/SI_Manage") > -1 && GM_config.get('Hidden_Func')){try{
+        $('head').append('<link rel="stylesheet" href="https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/css/tooltipster.bundle.min.css" type="text/css" />');
+        $('head').append('<link rel="stylesheet" href="https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-noir.min.css" type="text/css" />');
+        $("td").each(function() {
+            let ranking = get_univ( $(this).text().trim() );
+            if(ranking.color){
+                let markup = $(this);
+                markup.css("background-color",ranking.color).attr("title",ranking.detail.replace(/^<br\s*\/?>/i, ''))
+                    .tooltipster({functionInit: function(instance, helper){var content = $(helper.origin).attr('title');instance.content(content);}, contentAsHTML:true, theme:'tooltipster-noir'});
+            }
+        });
     } catch (error){ }}
 
     //Maths-Related Journal Search
@@ -1466,7 +1790,7 @@ function onInit() {
         var maths_regex = new RegExp("(" + maths_j.join("|") + ")", "i");
         var geometry_regex = new RegExp("(" + geometry_j.join("|") + ")", "i");
         if (window.location.hostname.indexOf("scopus") > -1) {waitForKeyElements("div[data-component='document-source'],div[data-testid='author-list']+span", mark_journals, true);} else {mark_journals()};
-        $("#gsc_bpf_more").click(function (){
+        $("#gsc_bpf_more").on("click", function (){
             let targetNode = document.querySelector('#gsc_a_nn')
             let observer = new MutationObserver(function(mutations) { mark_journals() });
             observer.observe(targetNode, {characterData: true, childList: true, subtree: true});
@@ -1492,7 +1816,7 @@ function onInit() {
     //派稿助手: iThenticate AUTO
     if (window.location.href.indexOf("managing/status/submitted") + window.location.href.indexOf("sme/status/submitted") > -2 && GM_config.get('Assign_Assistant')){try{
         $("#show_title").parent().append("<input type='button' id='send_ith' value='Send iThenticate in OneClick'>")
-        $("#send_ith").click(function() {
+        $("#send_ith").on("click", function() {
             if (confirm("I will send ALL manuscripts in this page to iThenticate!") == true) {
                 $("a:contains('math')[href*='/process_form/'],a:contains('games')[href*='/process_form/'],a:contains('children')[href*='/process_form/'],a:contains('geometry')[href*='/process_form/']").each(function() {chk_ith($(this).attr('href'),$(this).text())});
                 $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
@@ -1505,11 +1829,19 @@ function onInit() {
                         method: 'GET',
                         url: ith_chkurl,
                         onload: function(responseDetails) {
-                            if(responseDetails.responseText.indexOf("log can not be found") != -1) {
-                                GM_xmlhttpRequest({method: 'GET',url: window.location.origin + "/ajax/upload_manuscript_file_to_ithenticate/"+url.split("/").pop(),
+                            if(responseDetails.responseText.indexOf("iThenticate result found.") == -1) {
+                                GM_xmlhttpRequest({method: 'GET',url: window.location.origin + "/ajax/upload_manuscript_file_to_ithenticate/"+url.split("/").pop()+"?file_name=manuscript.v1.pdf",
                                                    onload: function(responseDetails) {
                                                        if(responseDetails.responseText.indexOf("success") != -1) {$("#ith_prompt").html($("#ith_prompt").html() + mid + " is sending to iThenticate... Done<br/>")}
-                                                       else {$("#ith_prompt").html($("#ith_prompt").html() + mid + " sent failed! Maybe wrong file extension<br/>")}
+                                                       else {
+                                                           GM_xmlhttpRequest({method: 'GET',url: window.location.origin + "/ajax/upload_manuscript_file_to_ithenticate/"+url.split("/").pop()+"?file_name=manuscript.v1.docx",
+                                                                              onload: function(responseDetails) {
+                                                                                  if(responseDetails.responseText.indexOf("success") != -1) {$("#ith_prompt").html($("#ith_prompt").html() + mid + " is sending to iThenticate... Done<br/>")}
+                                                                                  else {
+                                                                                      $("#ith_prompt").html($("#ith_prompt").html() + mid + " sent failed! Maybe wrong file extension<br/>")
+                                                                                  }
+                                                                              } })
+                                                       }
                                                    } })
                             }
                             else {$("#ith_prompt").html($("#ith_prompt").html() + mid + " already has iThenticate report<br/>")}
@@ -1517,7 +1849,7 @@ function onInit() {
                 }
             }
         });
-        $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align","center").bind("contextmenu",function(e){return false;}).each(function() {
+        $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align","center").on("bind", "contextmenu",function(e){return false;}).each(function() {
             $(this).append("<a class='sk_reject' style='font-style:italic' href='//susy.mdpi.com/user/assigned/reject-manuscript/"+$(this).parents("tr").find("td:nth-child(4) >> a").attr("href").split("/").pop()+"'>[Reject]</a>");} );
         $(".sk_reject").on('mouseup', function (e){switch (e.which) {
             case 3: // Right click.
@@ -1528,17 +1860,17 @@ function onInit() {
 
     //派稿助手: Paper Rejection
     if(window.location.href.indexOf("assigned/reject-manuscript/") > -1 && GM_config.get('Assign_Assistant')){try{
-        $('#emailTemplates').val(77).change(); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); window.scrollTo(0, document.body.scrollHeight);
+        $('#emailTemplates').val(77).trigger("change"); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change')); window.scrollTo(0, document.body.scrollHeight);
         if(window.location.search == "?quickreject"){
             waitForText(document.querySelector('#mailSubject'), ' ', init);
-            function init() {$("#sendingEmail").click();}
+            function init() {$("#sendingEmail").trigger("click");}
         }
     } catch (error){ }}
 
     //ManuscriptFunc: 文章页面加[Linkedin]
     if (window.location.href.indexOf("www.mdpi.com/2227-7390/") > -1 && GM_config.get('ManuscriptFunc')){try{
         $("a:contains('Peer-Reviewed')").parent().after('<a id="s_linkedin" href="' + $("a:contains('Peer-Reviewed')").attr("href") +'?linkedin"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a"></a>');
-        $("#s_linkedin").click(function() {$("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`)});
+        $("#s_linkedin").on("click", function() {$("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`)});
     } catch (error){ }}
 
     //Black Technology Reviewers
@@ -1547,7 +1879,7 @@ function onInit() {
         waitForKeyElements("#specialBackBtn",ForceAddR);
         function ForceAddR(){
             $("#specialBackBtn").after(' <a type="button" id="ForceAddR" value="[ForceAddR]" class="submit">　　　</a>')
-            $("#ForceAddR").click(function(){
+            $("#ForceAddR").on("click", function(){
                 let counter = 0; $("#ForceAddR").hide(); $("#addReviewerForm").show();
 //                 $('#submitBtn_check').parent().parent().parent().parent().parent().parent().on('submit', function(e){
 //                     e.preventDefault();
@@ -1573,153 +1905,11 @@ function onInit() {
         waitForKeyElements("#intercom-frame",function(){$('.intercom-lightweight-app,#intercom-frame').remove();},true);
     } catch (error){ }}
 
-    // Scilit Batch Download Old
-    if (window.location.href.indexOf("admin.scilit.net/articles/search") > -1) {try{
-        let urlObj = new URL($("span.nextPage").first().parent().attr("href"), window.location.origin);
-        let params = new URLSearchParams(urlObj.search);
-        let page = $('input[name="page"]').last().attr("value");
-        let totalpage = $('input[name="page"]').last().parent().text().match(/\d+/)[0];
-
-        if (window.location.href.indexOf("#ScilitBatchDownload") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
-            $("input.inheritPos").prop("checked",true);
-            unsafeWindow.$("a[data-action='/api/excel_report/scilit-authors']").click();
-            $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
-            <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
-            <p></p><p id=ith_prompt>Downloading ${page} of ${totalpage}</p><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
-        } else if(window.location.href.indexOf("#ScilitBatchInit") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
-            for (let i = 0; i < Math.min(totalpage, 11); i++) {
-                let urlObj_n = urlObj, params_n = params;
-                params_n.set('nb_articles', '1000'); params_n.set('offset', i*1000);
-                urlObj_n.search = params_n.toString();
-                GM_openInTab(urlObj_n.href+"#ScilitBatchDownload", {active: true});
-            }
-        }
-        else {
-            $(".header-results > h4.inline.bold").after(" <a id='ScilitDownload' href=#>[Batch Download Tool]</a>");
-            $("#ScilitDownload").click(function(){
-                let urlObj_n = urlObj, params_n = params;
-                params_n.set('nb_articles', '1000'); params_n.set('offset', 0);
-                urlObj_n.search = params_n.toString();
-                GM_openInTab(urlObj_n.href+"#ScilitBatchInit", {active: true});
-            })
-        }
-    } catch (error){ }}
-
-    // Scilit Batch Download
-//     if (window.location.href.indexOf("www.scilit.net/publications") > -1 && GM_config.get('Hidden_Func')) {try{
-//         if (window.location.href.indexOf("#SBD=") > -1){
-//             let sbdMatch = parseInt(window.location.href.match(/SBD=(\d+)/)[1]);
-//             let sbdeMatch = parseInt(window.location.href.match(/SBDE=(\d+)/)[1]);
-//             waitForKeyElements('main:contains("found")',function(){
-//                 $('button.m-button--secondary:contains("Export"):first').click();
-//                 waitForKeyElements('button:contains("Authors"):first', function(){
-//                     $('button:contains("Authors")').click();
-//                     var clicked1 = 0;
-//                     $('label:contains("Export records:")').click(function(){
-//                         $('div.m-input--filled:contains("From") input').val(sbdMatch)
-//                         $('div.m-input--filled:contains("To") input').val(sbdeMatch)
-//                     });
-//                     setTimeout(function() {
-//  //                       $('label:contains("Authors Having Email")').click();
-//                     }, 300);
-// //                    setTimeout(function() {
-// //                        $('div.m-input--filled:contains("From") input').val(sbdMatch)
-// //                        $('div.m-input--filled:contains("To") input').val(sbdeMatch)
-// //                        $('button.m-button--primary:contains("Export")').click();
-// //                    }, 3000);
-//                 }, true);
-//             }, true);
-//         } else { waitForKeyElements('label:contains("Authors Having Email"):first', function(){
-//             $('button.m-button--secondary:contains("Cancel")').after(` <button id="SBD" class="m-button m-button--md m-button--primary rounded justify-center">批量下载</button>`);
-//             $('button.m-button--secondary:contains("Cancel")').parent().after(` <hr class="text-color-border-default my-6 w-full"><div id="SBD_range" class="m-input common-field m-input--filled common-field--inline" style="display:inline"></div>`);
-//             $("#SBD").click(function(){
-//                 let total = parseInt($("h2:contains('publications found')").text().replace(/,/g,""));
-//                 $("#SBD_range").html(`Batch Download From <input id="SBD_start" type="number" value="1" min=1 autocomplete="off" style="width:6ch; text-align:center;">
-//                 To <input id="SBD_end" type="number" value="${total}" min=1 autocomplete="off" style="width:8ch; text-align:center;"> <button id="SBD_OK" class="m-button m-button--md m-button--primary rounded justify-center">Start</button>
-//                 <p class="text-color-subtlest text-sm mt-2">*Caution: It will open many new tabs during downloading. Please ensure your PC has enough memory.</p>`);
-//                 $("#SBD_OK").click(function(){
-//                     var start = parseInt($("#SBD_start").val());
-//                     var end = parseInt($("#SBD_end").val());
-//                     var maxLimit = Math.min(total, 100000);
-//                     if(start < 1 || end < 1 || start > maxLimit || end > maxLimit || start >= end){
-//                         alert("Error: Please ensure that both FROM and TO are correct, and are less than 100,000.");
-//                     } else {
-//                         var urls = [];
-//                         for(var i = start; i <= end; i += 1000){
-//                             var sbde = Math.min(i + 999, end);
-//                             var url = window.location.href + "#SBD=" + i + "&SBDE=" + sbde;
-//                             GM_openInTab(url, {active: false});
-//                             if(sbde == end){
-//                                 break;
-//                             }
-//                         }
-//                     }
-//                 });
-//             })
-//         });}
-
-//         let urlObj = new URL($("span.nextPage").first().parent().attr("href"), window.location.origin);
-//         let params = new URLSearchParams(urlObj.search);
-//         let page = $('input[name="page"]').last().attr("value");
-//         let totalpage = $('input[name="page"]').last().parent().text().match(/\d+/)[0];
-
-//         if (window.location.href.indexOf("#ScilitBatchDownload") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
-//             $("input.inheritPos").prop("checked",true);
-//             unsafeWindow.$("a[data-action='/api/excel_report/authors']").click();
-//             $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
-//             <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
-//             <p></p><p id=ith_prompt>Downloading ${page} of ${totalpage}</p><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
-//         } else if(window.location.href.indexOf("#ScilitBatchInit") > -1 && window.location.href.indexOf("nb_articles=1000") > -1){
-//             for (let i = 0; i < Math.min(totalpage, 11); i++) {
-//                 let urlObj_n = urlObj, params_n = params;
-//                 params_n.set('nb_articles', '1000'); params_n.set('offset', i*1000);
-//                 urlObj_n.search = params_n.toString();
-//                 GM_openInTab(urlObj_n.href+"#ScilitBatchDownload", {active: true});
-//             }
-//         }
-//         else {
-//             $(".header-results > h4.inline.bold").after(" <a id='ScilitDownload' href=#>[Batch Download Tool]</a>");
-//             $("#ScilitDownload").click(function(){
-//                 let urlObj_n = urlObj, params_n = params;
-//                 params_n.set('nb_articles', '1000'); params_n.set('offset', 0);
-//                 urlObj_n.search = params_n.toString();
-//                 GM_openInTab(urlObj_n.href+"#ScilitBatchInit", {active: true});
-//             })
-//         }
-//     } catch (error){ }}
-
-    // Scilit Scholar Download
-    if (window.location.href.indexOf("www.scilit.net/scholars?") > -1 && GM_config.get('Hidden_Func')) {try{
-        var csvContent = "Email\tName\tH-Index\tUniversity\n";
-        waitForKeyElements("h2:contains(' scholars found')", ExportButton, true);
-        function ExportButton(){
-            $("label:contains('Highlight')").parent().after(" <button id=SynaExport>[Export]</button>");
-            $("#SynaExport").click(SynaExportF);
-        }
-        function SynaExportF(){
-            $(".common-list > li").each(function() {
-                var name = $(this).find("h2").text().trim();
-                var hIndex = $(this).find("span:contains('h-Index')").text().trim().replace("h-Index ","");
-                var university = $(this).find("span:contains('h-Index')").parent().parent().prev().text().trim();
-
-                $(this).find(".email span").each(function() {
-                    var email = $(this).text().trim();
-                    csvContent += `${email}\t${name}\t${hIndex}\t${university}\n`;
-                });
-            });
-            $("body").append(`<div class="blockUI blockOverlay" id="csv-shade" style="z-index: 1000; border: none; margin: 0; padding: 0; width: 100%; height: 100%; top: 0; left: 0; background-color: #000; opacity: 0.6; cursor: wait; position: fixed;"></div>
-                <div class="blockUI blockMsg blockPage" id="csv-popup" style="z-index: 1011; position: fixed; padding: 0; margin: 0; width: 50%; top: 10%; left: 25%; text-align: center; color: #000; border: 3px solid #aaa; background-color: #fff; overflow-y: auto;">
-                <input type="button" value="Close" onclick="document.getElementById('csv-shade').remove(); document.getElementById('csv-popup').remove();" style="margin: 10px; padding: 5px 20px;">
-                <textarea id="csv_content" readonly rows="25" style="width: 90%;">${csvContent}</textarea></div>`);
-            document.getElementById("csv_content").select(); document.execCommand('copy');
-        }
-    } catch (error){ }}
-
     // Scopus Hidden Func
     if (window.location.hostname.indexOf("scopus.com") > -1 && GM_config.get('Hidden_Func')) {try{
         if (window.location.href.indexOf("/results/authorListResults.uri?") + window.location.href.indexOf("/results/coAuthorResults.uri?") > -2){
             $("h1.documentHeader").append(" <a href='#' id='scopus_list'> [Export CSV]</a>");
-            $("#scopus_list").click(function(){
+            $("#scopus_list").on("click", function(){
                 var csvContent = "";
                 $('#srchResultsList tbody tr.searchArea').each(function() {
                     var authorName = $(this).find('.authorResultsNamesCol a').text().trim();
@@ -1753,6 +1943,159 @@ function onInit() {
             }
         }
     } catch (error){ }}
+
+    //send_cfp_form_susy
+    if (window.location.href.indexOf("email/send_cfp_form_susy") > -1 && GM_config.get('Hidden_Func')){try{
+        $(".mailBody").each(function() {
+            let newVal = $(this).val().replace("We suggest compiling a list of potential contributors alongside myself as your MDPI in-house Editor. I will help to ensure that the excel file is formatted correctly and that the appropriate scholars are contacted. ", "");
+            $(this).val(newVal);
+        });
+    } catch (error){ }}
+
+    //Dinner
+    if (window.location.href.indexOf("i.mdpi.cn/team/dinner") > -1 && userNames.some(userName => $("a.nav-link:contains('@mdpi.com')").text().trim().includes(userName + "@mdpi.com"))){try{
+        $('#appbundle_dinner_dinnerRestaurant option:contains("江城快点")').prop('selected', true);
+    } catch (error){ }}
+
+    //Remind_Dinner
+    if (GM_config.get('Remind_Dinner') && window.location.href.indexOf("mdpi.com/") > -1 ){try{
+        let now = new Date();
+        let todayDateString = now.toISOString().slice(0, 10); // 获取YYYY-MM-DD格式的日期字符串
+        let lastDinnerDate = GM_getValue("lastDinnerDate", "");
+        if (todayDateString !== lastDinnerDate) {
+            let start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0, 0); // 13:00
+            let end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 15, 30, 0); // 15:30
+            if (now >= start && now <= end) {
+                GM_xmlhttpRequest({
+                    method: "GET",
+                    url: "https://i.mdpi.cn/team/dinner",
+                    onload: function(response) {
+                        let parser = new DOMParser();
+                        let doc = parser.parseFromString(response.responseText, "text/html");
+                        let inputExists = doc.querySelector('#appbundle_dinner_dish') !== null;
+                        let linkExists = doc.querySelector('a[href="/team/dinner/list/export"]') !== null;
+                        if (!inputExists && linkExists) {
+                            GM_setValue("lastDinnerDate", todayDateString);
+                        } else {
+                            $("body").append(`<div class="blockUI blockOverlay" id=dinner-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
+                                      <div class="blockUI blockMsg blockPage" id=dinner-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:40%;height:20%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
+                                      <p></p><p id=dinner_prompt><a href="https://i.mdpi.cn/team/dinner" target="_blank">亲，今天的晚餐似乎还没有点喔~</a></p><p id=dinner_prompt2>&nbsp;</p>
+                                      <input id="cancelDinnerBtn" type="button" value="不吃晚餐" style="margin:10px;padding:5px 20px"></div>`)
+                            if ([4, 5].includes(new Date().getDay())) {
+                                $("#dinner_prompt2").html(`<a href="https://i.mdpi.cn/team/admin/duty" target="_blank" style="background-color: yellow;">【周末值班嘛？记得点值班午餐！】</a>`);
+                            }
+                            $('#cancelDinnerBtn').on('click', function() {
+                                let userInput = prompt("确认不吃？输入：今天不吃晚餐");
+                                if (userInput === "今天不吃晚餐") { $('#dinner-shade1, #dinner-shade2').remove(); GM_setValue("lastDinnerDate", new Date().toISOString().slice(0, 10)) };
+                            });
+                        }
+                    }
+                });
+            }
+        }
+    } catch (error){ }}
+
+    if (window.location.href.indexOf("susy.mdpi.com/user/settings#reviewer") > -1 ) {
+        $("#container").html(`<div class="quickform"><form><div><fieldset><legend>[Mathematics] Batch Add Reviewers</legend><div><div class="cell small-12 medium-6 large-8"><textarea id="inputArea" rows="10" cols="50"></textarea>
+        <input type="button" value="Start" id="reviewer_button" class="submit"><span id="spinner" style="display: none; vertical-align: middle; margin-left: 10px;"><div class="loader"></div></span><iframe id="processFrame" style="width:100%; height:1500px;" src="about:blank">
+        </iframe></div></div></fieldset></div></form></div>`);
+
+        $("<style type='text/css'> " +
+          ".loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 2s linear infinite; } " +
+          "#spinner { display: inline-flex; align-items: center; } " +
+          "@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } " +
+          "</style>").appendTo("head");
+
+        $("#reviewer_button").on("click", function (){
+            $("#inputArea,#reviewer_button").prop('disabled', true);
+            $("#spinner").show();
+            var lines = $('#inputArea').val().split('\n');
+            var tasks = [];
+            var currentUrl = null;
+            lines.forEach(line => {
+                let urlMatch = /(https:\/\/susy\.mdpi\.com\/user.+|\w+-\d{6,})/.exec(line);
+                if (urlMatch) {
+                    currentUrl = urlMatch[0]; // 当匹配到URL时更新currentUrl
+                }
+                let emailMatch = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(line);
+                if (currentUrl && emailMatch) {
+                    tasks.push({ url: currentUrl, email: emailMatch[0] });
+                }
+            });
+
+            var i = 0;
+            async function loadNextURL() {
+                if (i >= tasks.length) {
+                    $("#inputArea,#reviewer_button").prop('disabled', false);
+                    $("#spinner").hide();
+                    return;
+                }
+
+                function updateFrameAndLoad(url) {
+                    $('#processFrame').on('load', function() {
+                        try {
+                            var iframeDoc = this.contentDocument || this.contentWindow.document;
+                            var cemail = tasks[i].email;
+                            $(iframeDoc).find('#form_email').val(cemail);
+                            $(iframeDoc).find('#nextBtn').trigger('click');
+                            waitForKeyElements('#specialBackBtn', process, true, '#processFrame');
+                            function process(){
+                                if($(iframeDoc).find('#keepRviewer').length > 0) {
+                                    $(iframeDoc).find('#keepRviewer').trigger('click');
+                                    waitForKeyElements('#nextBtn', function(){
+                                        $('#inputArea').val($('#inputArea').val().replace(cemail, "✅"+ cemail));
+                                        setTimeout(loadNextURL, 1000);
+                                    }, true, '#processFrame');
+                                } else {
+                                    $('#inputArea').val($('#inputArea').val().replace(cemail, "❌"+ cemail));
+                                    setTimeout(loadNextURL, 100);
+                                }
+                            }
+                            $('#processFrame').off('load');
+                        } catch (e) {
+                            console.error("Error processing iframe contents:", e);
+                        }
+                        i++;
+                    }).show().attr('src', url);
+                }
+
+                if (!tasks[i].url.startsWith("http")) {
+                    try {
+                        let jsonObject = await $.ajax({
+                            url: "//susy.mdpi.com/ajax/submission_get_manuscripts?term=" + tasks[i].url,
+                            type: 'GET',
+                            dataType: 'json'
+                        });
+                        if (jsonObject[0]) {
+                            tasks[i].url = jsonObject[0].url; // 更新URL
+                            updateFrameAndLoad(tasks[i].url); // 更新iframe的src属性
+                        }
+                        else{
+                            $('#inputArea').val($('#inputArea').val().replace(tasks[i].email, "⛓️‍💥"+ tasks[i].email));
+                            i++;
+                            setTimeout(loadNextURL, 100);
+                        }
+                    } catch (error) {
+                        $('#inputArea').val($('#inputArea').val().replace(tasks[i].email, "⛓️‍💥"+ tasks[i].email));
+                        i++;
+                        setTimeout(loadNextURL, 100);
+                    }
+                } else {
+                    updateFrameAndLoad(tasks[i].url); // 直接加载HTTP URL
+                }
+            }
+            loadNextURL();
+        })
+
+        // Extract query parameter after #
+        const hashDetails = window.location.hash.split('?');
+        if (hashDetails.length > 1) {
+                const decodedReviewerId = decodeURIComponent(hashDetails[1]);
+                $('#inputArea').val(decodedReviewerId);
+                $('#reviewer_button').click();
+        }
+    }
+
     console.timeEnd("test")
 }
 
@@ -1779,7 +2122,7 @@ function SidebarSize() {
     $(".note-list-container").css("padding","0"); $(".note-box-component").css("margin-bottom","10px");
     if ($(".section-note-box .manuscript-note-item-content").height() > 200) {$(".section-note-box .manuscript-note-item-content").height(200).css("overflow-y","auto")}
     if ($(".apc-container .manuscript-note-item-content").height() > 200) {$(".apc-container .manuscript-note-item-content").height(200).css("overflow-y","auto")}
-    if ($('.special-issue-note-box').length > 1) {$(".special-issue-note-box .manuscript-add-note-form").eq(1).prop("rows",20)}
+    if ($('.special-issue-note-box').length > 1) {$(".special-issue-note-box .manuscript-add-note-form").slice(1).prop("rows",22)}
     else if ($('.special-issue-note-box').length > 0) {$(".manuscript-note-box .manuscript-note-item-content").height(200).css("overflow-y","auto")}
 }
 function LineBreak() {
@@ -1837,36 +2180,44 @@ function get_univ(aff) {
     let results = "", color = "", i, len;
     var u_QP = ["tsinghua","peking"];
     var u_QPr =["24 Tsinghua University","25 Peking University"];
-    var u_A = ["shanghai jiao","fudan univ","university of science and technology of china","sci & technol china","zhejiang univ","sun yat-sen","harbin institute","nanjing univ","beijing normal","nankai univ","tongji univ"];
+    var u_A = ["shanghai jiao","fudan univ","university of science and technology of china","sci & technol china","zhejiang univ","sun yat-sen","harbin institute","nanjing univ","beijing normal","nankai univ","tongji univ","wuhan univ","shandong univ","an jiao",
+               "sichuan univ","jilin univ"];
     var u_Ar =["50 Shanghai Jiao Tong University","53 Fudan University","74 University of Science and Technology of China","74 University of Science and Technology of China","89 Zhejiang University","151+ Sun Yat-sen University","151+ Harbin Institute of Technology",
-               "136 Nanjing University","151+ Beijing Normal University","151+ Nankai University","201+ Tongji University"];
-    var u_B = ["beihang univ","an jiao","shandong univ","beijing institute of technology","wuhan univ","shanghai univ","sichuan univ","huazhong university of science","huazhong univ sci ","tianjin univ","east china normal","university of electronic science",
-               "national university of defense technology","central south","xiamen univ","southeast univ","chinese academy of science","beijing jiao","renmin university of","nanjing university of aeronautics","southern university of science","shenzhen univ"];
-    var u_Br =["201+ Beihang University","201+ Xi’an Jiaotong University","251+ Shandong University","201+ Beijing Institute of Technology","151+ Wuhan University","251+ Shanghai University","301+ Sichuan University","251+ Huazhong University of Science and Technology",
-               "251+ Huazhong University of Science and Technology","Tianjin University","East China Normal University","University of Electronic Science and Technology","National University of Defense Technology","Central South University","251+ Xiamen University",
-               "251+ Southeast University","Chinese Academy of Sciences<br>(Please further check its institute and decide)","301+ Beijing Jiaotong University","Renmin University of China","Nanjing University of Aeronautics and Astronautics",
-               "Southern University of Science and Technology","451+ Shenzhen University"];
-    var u_C = ["jilin univ","dalian university of technology","northwestern polytechnical","south china university of","china agricultural univ","lanzhou univ","hunan univ","chongqing univ","northeast normal","zhengzhou univ","university of science and technology beijing",
-               "shanghai university of finance and economics","beijing university of technology","xidian univ","nanchang univ","south china normal","huazhong normal","nanjing normal","shandong university of science","northeastern univ","southwest univ","shaanxi normal",
-               "hunan normal","nanjing university of science","northwest a&f","northwest a f","ocean university of china"];
-    var u_Cr =["Jilin University","Dalian University of Technology","Northwestern Polytechnical University","South China University of Technology","China Agricultural University","Lanzhou University","Hunan University","Chongqing University","Northeast Normal University",
-               "Zhengzhou University","University of Science and Technology Beijing","Shanghai University of Finance and Economics","Beijing University of Technology","Xidian University","Nanchang University","South China Normal University","Huazhong Normal University",
-               "Nanjing Normal University","Shandong University of Science and Technology","Northeastern University","Southwest University","Shaanxi Normal University","Hunan Normal University","Nanjing University of Science and Technology","Northwest A&F University",
-               "Ocean University of China"];
-    var u_D = ["nanjing agr","university of chinese academy","east china university of sci","wuhan university of technology","china university of mining and technology","fuzhou univ","china university of geosciences","china university of petroleum","suzhou univ",
-               "beijing university of chemical technology","jiangsu univ","minzu university of china","central university of finance and economics","mongolian univ","dalian maritime univ","donghua univ","hohai univ","hefei university of technology","huazhong agr",
-               "jinan univ","hainan univ","sichuan agr","guizhou univ","qinghai univ","beijing university of posts","university of international business and economics","china university of political science and law","tianjin med","liaoning univ","harbin engineering univ",
-               "jiangnan univ","southwestern university of finance and economics","yunnan univ","ningxia univ","north china elect","hebei university of technology","yanbian univ","northeast agricultural univ","shanghai international studies univ","anhui univ",
-               "zhongnan university of economics and law","southwest jiao","tibet univ","xinjiang univ","beijing forestry univ","communication university of china","taiyuan university of technology","northeast forestry univ","china pharmaceut","guangxi univ",
-               "northwest univ","changan univ","shihezi univ","zhejiang normal","chongqing normal","capital normal","xiangtan univ","qufu normal","jiangsu normal","guangzhou univ","shandong normal","soochow univ"];
-    var u_Dr =["Nanjing Agricultural University","University of Chinese Academy of Sciences","East China University of Science and Technology","Wuhan University of Technology","China University of Mining and Technology","Fuzhou University","China University of Geosciences",
-               "China University of Petroleum","Soochow University","Beijing University of Chemical Technology","Jiangsu University","Minzu University of China","Central University of Finance and Economics","Mongolian University","Dalian Maritime University",
-               "Donghua University","Hohai University","Hefei University of Technology","Huazhong Agricultural University","Jinan University","Hainan University","Sichuan Agricultural University","Guizhou University","Qinghai University",
-               "Beijing University of Posts and Telecommunications","University of International Business and Economics","China University of Political Science and Law","Tianjin Medical University","Liaoning University","Harbin Engineering University","Jiangnan University",
-               "Southwestern University of Finance and Economics","Yunnan University","Ningxia University","North China Electric Power University","Hebei University of Technology","Yanbian University","Northeast Agricultural University",
-               "Shanghai International Studies University","Anhui University","Zhongnan University of Economics and Law","Southwest Jiaotong University","Tibet University","Xinjiang University","Beijing Forestry University","Communication University of China",
-               "Taiyuan University of Technology","Northeast Forestry University","China Pharmaceutical University","Guangxi University","Northwest University","Changan University","Shihezi University","Zhejiang Normal University","Chongqing Normal University",
-               "Capital Normal University","Xiangtan University","Qufu Normal University","Jiangsu Normal University","GuangZhou University","Shandong Normal University","Soochow University"];
+               "136 Nanjing University","151+ Beijing Normal University","151+ Nankai University","201+ Tongji University","151+ Wuhan University","251+ Shandong University","201+ Xi’an Jiaotong University","301+ Sichuan University","Jilin University"];
+    var u_B = ["beihang univ","beijing institute of technology","shanghai univ","huazhong university of science","huazhong univ sci ","tianjin univ","east china normal","central south","xiamen univ","chinese academy of science","renmin university of",
+               "beijing university of aeronautics","capital normal","northeast normal","lanzhou univ","xiangtan univ","dalian university of technology","south china university of","soochow univ","suzhou univ","chongqing univ","hunan univ","hunan normal","southwest univ",
+               "northwestern polytechnical","institute of applied physics and computational mathematics","institute of computational mathematics and scientific engineering computing","beijing institute of mathematical sciences and applications"];
+    var u_Br =["201+ Beihang University","201+ Beijing Institute of Technology","251+ Shanghai University","251+ Huazhong University of Science and Technology","251+ Huazhong University of Science and Technology","Tianjin University","East China Normal University",
+               "Central South University","251+ Xiamen University","Chinese Academy of Sciences<br>(Please further check its institute and decide)","Renmin University of China","Beijing University of Aeronautics and Astronautics","Capital Normal University",
+               "Northeast Normal University","Lanzhou University","Xiangtan University","Dalian University of Technology","South China University of Technology","Soochow University","Soochow University","Chongqing University","Hunan University","Hunan Normal University",
+               "Southwest University","Northwestern Polytechnical University","Institute of Applied Physics and Computational Mathematics","Institute of Computational Mathematics and Scientific Engineering Computing",
+               "Beijing Institute of Mathematical Sciences and Applications"];
+    var u_C = ["china agricultural univ","zhengzhou univ","university of science and technology beijing","shanghai university of finance","beijing university of technology","xidian univ","nanchang univ","south china normal","huazhong normal","nanjing normal",
+               "shandong university of science","northeastern univ","shaanxi normal","nanjing university of science","northwest a&f","northwest agriculture","ocean university of china","central china normal","fujian normal","northwest normal","xinjiang univ","nanjing agr",
+               "east china university of sci","wuhan university of technology","china university of mining and technology","fuzhou univ","china university of geosciences","china university of petroleum","beijing university of chemical technology","jiangsu univ",
+               "beijing jiao","southeast univ","university of electronic science","southern university of science","central university of finance","dalian maritime univ","hohai univ","hefei university of technology","huazhong agr","jinan univ","hainan univ","guizhou univ",
+               "qinghai univ","beijing university of posts","university of international business","liaoning univ","harbin engineering univ","jiangnan univ","southwestern university of finance","yunnan univ","ningxia univ","north china elect","hebei university of technology",
+               "yanbian univ","anhui univ","zhongnan university of economics and law","southwest jiao","tibet univ","beijing forestry univ","taiyuan university of technology","northeast forestry univ","guangxi univ","northwest univ","changan univ","chang'an univ",
+               "shihezi univ","guangzhou univ","ningbo univ","yangzhou univ","mongolia univ","shanxi univ","donghua univ","henan univ","hubei univ","nanjing university of information science","nanjing univ informat sci","zhejiang sci-tech","shantou univ",
+               "university of shanghai for science","univ shanghai sci","zhejiang university of technology","zhejiang univ technol","changsha university of science","changsha univ sci","qingdao univ","yantai univ","guilin university of electronic technology",
+               "guilin univ elect technol","north china univ water resources","north china university of water resources","nanjing university of posts","nanjing univ posts","westlake univ","nanjing forestry univ","new york university shanghai","nyu shanghai",
+               "duke kunshan univ","guangdong technion-israel","nottingham","wenzhou-kean univ","shenzhen univ","nanjing university of aeronautics"];
+    var u_Cr =["China Agricultural University","Zhengzhou University","University of Science and Technology Beijing","Shanghai University of Finance and Economics","Beijing University of Technology","Xidian University","Nanchang University","South China Normal University",
+               "Huazhong Normal University","Nanjing Normal University","Shandong University of Science and Technology","Northeastern University","Shaanxi Normal University","Nanjing University of Science and Technology","Northwest A&F University","Northwest A&F University",
+               "Ocean University of China","Central China Normal University","Fujian Normal University","Northwest Normal University","Xinjiang University","Nanjing Agricultural University","East China University of Science and Technology","Wuhan University of Technology",
+               "China University of Mining and Technology","Fuzhou University","China University of Geosciences","China University of Petroleum","Beijing University of Chemical Technology","Jiangsu University","301+ Beijing Jiaotong University","251+ Southeast University",
+               "University of Electronic Science and Technology","Southern University of Science and Technology","Central University of Finance and Economics","Dalian Maritime University","Hohai University","Hefei University of Technology","Huazhong Agricultural University",
+               "Jinan University","Hainan University","Guizhou University","Qinghai University","Beijing University of Posts and Telecommunications","University of International Business and Economics","Liaoning University","Harbin Engineering University",
+               "Jiangnan University","Southwestern University of Finance and Economics","Yunnan University","Ningxia University","North China Electric Power University","Hebei University of Technology","Yanbian University","Anhui University","Zhongnan University of Economics",
+               "Southwest Jiaotong University","Tibet University","Beijing Forestry University","Taiyuan University of Technology","Northeast Forestry University","Guangxi University","Northwest University","Changan University","Changan University","Shihezi University",
+               "GuangZhou University","Ningbo Univ","Yangzhou Univ","Mongolia University","Shanxi University","Donghua University","Henan University","Hubei University","Nanjing University of Information Science and Technology",
+               "Nanjing University of Information Science and Technology","Zhejiang Sci-Tech University","Shantou University","University of Shanghai for Science and Technology","University of Shanghai for Science and Technology","Zhejiang University of Technology",
+               "Zhejiang University of Technology","Changsha University of Science and Technology","Changsha University of Science and Technology","Qingdao University","Yantai University","Guilin University of Electronic Technology",
+               "Guilin University of Electronic Technology","North China University of Water Resources and Electric Power","North China University of Water Resources and Electric Power","Nanjing University of Posts and Telecommunications",
+               "Nanjing University of Posts and Telecommunications","Westlake University","Nanjing Forestry University","New York University Shanghai","New York University Shanghai","Duke Kunshan University","Guangdong Technion-Israel Institute of Technology",
+               "University of Nottingham Ningbo China","Wenzhou-Kean University","Shenzhen University","Nanjing University of Aeronautics and Astronautics"];
+    var u_D = ["of hong kong","hong kong university of","of nottingham"];
+    var u_Dr =["Hong Kong","Hong Kong","University of Nottingham"];
     var u_2 = ["king abdulaziz","king abdul aziz","king abdul-aziz","de são paulo","of são paulo","de sao paulo","of sao paulo","de buenos aires","universidad nacional autónoma de méxico","national autonomous university of mexico",
                "indian institute of technology bombay","universidade estadual de campinas","state university of campinas","indian institute of technology delhi","indian institute of technology kanpur","universidad de chile","university of chile",
                "indian institute of science","universiti malaya","university of malaya","indian institute of technology madras"];
@@ -1883,14 +2234,22 @@ function get_univ(aff) {
     aff = aff.toLowerCase();
     for (i = 0, len = u_2.length; i < len ; i++){ if (aff.indexOf(u_2[i]) > -1){results += "<br><span style='background-color:lightblue;font-weight:bold'>Top150: "+u_2r[i]+"</span>"; color="lightblue";break;}}
     for (i = 0, len = u_D.length; i < len ; i++){
-        if (aff.indexOf(u_D[i]) > -1 && (u_D[i].indexOf("of") > -1 || (u_D[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){results += "<br><span style='background-color:thistle;font-weight:bold'>Zone D: "+u_Dr[i]+"</span>"; color="thistle";break;} }
+        if (aff.indexOf(u_D[i]) > -1 && (u_D[i].indexOf("of") > -1 || (u_D[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){
+            results += "<br><span style='background-color:thistle;font-weight:bold'>Rank HK: "+u_Dr[i]+"</span>"; color="thistle";}
+    }
     for (i = 0, len = u_C.length; i < len ; i++){
-        if (aff.indexOf(u_C[i]) > -1 && (u_C[i].indexOf("of") > -1 || (u_C[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){results += "<br><span style='background-color:lightgreen;font-weight:bold'>Zone C: "+u_Cr[i]+"</span>"; color="lightgreen";break;} }
+        if (aff.indexOf(u_C[i]) > -1 && (u_C[i].indexOf("of") > -1 || (u_C[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){
+            results += "<br><span style='background-color:lightgreen;font-weight:bold'>Rank C: "+u_Cr[i]+"</span>"; color="lightgreen";}
+    }
     for (i = 0, len = u_B.length; i < len ; i++){
-        if (aff.indexOf(u_B[i]) > -1 && (u_B[i].indexOf("of") > -1 || (u_B[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){results += "<br><span style='background-color:wheat;font-weight:bold'>Zone B: "+u_Br[i]+"</span>"; color="wheat";break;} }
+        if (aff.indexOf(u_B[i]) > -1 && (u_B[i].indexOf("of") > -1 || (u_B[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){
+            results += "<br><span style='background-color:wheat;font-weight:bold'>Rank B: "+u_Br[i]+"</span>"; color="wheat";}
+    }
     for (i = 0, len = u_A.length; i < len ; i++){
-        if (aff.indexOf(u_A[i]) > -1 && (u_A[i].indexOf("of") > -1 || (u_A[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){results += "<br><span style='background-color:lightblue;font-weight:bold'>Zone A: "+u_Ar[i]+"</span>"; color="lightblue";break;} }
-    for (i = 0, len = u_QP.length; i < len ; i++){ if (aff.indexOf(u_QP[i]) > -1){results += "<br><span style='background-color:cyan;font-weight:bold'>Zone QP: "+u_QPr[i]+"</span>"; color="cyan";}}
+        if (aff.indexOf(u_A[i]) > -1 && (u_A[i].indexOf("of") > -1 || (u_A[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1)) ){
+            results += "<br><span style='background-color:lightblue;font-weight:bold'>Rank A: "+u_Ar[i]+"</span>"; color="lightblue";}
+    }
+    for (i = 0, len = u_QP.length; i < len ; i++){ if (aff.indexOf(u_QP[i]) > -1){results += "<br><span style='background-color:cyan;font-weight:bold'>Rank Top: "+u_QPr[i]+"</span>"; color="cyan";}}
     return {detail: results, color: color};
 }
 
@@ -1904,7 +2263,8 @@ function sf(){
         <textarea id="add_r_t" class="manuscript-add-note-form" placeholder="Example:\nmathematics-11111111\nmathematics-2222222\n\nhttps://www.scopus.com/detail.uri?authorId=333\nhttps://scholar.google.com/citations?user=444\n\naaa@aaa.edu\nbbb@bbb.edu" minlength="1"
         rows="10" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 4px;'></textarea>
         <button id="add_r_b" class="submit" style='background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Submit</button></div></div>`);
-        $("#add_r_b").click(function (){
+        $("#add_r_t").focus();
+        $("#add_r_b").on("click", function (){
             var textContent = $("#add_r_t").val();
             var urlRegex = /(https?:\/\/[^\s]+)/g;
             var emailRegex = /[\w.-]+@[\w.-]+\.\w+/g;
@@ -1932,19 +2292,42 @@ function sf(){
 
 function sk_susie(){
     if($("#add_susie").length){
-        if ($("#add_susie").css("display")=="none") {$("#add_susie").css("display","block")} else {$("#add_susie").css("display","none")}
+        if ($("#add_susie").css("display")=="none") {$("#add_susie").css("display","block");} else {$("#add_susie").css("display","none")}
     } else {
-        $("body").append( `<div id='add_susie' role='dialog' style='position: absolute; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
-        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [for GL]</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
-        onclick='document.getElementById("add_susie").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'><textarea id="add_susie_t" class="manuscript-add-note-form"
-        placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu\nmathematics-yyyyyy\nccc@ccc.edu" minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_susie_b" class="submit">Submit</button></div></div>`);
-        $("#add_susie_b").click(function (){
-            let myArray, add_id, rdline = $("#add_susie_t").val().split("\n");
-            for (var i=0; i < rdline.length; i++){
-                if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
-                if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/build/img/design/susy-logo.png?term="+add_id+"&r="+myArray[0], false)}
-            }
-        })
+        $("body").append( `<div id='add_susie' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
+        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [Ctrl+E] <a href='/user/settings#reviewer' target=_blank>[Full Version]</a></span>
+        <button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close' onclick='document.getElementById("add_susie").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div>
+        <div class='ui-dialog-content ui-widget-content'><textarea id="add_susie_t" class="manuscript-add-note-form" placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu (in USA now)\nhttps://susy.mdpi.com/user/xxxxxxxxxxxx\nccc@ccc.edu ddd@ddd.edu"
+        minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_susie_b" class="submit">Submit</button></div></div>`);
+        $("#add_susie_t").focus();
+        $("#add_susie_b").on("click", function (){
+            let myArray, add_id, emailArray, rdline = $("#add_susie_t").val().split("\n");
+            rdline.forEach((line, index) => {
+                if ((myArray = /(https:\/\/susy\.mdpi\.com\/user.+|\w+-\d{6,})/.exec(line)) !== null) {
+                    add_id = myArray[0];
+                }
+                const emailPattern = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/g;
+                while ((emailArray = emailPattern.exec(line)) !== null) {
+                    if (add_id.startsWith("https://")) {
+                        // 如果 add_id 是网址，则以这种方式构建 URL 并打开
+                        GM_openInTab(add_id + "?r=" + emailArray[0], true);
+                    } else {
+                        // 如果 add_id 是字母数字-数字模式，则以原有方式构建 URL 并打开
+                        GM_openInTab(window.location.origin + "/build/img/design/susy-logo.png?term=" + add_id + "&r=" + emailArray[0], true);
+                    }
+                }
+            });
+        });
+    }
+}
+
+function sk_MyAccountOnly(){
+    let My_Account_Only = GM_config.get('My_Account_Only');
+    let Current_Account = $("#topmenu span:contains('@mdpi.com')").text();
+    if(My_Account_Only.length > 0 && Current_Account != My_Account_Only){
+        $('body').append(`<div id="overlay" style="position: fixed; width: 100%; height: 100%; top: 0px; left: 0px; background: rgba(0, 0, 0, 0.5); z-index: 1000;"></div>
+        <div id="alertBox" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; background: white; border: 1px solid black; z-index: 1001;"><p>You are now using: ${Current_Account}</p><button id="okBtn">[OK]</button></div>`);
+        $('#okBtn').on("click", function() {$('#overlay, #alertBox').remove()});
     }
 }
 
@@ -1990,3 +2373,4 @@ var icon_webs="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9
 var icon_scopus="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB0UlEQVR4nLWTvWtUURDFf3PfXd9LdjessGKMglYB0ahgOhtB0JVgodhaiVhYiWJnI6hY+R8IljYBP1AUjKCInYpgVmJQiIQY1w+St4v7vu5YvHXd4CpI8MCtzszcMzNnZPH0JmUVMKtJ7l9ANX/90IdbUUDTCIwBz0IW/yKyBE1jsGtABM2SLmV"
 + "7g4KdE/jbawDEM49pv7iFJm0KW8bxx2p41c1oOyR6dY/4zSMwtlMgS7EjWykePEd44yxu+ROmsgF1Kf7YAQb3nqR1/yrZk1lMqYoEZRDTq0ARvwQoaeM9bmkB+TKHCUoU952ieecy8dunSCHAhQ1Q8ja7M/AsydxLovoUlRPX8XdMoC7DlNdhSlXSjzNIIch/Nbab3KNAQJXmzQv42/ZTrJ3Bq4wQ1adAvDxRFeSva1RwjvbzScLJ8wzsOYZGTdLGO4LxI7ioha"
 + "YRmrThty2ow6zdSLDrENm3eQZ2HyaefYYLP9O8fZHy0Ut5K/PTmKH1ZF8/EL1+gBjvpwJBvy+jWYodHiWafkjr7hWkEJAt1Fm6dhwXNrDDo5jBIVy4mCsGpHsLqrmRVEEEsT5Ip2l1uZE6LhRbyIe5wkgi+aT7Qcwfuf9wTP+IH7tLvmy5ImEAAAAAAElFTkSuQmCC"
+var icon_retractiondatabase="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQAAAAA3iMLMAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAACxMAAAsTAQCanBgAAAA4SURBVAjXY/jxn+FTPcPy/QxdzQwnuxk4mhme72f4UM/w357h/34Gk/kMCv4Mvf4ME9IZ/n8HIgD7ARTNr5OwGQAAAABJRU5ErkJggg=="
