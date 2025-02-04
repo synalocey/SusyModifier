@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.1.16
+// @version       5.2.4
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -316,30 +316,29 @@ function onInit() {
             $(".menu [href='/voucher/application/list']").after("<div style='float:right;'><a href='//skday.com/task/susylog.php' target=_black>[Log]</a> </div> ");
         }
         if (S_J>0){
-            $(".menu [href='/user/assigned/status/ongoing']").after("<a href='/user/managing/status/published?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.publish_date&sort=DESC'>[P]</a>");
-            $(".menu [href='/user/assigned/status/ongoing']").after(" <a href='/user/managing/status/production?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.last_action&sort=DESC'>[F]</a>");
+            $(".menu [href='/user/assigned/status/ongoing']").after("<a href='/user/managing/status/published?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.publish_date&sort=DESC'>[Pub]</a> ");
+            $(".menu [href='/user/assigned/status/ongoing']").after(" <a href='/user/managing/status/production?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.last_action&sort=DESC'>[Fin]</a> ");
             $(".menu [href='/user/managing/status/submitted']").after(" <a id='owner' href='#'>[Owner]</a>");
             $(".menu [href='/voucher/application/list']").attr("href","/voucher/application/list/my_journal?form[journal_id]=" + S_J);
             $(".menu [href='/user/manage/award_request']").attr("href","/user/manage/award_request?form[journal_id]=" + S_J);
             $(".menu [href='/user/manage/awards_item']").attr("href","/user/manage/awards_item?form[journal_id]=" + S_J);
             $(".menu [href='/si/proposal/list']").attr("href","/si/proposal/list?form[journal_id]=" + S_J);
             $(".menu [href='/list/list_volunteer_reviewers']").attr("href","/list/list_volunteer_reviewers?form[journal_id]=" + S_J);
-            $(".menu [href='/tap/list']").after("<a href='/tap/list/pending/my_journals?form[journal_id]=" + S_J + "'> [J</a>");
+            $(".menu [href='/tap/list']").after("<a href='/tap/list/pending/my_journals?form[journal_id]=" + S_J + "'> [J]</a>");
             $(".menu [href='/topic/proposal/list']").attr("href","/topic/proposal/list?form[journal_id]=" + S_J);
             $(".menu [href='/user/conference/list']").attr("href","/user/conference/list?form[subject_id]=4");
             $(".menu [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
             $(".menu [href='/user/manuscript/list/owner']").attr("href",'/user/manuscript/list/owner/my_journal');
             $(".menu [href='/user/manuscript/special_approval_list']").attr("href",'/user/manuscript/special_approval_list/my_journal');
-            $(".menu [href='/user/list/editors']").after(" <a href='/user/ebm/contract?form[journal_id]=" + S_J + "'>[R]</a>");
             $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a> <a href='/user/public_forum/list?form[journal_id]=" + S_J + "'>[P]</a>");
             $(".menu [href='/publisher/manuscripts']").attr("href","/publisher/manuscripts?form[journal_id]=" + S_J);
         }
-        $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC&page_limit=100'>Special Issues</a> <a href='/user/sme/status/submitted'>[M]</a>");
+        $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC&page_limit=100'>Special Issues</a> <a href='/user/sme/status/submitted'>[MS]</a> ");
         $(".menu [href='/special_issue_pending/list']").text("Manage").attr("href","/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC&page_limit=100")
-        $(".menu [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[M]</a>");
+        $(".menu [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[MS]</a>");
         $(".menu [href='/submission/topic/list']").attr("href","/submission/topic/list/online");
         $(".menu [href='/user/manuscript/approval/manage']").attr("href","/user/manuscript/special_approval_list/my_journal");
-        $(".menu [href='/planned_paper/my/list']").after(" <a href='/planned_paper/my/list?form[submission_topic_id]=-1&form[special_issue_id]=-1'>[R]</a>");
+        $(".menu [href='/planned_paper/my/list']").after(" <a href='/planned_paper/my/list?form[submission_topic_id]=-1&form[special_issue_id]=-1'>[Reg.]</a>");
         $(".menu [href='/user/ebm-new/management']").after(`<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='${icon_magnifier}'></a> </div> `);
 
         $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_webs}'></a></div>`); $("#sf_b").on("click", sf)
@@ -844,25 +843,32 @@ function onInit() {
                     //Always: SI QC QuickAdd
                     let prependContent = GM_getValue("SI_QC", "⭐ - SME按QC要求完成&自己做的其他事情\n✅ - 已做\n❌ - 未做\n————————————————\n$YYYY$.$MM$\nQC comment:\n1. \n2. \nQC 复查意见\n1. \n2. \n⭐ ：xxxx+完成时间\n————————————————");
                     let AddPlace = GM_getValue("SI_QC_AddPlace", "❌ - 未做");
+
                     $("div.special-issue-note-box").last().on("mousedown", function(event) { if (event.which === 2) { // 中键点击
-                        event.preventDefault();
-                        $("body").append(`<div id='si_qc' role='dialog' style='position: fixed; height: 400px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-                        border-radius: 5px; overflow: hidden;'><div style='background-color: #FFA500; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'><span>Note Settings</span><button type='button'
-                        onclick='document.getElementById("si_qc").remove()' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div><div style='padding: 20px;'><textarea id="si_qc_t"
-                        class="manuscript-add-note-form" minlength="1" rows="8" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius:4px;'>${prependContent}</textarea><div style='margin-top: 10px;font-size:14px;'>
-                        Text will append after the location specified below, or at the beginning if not found:</div><input type="text" id="si_qc_addplace" value="${AddPlace}" style='width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;'>
-                        <button id="si_qc_save" class="submit" style='background-color: #FFA500; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Save</button></div></div>`);
-                        $("#si_qc_save").on("click", function (){
-                            prependContent = $("#si_qc_t").val();
-                            AddPlace = $("#si_qc_addplace").val();
-                            GM_setValue("SI_QC", prependContent);
-                            GM_setValue("SI_QC_AddPlace", AddPlace);
-                            $("#si_qc").remove();
-                        });
-                        return false;
+                        event.preventDefault(); createDialog(); return false;
                     }});
+                    $('#qcButton').on('click', AddQCNote).on("dblclick", createDialog)
                     $("div.special-issue-note-box div.note-list-container div.click-to-edit-manuscript").last().on("contextmenu", AddQCNote);
-                    $('#qcButton').on('click', AddQCNote);
+
+                    function createDialog() {
+                        if ($("#si_qc").length == 0) {
+                            var dialogHTML = `<div id='si_qc' role='dialog' style='position: fixed; height: 400px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                            border-radius: 5px; overflow: hidden;'><div style='background-color: #FFA500; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'><span>Note Settings</span><button type='button'
+                            onclick='document.getElementById("si_qc").remove()' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div><div style='padding: 20px;'><textarea id="si_qc_t"
+                            class="manuscript-add-note-form" minlength="1" rows="8" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius:4px;'>${prependContent}</textarea><div style='margin-top: 10px;font-size:
+                            14px;'>Text will append after the location specified below, or at the beginning if not found:</div><input type="text" id="si_qc_addplace" value="${AddPlace}" style='width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc;
+                            border-radius:4px;'><button id="si_qc_save" class="submit" style='background-color: #FFA500; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Save</button></div></div>`;
+                            $("body").append(dialogHTML);
+
+                            $("#si_qc_save").on("click", function() {
+                                prependContent = $("#si_qc_t").val();
+                                AddPlace = $("#si_qc_addplace").val();
+                                GM_setValue("SI_QC", prependContent);
+                                GM_setValue("SI_QC_AddPlace", AddPlace);
+                                $("#si_qc").remove();
+                            });
+                        }
+                    }
 
                     function AddQCNote(event) {
                         event.preventDefault();
