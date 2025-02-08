@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.2.4
+// @version       5.2.7
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -148,8 +148,9 @@
             'Con_TemplateB2': {'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website."},
 
             'Interface_SME': {'section': [GM_config.create('Interface Modification')],'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
-                              ['','Algebra, Geometry and Topology','Computational and Applied Mathematics','Difference and Differential Equations','Dynamical Systems','Engineering Mathematics','Financial Mathematics','Functional Interpolation',
-                               'Fuzzy Sets, Systems and Decision Making','Mathematical Biology','Mathematical Physics','Mathematics and Computer Science','Network Science','Probability and Statistics'], 'default': ''},
+                              ['','A: Algebra and Logic', 'B: Geometry and Topology', 'C: Mathematical Analysis', 'C1: Difference and Differential Equations', 'C2: Dynamical Systems', 'C3: Real Analysis', 'C4: Complex Analysis', 'D: Statistics and Operations Research',
+                               'D1: Probability and Statistics', 'D2: Operations Research and Fuzzy Decision Making', 'E: Applied Mathematics', 'E1: Mathematics and Computer Science', 'E2: Control Theory and Mechanics', 'E3: Mathematical Biology', 'E4: Mathematical Physics',
+                               'E5: Financial Mathematics'], 'default': ''},
             'Journal': {'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics','AppliedMath','Games','Geometry','Mathematics','Risks','IJT','Telecom','None'], 'default': 'Mathematics'},
             'Easy_Journal': {'label': '置顶期刊列表', 'labelPos': 'right', 'type': 'checkbox', 'default': false},
             'Susy_Theme': {'label': 'Change Susy Theme', 'type': 'button', 'click': function() {window.location.href="https://susy.mdpi.com/user/settings"}},
@@ -291,6 +292,23 @@ function onInit() {
 
         S_S=-1;
         if (S_J==154) {switch (GM_config.get('Interface_SME')) {
+            case 'A: Algebra and Logic': S_S=915; break;
+            case 'B: Geometry and Topology': S_S=2629; break;
+            case 'C: Mathematical Analysis': S_S=2630; break;
+            case 'C1: Difference and Differential Equations': S_S=894; break;
+            case 'C2: Dynamical Systems': S_S=891; break;
+            case 'C3: Real Analysis': S_S=2631; break;
+            case 'C4: Complex Analysis': S_S=2632; break;
+            case 'D: Statistics and Operations Research': S_S=2633; break;
+            case 'D1: Probability and Statistics': S_S=916; break;
+            case 'D2: Operations Research and Fuzzy Decision Making': S_S=893; break;
+            case 'E: Applied Mathematics': S_S=892; break;
+            case 'E1: Mathematics and Computer Science': S_S=555; break;
+            case 'E2: Control Theory and Mechanics': S_S=544; break;
+            case 'E3: Mathematical Biology': S_S=545; break;
+            case 'E4: Mathematical Physics': S_S=896; break;
+            case 'E5: Financial Mathematics': S_S=895; break;
+
             case 'Algebra, Geometry and Topology': S_S=915; break;
             case 'Computational and Applied Mathematics': S_S=892; break;
             case 'Difference and Differential Equations': S_S=894; break;
