@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.2.7
+// @version       5.2.9
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1057,7 +1057,7 @@ function onInit() {
             $("#add6th").on("click", sk_add6th); function sk_add6th (zEvent) {
                 $("#eltry").css("display","none"); $("#add6th").css("display","none");
                 $("#guestNextBtn").trigger("click");
-                waitForKeyElements("#specialBackBtn", sk_add6th_check, true);
+                waitForKeyElements("div.colorblack", sk_add6th_check, true);
                 function sk_add6th_check() {
                     $("#specialBackBtn").after(` <input id="process-special-issue-guest-editor" type="submit" value="Force Add" class="submit is-psme-assessment">`);
                 }
@@ -1327,10 +1327,10 @@ function onInit() {
     //Susy CfP
     if (window.location.href.indexOf("/paper_invitations/") > -1){try{
             $('#mailBody').parent().after(`&nbsp;<a id="SpecialDiscount">📉</a>`);
-            $('#SpecialDiscount').on("click", function (){
-                document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/\(20%/g, '(with special').replace(/\nThis invitation entitles you.* after peer review.\n/g,"").replace(/20% discount/g,'*special discount*');
-                document.getElementById('mailSubject').value=document.getElementById('mailSubject').value.replace(/20%/g, 'Special');
-            });
+        $('#SpecialDiscount').on("click", function (){
+            document.getElementById('mailBody').value=document.getElementById('mailBody').value.replace(/\(\d+%/, '(with special').replace(/\nThis invitation entitles you.* after peer review. /g,"\n").replace(/\d+% discount/g,'*special discount*');
+            document.getElementById('mailSubject').value=document.getElementById('mailSubject').value.replace(/\d+%/g, 'Special');
+        });
     } catch (error){ }}
 
     //默认新建EBM位置
