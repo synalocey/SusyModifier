@@ -2,7 +2,7 @@ DOMAIN-SUFFIX,webofknowledge.com
 DOMAIN-SUFFIX,clarivate.com
 DOMAIN-SUFFIX,clarivate.cn
 DOMAIN-SUFFIX,ieee.org
-DOMAIN-SUFFIX,scilit.net
+DOMAIN-KEYWORD,scilit
 DOMAIN-SUFFIX,teams.microsoft.com
 DOMAIN-SUFFIX,login.microsoftonline.com
 # DOMAIN-SUFFIX,mail-internal.mdpi.com
