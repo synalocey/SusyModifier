@@ -40,12 +40,8 @@ DOMAIN-SUFFIX,zte.home
 DOMAIN-SUFFIX,tplogin.cn
 
 # MDPI
-DOMAIN-SUFFIX,i.mdpi.com
 DOMAIN-SUFFIX,mdpi.test
 DOMAIN-SUFFIX,mdpi.intra
-DOMAIN-SUFFIX,mail.mdpi.com
-DOMAIN-SUFFIX,mail-internal.mdpi.com
-DOMAIN-SUFFIX,mdpi.net
 IP-CIDR,188.188.10.88/24,no-resolve
 IP-CIDR,188.188.1.88/24,no-resolve
 
