@@ -1,5 +1,10 @@
 # 直连列表
 
+# SMTP
+DST-PORT,25
+DST-PORT,587
+DST-PORT,465
+
 # MyList
 DOMAIN-SUFFIX,13th.tech
 DOMAIN-SUFFIX,423down.com
