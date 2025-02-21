@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Maths ToolKit
-// @version       4.7.20
+// @version       5.2.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Maths ToolKit
 // @author        Syna
@@ -29,7 +29,7 @@
 
     if (window.location.href.indexOf("susy.mdpi.com/user/settings#math") > -1 ) {
         const date_v = new Date('202'+GM_info.script.version);
-        if ((Date.now() - date_v)/86400000 > 180) {$("#maincol").html("<p>!!! Outdated !!!</p>"); return;}
+        if ((Date.now() - date_v)/86400000 > 360) {$("#maincol").html("<p>!!! Outdated !!!</p>"); return;}
         else {
             $("#maincol").html(`
 <div class="quickform">
