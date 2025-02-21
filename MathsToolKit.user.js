@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Maths ToolKit
-// @version       5.2.20
+// @version       5.2.25
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Maths ToolKit
 // @author        Syna
