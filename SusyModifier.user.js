@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.2.9
+// @version       5.2.21
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -675,7 +675,7 @@ function onInit() {
                                GM_config.get('Template_Paper').replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section).replace(/%name%/g,name[index]) + `"><img src=${icon_mail}></a> `);
             });
 
-            $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=['+ m_journal +'] Manuscript ID: '+ m_id +' - Your Paper is Promoted via Social Media&body=' + GM_config.get('Template_Linkedin')
+            $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=['+ m_journal +'] Manuscript ID: '+ m_id +'&body=' + GM_config.get('Template_Linkedin')
                                                          .replace(/\n/g,"%0A").replace(/"/g,"&quot;").replace(/%m_id%/g,m_id).replace(/%m_section%/g,m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
             if (window.location.href.indexOf("?linkedin") > -1) {$("#linkedin")[0].trigger("click"); history.back();}
             $("[title='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query='+$("[title='Google']").prev().text()+
@@ -2127,7 +2127,7 @@ function onInit() {
             });
 
             var i = 0;
-            async function loadNextURL() {
+            async function loadNextURL(retryCount = 0) {
                 if (i >= tasks.length) {
                     $("#inputArea,#reviewer_button").prop('disabled', false);
                     $("#spinner").hide();
@@ -2135,7 +2135,7 @@ function onInit() {
                 }
 
                 function updateFrameAndLoad(url) {
-                    $('#processFrame').on('load', function() {
+                    $('#processFrame').off('load').on('load', function() {
                         try {
                             var iframeDoc = this.contentDocument || this.contentWindow.document;
                             var cemail = tasks[i].email;
@@ -2145,10 +2145,10 @@ function onInit() {
                             function process(){
                                 if($(iframeDoc).find('#keepRviewer').length > 0) {
                                     $(iframeDoc).find('#keepRviewer').trigger('click');
-                                    waitForKeyElements('#nextBtn', function(){
+                                    setTimeout(waitForKeyElements('#nextBtn:visible', function(){
                                         $('#inputArea').val($('#inputArea').val().replace(cemail, "✅"+ cemail));
                                         setTimeout(loadNextURL, 1000);
-                                    }, true, '#processFrame');
+                                    }, true, '#processFrame'), 1000)
                                 } else {
                                     $('#inputArea').val($('#inputArea').val().replace(cemail, "❌"+ cemail));
                                     setTimeout(loadNextURL, 100);
@@ -2171,17 +2171,26 @@ function onInit() {
                         });
                         if (jsonObject[0]) {
                             tasks[i].url = jsonObject[0].url; // 更新URL
-                            updateFrameAndLoad(tasks[i].url); // 更新iframe的src属性
+                            updateFrameAndLoad(tasks[i].url);
+                        } else {
+                            if (retryCount < 3) {
+                                console.warn(`Retrying AJAX request for ${tasks[i].url} (attempt ${retryCount + 1})`);
+                                setTimeout(() => loadNextURL(retryCount + 1), 1000); // 1秒后重试
+                            } else {
+                                $('#inputArea').val($('#inputArea').val().replace(tasks[i].email, "⛓️‍💥" + tasks[i].email));
+                                i++;
+                                setTimeout(loadNextURL, 100);
+                            }
                         }
-                        else{
-                            $('#inputArea').val($('#inputArea').val().replace(tasks[i].email, "⛓️‍💥"+ tasks[i].email));
+                    } catch (error) {
+                        console.error(`AJAX request failed for ${tasks[i].url}, attempt ${retryCount + 1}`, error);
+                        if (retryCount < 2) {
+                            setTimeout(() => loadNextURL(retryCount + 1), 1000); // 1秒后重试
+                        } else {
+                            $('#inputArea').val($('#inputArea').val().replace(tasks[i].email, "⛓️‍💥" + tasks[i].email));
                             i++;
                             setTimeout(loadNextURL, 100);
                         }
-                    } catch (error) {
-                        $('#inputArea').val($('#inputArea').val().replace(tasks[i].email, "⛓️‍💥"+ tasks[i].email));
-                        i++;
-                        setTimeout(loadNextURL, 100);
                     }
                 } else {
                     updateFrameAndLoad(tasks[i].url); // 直接加载HTTP URL
