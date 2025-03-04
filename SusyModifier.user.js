@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.2.25
+// @version       5.3.3
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -120,7 +120,7 @@
                  'Extend The Deadline', 'Editorial – SI Closed', 'Book Online', 'Check Abstract', 'Monthly Report', 'IF Increased', 'Journal Awards', 'First Publication']
             },
             'Report_Notes': { 'label': '', 'labelPos': 'left', 'type': 'text', 'default': "月报" },
-            'Report_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=] )\\(.* – monthly report" },
+            'Report_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=\\] ).*" },
             'Report_TemplateS2': {
                 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () {\n let $si_name = $('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();\n`
                 + ` return \`Monthly Report (\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – \${$si_name}\`;\n}`
@@ -137,11 +137,11 @@
                 + `do not hesitate to contact us.\n--\nBest regards,\n\`;\n}`
             },
             'PP_Template': { 'section': [], 'label': '修改 PP 提醒模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
-            'PP_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
-            'PP_TemplateS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'PP_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*Special Issue(.*) – Potential Paper" },
+            'PP_TemplateS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (JCR Q1)$1 - Reminder" },
             'PP_TemplateB1': {
                 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
-                "[Regex]A few months ago[\\s\\S]*submit to the Special Issue (.*?)\\.[\\s\\S]*(https:\\/\\/www.mdpi.com\\/journal\\/mathematics\\/special_issues.*)[\\s\\S]*Kind regards,"
+                "[Regex]We hope you are well. [\\s\\S]*submitting a paper to the Special Issue (.*?)\\.[\\s\\S]*(https:\\/\\/www.mdpi.com\\/journal\\/mathematics\\/special_issues.*)[\\s\\S]*Kind regards,"
             },
             'PP_TemplateB2': {
                 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': 'A few months ago, you expressed interest in submitting a paper to our special issue "$1". We would be grateful to have the opportunity to receive it.\n\n$2\n\n'
@@ -191,7 +191,7 @@
         },
         'events': {
             'save': function () { if ($("#SusyModifierConfig").length > 0) { location.reload() }; },
-            'open': function (doc) {
+            'open': function () {
                 var f_settings = $("#SusyModifierConfig").contents();
                 //Experimental警告
                 GM_config.fields.Hidden_Func.node.addEventListener('change', function () {
@@ -201,7 +201,7 @@
                 });
                 //隐藏推广信模板
                 if (!GM_config.get('ManuscriptFunc')) { f_settings.find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").hide() }
-                GM_config.fields.ManuscriptFunc.node.addEventListener('change', function (doc) {
+                GM_config.fields.ManuscriptFunc.node.addEventListener('change', function () {
                     if (f_settings.find("#SusyModifierConfig_field_ManuscriptFunc")[0].checked) { f_settings.find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").show(); }
                     else { f_settings.find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").hide() }
                 });
@@ -211,19 +211,19 @@
                 if (!GM_config.get('Con_Template')) { f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").hide() }
                 if (!GM_config.get('PP_Template')) { f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").hide() }
                 if (!GM_config.get('Interface_combine')) { f_settings.find("#SusyModifierConfig_Topic_TemplateS1_var,#SusyModifierConfig_Topic_TemplateS2_var,#SusyModifierConfig_Topic_TemplateB1_var,#SusyModifierConfig_Topic_TemplateB2_var").hide() }
-                GM_config.fields.Con_Template.node.addEventListener('change', function (doc) {
+                GM_config.fields.Con_Template.node.addEventListener('change', function () {
                     if (f_settings.find("#SusyModifierConfig_field_Con_Template")[0].checked) {
                         f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").show()
                     }
                     else { f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").hide() }
                 });
-                GM_config.fields.PP_Template.node.addEventListener('change', function (doc) {
+                GM_config.fields.PP_Template.node.addEventListener('change', function () {
                     if (f_settings.find("#SusyModifierConfig_field_PP_Template")[0].checked) {
                         f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").show()
                     }
                     else { f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").hide() }
                 });
-                GM_config.fields.Interface_combine.node.addEventListener('change', function (doc) {
+                GM_config.fields.Interface_combine.node.addEventListener('change', function () {
                     if (f_settings.find("#SusyModifierConfig_field_Interface_combine")[0].checked) {
                         f_settings.find("#SusyModifierConfig_Topic_TemplateS1_var,#SusyModifierConfig_Topic_TemplateS2_var,#SusyModifierConfig_Topic_TemplateB1_var,#SusyModifierConfig_Topic_TemplateB2_var").show()
                     }
@@ -231,7 +231,7 @@
                 });
                 //隐藏Section
                 if (GM_config.get('Journal') != "Mathematics") { f_settings.find("#SusyModifierConfig_field_Interface_SME").hide(); }
-                GM_config.fields.Journal.node.addEventListener('change', function (doc) {
+                GM_config.fields.Journal.node.addEventListener('change', function () {
                     if (f_settings.find("#SusyModifierConfig_field_Journal").val() == "Mathematics") {
                         f_settings.find("#SusyModifierConfig_field_Interface_SME").show()
                     }
@@ -256,11 +256,11 @@ function onInit() {
     const date_v = new Date('202' + GM_info.script.version);
     if ((Date.now() - date_v) / 86400000 > 75) { $("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return false; }
     else {
-        $("#topmenu > ul").append(`<li><a id='susymodifier_config'>SusyModifier</a></li>`); $("#susymodifier_config").on("click", function (e) { GM_config.open() });
+        $("#topmenu > ul").append(`<li><a id='susymodifier_config'>SusyModifier</a></li>`); $("#susymodifier_config").on("click", function () { GM_config.open() });
         document.addEventListener('keydown', function (e) {
             if (e.ctrlKey && e.key === 'q') {
                 e.preventDefault();
-                sf();
+                skOpenUrls();
             }
         })
     }
@@ -392,23 +392,23 @@ function onInit() {
             $(".menu [href='/planned_paper/my/list']").after(" <a href='/planned_paper/my/list?form[submission_topic_id]=-1&form[special_issue_id]=-1'>[Reg.]</a>");
             $(".menu [href='/user/ebm-new/management']").after(`<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='${icon_magnifier}'></a> </div> `);
 
-            $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_webs}'></a></div>`); $("#sf_b").on("click", sf)
+            $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_webs}'></a></div>`); $("#sf_b").on("click", skOpenUrls)
 
             $(".menu [href='/user/managing/status/submitted']").attr("href", "/user/managing/status/submitted?form[journal_id]=" + S_J);
             $(".menu [href='/manuscript/quality/check/list']").attr("href", '/manuscript/quality/check/list?form[journal_id]=' + S_J);
             $("#owner").on("click", function () { $.getJSON("/user/ajax/search_manuscript_owner?term=" + $("#topmenu span:contains('@mdpi.com')").text(), function (data) { window.location.href = '/user/managing/status/submitted?form[owner_id]=' + data[0].value }); });
 
             if (GM_config.get('Assign_Assistant')) { //派稿助手
-                $(".menu [href*='/list/list_volunteer_reviewers']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").on("click", sk_susie);
-                document.addEventListener('keydown', function (e) { if (e.ctrlKey && e.key === 'e') { e.preventDefault(); sk_susie(); $("#add_susie_t").val(''); } });
-                document.addEventListener('keydown', function (e) { if (e.ctrlKey && e.key === '3') { e.preventDefault(); sk_susie(); } });
+                $(".menu [href*='/list/list_volunteer_reviewers']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").on("click", skAddReviewers);
+                document.addEventListener('keydown', function (e) { if (e.ctrlKey && e.key === 'e') { e.preventDefault(); skAddReviewers(); $("#add_susie_t").val(''); } });
+                document.addEventListener('keydown', function (e) { if (e.ctrlKey && e.key === '3') { e.preventDefault(); skAddReviewers(); } });
             }
 
             if (GM_config.get('Maths_J')) {
                 $('.submit.show-user-info-btn.user-overview').on("click", function () {
                     waitForKeyElements('.get-unsubscribe-link-btn', function () {
                         $("a:contains('Edit Reviewer')").parent().find('td').each(function () {
-                            let ranking = get_univ($(this).text().trim());
+                            let ranking = skGetUniv($(this).text().trim());
                             if (ranking.color) {
                                 if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
                                 $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
@@ -437,14 +437,14 @@ function onInit() {
     //Manuscript Page 侧边栏紧凑
     if (window.location.href.indexOf(".mdpi.com/") > -1 && window.location.href.indexOf("susy") > -1 && GM_config.get('Manuscriptnote') == true) {
         try {
-            waitForKeyElements(".manuscript-note-box", SidebarSize);
+            waitForKeyElements(".manuscript-note-box", skSidebarSize);
         } catch (error) { }
     }
 
     //GE Invitation✏️ + Quick
     if (window.location.href.indexOf("/invite/guest_editor") > -1) {
         try {
-            sk_MyAccountOnly();
+            skMyAccountOnly();
             unsafeWindow.$(document.getElementById('emailTemplates')).append('<option value>*Guest Editor - SI Mentor Program</option>').trigger("chosen:updated").on("change", function () {
                 if ($("#emailTemplates option:selected").text() == "*Guest Editor - SI Mentor Program") {
                     $.ajax({
@@ -477,8 +477,8 @@ function onInit() {
             $("#emailTemplates > option:contains('" + GM_config.get('GE_TemplateID') + "')").prop('selected', true);
             unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
             function init() {
-                let t1 = RegExptest(GM_config.get('GE_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_TemplateS2'))));
-                let t2 = RegExptest(GM_config.get('GE_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_TemplateB2'))));
+                let t1 = skStringToRegex(GM_config.get('GE_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, skStringToFunction(GM_config.get('GE_TemplateS2'))));
+                let t2 = skStringToRegex(GM_config.get('GE_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, skStringToFunction(GM_config.get('GE_TemplateB2'))));
                 if (window.location.search == "?Q") { setTimeout(function () { $("#sendingEmail").trigger("click") }, 500); }
             }
             waitForText(document.querySelector('#mailSubject'), ' ', init);
@@ -489,18 +489,18 @@ function onInit() {
     //GE Reminder✏️ + Quick
     if (window.location.href.indexOf("/remind/guest_editor") > -1) {
         try {
-            sk_MyAccountOnly();
+            skMyAccountOnly();
             $("#emailTemplates > option:contains('" + GM_config.get('GE_ReminderID') + "')").prop('selected', true);
             unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
             function init() {
-                let t1 = RegExptest(GM_config.get('GE_ReminderS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, Functiontest(GM_config.get('GE_ReminderS2'))));
-                let t2 = RegExptest(GM_config.get('GE_ReminderB1')); $("#mailBody").val($("#mailBody").val().replace(t2, Functiontest(GM_config.get('GE_ReminderB2'))));
+                let t1 = skStringToRegex(GM_config.get('GE_ReminderS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, skStringToFunction(GM_config.get('GE_ReminderS2'))));
+                let t2 = skStringToRegex(GM_config.get('GE_ReminderB1')); $("#mailBody").val($("#mailBody").val().replace(t2, skStringToFunction(GM_config.get('GE_ReminderB2'))));
                 if (window.location.search == "?Q") { setTimeout(function () { $("#sendingEmail").trigger("click") }, 500); }
             }
             waitForText(document.querySelector('#mailSubject'), ' ', init);
 
             $('#mailSubject').parent().after(`<a id="Awaiting"><img src="${icon_pencil}"></a>`);
-            $('#Awaiting').on("click", function (e) { if ($('#mailSubject').val().indexOf("Awaiting Your Reply") == -1) { $('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val()) } });
+            $('#Awaiting').on("click", function () { if ($('#mailSubject').val().indexOf("Awaiting Your Reply") == -1) { $('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val()) } });
             $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
         } catch (error) { }
     }
@@ -513,12 +513,12 @@ function onInit() {
                 document.getElementById('emailTemplates').dispatchEvent(new CustomEvent('change'));
             }
             function init() {
-                let t1 = RegExptest(GM_config.get('EB_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, Functiontest(GM_config.get('EB_TemplateS2'))));
-                let t2 = RegExptest(GM_config.get('EB_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_TemplateB2'))));
+                let t1 = skStringToRegex(GM_config.get('EB_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, skStringToFunction(GM_config.get('EB_TemplateS2'))));
+                let t2 = skStringToRegex(GM_config.get('EB_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, skStringToFunction(GM_config.get('EB_TemplateB2'))));
             }
             waitForText(document.querySelector('#mailSubject'), ' ', init);
             $('#mailSubject').parent().after('<a id="No_Discount">[No Discount]</a>');
-            $('#No_Discount').on("click", function (e) {
+            $('#No_Discount').on("click", function () {
                 $('#mailBody').val($('#mailBody').val().replace(/you will have the opportunity to publish one paper free of charge in .* per year, and can also publish extra papers with special discounts.\n\n/, '').replace(
                     'Additionally, we would like to invite you to publish one paper per year—this will be free of charge once accepted for publication. ', '').replace(/\nPlease click on the following link .*?\nhttp.*?\n/g, ''))
             });
@@ -538,8 +538,8 @@ function onInit() {
 
 
             function init() {
-                let t1 = RegExptest(GM_config.get('EB_ReminderS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, Functiontest(GM_config.get('EB_ReminderS2'))));
-                let t2 = RegExptest(GM_config.get('EB_ReminderB1')); $("#mailBody").val($("#mailBody").val().replace(t2, Functiontest(GM_config.get('EB_ReminderB2'))));
+                let t1 = skStringToRegex(GM_config.get('EB_ReminderS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, skStringToFunction(GM_config.get('EB_ReminderS2'))));
+                let t2 = skStringToRegex(GM_config.get('EB_ReminderB1')); $("#mailBody").val($("#mailBody").val().replace(t2, skStringToFunction(GM_config.get('EB_ReminderB2'))));
             }
             waitForText(document.querySelector('#mailSubject'), ' ', init);
             $('html, body').scrollTop($('#emailTemplates').offset().top);
@@ -556,7 +556,7 @@ function onInit() {
     //GE Monthly Report
     if (window.location.href.indexOf("/email/acknowledge/") > -1) {
         try {
-            sk_MyAccountOnly();
+            skMyAccountOnly();
             $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({ "background-color": "yellow" });
 
             if (window.location.href.indexOf("guest_editor") > -1) {
@@ -567,13 +567,13 @@ function onInit() {
                 unsafeWindow.$(document.getElementById('emailTemplates')).trigger("change");
             }
 
-            let result = "", headers = {};
+            let result = "";
             if (GM_config.get('Report_TemplateB2').indexOf("%pp_list%") > -1) {
                 let SI_Topic_Link = $("#special_issue_id").attr("data-special-issue-id") ? "/special_issue/process/" + $("#special_issue_id").attr("data-special-issue-id") : "/submission/topic/view/" + $("#submission_topic_id").attr("data-topic-id");
                 let counter = 0, xhr = new XMLHttpRequest(); xhr.open('GET', SI_Topic_Link, false); xhr.send();
                 let $form = $($.parseHTML(xhr.responseText)).find('#add-planned-paper-section, #single-planned-paper-form');
                 let emailIndex = 1, statusIndex = 2, sourceIndex = 3, discountIndex = 4, agreedDateIndex = 6;
-                $form.find('table').each(function (index) {
+                $form.find('table').each(function () {
                     $(this).find('thead th').each(function (index) {
                         let text = $(this).text().trim();
                         if (text.indexOf("Email") > -1) { emailIndex = index };
@@ -617,13 +617,13 @@ function onInit() {
                 let GetNoteUrl;
                 if (window.location.href.indexOf("guest_editor") > -1) {
                     GetNoteUrl = "/user/notes_of_special_issue/" + $("#special_issue_id").attr("data-special-issue-id");
-                    let t1 = RegExptest(GM_config.get('Report_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, Functiontest(GM_config.get('Report_TemplateS2'))));
-                    let t2 = RegExptest(GM_config.get('Report_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, Functiontest(GM_config.get('Report_TemplateB2'))));
+                    let t1 = skStringToRegex(GM_config.get('Report_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, skStringToFunction(GM_config.get('Report_TemplateS2'))));
+                    let t2 = skStringToRegex(GM_config.get('Report_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, skStringToFunction(GM_config.get('Report_TemplateB2'))));
                     $("#mailBody").val($("#mailBody").val().replace("%pp_list%", result.trim()));
                 } else {
                     GetNoteUrl = "/submission/topic/show_notes/" + $("#submission_topic_id").attr("data-topic-id");
-                    let t1 = RegExptest(GM_config.get('Topic_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, Functiontest(GM_config.get('Topic_TemplateS2'))));
-                    let t2 = RegExptest(GM_config.get('Topic_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, Functiontest(GM_config.get('Topic_TemplateB2'))));
+                    let t1 = skStringToRegex(GM_config.get('Topic_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, skStringToFunction(GM_config.get('Topic_TemplateS2'))));
+                    let t2 = skStringToRegex(GM_config.get('Topic_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, skStringToFunction(GM_config.get('Topic_TemplateB2'))));
                     $("#mailBody").val($("#mailBody").val().replace("%pp_list%", result.trim()));
                 }
                 $("#maincol").after('<div id="special_issue_note_offcanvas" class="hide-note-offcanvas"></div>');
@@ -634,7 +634,7 @@ function onInit() {
                     if (OtherEmails) { $("#mailTo").val(OtherEmails[1]); $("#mailTo").trigger("focus"); }
                     if (Appellation) { $("#mailBody").val($("#mailBody").val().replace(/(?<=^Dear ).*/, Appellation[1].trim() + ",")) }
                     $("#mailBody").prop('selectionStart', 0).prop('selectionEnd', 0).trigger("focus"); $("#mailTo").trigger("focus");
-                    waitForKeyElements(".special-issue-note-box", SidebarSize);
+                    waitForKeyElements(".special-issue-note-box", skSidebarSize);
                 });
             }
             waitForText(document.querySelector('#mailSubject'), ' ', init);
@@ -729,7 +729,7 @@ function onInit() {
     if (window.location.href.indexOf("/process_form/") + window.location.href.indexOf("/production_form/") > -2) {
         try {
             if (GM_config.get('ManuscriptFunc')) {
-                let Promote = '', email = [], name = [];
+                let email = [], name = [];
                 let m_id = $("#manuscript_id").parent().text().trim();
                 let m_section = $("div.cell.small-12.medium-6.large-2:contains('Section') + div").text().trim();
                 let m_journal = $("div .cell.small-12.medium-6.large-2:contains('Journal')").next().text().trim();
@@ -864,7 +864,7 @@ function onInit() {
 
                 if ([154, 159, 162, 517, 599, 25, 598, 276].includes(S_J)) {
                     $("table [title|='Google Scholar']").each(function () {
-                        let ranking = get_univ($(this).parent().nextAll(":last-child").text().trim());
+                        let ranking = skGetUniv($(this).parent().nextAll(":last-child").text().trim());
                         if (ranking.color) {
                             let markup = $(this).parent().nextAll(":last-child").children("div");
                             markup.css("background-color", ranking.color); markup.attr("title", markup.attr("title") + "<br>" + ranking.detail)
@@ -875,7 +875,7 @@ function onInit() {
             }
 
             //Always QC 换行
-            $('a[data-title="Quality Check"]').on("click", LineBreak);
+            $('a[data-title="Quality Check"]').on("click", skLineBreakForQC);
 
             $('h1').each(function () {
                 if ($(this).text().includes('403 - Permission denied')) {
@@ -890,10 +890,10 @@ function onInit() {
     //特刊列表免翻页⚙️
     if (window.location.href.indexOf(".mdpi.com/special_issue_pending/list") > -1 && !window.location.href.match(/page=(?!1\b)[0-9]+/)) {
         try {
-            sk_MyAccountOnly();
+            skMyAccountOnly();
             if (GM_config.get('SInote')) {
                 waitForKeyElements(".special-issue-note-box", function () {
-                    SidebarSize();
+                    skSidebarSize();
                     $("span.note-title:contains('SI Section Notes')").trigger("click");
                 })
             }
@@ -921,7 +921,7 @@ function onInit() {
     //特刊页面➕按钮、Note
     if (window.location.href.indexOf(".mdpi.com/submission/topic/view") + window.location.href.indexOf(".mdpi.com/special_issue/process") > -2) {
         try {
-            sk_MyAccountOnly();
+            skMyAccountOnly();
             if (window.location.href.indexOf("?pagesection=AddGuestEditor") > -1 && GM_config.get('Hidden_Func')) {
                 if ($("#guestNextBtn").length === 0) {
                     $("#form_email").after(`<input id="process-special-issue-guest-editor" type="submit" value="Force Add (Info must be pre-filled)" class="submit is-psme-assessment">`)
@@ -931,7 +931,7 @@ function onInit() {
                 let done = false;
                 waitForKeyElements(".special-issue-note-box", function () {
                     if (!done) {
-                        SidebarSize();
+                        skSidebarSize();
                         $("span.note-title:contains('SI Section Notes')").trigger("click");
                         $('.fold-note-list').last().before('<button id="qcButton" style="background-color: orange; border: none; color: white; padding: 5px;">Add Note</button>');
 
@@ -1043,8 +1043,8 @@ function onInit() {
                 $("#checkMailsdb").before('<input id=eltry_stop style=display:none type=button class=submit value=Stop><input id=eltry_stopbox style=display:none type=checkbox> ');
                 $("#guestNextBtn").after(' <span id=timesRun style=background-color:#90EE90></span> <input id=eltry style=display:inline-block type=button class=submit value="!AutoRetry"> <input id=add6th style=display:inline-block type=button class=submit value="! Add6th">');
 
-                $("#eltry_stop").on("click", eltry_stop); function eltry_stop(zEvent) { $("#eltry_stopbox").prop('checked', true) };
-                $("#eltry").on("click", sk_eltry); function sk_eltry(zEvent) {
+                $("#eltry_stop").on("click", eltry_stop); function eltry_stop() { $("#eltry_stopbox").prop('checked', true) };
+                $("#eltry").on("click", sk_eltry); function sk_eltry() {
                     $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>`);
                     GM_xmlhttpRequest({
                         method: "GET",
@@ -1061,7 +1061,7 @@ function onInit() {
                 <form onsubmit="return false;"><br>E-Mail <input type="text" id="sk_eltry_email" style="display:inline-block; width:65%;" value="`+ $("#form_email").val() + `" required> <br>Interval <input type="number" id="sk_eltry_interval" min=` + p1 + ` max=10000 step=50
                 style="display:inline-block; width:7em;" value=`+ p1 + ` onkeydown="return false;" required> ms <br>Start Time <input type="time" id="sk_eltry_startt" style="display:inline-block; width:10em;" required><br><input type=submit id=sk_eltry_submit
                 value=Start style="margin:10px;padding:5px 20px"><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></form></div>`)
-                    $("#sk_eltry_submit").on("click", function (e) {
+                    $("#sk_eltry_submit").on("click", function () {
                         var eltry_email = $("#sk_eltry_email").val();
                         var interval_time = $("#sk_eltry_interval").val();
                         let today = new Date();
@@ -1114,12 +1114,12 @@ function onInit() {
                             if (!window.Notification) { console.log('Notification is not supported by Broswer!'); }
                             else {
                                 if (Notification.permission === 'granted') {
-                                    var notification = new Notification(title, options); notification.onclick = e => { };
+                                    var notification = new Notification(title, options); notification.onclick = () => { };
                                 } else if (Notification.permission === 'default') {
                                     Notification.requestPermission().then(permission => {
                                         if (permission === 'granted') {
                                             console.log('Notification is granted by User!');
-                                            var notification = new Notification(title, options); notification.onclick = e => { };
+                                            var notification = new Notification(title, options); notification.onclick = () => { };
                                         } else if (permission === 'default') {
                                             console.warn('Notification is not granted or denied. Let us try again!');
                                         } else {
@@ -1133,7 +1133,7 @@ function onInit() {
                     });
                 }
 
-                $("#add6th").on("click", sk_add6th); function sk_add6th(zEvent) {
+                $("#add6th").on("click", sk_add6th); function sk_add6th() {
                     $("#eltry").css("display", "none"); $("#add6th").css("display", "none");
                     $("#guestNextBtn").trigger("click");
                     waitForKeyElements("div.colorblack", sk_add6th_check, true);
@@ -1145,8 +1145,8 @@ function onInit() {
 
             Quick_InviteRemind($("a[href^='/email/invite/guest_editor/']")); Quick_InviteRemind($("a[href^='/email/remind/guest_editor/']"));
             function Quick_InviteRemind(param) { param.each(function () { $(this).after(" (<a href='" + $(this).attr("href") + "?Q'>Quick</a>)") }) }
-            $('a[data-title="Extend Deadline"]').on("click", function (e) { waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly() { $("#form_deadline").attr("readonly", false) }; })
-            $('a[data-title="Change special issue deadline"]').on("click", function (e) { waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2() { $("#form_date").attr("readonly", false) }; })
+            $('a[data-title="Extend Deadline"]').on("click", function () { waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly() { $("#form_deadline").attr("readonly", false) }; })
+            $('a[data-title="Change special issue deadline"]').on("click", function () { waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2() { $("#form_date").attr("readonly", false) }; })
             $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({ "background-color": "yellow" });
             $("#form_checklist_1").before("<input id='select_all' type='button' value='[Select All]'><br>"); $("#select_all").on("click", function () {
                 $("#si-cfp-form [type=\'checkbox\']").prop("checked", true); if ($("#form_template_id").val() == 1) { $("#form_template_id").val(2) }; if ($("#form_comments").val() == "") { $("#form_comments").val("Thank you.") }
@@ -1208,7 +1208,7 @@ function onInit() {
                                 <div class="blockUI blockMsg blockPage" id=links-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:50%;top:5%;height:90%;left:25%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
                                 <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><textarea id=links_prompt rows=30>`+ emailLinks.join('\n') +
                                      `</textarea><input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
-                    $("#links_prompt").select(); document.execCommand('copy');
+                    $("#links_prompt").select(); navigator.clipboard.writeText($("#links_prompt").val());
                 })
 
                 // Send to Website Editor Button
@@ -1223,7 +1223,7 @@ function onInit() {
                 $("a.display_present_editor").on("click", function () {
                     waitForKeyElements('span:contains("Guest Editor Information"):visible', function () {
                         $('span:contains("Guest Editor Information"):visible').parent().parent().find("div.cell.small-12").each(function () {
-                            let ranking = get_univ($(this).text().trim());
+                            let ranking = skGetUniv($(this).text().trim());
                             if (ranking.color) {
                                 if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
                                 $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
@@ -1237,14 +1237,14 @@ function onInit() {
                         $('#checkMailsdb').parent().find("br").each(function () {
                             var nextNode = this.nextSibling;
                             if (nextNode && nextNode.nodeType === 3 && nextNode.nodeValue.includes('Affiliation:')) {
-                                let ranking = get_univ($(nextNode).text().trim());
+                                let ranking = skGetUniv($(nextNode).text().trim());
                                 if (ranking.color) {
                                     if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
                                     $(nextNode).replaceWith($('<span>').text(nextNode.nodeValue).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                                             .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' }));
                                 }
                             }
-                            let ranking = get_univ($(this).text().trim());
+                            let ranking = skGetUniv($(this).text().trim());
                             if (ranking.color) {
                                 if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
                                 $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
@@ -1267,8 +1267,8 @@ function onInit() {
 
             $("#s_key").val($("#sq_101i").val().replace(" and ", "\n")); $("#s_key_submit").on("click", fc_fill);
             function fc_fill() {
-                let keywords = $("#s_key").val().split(/[.:;,|\n/\\]+/), keyword_num = keywords.length, url1 = "https://finder.susy.mdpi.com/topic/special_issue?", n_closed, n_open, n_pending, j_open, n_wos, n_wos_m, wss_fin, conclusion = 0;
-                let fc_journal_name = $("h4:contains('Journal:')").find("i").text(); let fc_j_id = get_jid(fc_journal_name.toLowerCase());
+                let keywords = $("#s_key").val().split(/[.:;,|\n/\\]+/), keyword_num = keywords.length, url1 = "https://finder.susy.mdpi.com/topic/special_issue?", n_closed, n_open, n_pending, j_open, n_wos, n_wos_m, conclusion = 0;
+                let fc_journal_name = $("h4:contains('Journal:')").find("i").text(); let fc_j_id = skGetJid(fc_journal_name.toLowerCase());
                 let WOS_Category = "";
                 for (let i = 0; i < keyword_num; i++) { url1 = url1 + "fields[keywords][" + i + "]=" + keywords[i] + "&fields[operators][" + i + "]=" + $("#finder_o").val() + "&" }
                 url1 = encodeURI(url1.slice(0, -1));
@@ -1344,7 +1344,7 @@ function onInit() {
                     if (data.indexOf('"key":"COMPLETE"') > -1) { ws.close(); }
                     if (data.indexOf('{"QueryID":') > -1) { QID = data.match(/"QueryID":"(.*?)",/).pop(); n_wos = data.match(/"RecordsFound":(.*?),"/).pop(); }
                     if (data.indexOf('"Key":"TASCA') > -1) {
-                        $.each(JSON.parse(data).payload['TASCA.Value.6'].Values, function (index, item) { WOS_Category = WOS_Category + "• " + item.Key + ": " + item.Value + "; " });
+                        $.each(JSON.parse(data).payload['TASCA.Value.6'].Values, function (_, item) { WOS_Category = WOS_Category + "• " + item.Key + ": " + item.Value + "; " });
                         WOS_Category = WOS_Category.replace(/TASCA./g, "").toLowerCase().replace(/(?:^|\s)\w/g, function (match) { return match.toUpperCase(); });
                     }
                     console.log(data)
@@ -1414,7 +1414,7 @@ function onInit() {
                     (async () => {
                         $('#form_name, input[value="Edit"], input[value="Add"]').prop("disabled", true);
                         var result = "";
-                        let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($("#form_name").val()) + "&preserveAllCaps=true&styleC=true");
+                        let response = await skGMFetchGet("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($("#form_name").val()) + "&preserveAllCaps=true&styleC=true");
                         let jsonarray = JSON.parse(response.responseText);
                         jsonarray[0].title.forEach(element => { result = result + element.joint + element.word });
                         $("#form_name").val(result);
@@ -1482,8 +1482,8 @@ function onInit() {
     if (window.location.href.indexOf("mdpi.com/user/send/conference_journal/contact_mail") > -1 && GM_config.get('Con_Template')) {
         try {
             function init() {
-                let t1 = RegExptest(GM_config.get('Con_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, GM_config.get('Con_TemplateS2')));
-                let t2 = RegExptest(GM_config.get('Con_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, GM_config.get('Con_TemplateB2')));
+                let t1 = skStringToRegex(GM_config.get('Con_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, GM_config.get('Con_TemplateS2')));
+                let t2 = skStringToRegex(GM_config.get('Con_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, GM_config.get('Con_TemplateB2')));
             }
             waitForText(document.querySelector('#mailSubject'), ' ', init);
             $('#mailSubject').parent().after('<div><a id="First_Line">[First Line]</a><br><br><a id="Del_Proceedings">[Del Proceedings]</a></div>');
@@ -1497,8 +1497,8 @@ function onInit() {
         try {
             unsafeWindow.$("#emailTemplates > option:contains('Follow up on Interested Authors')").prop('selected', true).trigger("change");
             function init() {
-                let t1 = RegExptest(GM_config.get('PP_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, GM_config.get('PP_TemplateS2')));
-                let t2 = RegExptest(GM_config.get('PP_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, GM_config.get('PP_TemplateB2')));
+                let t1 = skStringToRegex(GM_config.get('PP_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, GM_config.get('PP_TemplateS2')));
+                let t2 = skStringToRegex(GM_config.get('PP_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, GM_config.get('PP_TemplateB2')));
             }
             waitForText(document.querySelector('#mailSubject'), ' ', init, 1000);
             $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
@@ -1546,14 +1546,14 @@ function onInit() {
                                      + `]&f[]=&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&group_by=&per_page=100'>[EC]</a>`)
             //Checker功能和检测函数
             $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").on("click", sk_cfpcheck_func);
-            function sk_cfpcheck_func(zEvent) {
+            function sk_cfpcheck_func() {
                 let Today = new Date();
                 $("#issue_pe_note").val($("#issue_pe_note").val() + "--- Checked on " + Today.getFullYear() + "-" + (Today.getMonth() + 1) + "-" + Today.getDate() + " ---\n");
                 if ($(".subject").eq(0).text().indexOf(GM_config.get('Journal')) == -1) { $("#issue_pe_note").val($("#issue_pe_note").val() + "🚨 Cannot find [Journal Name]\n") }
 
                 (async () => {
                     var result = "";
-                    let response = await p_get("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($(".subject").eq(0).text().trim()) + "&preserveAllCaps=true&styleC=true");
+                    let response = await skGMFetchGet("https://titlecaseconverter.com/tcc/?title=" + encodeURIComponent($(".subject").eq(0).text().trim()) + "&preserveAllCaps=true&styleC=true");
                     let jsonarray = JSON.parse(response.responseText);
                     jsonarray[0].title.forEach(element => { result = result + element.joint + element.word });
                     if (result.match(/[a-zA-Z]*/g).join("") != $(".subject").eq(0).text().match(/[a-zA-Z]*/g).join("")) { $("#issue_pe_note").val($("#issue_pe_note").val() + "🚨 TitleCase Is Inconsistent with Chicago Style: " + result.trim() + "\n") }
@@ -1637,10 +1637,10 @@ function onInit() {
                     onload: function (responseDetails) {
                         var $jQueryObject = $($.parseHTML(responseDetails.responseText.replace(/href="\//g, "href=\"//susy.mdpi.com/").replace(/ data-url=/g, ' href=').replace(/ data-load-url=/g, ' href=').replace(/<h1>[\s\S]*<\/h1>/g, '')));
                         $("#d2").html($jQueryObject);
-                        $("[title='Generate unsubscribe link']").each(function (e) {
+                        $("[title='Generate unsubscribe link']").each(function () {
                             $(this).attr("href", "//scholar.google.com/scholar?hl=en&q=" + $(this).attr('data-email')).attr("target", "_blank").text("").append('<img width="20px" height="20px" src="//www.google.com/favicon.ico">')
                         });
-                        $("a:contains('Edit Reviewer')").each(function (e) {
+                        $("a:contains('Edit Reviewer')").each(function () {
                             let full_name = $(this).prev("b").text(), first_name = full_name.split(" ")[0], last_name = full_name.split(" ").pop();
                             $(this).after(` <a href="//susy.mdpi.com/user/reviewer/checking/a5ce29b8b4917729fc1dc44abf2fc686?email=` + $("[title='Generate unsubscribe link']").attr('data-email') + `" target="_blank">
                         <img width=20px height=20px src="//susy.mdpi.com/build/img/design/susy-logo.png"></a> <a href="//scholar.google.com/scholar?hl=en&q=` + full_name + `" target=_blank><img width=20px height=20px src="//www.google.com/favicon.ico"></a>
@@ -1650,7 +1650,7 @@ function onInit() {
                         if ($jQueryObject.find("a:contains('Edit Reviewer')").length) {
                             let ReviewerHistory = $jQueryObject.find("a:contains('Edit Reviewer')").attr("href").replace('//susy.mdpi.com/reivewer/managment/edit', 'https://susy.mdpi.com/list/reviewer/invitations-history');
                             $jQueryObject.find("a:contains('Edit Reviewer')").parent().find('td').each(function () {
-                                let ranking = get_univ($(this).text().trim());
+                                let ranking = skGetUniv($(this).text().trim());
                                 if (ranking.color) {
                                     if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
                                     $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
@@ -1697,7 +1697,7 @@ function onInit() {
                     $("body").append(responseDetails.responseText.replace(/href="\//g, "href=\"//susy.mdpi.com/"));
                 }
             });
-            function getUrlParam(name) { var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); var r = window.location.search.substr(1).match(reg); if (r != null) { return decodeURI(r[2]); } return null; }
+            function getUrlParam(name) { var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); var r = window.location.search.slice(1).match(reg); if (r != null) { return decodeURI(r[2]); } return null; }
             $(".morphNotes").first().before(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') + "'><img style='vertical-align: middle;' width=20px height=20px src='https://www.google.com/favicon.ico'></a> ");
             $("a:contains('see more')").attr('href', $("a:contains('see more')").attr('data-uri'));
         } catch (error) { }
@@ -1711,7 +1711,7 @@ function onInit() {
                     $(this).html($(this).html().replace(/\n/g, '<br>\n'));
                 });
             }
-            $('a[data-title="Quality Check"]').on("click", LineBreak);
+            $('a[data-title="Quality Check"]').on("click", skLineBreakForQC);
         } catch (error) { }
     }
 
@@ -1802,7 +1802,7 @@ function onInit() {
     //Always: MRS Chosen
     if (window.location.href.indexOf("//mrs.mdpi.com/statistics") > -1) {
         try {
-            let styleElement = document.createElement("style"); styleElement.type = "text/css";
+            let styleElement = document.createElement("style");
             styleElement.innerHTML = `.chosen-container{position:relative;display:inline-block;vertical-align:middle;font-size:13px;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.chosen-container *{-webkit-box-sizing:border-box;
         box-sizing:border-box}.chosen-container .chosen-drop{position:absolute;top:100%;z-index:1010;width:100%;border:1px solid #aaa;border-top:0;background:#fff;-webkit-box-shadow:0 4px 5px rgba(0,0,0,.15);box-shadow:0 4px 5px rgba(0,0,0,.15);clip:rect(0,0,0,0);
         -webkit-clip-path:inset(100% 100%);clip-path:inset(100% 100%)}.chosen-container.chosen-with-drop .chosen-drop{clip:auto;-webkit-clip-path:none;clip-path:none}.chosen-container a{cursor:pointer}.chosen-container .chosen-single .group-name,.chosen-container
@@ -1963,7 +1963,7 @@ function onInit() {
         try {
             waitForKeyElements("#field-form_emails", ObserveEmail, false); function ObserveEmail() {
                 let targetNode = document.getElementById('field-form_emails');
-                let observer = new MutationObserver(function (mutations) {
+                let observer = new MutationObserver(function () {
                     if ($("#field-form_emails:contains('[Edit]')").length) { return; }
                     $("#field-form_emails fieldset>div:contains('Name:')").children().last().append("<a id='update_reviewer'>[Edit]</a>");
                     $("#update_reviewer").on("click", function () {
@@ -2010,7 +2010,7 @@ function onInit() {
         try {
             $('head').append(css_tooltipster);
             $("td").each(function () {
-                let ranking = get_univ($(this).text().trim());
+                let ranking = skGetUniv($(this).text().trim());
                 if (ranking.color) {
                     $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                         .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
@@ -2046,7 +2046,7 @@ function onInit() {
                 waitForKeyElements("div[data-component='document-source'],div[data-testid='author-list']+span", function () {
                     mark_journals();
                     $('span[data-testid="authorInstitution"]').each(function () {
-                        let ranking = get_univ($(this).text().trim());
+                        let ranking = skGetUniv($(this).text().trim());
                         if (ranking.color) {
                             if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
                             $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
@@ -2058,15 +2058,15 @@ function onInit() {
                 mark_journals();
                 $("#gsc_bpf_more").on("click", function () {
                     let targetNode = document.querySelector('#gsc_a_nn')
-                    let observer = new MutationObserver(function (mutations) { mark_journals() });
+                    let observer = new MutationObserver(function () { mark_journals() });
                     observer.observe(targetNode, { characterData: true, childList: true, subtree: true });
                 })
                 $("div.gsc_prf_il").each(function () {
-                    let ranking = get_univ($(this).text().trim());
+                    let ranking = skGetUniv($(this).text().trim());
                     if (ranking.color) {
                         if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
-                        let markup = $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
-                        .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
+                        $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
+                            .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                     }
                 });
             };
@@ -2133,7 +2133,7 @@ function onInit() {
                     }
                 }
             });
-            $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align", "center").on("bind", "contextmenu", function (e) { return false; }).each(function () {
+            $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align", "center").on("bind", "contextmenu", function () { return false; }).each(function () {
                 $(this).append("<a class='sk_reject' style='font-style:italic' href='//susy.mdpi.com/user/assigned/reject-manuscript/" + $(this).parents("tr").find("td:nth-child(4) >> a").attr("href").split("/").pop() + "'>[Reject]</a>");
             });
             $(".sk_reject").on('mouseup', function (e) {
@@ -2173,7 +2173,7 @@ function onInit() {
             function ForceAddR() {
                 $("#specialBackBtn").after(' <a type="button" id="ForceAddR" value="[ForceAddR]" class="submit">　　　</a>')
                 $("#ForceAddR").on("click", function () {
-                    let counter = 0; $("#ForceAddR").hide(); $("#addReviewerForm").show();
+                    $("#ForceAddR").hide(); $("#addReviewerForm").show();
                     //                 $('#submitBtn_check').parent().parent().parent().parent().parent().parent().on('submit', function(e){
                     //                     e.preventDefault();
                     //                     var formData = $(this).serialize();
@@ -2437,17 +2437,17 @@ function waitForText(element, text, callback, freq) {
     }
 }
 
-function p_get(url) { return new Promise(resolve => { GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve }); }) };
-function RegExptest(str) { if (str.indexOf("[Regex]") == 0) { return RegExp(str.substring(7), "g"); } else { return str } };
-function Functiontest(str) { if (str.indexOf("function ") == 0) { let funcTest = new Function('return ' + str); return funcTest(); } else { return str } };
-function SidebarSize() {
+function skGMFetchGet(url) { return new Promise(resolve => { GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve }); }) };
+function skStringToRegex(str) { if (str.startsWith("[Regex]")) { return RegExp(str.substring(7), "g"); } else { return str } };
+function skStringToFunction(str) { if (str.indexOf("function ") == 0) { let funcTest = new Function('return ' + str); return funcTest(); } else { return str } };
+function skSidebarSize() {
     $(".note-list-container").css("padding", "0"); $(".note-box-component").css("margin-bottom", "10px");
     if ($(".section-note-box .manuscript-note-item-content").height() || 0 > 200) { $(".section-note-box .manuscript-note-item-content").height(200).css("overflow-y", "auto") }
     if ($(".apc-container .manuscript-note-item-content").height() || 0 > 200) { $(".apc-container .manuscript-note-item-content").height(200).css("overflow-y", "auto") }
     if ($('.special-issue-note-box').length > 1) { $(".special-issue-note-box .manuscript-add-note-form").slice(1).prop("rows", 22) }
     else if ($('.special-issue-note-box').length > 0) { $(".manuscript-note-box .manuscript-note-item-content").height(200).css("overflow-y", "auto") }
 }
-function LineBreak() {
+function skLineBreakForQC() {
     $("span:contains('Quality Check')").text("QC");
     //    waitForText(document.querySelector('span:contains("Quality Check")'), 'Quality Check', LineBreak2);
     waitForKeyElements("div.ui-widget-overlay.ui-front", LineBreak2, true);
@@ -2457,7 +2457,7 @@ function LineBreak() {
     }
 }
 
-function get_jid(sysname) {const journalMap = [
+function skGetJid(sysname) {const journalMap = [
     {id:"250",j:"acoustics"},{id:"77",j:"actuators"},{id:"88",j:"admsci"},{id:"437",j:"adolescents"},{id:"573",j:"arm"},{id:"145",j:"aerospace"},{id:"95",j:"agriculture"},{id:"336",j:"agriengineering"},{id:"554",j:"agrochemicals"},{id:"34",j:"agronomy"},
     {id:"557",j:"air"},{id:"13",j:"algorithms"},{id:"210",j:"allergies"},{id:"524",j:"alloys"},{id:"285",j:"analytica"},{id:"555",j:"analytics"},{id:"552",j:"anatomia"},{id:"570",j:"anesthesia"},{id:"74",j:"animals"},{id:"116",j:"antibiotics"},{id:"40",j:"antibodies"},
     {id:"75",j:"antioxidants"},{id:"534",j:"applbiosci"},{id:"341",j:"applmech"},{id:"456",j:"applmicrobiol"},{id:"390",j:"applnano"},{id:"90",j:"applsci"},{id:"302",j:"asi"},{id:"480",j:"appliedchem"},{id:"517",j:"appliedmath"},{id:"335",j:"aquacj"},
@@ -2497,9 +2497,9 @@ function get_jid(sysname) {const journalMap = [
     {id:"489",j:"tomography"},{id:"378",j:"tourismhosp"},{id:"171",j:"toxics"},{id:"21",j:"toxins"},{id:"352",j:"transplantology"},{id:"502",j:"traumacare"},{id:"567",j:"higheredu"},{id:"230",j:"tropicalmed"},{id:"133",j:"universe"},{id:"228",j:"urbansci"},
     {id:"403",j:"uro"},{id:"76",j:"vaccines"},{id:"291",j:"vehicles"},{id:"490",j:"venereology"},{id:"178",j:"vetsci"},{id:"269",j:"vibration"},{id:"553",j:"virtualworlds"},{id:"8",j:"viruses"},{id:"223",j:"vision"},{id:"530",j:"waste"},{id:"36",j:"water"},
     {id:"504",j:"wind"},{id:"349",j:"women"},{id:"377",j:"world"},{id:"354",j:"wevj"},{id:"519",j:"youth"},{id:"362",j:"ai"},{id:"541",j:"zoonoticdis"}];
-                           const journal = journalMap.find(b => b.j === sysname); return journal ? journal.id : 0;}
+                            const journal = journalMap.find(b => b.j === sysname); return journal ? journal.id : 0;}
 
-function get_univ(aff) {
+function skGetUniv(aff) {
     let results = "", color = "", i, len;
     var u_QP = ["tsinghua", "peking", "北京大学", "清华大学"];
     var u_QPr = ["24 Tsinghua University", "25 Peking University", "北京大学", "清华大学"];
@@ -2593,7 +2593,7 @@ function get_univ(aff) {
     return { detail: results, color: color };
 }
 
-function sf() {
+function skOpenUrls() {
     if ($("#add_r").length) {
         if ($("#add_r").css("display") == "none") { $("#add_r").css("display", "block") } else { $("#add_r").css("display", "none") }
     } else {
@@ -2630,7 +2630,7 @@ function sf() {
     }
 }
 
-function sk_susie() {
+function skAddReviewers() {
     if ($("#add_susie").length) {
         if ($("#add_susie").css("display") == "none") { $("#add_susie").css("display", "block"); } else { $("#add_susie").css("display", "none") }
     } else {
@@ -2642,7 +2642,7 @@ function sk_susie() {
         $("#add_susie_t").trigger("focus");
         $("#add_susie_b").on("click", function () {
             let myArray, add_id, emailArray, rdline = String($("#add_susie_t").val()).split("\n");
-            rdline.forEach((line, index) => {
+            rdline.forEach((line, _) => {
                 if ((myArray = /(https:\/\/susy\.mdpi\.com\/user.+|\w+-\d{6,})/.exec(line)) !== null) {
                     add_id = myArray[0];
                 }
@@ -2661,7 +2661,7 @@ function sk_susie() {
     }
 }
 
-function sk_MyAccountOnly() {
+function skMyAccountOnly() {
     let My_Account_Only = String(GM_config.get('My_Account_Only'));
     let Current_Account = $("#topmenu span:contains('@mdpi.com')").text();
     if (My_Account_Only.length > 0 && Current_Account != My_Account_Only) {
