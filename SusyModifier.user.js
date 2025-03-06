@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.3.3
+// @version       5.3.5
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -45,6 +45,7 @@
 // @grant         GM.setValue
 // @grant         GM_xmlhttpRequest
 // @grant         GM_openInTab
+// @grant         GM_addStyle
 // @connect       mdpi.com
 // @connect       i.mdpi.cn
 // @connect       titlecaseconverter.com
@@ -410,7 +411,7 @@ function onInit() {
                         $("a:contains('Edit Reviewer')").parent().find('td').each(function () {
                             let ranking = skGetUniv($(this).text().trim());
                             if (ranking.color) {
-                                if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
+                                if (!$('#tooltipster-style').length) { addCssTooltipster() }
                                 $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                     .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                             }
@@ -1225,7 +1226,7 @@ function onInit() {
                         $('span:contains("Guest Editor Information"):visible').parent().parent().find("div.cell.small-12").each(function () {
                             let ranking = skGetUniv($(this).text().trim());
                             if (ranking.color) {
-                                if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
+                                if (!$('#tooltipster-style').length) { addCssTooltipster() }
                                 $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                     .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                             }
@@ -1239,14 +1240,14 @@ function onInit() {
                             if (nextNode && nextNode.nodeType === 3 && nextNode.nodeValue.includes('Affiliation:')) {
                                 let ranking = skGetUniv($(nextNode).text().trim());
                                 if (ranking.color) {
-                                    if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
+                                    if (!$('#tooltipster-style').length) { addCssTooltipster() }
                                     $(nextNode).replaceWith($('<span>').text(nextNode.nodeValue).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                                             .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' }));
                                 }
                             }
                             let ranking = skGetUniv($(this).text().trim());
                             if (ranking.color) {
-                                if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
+                                if (!$('#tooltipster-style').length) { addCssTooltipster() }
                                 $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                     .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                             }
@@ -1652,7 +1653,7 @@ function onInit() {
                             $jQueryObject.find("a:contains('Edit Reviewer')").parent().find('td').each(function () {
                                 let ranking = skGetUniv($(this).text().trim());
                                 if (ranking.color) {
-                                    if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
+                                    if (!$('#tooltipster-style').length) { addCssTooltipster() }
                                     $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                         .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                                 }
@@ -2008,7 +2009,7 @@ function onInit() {
     //Experimental: CN Rank标记
     if (window.location.href.indexOf("projects/journal-mathematics/wiki/SI_Manage") > -1 && GM_config.get('Hidden_Func')) {
         try {
-            $('head').append(css_tooltipster);
+            addCssTooltipster();
             $("td").each(function () {
                 let ranking = skGetUniv($(this).text().trim());
                 if (ranking.color) {
@@ -2048,7 +2049,7 @@ function onInit() {
                     $('span[data-testid="authorInstitution"]').each(function () {
                         let ranking = skGetUniv($(this).text().trim());
                         if (ranking.color) {
-                            if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
+                            if (!$('#tooltipster-style').length) { addCssTooltipster() }
                             $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                 .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                         }
@@ -2064,7 +2065,7 @@ function onInit() {
                 $("div.gsc_prf_il").each(function () {
                     let ranking = skGetUniv($(this).text().trim());
                     if (ranking.color) {
-                        if (!$('#tooltipster-style').length) { $('head').append(css_tooltipster) }
+                        if (!$('#tooltipster-style').length) { addCssTooltipster() }
                         $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                             .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                     }
@@ -2671,8 +2672,7 @@ function skMyAccountOnly() {
     }
 }
 
-//---------------------------------------------------------------------------------------------------------------------------CSS-------------------------------------------------------------------------------------------------------------------------
-var css_tooltipster = `<style id="tooltipster-style">.tooltipster-fall,.tooltipster-grow.tooltipster-show{-webkit-transition-timing-function:cubic-bezier(.175,.885,.32,1);-moz-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);-ms-transition-timing-function:
+function addCssTooltipster() {GM_addStyle(`.tooltipster-fall,.tooltipster-grow.tooltipster-show{-webkit-transition-timing-function:cubic-bezier(.175,.885,.32,1);-moz-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);-ms-transition-timing-function:
 cubic-bezier(.175,.885,.32,1.15);-o-transition-timing-function:cubic-bezier(.175,.885,.32,1.15)}.tooltipster-base{display:flex;pointer-events:none;position:absolute}.tooltipster-box{flex:1 1 auto}.tooltipster-content{box-sizing:border-box;max-height:100%;max-width:100%;
 overflow:auto}.tooltipster-ruler{bottom:0;left:0;overflow:hidden;position:fixed;right:0;top:0;visibility:hidden}.tooltipster-fade{opacity:0;-webkit-transition-property:opacity;-moz-transition-property:opacity;-o-transition-property:opacity;-ms-transition-property:opacity;
 transition-property:opacity}.tooltipster-fade.tooltipster-show{opacity:1}.tooltipster-grow{-webkit-transform:scale(0,0);-moz-transform:scale(0,0);-o-transform:scale(0,0);-ms-transform:scale(0,0);transform:scale(0,0);-webkit-transition-property:-webkit-transform;
@@ -2702,7 +2702,8 @@ width:22px}.tooltipster-sidetip.tooltipster-noir.tooltipster-left .tooltipster-a
 .tooltipster-arrow-background{border:11px solid transparent}.tooltipster-sidetip.tooltipster-noir.tooltipster-bottom .tooltipster-arrow-background{border-bottom-color:#fff;top:4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-left.tooltipster-arrow-background{
 border-left-color:#fff;left:-4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-right .tooltipster-arrow-background{border-right-color:#fff;left:4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-top .tooltipster-arrow-background{border-top-color:#fff;top:-4px}
 .tooltipster-sidetip.tooltipster-noir .tooltipster-arrow-border{border-width:11px}.tooltipster-sidetip.tooltipster-noir.tooltipster-bottom .tooltipster-arrow-uncropped{top:-11px}.tooltipster-sidetip.tooltipster-noir.tooltipster-right.tooltipster-arrow-uncropped{
-left:-11px}</style>`
+left:-11px}`)}
+
 //---------------------------------------------------------------------------------------------------------------------------ICON-------------------------------------------------------------------------------------------------------------------------
 var icon_magnifier = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNqMk01oE1EQx99+mmSTbLayWqtN+hWxIW21VeOhpDEVBIupFBQRAgUL6rWth57tVSgIvWnBiyj1EBDpQdCDH4RCIVAbTSm9pBGDJqkxyW42u+u8kGKzbsGBH++D"
 + "/8ybmfceEYlEkJlRFIURCIIYgGUbwAElIKPrekJV1TyAaHSwddrs/MXzo5HeM4PnetpEZ2tVlnPxePzrm1cvu4q7ubeg2aa8Xi+CiE2ACZzTNTZxezbYffKU333EKdIkQbMM4/B0dHhau/ocycQqKUvlbRKnYaRWqw0GwhGfQzjsETiWJQlE7KWF5+4Tx3qGL1/rwzq6Wq2apd/u9Q+58SSTr0gYo8A3cLZzeelRO60oilkA3mK1tqhavRzUe9zpNArSuQoDvvx"
