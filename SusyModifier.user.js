@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.3.5
+// @version       5.3.12
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1032,11 +1032,10 @@ function onInit() {
                 if ($('#si-update-emphasized').attr("data-uri")) {
                     $('#si-update-emphasized').before('<a href="' + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/", "/special_issue/reset_status/") + `" title="Reset"><img border="0" src="${icon_arrow}"></a> `);
                     $('#si-update-emphasized').before('<a href="' + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/", "/special_issue/close_invitation/") + `" title="Close"><img border="0" src="${icon_book}"></a> `);
-                    $("button[data-title='Import']").before('<input id="forceadd" type="button" class="submit" value="Force Add">&nbsp; ');
                     $("#forceadd").on("click", function () { window.location.href = "//susy.mdpi.com/planned_paper/edit?email=" + $("#add-planned-paper-section input[name='email']").val() });
                 }
-                SpecialFunc();
-            } else if (userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {
+            }
+            if (userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {
                 SpecialFunc();
             }
 
@@ -1195,31 +1194,6 @@ function onInit() {
                 return this.href + "?page=1&page_limit=100";
             });
 
-            if (GM_config.get('Hidden_Func')) {
-                $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `);
-                $("h1:contains('Process Special Issue')").attr("id", "sk_list2")
-                $("#sk_list,#sk_list2").on("click", function () {
-                    var emailLinks = [];
-                    $("[data-user-info-emails]").each(function () {
-                        let email = $(this).attr('data-user-info-emails');
-                        let quickLink = $(this).parent().parent().next().next().find('a:contains("Quick")').attr('href');
-                        if (quickLink) { emailLinks.push(email + "\thttps://susy.mdpi.com" + quickLink) };
-                    })
-                    $("body").append(`<div class="blockUI blockOverlay"id=links-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
-                                <div class="blockUI blockMsg blockPage" id=links-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:50%;top:5%;height:90%;left:25%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
-                                <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><textarea id=links_prompt rows=30>`+ emailLinks.join('\n') +
-                                     `</textarea><input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
-                    $("#links_prompt").select(); navigator.clipboard.writeText($("#links_prompt").val());
-                })
-
-                // Send to Website Editor Button
-                $('input.submit.disabled[type="submit"][value="Send to Website Editor"]').each(function () {
-                    $(this).after('<a id="enableSubmit"> [Force Submit]</a>').next('#enableSubmit').on('click', function () {
-                        $(this).prev('input.submit.disabled').removeClass('disabled');
-                    });
-                });
-            }
-
             if (GM_config.get('Maths_J')) {
                 $("a.display_present_editor").on("click", function () {
                     waitForKeyElements('span:contains("Guest Editor Information"):visible', function () {
@@ -1255,6 +1229,32 @@ function onInit() {
                     }, true)
                 });
             }
+
+            if (GM_config.get('Hidden_Func')) {
+                $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `);
+                $("h1:contains('Process Special Issue')").attr("id", "sk_list2")
+                $("#sk_list,#sk_list2").on("click", function () {
+                    var emailLinks = [];
+                    $("[data-user-info-emails]").each(function () {
+                        let email = $(this).attr('data-user-info-emails');
+                        let quickLink = $(this).parent().parent().next().next().find('a:contains("Quick")').attr('href');
+                        if (quickLink) { emailLinks.push(email + "\thttps://susy.mdpi.com" + quickLink) };
+                    })
+                    $("body").append(`<div class="blockUI blockOverlay"id=links-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
+                                <div class="blockUI blockMsg blockPage" id=links-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:50%;top:5%;height:90%;left:25%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
+                                <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><textarea id=links_prompt rows=30>`+ emailLinks.join('\n') +
+                                     `</textarea><input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
+                    $("#links_prompt").select(); navigator.clipboard.writeText($("#links_prompt").val());
+                })
+
+                if (window.location.href.indexOf("/ge") > -1) {
+                    let url_ChangeDiscount = $("input[data-post-uri*='/special_issue/cfp/batch_change_discount']").last().attr('data-post-uri');
+                    let url_Invite = url_ChangeDiscount.replace("/restapi/special_issue/cfp/batch_change_discount", "/special_issue/paper_invitations").replace(/\/1$/,"/invite/1");
+                    $("input[batch-ajax-url*='paper_invitations/withdraws']").before(`<input value="🚨 Invite" type="button" class="batch-operation-button button batch-invite-btn" batch-ajax-url="${url_Invite}">`);
+
+                }
+            }
+
         } catch (error) { }
     }
 
