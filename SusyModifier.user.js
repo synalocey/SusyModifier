@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.3.12
+// @version       5.4.9
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -99,6 +99,15 @@
             'GE_ReminderS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_ReminderB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_ReminderB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'GE_CancelID': {
+                'section': [], 'label': '默认 GE Cancel Template', 'type': 'select', 'labelPos': 'left', 'options':
+                ['Guest Editor Invitation – Cancel Invitation', 'Guest Editor Invitation – Cancel Invitation (Declined the Invitation via Email)', 'Guest Editor Invitation-Cancel Invitation (feature paper invitation)-manually'],
+                default: 'Guest Editor Invitation-Cancel Invitation (feature paper invitation)-manually'
+            },
+            'GE_CancelS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'GE_CancelS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'GE_CancelB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "once this Special Issue is online, we welcome you to contribute one Feature Paper with the publishing fees waived" },
+            'GE_CancelB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "we welcome you to contribute one Feature Paper with a special discount" },
             'EB_TemplateID': { 'section': [], 'label': '默认 EB Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['Invite Version 1', 'Invite Version 2', 'Invite Version 3', 'Invite Version 4'], default: 'Invite Version 1' },
             'EB_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation" },
             'EB_TemplateS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation" },
@@ -245,10 +254,10 @@
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
         #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label,#SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_field_Report_Notes,
         #SusyModifierConfig_Old_Icon_field_label,#SusyModifierConfig_Hidden_Func_field_label{width:140px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label,
-        #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,
-        #SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);grid-template-rows:auto auto;}
-        #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,#SusyModifierConfig_Report_TemplateB1_var,
-        #SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_field_Journal{width:auto}`
+        #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_GE_CancelID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
+        #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);
+        grid-template-rows:auto auto;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,
+        #SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_field_Journal{width:auto}`
     });
 })();
 
@@ -502,6 +511,29 @@ function onInit() {
 
             $('#mailSubject').parent().after(`<a id="Awaiting"><img src="${icon_pencil}"></a>`);
             $('#Awaiting').on("click", function () { if ($('#mailSubject').val().indexOf("Awaiting Your Reply") == -1) { $('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val()) } });
+            $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
+        } catch (error) { }
+    }
+
+    //GE Cancel🗑️ + Quick
+    if (window.location.href.indexOf("/uninvite/guest_editor") > -1) {
+        try {
+            skMyAccountOnly();
+            $("#emailTemplates > option:contains('" + GM_config.get('GE_CancelID') + "')").prop('selected', true);
+            unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
+            function init() {
+                let t1 = skStringToRegex(GM_config.get('GE_CancelS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, skStringToFunction(GM_config.get('GE_CancelS2'))));
+                let t2 = skStringToRegex(GM_config.get('GE_CancelB1')); $("#mailBody").val($("#mailBody").val().replace(t2, skStringToFunction(GM_config.get('GE_CancelB2'))));
+                if (window.location.search == "?Q") { setTimeout(function () { $("#sendingEmail").trigger("click") }, 500); }
+            }
+            waitForText(document.querySelector('#mailSubject'), ' ', init);
+
+            $('#mailSubject').parent().after(`<a id="sk_discount">[Special Discount]</a></a>`);
+            $('#sk_discount').on("click", function () { $("#mailBody").val($("#mailBody").val().replace("the publishing fees waived", "a special discount").replace("Feature Paper, if", "Feature Paper with a special discount, if")) });
+            $('#mailBody').parent().after(`<a id="sk_nodiscount">[No Discount]</a>`);
+            $('#sk_nodiscount').on("click", function () { $("#mailBody").val($("#mailBody").val().replace(" with the publishing fees waived", "").replace(" with a special discount", "")) });
+            $('#mailBcc').parent().after(`<a id="sk_fullwaiver" style="align-self: center;">[Full Fee Waiver]</a>`);
+            $('#sk_fullwaiver').on("click", function () { $("#mailBody").val($("#mailBody").val().replace("a special discount", "the publishing fees waived").replace(" Feature Paper, if", "Feature Paper with the publishing fees waived, if")) });
             $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
         } catch (error) { }
     }
@@ -1026,7 +1058,6 @@ function onInit() {
             }
             if ($("a:contains('Edit at backend')").length) { $('#si-update-emphasized').parent().children("a").first().attr("href", $("a:contains('Edit at backend')").attr("href").replace(/.*\//, "https://mdpi.com/si/")) };
             $('#si-update-emphasized').before(`<a href="?pagesection=AddGuestEditor" title="Add Guest Editor"><img border="0" src="${icon_plus}"></a> `);
-            $('#si-update-emphasized').attr("data-uri") && $("a:contains('SI manuscripts')").after(" <a href=" + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/", "/academic-editor/special_issues/process/") + ">[AcE Interface]</a>");
             $("[for='form_name_system']").append(` <a onclick="$('#form_name_system').prop('readonly', false)">[Edit]</a>`);
             if (GM_config.get('Hidden_Func')) {
                 if ($('#si-update-emphasized').attr("data-uri")) {
