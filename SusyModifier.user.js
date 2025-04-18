@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.4.9
+// @version       5.4.10
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1796,6 +1796,7 @@ function onInit() {
     if (window.location.href.indexOf("admin.mdpi.com/tools/email-purger/") > -1) {
         try {
             $('#ExcelMailPurgerEmailList_full_name,#ExcelMailPurgerEmailList_exclude_cfr').prop('checked', false);
+            $('#ExcelMailPurgerEmailList_sanctions').prop('checked', true);
             $("div[id^='ExcelMailPurger'].chzn-container").remove();
             unsafeWindow.$("select[id^='ExcelMailPurger'].chosen.chzn-done").val(S_J).removeClass('chzn-done').chosen({ allow_single_deselect: true });
         } catch (error) { }
