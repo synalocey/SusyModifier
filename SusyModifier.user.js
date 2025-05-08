@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.4.10
+// @version       5.5.8
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -693,7 +693,7 @@ function onInit() {
                         +`significantly enhance the Special Issue.\n\nWe would like to remind you that our Editorial Office is responsible for administering the discounts. Therefore, we kindly request that you discuss the invitees with us before sending out the invitations.`
                         +`\n\nIf you are unable to provide us with a list, we would be happy if you could send invitations to scholars on our list. If you are interested, we can prepare a mailing list and email template that you can use to send the invitations.\n\n`
                         +`Thank you for your valuable time and consideration. We look forward to hearing back from you.\n`; $("#addnote").val("请GE发邀请"); break;
-                    case 'book':insert_text=`\nIf ten or more papers are published in this Special Issue, we can make a Special Issue book and send a hard copy to each Guest Editor (free of charge). Special Issue book example:\nhttps://www.mdpi.com/books/pdfview/book/3008\n`;
+                    case 'book':insert_text=`\nIf eight or more papers are published in this Special Issue, we can make a Special Issue book and send a hard copy to each Guest Editor (free of charge). Special Issue book example:\nhttps://www.mdpi.com/books/pdfview/book/3008\n`;
                         $("#addnote").val("告知做书条件"); break;
                     case 'certificate':insert_text=`\n3. Editor Certificate\n\nOn behalf of the Editor-in-Chief, we would like to thank you for your editorial work, and we are glad to issue you the editor certificate (see attached). \n\nWe look forward to a fruitful `
                         +`collaboration.\n`; $("#addnote").val("发证书"); window.open("https://susy.mdpi.com/user/list/editors?form[email]=" + $("#mailTo").attr("value").match(/<([^>]+)>/)[1] + "&form[_token]=INShBxf_zyiQ6XpSwRC7dFyTvOYTpaIsun9weGzmiPA"); break;
@@ -1187,6 +1187,65 @@ function onInit() {
             let button = $('input.submit[value="Contact All Guest Editors (Special Issue Management)"]');
             if (button.length > 0) { button.replaceWith(`<a href="${button.attr('onclick').match(/'([^']+)'/)[1]}" class="submit">${button.val()}</a>`); }
 
+            // 按钮 PP Note 中键
+            $('a[data-load-url*="/planned_paper/update_notes/"]').on("mousedown", function(event) {
+                if (event.which === 2) { // Middle mouse button
+                    event.preventDefault();
+                    if ($("#pp_note_settings").length == 0) {
+                        var dialogHTML = `<div id='pp_note_settings' role='dialog' style='position: fixed; height: 300px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                            border-radius: 5px; overflow: hidden;'><div style='background-color: #FFA500; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'><span>Note Settings</span><button type='button'
+                            onclick='document.getElementById("pp_note_settings").remove()' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div><div style='padding: 20px;'>
+                            <div style='margin-bottom: 15px;'><label style='display: block; margin-bottom: 5px;'>Note:</label>
+                            <textarea id="pp_note" style='width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;'></textarea></div>
+                            <button id="pp_note_save" class="submit" style='background-color: #FFA500; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%;'>Save</button></div></div>`;
+                        $("body").append(dialogHTML);
+
+                        let savedNote = GM_getValue("PP_Note", "%YYYY-MM-DD% Remind PP");
+                        $("#pp_note").val(savedNote);
+                        $("#pp_note_save").on("click", function () {
+                            let note = $("#pp_note").val();
+                            GM_setValue("PP_Note", note);
+                            $("#pp_note_settings").remove();
+                        });
+                    }
+                    return false;
+                }
+            })
+            // 按钮 PP Note 右键
+            $('a[data-load-url*="/planned_paper/update_notes/"]').on("contextmenu", function(event) {
+                let target = $(event.target);
+                let link = target.is('a') ? target : target.parent();
+                if (link.html() === "✅") { return; } else { event.preventDefault();}
+
+                let url = "https://susy.mdpi.com" + link.attr('data-load-url');
+                $.get(url, function(data) {
+                    let textareaContent = $(data).find('textarea').text().trim();
+                    let savedNote = GM_getValue("PP_Note", "%YYYY-MM-DD% Remind PP");
+                    let today = new Date();
+                    let year = today.getFullYear();
+                    let month = String(today.getMonth() + 1).padStart(2, '0');
+                    let day = String(today.getDate()).padStart(2, '0');
+
+                    savedNote = savedNote.replace(/%([^%]+)%/g, function(match, content) {
+                        return content.replace(/YYYY/g, year).replace(/YY/g, String(year).slice(-2)).replace(/MM/g, month).replace(/DD/g, day);
+                    });
+                    textareaContent = textareaContent + "\n" + savedNote;
+                    $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: { data: textareaContent },
+                        headers: {
+                            'susy-csrf-token': unsafeWindow.SusyConfig.susy_csrf_token
+                        },
+                        success: function(response, status, xhr) {
+                            if (xhr.status === 200) {
+                                link.removeAttr("title"); link.html("✅");
+                            }
+                        }
+                    });
+                });
+            });
+
             // 按钮PP MailMerge
             var PPMM = $('<input type="button" id=PPMM class="submit" value="PPMailMerge" style="float:right;margin:0"> ').on("click", function () {
                 var selectedEmailLinks = [];
@@ -1204,6 +1263,7 @@ function onInit() {
                 var ids = selectedEmailLinks.map(link => link.split('/').pop()).join(',');
                 GM_openInTab("https://susy.mdpi.com" + baseLink + "/management?multiIds=" + ids, false);
             });
+
             var SelectALL = $('<input type="button" id=SelectALL class="button hollow" value="Select PP" style="float:right;float:right;font-size:small;margin:0;"> ').on("click", function () {
                 this.toggle = !this.toggle;
                 var statusesToCheck = this.toggle ? ['Title Provided', 'Agreed'] : ['Title Provided', 'Agreed', 'Interested'];
