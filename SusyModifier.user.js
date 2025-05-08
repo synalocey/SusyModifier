@@ -1299,7 +1299,7 @@ function onInit() {
                     var dialogHTML = `<div id='pp_note_settings' role='dialog' style='position: fixed; height: 300px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
                             border-radius: 5px; overflow: hidden;'><div style='background-color: #FFA500; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'><span>Note Settings</span><button type='button'
                             onclick='document.getElementById("pp_note_settings").remove()' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div><div style='padding: 20px;'>
-                            <div style='margin-bottom: 15px;'><label style='display: block; margin-bottom: 5px;'>Note:</label>
+                            <div style='margin-bottom: 15px;'><label style='display: block; margin-bottom: 5px;'>Add the following note at the end:</label>
                             <textarea id="pp_note" style='width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;'></textarea></div>
                             <button id="pp_note_save" class="submit" style='background-color: #FFA500; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%;'>Save</button></div></div>`;
                     $("body").append(dialogHTML);
