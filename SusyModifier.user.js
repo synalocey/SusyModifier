@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.5.9
+// @version       5.5.22
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -895,12 +895,15 @@ function onInit() {
                     });
                 }
 
+                // 颜色标记
                 if ([154, 159, 162, 517, 599, 25, 598, 276].includes(S_J)) {
+                    addCssTooltipster();
                     $("table [title|='Google Scholar']").each(function () {
                         let ranking = skGetUniv($(this).parent().nextAll(":last-child").text().trim());
                         if (ranking.color) {
                             let markup = $(this).parent().nextAll(":last-child").children("div");
-                            markup.css("background-color", ranking.color); markup.attr("title", markup.attr("title") + "<br>" + ranking.detail)
+                            markup.css("background-color", ranking.color);
+                            markup.attr("title", ranking.detail).tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                         }
                     });
                     //              $("table:has([title|='Google Scholar'])").parent().prev().html( $("table:has([title|='Google Scholar'])").parent().prev().html() + " <a href='//redmine.mdpi.cn/projects/journal-mathematics/wiki/SI_Manage_CN' target=_blank>[List]</a>" )
@@ -2661,30 +2664,30 @@ function skGetUniv(aff) {
     var u_Abbrr = ["Rank B 201+ Beihang University","Rank B National University of Defense Technology","Chinese Academy of Sciences<br>(Please further check its institute and decide)","65 King Abdulaziz University","104 Universidad de Buenos Aires",
                    "107 Universidad Nacional Autónoma de México","117 Indian Institute of Technology Bombay","124 Universidade Estadual de Campinas","124 Universidade Estadual de Campinas","128 Indian Institute of Technology Delhi",
                    "132 Indian Institute of Technology Kanpur","144 Universiti Malaya","148 Indian Institute of Technology Madras"];
-    for (i = 0, len = u_Abbr.length; i < len; i++) { if (aff.indexOf(u_Abbr[i]) > -1) { results += "<br><span style='background-color:pink;font-weight:bold'>Abbr: " + u_Abbrr[i] + "</span>"; color = "pink"; break; } }
+    for (i = 0, len = u_Abbr.length; i < len; i++) { if (aff.indexOf(u_Abbr[i]) > -1) { results += "<span style='background-color:pink;font-weight:bold'>Abbr: " + u_Abbrr[i] + "</span>"; color = "pink"; break; } }
     aff = aff.toLowerCase();
-    for (i = 0, len = u_2.length; i < len; i++) { if (aff.indexOf(u_2[i]) > -1) { results += "<br><span style='background-color:lightblue;font-weight:bold'>Top150: " + u_2r[i] + "</span>"; color = "lightblue"; break; } }
+    for (i = 0, len = u_2.length; i < len; i++) { if (aff.indexOf(u_2[i]) > -1) { results += "<span style='background-color:lightblue;font-weight:bold'>Top150: " + u_2r[i] + "</span>"; color = "lightblue"; break; } }
     for (i = 0, len = u_D.length; i < len; i++) {
         if (aff.indexOf(u_D[i]) > -1 && (u_D[i].indexOf("of") > -1 || (u_D[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1))) {
-            results += "<br><span style='background-color:thistle;font-weight:bold'>Rank HK: " + u_Dr[i] + "</span>"; color = "thistle";
+            results += "<span style='background-color:thistle;font-weight:bold'>Rank HK: " + u_Dr[i] + "</span>"; color = "thistle";
         }
     }
     for (i = 0, len = u_C.length; i < len; i++) {
         if (aff.indexOf(u_C[i]) > -1 && (u_C[i].indexOf("of") > -1 || (u_C[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1))) {
-            results += "<br><span style='background-color:lightgreen;font-weight:bold'>Rank C: " + u_Cr[i] + "</span>"; color = "lightgreen";
+            results += "<span style='background-color:lightgreen;font-weight:bold'>Rank C: " + u_Cr[i] + "</span>"; color = "lightgreen";
         }
     }
     for (i = 0, len = u_B.length; i < len; i++) {
         if (aff.indexOf(u_B[i]) > -1 && (u_B[i].indexOf("of") > -1 || (u_B[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1))) {
-            results += "<br><span style='background-color:wheat;font-weight:bold'>Rank B: " + u_Br[i] + "</span>"; color = "wheat";
+            results += "<span style='background-color:wheat;font-weight:bold'>Rank B: " + u_Br[i] + "</span>"; color = "wheat";
         }
     }
     for (i = 0, len = u_A.length; i < len; i++) {
         if (aff.indexOf(u_A[i]) > -1 && (u_A[i].indexOf("of") > -1 || (u_A[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1))) {
-            results += "<br><span style='background-color:lightblue;font-weight:bold'>Rank A: " + u_Ar[i] + "</span>"; color = "lightblue";
+            results += "<span style='background-color:lightblue;font-weight:bold'>Rank A: " + u_Ar[i] + "</span>"; color = "lightblue";
         }
     }
-    for (i = 0, len = u_QP.length; i < len; i++) { if (aff.indexOf(u_QP[i]) > -1) { results += "<br><span style='background-color:cyan;font-weight:bold'>Rank Top: " + u_QPr[i] + "</span>"; color = "cyan"; } }
+    for (i = 0, len = u_QP.length; i < len; i++) { if (aff.indexOf(u_QP[i]) > -1) { results += "<span style='background-color:cyan;font-weight:bold'>Rank Top: " + u_QPr[i] + "</span>"; color = "cyan"; } }
     return { detail: results, color: color };
 }
 
