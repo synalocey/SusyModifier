@@ -66,8 +66,10 @@ hosts:
     "feedback.mdpi.cn": 210.51.191.4
     "*.mdpi.test": 195.65.177.76
     "*.mdpi.intra": 195.65.177.76
+    "*.mdpi.dev": 195.65.177.78
     "*.*.mdpi.test": 195.65.177.76
     "*.*.mdpi.intra": 195.65.177.76
+    "*.*.mdpi.dev": 195.65.177.78
     "api.dalaie.com": 140.238.9.12
 tun:
   enable: false
