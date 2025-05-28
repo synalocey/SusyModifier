@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.5.22
+// @version       5.5.27
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1284,7 +1284,7 @@ function onInit() {
 
                 if (window.location.href.indexOf("/ge") > -1) {
                     let url_ChangeDiscount = $("input[data-post-uri*='/special_issue/cfp/batch_change_discount']").last().attr('data-post-uri');
-                    let url_Invite = url_ChangeDiscount.replace("/restapi/special_issue/cfp/batch_change_discount", "/special_issue/paper_invitations").replace(/\/1$/,"/invite/1");
+                    let url_Invite = url_ChangeDiscount.replace("/restapi/special_issue/cfp/batch_change_discount", "/special_issue/paper_invitations").replace(/\/1\/.*$/,"/invite/1");
                     $("input[batch-ajax-url*='paper_invitations/withdraws']").before(`<input value="🚨 Invite" type="button" class="batch-operation-button button batch-invite-btn" batch-ajax-url="${url_Invite}">`);
 
                 }
