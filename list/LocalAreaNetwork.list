@@ -42,6 +42,7 @@ DOMAIN-SUFFIX,tplogin.cn
 # MDPI
 DOMAIN-SUFFIX,mdpi.test
 DOMAIN-SUFFIX,mdpi.intra
+DOMAIN-SUFFIX,mdpi.dev
 DOMAIN-SUFFIX,mail.mdpi.com
 DOMAIN-SUFFIX,mail-internal.mdpi.com
 DOMAIN-SUFFIX,i.mdpi.com
