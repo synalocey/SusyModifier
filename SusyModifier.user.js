@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.5.30
+// @version       5.5.31
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -2232,12 +2232,12 @@ function onInit() {
                 }
             });
             $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align", "center").on("bind", "contextmenu", function () { return false; }).each(function () {
-                $(this).append("<a class='sk_reject' style='font-style:italic' href='//susy.mdpi.com/user/assigned/reject-manuscript/" + $(this).parents("tr").find("td:nth-child(4) >> a").attr("href").split("/").pop() + "'>[Reject]</a>");
+                $(this).append("<a class='sk_reject' style='font-style:italic' href='//susy.mdpi.com/user/managing/reject/" + $(this).parents("tr").find("td:nth-child(4) >> a").attr("href").split("/").pop() + "'>[Reject]</a>");
             });
             $(".sk_reject").on('mouseup', function (e) {
                 switch (e.which) {
                     case 3: // Right click.
-                        if (confirm('The paper will be rejected immediately using "without Peer Review Template"')) { GM_openInTab($(this).attr("href") + "?quickreject", 1); $(this).parent().html("[Rejected]"); }
+                        if (confirm('The paper will be rejected immediately using "without Peer Review Template"')) { GM_openInTab($(this).attr("href").replace("managing/reject/","assigned/reject-manuscript/") + "?quickreject", 1); $(this).parent().html("[Rejected]"); }
                         return;
                 }; return true;
             });
@@ -2252,6 +2252,12 @@ function onInit() {
                 waitForText(document.querySelector('#mailSubject'), ' ', init);
                 function init() { $("#sendingEmail").trigger("click"); }
             }
+        } catch (error) { }
+    }
+    if (window.location.href.indexOf("user/managing/reject/") > -1 && GM_config.get('Assign_Assistant')) {
+        try {
+            $('input[value="Reject/Recommend"]').trigger("click");
+            waitForKeyElements("#form_comment", function() { window.scrollTo(0, document.body.scrollHeight) });
         } catch (error) { }
     }
 
