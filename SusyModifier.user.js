@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.5.27
+// @version       5.5.30
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        Syna
@@ -1631,7 +1631,7 @@ function onInit() {
                 $('[href="/users/64"]').css("background-color", "yellow"); $('h2:contains("Issues")').append(" <span style=background-color:#ff0>(" + $('[href="/users/64"]').length + " pending CfP Team)</span>");
             }
             //CfP filter链接
-            $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=` + GM_config.get('Journal')
+            $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&v[status_id][]=113&f[]=cf_10&op[cf_10]==&v[cf_10][]=` + GM_config.get('Journal')
                                      + `&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[CfP]</a>`) // + GM_config.get('Journal')
             $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-committee/issues?c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&f[]=status_id&utf8=%E2%9C%93&v[subject][]=[` + GM_config.get('Journal')
                                      + `&f[]=subject&f[]=&group_by=&op[status_id]=o&op[subject]=%7E&per_page=100&set_filter=1'>[SCfP]</a>`)
