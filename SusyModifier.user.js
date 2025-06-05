@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.5.31
+// @version       5.6.3
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
-// @author        Syna
+// @author        SKDAY
 // @icon64        https://susy.mdpi.com/build/img/design/susy-logo.png
 // @updateURL     https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @downloadURL   https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
@@ -187,7 +187,7 @@
                  'D1: Probability and Statistics', 'D2: Operations Research and Fuzzy Decision Making', 'E: Applied Mathematics', 'E1: Mathematics and Computer Science', 'E2: Control Theory and Mechanics', 'E3: Mathematical Biology', 'E4: Mathematical Physics',
                  'E5: Financial Mathematics'], 'default': ''
             },
-            'Journal': { 'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics', 'AppliedMath', 'Games', 'Geometry', 'Mathematics', 'Risks', 'IJT', 'Telecom', 'None'], 'default': 'Mathematics' },
+            'Journal': { 'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics', 'Games', 'Geometry', 'Mathematics', 'Risks', 'IJT', 'Telecom', 'None'], 'default': 'Mathematics' },
             'Easy_Journal': { 'label': '置顶期刊列表', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'Susy_Theme': { 'label': 'Change Susy Theme', 'type': 'button', 'click': function () { window.location.href = "https://susy.mdpi.com/user/settings" } },
             'MathBatch': { 'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function () { window.location.href = "https://skday.eu.org/math.html" } },
@@ -264,9 +264,21 @@
 
 function onInit() {
     const date_v = new Date('202' + GM_info.script.version);
-    if ((Date.now() - date_v) / 86400000 > 75) { $("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return false; }
+    const blacklistEncoded = ["YWJjYW1lbGlhLnN1bnh5eg==","YWJjY2VsaW5hLnNpeHl6"];
+    const blacklist = blacklistEncoded.map(decode);
+    const isBlacklisted = blacklist.some(name => $("#topmenu span:contains('@mdpi.com')").text().toLowerCase().includes(name));
+
+    if (isBlacklisted) {
+        $("#topmenu > ul").append("<li><a style='color:red' onclick='alert(\"Access denied.\");'>!</a></li>");
+        return false;
+    }
+    else if ((Date.now() - date_v) / 86400000 > 75) {
+        $("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! Outdated !!!</a></li>");
+        return false;
+    }
     else {
-        $("#topmenu > ul").append(`<li><a id='susymodifier_config'>SusyModifier</a></li>`); $("#susymodifier_config").on("click", function () { GM_config.open() });
+        $("#topmenu > ul").append(`<li><a id='susymodifier_config'>SusyModifier</a></li>`);
+        $("#susymodifier_config").on("click", function () { GM_config.open() });
         document.addEventListener('keydown', function (e) {
             if (e.ctrlKey && e.key === 'q') {
                 e.preventDefault();
@@ -280,7 +292,6 @@ function onInit() {
         case 'Mathematics': S_J = 154; break;
         case 'Children': S_J = 159; break;
         case 'Risks': S_J = 162; break;
-        case 'AppliedMath': S_J = 517; break;
         case 'Geometry': S_J = 599; break;
         case 'Games': S_J = 25; break;
         case 'IJT': S_J = 598; break;
@@ -291,7 +302,7 @@ function onInit() {
     }
 
     if (GM_config.get('Easy_Journal')) {
-        $("#topmenu > ul").append(`<li><select id="SusyModifier_Journal_Easy"><option value="555">Analytics</option><option value="517">AppliedMath</option><option value="25">Games</option><option value="599">Geometry</option><option value="154">Mathematics</option>
+        $("#topmenu > ul").append(`<li><select id="SusyModifier_Journal_Easy"><option value="555">Analytics</option><option value="25">Games</option><option value="599">Geometry</option><option value="154">Mathematics</option>
                                    <option value="162">Risks</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select></li>`);
         $("#SusyModifier_Journal_Easy").val(S_J).on("change", function () {
             let J_old = S_J, J_new = $(this).find('option:selected').val(); S_J = J_new;
