@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.6.3
+// @version       5.6.7
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -790,9 +790,7 @@ function onInit() {
                 $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=[' + m_journal + '] Manuscript ID: ' + m_id + '&body=' + GM_config.get('Template_Linkedin')
                                                              .replace(/\n/g, "%0A").replace(/"/g, "&quot;").replace(/%m_id%/g, m_id).replace(/%m_section%/g, m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
                 if (window.location.href.indexOf("?linkedin") > -1) { $("#linkedin")[0].trigger("click"); history.back(); }
-                $("[title='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query=' + $("[title='Google']").prev().text() +
-                                             '" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="https://c5.rgstatic.net/m/41542880220916/images/favicon/favicon-16x16.png"></a> ');
-
+                $("[title='Google']").before(`<a href="https://www.researchgate.net/search.Search.html?type=publication&query=${$("[title='Google']").prev().text()}" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="${icon_researchgate}"></a> `);
                 $("[class|='margin-horizontal-1']").after(`<form id='vf' class='insertform' method='post' target='_blank' style='display:none;'><input name='form[journal_id]'><input name='form[is_percentage]' value='1'><input name='form[special_issue_id]'>
             <input name='form[emails]'><input name='form[valid_months]' value='12'><input name='form[section_id]'><input name='form[reason]'><input name='form[manuscript_id]'><textarea name='form[note]'></textarea></form>`);
                 $("[class|='margin-horizontal-1']").after(`<div id="voucher" style="display:inline-block;"><a style="color:#4b5675;">[Vouchers]</a><div style="position:absolute;background-color: #f1f1f1;box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);display: none;">
@@ -2861,3 +2859,4 @@ var icon_scopus = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAA
 + "7g4KdE/jbawDEM49pv7iFJm0KW8bxx2p41c1oOyR6dY/4zSMwtlMgS7EjWykePEd44yxu+ROmsgF1Kf7YAQb3nqR1/yrZk1lMqYoEZRDTq0ARvwQoaeM9bmkB+TKHCUoU952ieecy8dunSCHAhQ1Q8ja7M/AsydxLovoUlRPX8XdMoC7DlNdhSlXSjzNIIch/Nbab3KNAQJXmzQv42/ZTrJ3Bq4wQ1adAvDxRFeSva1RwjvbzScLJ8wzsOYZGTdLGO4LxI7ioha"
 + "YRmrThty2ow6zdSLDrENm3eQZ2HyaefYYLP9O8fZHy0Ut5K/PTmKH1ZF8/EL1+gBjvpwJBvy+jWYodHiWafkjr7hWkEJAt1Fm6dhwXNrDDo5jBIVy4mCsGpHsLqrmRVEEEsT5Ip2l1uZE6LhRbyIe5wkgi+aT7Qcwfuf9wTP+IH7tLvmy5ImEAAAAAAElFTkSuQmCC"
 var icon_retractiondatabase = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQAAAAA3iMLMAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAACxMAAAsTAQCanBgAAAA4SURBVAjXY/jxn+FTPcPy/QxdzQwnuxk4mhme72f4UM/w357h/34Gk/kMCv4Mvf4ME9IZ/n8HIgD7ARTNr5OwGQAAAABJRU5ErkJggg=="
+var icon_researchgate = "data:image/gif;base64,R0lGODdhEAAQAPIFAGZmZpmZmczMzP///zNmZjMzMwAAAAAAACwAAAAAEAAQAAADOTi63P7QBQIiK0PYRQQIjFAUAFBomAAyQTUEWNs1rSJa9VDiJLnVhVWkJtIMCQpTREAIJk+bqHSQAAA7"
