@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.6.7
+// @version       5.7.1
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2199,7 +2199,7 @@ function onInit() {
     }
 
     //派稿助手: iThenticate AUTO
-    if (window.location.href.indexOf("managing/status/submitted") + window.location.href.indexOf("sme/status/submitted") > -2 && GM_config.get('Assign_Assistant')) {
+    if (window.location.href.indexOf("managing/status/") + window.location.href.indexOf("sme/status/submitted") > -2 && GM_config.get('Assign_Assistant')) {
         try {
             $("#show_title").parent().append("<input type='button' id='send_ith' value='Send iThenticate in OneClick'>")
             $("#send_ith").on("click", function () {
@@ -2243,13 +2243,13 @@ function onInit() {
             $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align", "center").on("bind", "contextmenu", function () { return false; }).each(function () {
                 $(this).append("<a class='sk_reject' style='font-style:italic' href='//susy.mdpi.com/user/managing/reject/" + $(this).parents("tr").find("td:nth-child(4) >> a").attr("href").split("/").pop() + "'>[Reject]</a>");
             });
-            $(".sk_reject").on('mouseup', function (e) {
-                switch (e.which) {
-                    case 3: // Right click.
-                        if (confirm('The paper will be rejected immediately using "without Peer Review Template"')) { GM_openInTab($(this).attr("href").replace("managing/reject/","assigned/reject-manuscript/") + "?quickreject", 1); $(this).parent().html("[Rejected]"); }
-                        return;
-                }; return true;
-            });
+//             $(".sk_reject").on('mouseup', function (e) {
+//                 switch (e.which) {
+//                     case 3: // Right click.
+//                         if (confirm('The paper will be rejected immediately using "without Peer Review Template"')) { GM_openInTab($(this).attr("href").replace("managing/reject/","assigned/reject-manuscript/") + "?quickreject", 1); $(this).parent().html("[Rejected]"); }
+//                         return;
+//                 }; return true;
+//             });
         } catch (error) { }
     }
 
@@ -2524,6 +2524,18 @@ function onInit() {
     }
 
     console.timeEnd("test")
+
+    if (window.location.href.indexOf("user/managing/reject/") > -1 && GM_config.get('ManuscriptFunc')) {
+        try {
+            waitForKeyElements(".submit-reasons", function () {
+                //$('input[id="Low H-index of authors"],input[id="Lack of novelty"]').prop('checked', true);
+                if ($('.card-yellow').length + $('.card-red').length > 0) {
+                    $('input[id="Authors have a red/yellow card"]').prop('checked', true);
+                }
+                //$('.submit-reasons').click();
+            }, true)
+        } catch (error) { }
+    }
 }
 
 //---------------------------------------------------------------------------------------------------------------------------Functions-------------------------------------------------------------------------------------------------------------------------
