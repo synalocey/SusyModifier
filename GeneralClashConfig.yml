@@ -59,7 +59,7 @@ experimental:
 # 静态的域名 比 通配域名 具有更高的优先级 (foo.example.com 优先于 *.example.com)
 # 注意: hosts 在 fake-ip 模式下不生效
 hosts:
-    "mail.mdpi.com": 212.243.204.123
+    "mail.mdpi.com": 195.65.194.210
     "*.mdpi.lab": 210.51.191.4
     "*.*.mdpi.lab": 210.51.191.4
     "merrin5.mdpi.lab": 210.51.191.7
