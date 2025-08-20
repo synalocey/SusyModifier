@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.7.28
+// @version       5.8.19
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -8,6 +8,7 @@
 // @updateURL     https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @downloadURL   https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @match         *://*.mdpi.com/*
+// @match         *://*.mdpi.cn/*
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
 // @match         *://www.scilit.net/*
@@ -1308,19 +1309,25 @@ function onInit() {
             if (event.which === 2) { // Middle mouse button
                 event.preventDefault();
                 if ($("#pp_note_settings").length == 0) {
-                    var dialogHTML = `<div id='pp_note_settings' role='dialog' style='position: fixed; height: 300px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                    var notePos = GM_getValue("PP_Note_Pos", "end");
+                    var dialogHTML = `<div id='pp_note_settings' role='dialog' style='position: fixed; height: 340px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
                             border-radius: 5px; overflow: hidden;'><div style='background-color: #FFA500; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'><span>Note Settings</span><button type='button'
                             onclick='document.getElementById("pp_note_settings").remove()' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div><div style='padding: 20px;'>
-                            <div style='margin-bottom: 15px;'><label style='display: block; margin-bottom: 5px;'>Add the following note at the end:</label>
-                            <textarea id="pp_note" style='width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;'></textarea></div>
-                            <button id="pp_note_save" class="submit" style='background-color: #FFA500; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%;'>Save</button></div></div>`;
+                            <div style='margin-bottom: 15px;'><label style='display: block; margin-bottom: 5px;'>Add the following note at:</label><div style="display: flex; gap: 20px; align-items: center;"><label style="margin:0;">
+                            <input type="radio" name="pp_note_pos" value="end" ${notePos === "end" ? "checked" : ""}> End</label><label style="margin:0;"><input type="radio" name="pp_note_pos" value="beginning" ${notePos === "beginning" ? "checked" : ""}> Beginning</label>
+                            </div></div><div style='margin-bottom: 15px;'><label style='display: block; margin-bottom: 5px;'>Note Content:</label><textarea id="pp_note" style='width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+                            resize: vertical;'></textarea></div><button id="pp_note_save" class="submit" style='background-color: #FFA500; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%;'>Save</button></div></div>`;
                     $("body").append(dialogHTML);
 
                     let savedNote = GM_getValue("PP_Note", "%YYYY-MM-DD% Remind PP");
                     $("#pp_note").val(savedNote);
+                    $(`input[name="pp_note_pos"][value="${notePos}"]`).prop("checked", true);
+
                     $("#pp_note_save").on("click", function () {
                         let note = $("#pp_note").val();
+                        let pos = $('input[name="pp_note_pos"]:checked').val();
                         GM_setValue("PP_Note", note);
+                        GM_setValue("PP_Note_Pos", pos);
                         $("#pp_note_settings").remove();
                     });
                 }
@@ -1337,6 +1344,7 @@ function onInit() {
             $.get(url, function(data) {
                 let textareaContent = $(data).find('textarea').text().trim();
                 let savedNote = GM_getValue("PP_Note", "%YYYY-MM-DD% Remind PP");
+                let notePos = GM_getValue("PP_Note_Pos", "end");
                 let today = new Date();
                 let year = today.getFullYear();
                 let month = String(today.getMonth() + 1).padStart(2, '0');
@@ -1345,17 +1353,20 @@ function onInit() {
                 savedNote = savedNote.replace(/%([^%]+)%/g, function(match, content) {
                     return content.replace(/YYYY/g, year).replace(/YY/g, String(year).slice(-2)).replace(/MM/g, month).replace(/DD/g, day);
                 });
-                textareaContent = textareaContent + "\n" + savedNote;
+
+                let newContent;
+                if (notePos === "beginning") { newContent = savedNote + "\n" + textareaContent; } else { newContent = textareaContent + "\n" + savedNote; }
+
                 $.ajax({
                     url: url,
                     type: 'POST',
-                    data: { data: textareaContent },
+                    data: { data: newContent },
                     headers: {
                         'susy-csrf-token': unsafeWindow.SusyConfig.susy_csrf_token
                     },
                     success: function(response, status, xhr) {
                         if (xhr.status === 200) {
-                            link.attr("title",textareaContent).html("✅");
+                            link.attr("title",newContent).html("✅");
                         }
                     }
                 });
@@ -2534,6 +2545,23 @@ function onInit() {
                 }
                 //$('.submit-reasons').click();
             }, true)
+        } catch (error) { }
+    }
+
+    if (window.location.href.indexOf("crm.mdpi.cn/conference/booth/") + window.location.href.indexOf("crm.mdpi.cn/scholar_visits/")+ window.location.href.indexOf("crm.mdpi.cn/sponsorship/") > -3 && GM_config.get('Hidden_Func')) {
+        try {
+            waitForKeyElements('button[label="Accept"]:first', function(acceptBtn) {
+                acceptBtn.trigger('click');
+                waitForKeyElements('button:contains("OK"):visible', function(okBtn) {
+                    if ($("span:contains('Error')").length > 0){
+                        alert("Please check manually");
+                    }
+                    else {
+                        setTimeout(function() {location.reload();}, 1500);
+                    }
+                    okBtn.trigger('click');
+                }, true);
+            }, true);
         } catch (error) { }
     }
 }
