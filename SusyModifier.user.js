@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.8.19
+// @version       5.9.28
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -540,10 +540,10 @@ function onInit() {
             }
             waitForText(document.querySelector('#mailSubject'), ' ', init);
 
-            $('#mailSubject').parent().after(`<a id="sk_discount">[Special Discount]</a><`);
+            $('#mailSubject').parent().after(`<a id="sk_discount">[Special Discount]</a>`);
             $('#sk_discount').on("click", function () { $("#mailBody").val($("#mailBody").val().replace("the publishing fees waived", "a special discount").replace("Feature Paper, if", "Feature Paper with a special discount, if")) });
             $('#mailBody').parent().after(`<a id="sk_nodiscount">[No Discount]</a>`);
-            $('#sk_nodiscount').on("click", function () { $("#mailBody").val($("#mailBody").val().replace(" with the publishing fees waived", "").replace(" with a special discount", "")) });
+            $('#sk_nodiscount').on("click", function () { $("#mailBody").val($("#mailBody").val().replace("once this Special Issue is online, w","your publication record demonstrates your expertise in this subject area. W").replace(" with the publishing fees waived", "").replace(" with a special discount", "")) });
             $('#mailBcc').parent().after(`<a id="sk_fullwaiver" style="align-self: center;">[Full Fee Waiver]</a>`);
             $('#sk_fullwaiver').on("click", function () { $("#mailBody").val($("#mailBody").val().replace("a special discount", "the publishing fees waived").replace("Feature Paper, if", "Feature Paper with the publishing fees waived, if")) });
             $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
@@ -643,7 +643,9 @@ function onInit() {
                                     case 2022: discountRatio = discount / 1800; break;
                                     case 2023: if (agreedDate.getMonth() < 6) { discountRatio = discount / 2100 } else { discountRatio = discount / 2600 }; break;
                                     case 2024: discountRatio = discount / 2600; break;
-                                    default: discountRatio = 8;
+                                    case 2025: discountRatio = discount / 2600; break;
+                                    case 2026: discountRatio = discount / 2600; break;
+                                    default: discountRatio = 0.2;
                                 }
                             }
                             if (invitedByGE.indexOf("by GE") > -1 && discountRatio > 0) {
@@ -2555,6 +2557,7 @@ function onInit() {
                 waitForKeyElements('button:contains("OK"):visible', function(okBtn) {
                     if ($("span:contains('Error')").length > 0){
                         alert("Please check manually");
+                        waitForKeyElements('.full-loading.absolute', function(jNode) {jNode.css('display', 'none')}, false);
                     }
                     else {
                         setTimeout(function() {location.reload();}, 1500);
