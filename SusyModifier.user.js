@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.10.27
+// @version       5.10.28
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -543,7 +543,8 @@ function onInit() {
             $('#mailSubject').parent().after(`<a id="sk_discount">[Special Discount]</a>`);
             $('#sk_discount').on("click", function () { $("#mailBody").val($("#mailBody").val().replace("the publishing fees waived", "a special discount").replace("Feature Paper, if", "Feature Paper with a special discount, if")) });
             $('#mailBody').parent().after(`<a id="sk_nodiscount">[No Discount]</a>`);
-            $('#sk_nodiscount').on("click", function () { $("#mailBody").val($("#mailBody").val().replace("once this Special Issue is online, w","your publication record demonstrates your expertise in this subject area. W").replace(" with the publishing fees waived", "").replace(" with a special discount", "")) });
+            $('#sk_nodiscount').on("click", function () { $("#mailBody").val($("#mailBody").val().replace("once this Special Issue is online, w","your publication record demonstrates your expertise in this subject area. W").replace(" with the publishing fees waived", "")
+                                                                             .replace(" with a special discount", "")) });
             $('#mailBcc').parent().after(`<a id="sk_fullwaiver" style="align-self: center;">[Full Fee Waiver]</a>`);
             $('#sk_fullwaiver').on("click", function () { $("#mailBody").val($("#mailBody").val().replace("a special discount", "the publishing fees waived").replace("Feature Paper, if", "Feature Paper with the publishing fees waived, if")) });
             $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
@@ -922,52 +923,13 @@ function onInit() {
                 }
 
                 // Manuscript Source 快捷按钮
-                let m_source = $("div.cell.small-12.medium-6.large-2:contains('Manuscript Source')").next().text().trim() || "[Please Select Source]";
-                let apiUrl = 'https://susy.mdpi.com/restapi/manuscript/quick_change/save/' + $('#maincol a:contains("Manuscript Summary")').attr('href').match(/\/manuscript\/summary\/([a-f0-9]+)/)[1] + '/source';
+                AddManuscriptSourceSidebar();
 
-                waitForKeyElements("span.note-title:contains('Manuscript Notes')", function () {
-                    $("span.note-title:contains('Manuscript Notes')").append(
-                        ` <span style="display:inline-block; pointer-events: all; margin:0; padding:0;">
-                        <select id="quick-source" style="width:140px; margin:0;">
-                            <option value="" selected disabled hidden>${m_source}</option>
-                            <option value="1">Self-submission</option>
-                            <option value="2">Invited via Call for Papers (CFP)</option>
-                            <option value="3">In House Editor invited</option>
-                            <option value="4">Academic Editor Invited</option>
-                            <option value="5">Academic Editor Submission</option>
-                            <option value="6">Conference SI invited</option>
-                        </select>
-                    </span>`
-                    );
-
-                    if (m_source != "[Please Select Source]") {$('#quick-source option').prop('disabled', true)}
-
-                    $('#quick-source').on('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    });
-                    $('#quick-source').on("dblclick", function(e){
-                        $('#quick-source option').prop('disabled', false);
-                    });
-                    $('#quick-source').on('change', function(e) {
-                        const type_value = $(this).val();
-                        $.ajax({
-                            url: apiUrl,
-                            method: "POST",
-                            contentType: "application/json",
-                            data: JSON.stringify({ type_value: type_value }),
-                            headers: {
-                                "susy-csrf-token": SusyConfig.susy_csrf_token,
-                                "susy-auth-token": "Bearer " + localStorage.getItem("Susy-token")
-                            }
-                        }).done(function(){
-                            let currentsource = $('#quick-source').find('option:selected')
-                            currentsource.text('✓ ' + currentsource.text());
-                        }).fail(function(){
-                            alert("Failed. Please try again.")
-                        });
-                    });
-                }, true);
+                // 重置拒稿按钮
+                $("[title|='Reject / Recommend to other journals']").on('click', function(e){
+                    e.preventDefault(); e.stopPropagation();
+                    waitForKeyElements(".jconfirm-title:contains('Error')", AddManuscriptSourceErrorbox, true);
+                })
             }
 
             //Always QC 换行
@@ -2326,7 +2288,9 @@ function onInit() {
     }
     if (window.location.href.indexOf("user/managing/reject/") > -1 && GM_config.get('Assign_Assistant')) {
         try {
+            AddManuscriptSourceSidebar();
             $('input[value="Reject/Recommend"]').trigger("click");
+            waitForKeyElements(".jconfirm-title:contains('Error')", AddManuscriptSourceErrorbox);
             waitForKeyElements("#form_comment", function() { window.scrollTo(0, document.body.scrollHeight) });
         } catch (error) { }
     }
@@ -2906,6 +2870,77 @@ width:22px}.tooltipster-sidetip.tooltipster-noir.tooltipster-left .tooltipster-a
 border-left-color:#fff;left:-4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-right .tooltipster-arrow-background{border-right-color:#fff;left:4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-top .tooltipster-arrow-background{border-top-color:#fff;top:-4px}
 .tooltipster-sidetip.tooltipster-noir .tooltipster-arrow-border{border-width:11px}.tooltipster-sidetip.tooltipster-noir.tooltipster-bottom .tooltipster-arrow-uncropped{top:-11px}.tooltipster-sidetip.tooltipster-noir.tooltipster-right.tooltipster-arrow-uncropped{
 left:-11px}`)}
+
+function AddManuscriptSourceSidebar(){
+    let m_source = $("div.cell.small-12.medium-6.large-2:contains('Manuscript Source')").next().text().trim() || "[Please Select Source]";
+    let apiUrl = 'https://susy.mdpi.com/restapi/manuscript/quick_change/save/' + $('#maincol a:contains("Manuscript Summary")').attr('href').match(/\/manuscript\/summary\/([a-f0-9]+)/)[1] + '/source';
+
+    waitForKeyElements("span.note-title:contains('Manuscript Notes')", function () {
+        $("span.note-title:contains('Manuscript Notes')").append(
+            ` <span style="display:inline-block; pointer-events: all; margin:0; padding:0;"><select id="quick-source" style="width:140px; margin:0;"><option value="" selected disabled hidden>${m_source}</option>
+                            <option value="1">Self-submission</option><option value="2">Invited via Call for Papers (CFP)</option><option value="3">In House Editor invited</option><option value="4">Academic Editor Invited</option>
+                            <option value="5">Academic Editor Submission</option><option value="6">Conference SI invited</option></select></span>`);
+
+        if (m_source != "[Please Select Source]") {$('#quick-source option').prop('disabled', true)}
+
+        $('#quick-source').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        $('#quick-source').on("dblclick", function(e){
+            $('#quick-source option').prop('disabled', false);
+        });
+        $('#quick-source').on('change', function(e) {
+            const type_value = $(this).val();
+            $.ajax({
+                url: apiUrl,
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ type_value: type_value }),
+                headers: {
+                    "susy-csrf-token": unsafeWindow.SusyConfig.susy_csrf_token,
+                    "susy-auth-token": "Bearer " + localStorage.getItem("Susy-token")
+                }
+            }).done(function(response){
+                let currentsource = $('#quick-source').find('option:selected')
+                currentsource.text('✅ ' + currentsource.text());
+                $('#quick-source').trigger('ajaxComplete', [true, response]);
+            }).fail(function(error){
+                alert("Failed. Please try again.");
+                $('#quick-source').trigger('ajaxComplete', [false, error]);
+            });
+        });
+    }, true);
+}
+
+function AddManuscriptSourceErrorbox() {
+    $(".jconfirm-content:contains('Please ')").append(`<select id="sourceSelect" size="6" style="height: auto;"><option value="1">Self-submission</option><option value="2">Invited via Call for Papers (CFP)</option><option value="3">In House Editor invited</option>
+                                                       <option value="4">Academic Editor Invited</option><option value="5">Academic Editor Submission</option><option value="6">Conference SI invited</option></select>`);
+    $('#sourceSelect option').css({'padding': '6px'});
+    $(".jconfirm-buttons:contains('ok') > button").text("Close");
+
+    $('#sourceSelect').on('change', function(e) {
+        const type_value = $(this).val();
+        let apiUrl = 'https://susy.mdpi.com/restapi/manuscript/quick_change/save/' + $('#maincol a:contains("Manuscript Summary")').attr('href').match(/\/manuscript\/summary\/([a-f0-9]+)/)[1] + '/source';
+        $(this).find('option:selected').text('⌛ ' + $(this).find('option:selected').text());
+        $(this).find("option").prop('disabled', true);
+        $.ajax({
+            url: apiUrl,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ type_value: type_value }),
+            headers: {
+                "susy-csrf-token": unsafeWindow.SusyConfig.susy_csrf_token,
+                "susy-auth-token": "Bearer " + localStorage.getItem("Susy-token")
+            }
+        }).done(function(response){
+            $('#sourceSelect').find('option:selected').text($('#sourceSelect').find('option:selected').text().replace('⌛','✅'));
+            window.location.href = 'https://susy.mdpi.com/user/managing/reject/' + $('#maincol a:contains("Manuscript Summary")').attr('href').match(/\/manuscript\/summary\/([a-f0-9]+)/)[1];
+        }).fail(function(error){
+            alert("Failed. Please try again.");
+        });
+    })
+}
 
 //---------------------------------------------------------------------------------------------------------------------------ICON-------------------------------------------------------------------------------------------------------------------------
 var icon_magnifier = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNqMk01oE1EQx99+mmSTbLayWqtN+hWxIW21VeOhpDEVBIupFBQRAgUL6rWth57tVSgIvWnBiyj1EBDpQdCDH4RCIVAbTSm9pBGDJqkxyW42u+u8kGKzbsGBH++D"
