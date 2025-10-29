@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.9.28
+// @version       5.10.27
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -920,6 +920,53 @@ function onInit() {
                     });
                     //              $("table:has([title|='Google Scholar'])").parent().prev().html( $("table:has([title|='Google Scholar'])").parent().prev().html() + " <a href='//redmine.mdpi.cn/projects/journal-mathematics/wiki/SI_Manage_CN' target=_blank>[List]</a>" )
                 }
+
+                // Manuscript Source 快捷按钮
+                let m_source = $("div.cell.small-12.medium-6.large-2:contains('Manuscript Source')").next().text().trim() || "[Please Select Source]";
+
+                waitForKeyElements("span.note-title:contains('Manuscript Notes')", function () {
+                    $("span.note-title:contains('Manuscript Notes')").append(
+                        ` <span style="display:inline-block; pointer-events: all; margin:0; padding:0;">
+                        <select id="quick-source" style="width:140px; margin:0;">
+                            <option value="" selected disabled hidden>${m_source}</option>
+                            <option value="1">Self-submission</option>
+                            <option value="2">Invited via Call for Papers (CFP)</option>
+                            <option value="3">In House Editor invited</option>
+                            <option value="4">Academic Editor Invited</option>
+                            <option value="5">Academic Editor Submission</option>
+                            <option value="6">Conference SI invited</option>
+                        </select>
+                    </span>`
+                    );
+
+                    if (m_source != "[Please Select Source]") {$('#quick-source option').prop('disabled', true)}
+
+                    $('#quick-source').on('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                    $('#quick-source').on("dblclick", function(e){
+                        $('#quick-source option').prop('disabled', false);
+                    });
+                    $('#quick-source').on('change', function(e) {
+                        const type_value = $(this).val();
+                        $.ajax({
+                            url: "https://susy.mdpi.com/restapi/manuscript/quick_change/save/0433e5984b49444c333237ab551bd286/source",
+                            method: "POST",
+                            contentType: "application/json",
+                            data: JSON.stringify({ type_value: type_value }),
+                            headers: {
+                                "susy-csrf-token": SusyConfig.susy_csrf_token,
+                                "susy-auth-token": "Bearer " + localStorage.getItem("Susy-token")
+                            }
+                        }).done(function(){
+                            let currentsource = $('#quick-source').find('option:selected')
+                            currentsource.text('✓ ' + currentsource.text());
+                        }).fail(function(){
+                            alert("Failed. Please try again.")
+                        });
+                    });
+                }, true);
             }
 
             //Always QC 换行
