@@ -923,6 +923,7 @@ function onInit() {
 
                 // Manuscript Source 快捷按钮
                 let m_source = $("div.cell.small-12.medium-6.large-2:contains('Manuscript Source')").next().text().trim() || "[Please Select Source]";
+                let apiUrl = 'https://susy.mdpi.com/restapi/manuscript/quick_change/save/' + $('#maincol a:contains("Manuscript Summary")').attr('href').match(/\/manuscript\/summary\/([a-f0-9]+)/)[1] + '/source';
 
                 waitForKeyElements("span.note-title:contains('Manuscript Notes')", function () {
                     $("span.note-title:contains('Manuscript Notes')").append(
@@ -951,7 +952,7 @@ function onInit() {
                     $('#quick-source').on('change', function(e) {
                         const type_value = $(this).val();
                         $.ajax({
-                            url: "https://susy.mdpi.com/restapi/manuscript/quick_change/save/0433e5984b49444c333237ab551bd286/source",
+                            url: apiUrl,
                             method: "POST",
                             contentType: "application/json",
                             data: JSON.stringify({ type_value: type_value }),
