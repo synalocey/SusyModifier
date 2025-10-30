@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.10.28
+// @version       5.10.29
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -832,11 +832,11 @@ function onInit() {
                     let $link = $(this);
                     let pubpeer_search = new URLSearchParams(new URL($link.attr("href")).search);
                     let pubpeer_name = pubpeer_search.get("q");
-                    $link.attr("href", "https://pubpeer.org/search?q=authors%3A%22" + pubpeer_name + "%22");
+                    $link.attr("href", `https://pubpeer.com/search?q=authors%3A%22${pubpeer_name}%22`);
                     let firstName = $link.parent().contents().filter(function () { return this.nodeType === 3; }).first().text().trim();
                     let lastName = $link.parent().find('b').first().text().trim();
-                    $(this).before(` <a href="//www.scopus.com/results/authorNamesList.uri?st2=${firstName}&st1=${lastName}" title="Scopus" target="_blank" rel="noopener noreferrer"><img src=${icon_scopus}></a> `);
-                    $(this).after(` <a href="//retractiondatabase.org/RetractionSearch.aspx?auth%3d${firstName}+${lastName}" title="retractiondatabase" target="_blank" rel="noopener noreferrer"><img src=${icon_retractiondatabase}></a> `)
+                    $link.before(` <a href="//www.scopus.com/results/authorNamesList.uri?st2=${firstName}&st1=${lastName}" title="Scopus" target="_blank" rel="noopener noreferrer"><img src=${icon_scopus}></a> `);
+                    $link.after(` <a href="//retractiondatabase.org/RetractionSearch.aspx?auth%3d${firstName}+${lastName}" title="retractiondatabase" target="_blank" rel="noopener noreferrer"><img src=${icon_retractiondatabase}></a> `)
                 });
 
                 let hasBeenClicked = false;
@@ -845,29 +845,38 @@ function onInit() {
                         $('body').append('<div id="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; cursor: wait; z-index: 10000;"></div>');
                         event.preventDefault(); hasBeenClicked = true;
                         let $link = $(this);
+
                         GM_xmlhttpRequest({
                             method: "GET",
-                            url: $link.attr("href").replace("pubpeer.org/", "pubpeer.com/api/"),
-                            onload: function (response) {
-                                let pub_num = JSON.parse(response.responseText).meta.total;
-                                $link.append("[" + pub_num + "]");
-                                if (pub_num > 0) { $link.css('background-color', 'gold'); }
+                            url: "https://pubpeer.com/",
+                            onload: function(response) {
+                                let data = response.responseText;
+                                let match = data.match(/<meta\s+name=["']csrf-token["']\s+content=["']([^"']+)["']/i);
+                                let pubpeertoken = match ? match[1] : "";
+
+                                $("[title='PubPeer']").each(function () {
+                                    let $link = $(this);
+                                    $link.attr("href", $link.attr("href") + `&token=${pubpeertoken}`);
+
+                                    GM_xmlhttpRequest({
+                                        method: "GET",
+                                        url: $link.attr("href").replace("pubpeer.com/", "pubpeer.com/api/") + `&token=${pubpeertoken}`,
+                                        onload: function(response) {
+                                            try {
+                                                let result = JSON.parse(response.responseText);
+                                                let pub_num = result.meta.total;
+                                                $link.append("[" + pub_num + "]");
+                                                if (pub_num > 0) { $link.css('background-color', 'gold'); }
+                                            } catch (e) { console.error(e); }
+                                        }
+                                    });
+                                });
+                                setTimeout(function () { $('#overlay').remove(); }, 500);
+                            },
+                            onerror: function() {
                                 $('#overlay').remove();
                             }
                         });
-                        $("[title='PubPeer']").each(function () {
-                            let $link = $(this);
-                            GM_xmlhttpRequest({
-                                method: "GET",
-                                url: $link.attr("href").replace("pubpeer.org/", "pubpeer.com/api/"),
-                                onload: function (response) {
-                                    let pub_num = JSON.parse(response.responseText).meta.total;
-                                    $link.append("[" + pub_num + "]");
-                                    if (pub_num > 0) { $link.css('background-color', 'gold'); }
-                                }
-                            });
-                        });
-                        setTimeout(function () { $('#overlay').remove(); }, 1000);
                     }
                 });
 
