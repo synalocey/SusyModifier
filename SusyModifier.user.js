@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.10.29
+// @version       5.11.1
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -853,6 +853,11 @@ function onInit() {
                                 let data = response.responseText;
                                 let match = data.match(/<meta\s+name=["']csrf-token["']\s+content=["']([^"']+)["']/i);
                                 let pubpeertoken = match ? match[1] : "";
+
+                                if (!pubpeertoken) {
+                                    alert("pubpeer.com首页无法打开，请检查网络连接或代理");
+                                    $('#overlay').remove(); return;
+                                }
 
                                 $("[title='PubPeer']").each(function () {
                                     let $link = $(this);
