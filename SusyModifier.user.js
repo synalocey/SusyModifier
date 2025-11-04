@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.11.1
+// @version       5.11.3
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -798,9 +798,10 @@ function onInit() {
                 $("[class|='margin-horizontal-1']").after(`<form id='vf' class='insertform' method='post' target='_blank' style='display:none;'><input name='form[journal_id]'><input name='form[is_percentage]' value='1'><input name='form[special_issue_id]'>
             <input name='form[emails]'><input name='form[valid_months]' value='12'><input name='form[section_id]'><input name='form[reason]'><input name='form[manuscript_id]'><textarea name='form[note]'></textarea></form>`);
                 $("[class|='margin-horizontal-1']").after(`<div id="voucher" style="display:inline-block;"><a style="color:#4b5675;">[Vouchers]</a><div style="position:absolute;background-color: #f1f1f1;box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);display: none;">
-            <a id="v_invited" reason="Feature paper invited by guest editor" style="display:block;padding: 8px 12px;text-decoration: none;color:black;">FP invited by GE</a><a id="v_ge" reason="Paper by guest editor" style
+            <a id="v_invited" reason="Feature paper invited by guest editor" style="display:block;padding: 8px 12px;text-decoration: none;color:black;">Invited by GE</a><a id="v_ge" reason="Paper by guest editor" style
             ="display:block;padding: 8px 12px;text-decoration:none;color:black;">Paper by GE</a><a id="v_ebm" reason="Paper by editorial board member" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Paper by EBM</a>
-            <a id="v_other" reason="Others" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Others</a></div></div>`);
+            <a id="v_sme" reason="Paper Invited by Journal Editorial Office" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Invited by SME</a>
+            <a id="v_author" reason="Discount Requested by Authors" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Author Request</a></div></div>`);
                 $("#voucher").on("mouseover", function () { $(this).children("div").show() });
                 $("#voucher").on("mouseout", function () { $(this).children("div").hide() });
                 $('head').append('<style>#voucher a:hover {background-color: #ddd;}</style>');
@@ -808,14 +809,16 @@ function onInit() {
 
                 let d_reason = "";
                 $("#voucher>div>a").on("click", function () {
-                    if ($("[data-invoice_id]").length == 0) { alert("There is no APC form on the page. Please change the manuscript status."); return; }
+                    var invoiceId = $("[data-invoice_id]").attr("data-invoice_id") || $('a[href*="show/invoice"]').attr('href')?.match(/\/invoice\/(\d+)\//)?.[1];
+                    if (!invoiceId) {alert("There is no APC form on the page. Please change the manuscript status."); return; };
 
-                    let xhr = new XMLHttpRequest(); xhr.open('GET', "https://susy.mdpi.com/apply/voucher/on_ms_page/" + $("[data-rel]").attr("data-rel") + "/" + $("[data-invoice_id]").attr("data-invoice_id") + "/", false); xhr.send();
+                    let xhr = new XMLHttpRequest(); xhr.open('GET', "https://susy.mdpi.com/apply/voucher/on_ms_page/" + $("[data-rel]").attr("data-rel") + "/" + invoiceId + "/", false); xhr.send();
                     let searchParams = new URLSearchParams(new URL(decodeURIComponent(xhr.responseURL)).search);
                     switch ($(this).attr("id")) {
-                        case 'v_invited':
-                        case 'v_other':d_reason="The paper invited by GE is now submitted. I would like to apply for a XXX% discount on this paper as we promised before. Hope you may approve.\n\nP.S. No need to send promotion letter. / Promotion letter has been sent."; break;
+                        case 'v_invited':d_reason="The paper invited by GE is now submitted. I would like to apply for a XXX% discount on this paper as we promised before. Hope you may approve.\n\nP.S. No need to send promotion letter. / Promotion letter has been sent.";break;
+                        case 'v_sme': d_reason="The paper was invited with a XXX% discount."; break;
                         case 'v_ge': d_reason = "The paper by GE is now submitted. We agreed to grant a XXX% discount on GE's paper. Hope you may approve.\n\nP.S. No need to send promotion letter. / Promotion letter has been sent."; break;
+                        case 'v_author': d_reason="The authors asked for a discount."; break;
                         default: d_reason = ""; break;
                     }
                     $("[name='form[journal_id]']").val(searchParams.get("waiverApplyForm[journal_id]"));
@@ -2562,8 +2565,6 @@ function onInit() {
         }
     }
 
-    console.timeEnd("test")
-
     if (window.location.href.indexOf("user/managing/reject/") > -1 && GM_config.get('ManuscriptFunc')) {
         try {
             waitForKeyElements(".submit-reasons", function () {
@@ -2582,8 +2583,34 @@ function onInit() {
                 acceptBtn.trigger('click');
                 waitForKeyElements('button:contains("OK"):visible', function(okBtn) {
                     if ($("span:contains('Error')").length > 0){
-                        alert("Please check manually");
-                        waitForKeyElements('.full-loading.absolute', function(jNode) {jNode.css('display', 'none')}, false);
+                        waitForKeyElements('.full-loading.absolute:first', function(jNode) {
+                            jNode.css('display', 'none');
+
+                            const $inputs = $("input[id^='rc_select_']");
+                            let index = 0;
+                            function processNextInput() {
+                                if (index >= $inputs.length) {
+                                    alert('Please check meeting report.');
+                                    return;
+                                }
+                                const input = $inputs[index];
+                                index++;
+
+                                const event = new MouseEvent('mousedown', { bubbles: true });
+                                input.dispatchEvent(event);
+
+                                waitForKeyElements('.ant-select-item-option[title="Qualified"]:visible', function($option) {
+                                    const el = $option[0];
+                                    ['mousedown','mouseup','click'].forEach(type => {
+                                        const event = new MouseEvent(type, { bubbles: true, cancelable: true });
+                                        el.dispatchEvent(event);
+                                    });
+
+                                    setTimeout(processNextInput, 2000);
+                                }, true);
+                            }
+                            processNextInput();
+                        }, true);
                     }
                     else {
                         setTimeout(function() {location.reload();}, 1500);
@@ -2593,6 +2620,9 @@ function onInit() {
             }, true);
         } catch (error) { }
     }
+
+    console.timeEnd("test")
+
 }
 
 //---------------------------------------------------------------------------------------------------------------------------Functions-------------------------------------------------------------------------------------------------------------------------
