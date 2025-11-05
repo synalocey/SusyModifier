@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.11.3
+// @version       5.11.4
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -811,6 +811,7 @@ function onInit() {
                 $("#voucher>div>a").on("click", function () {
                     var invoiceId = $("[data-invoice_id]").attr("data-invoice_id") || $('a[href*="show/invoice"]').attr('href')?.match(/\/invoice\/(\d+)\//)?.[1];
                     if (!invoiceId) {alert("There is no APC form on the page. Please change the manuscript status."); return; };
+                    if ($('[title="Planned Paper"]').length === 0) { alert('Please submit the PP information!') };
 
                     let xhr = new XMLHttpRequest(); xhr.open('GET', "https://susy.mdpi.com/apply/voucher/on_ms_page/" + $("[data-rel]").attr("data-rel") + "/" + invoiceId + "/", false); xhr.send();
                     let searchParams = new URLSearchParams(new URL(decodeURIComponent(xhr.responseURL)).search);
