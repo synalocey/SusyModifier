@@ -10,6 +10,7 @@ DOMAIN-SUFFIX,anthropic.com
 DOMAIN-SUFFIX,claude.ai
 DOMAIN,copilot.microsoft.com
 DOMAIN,gemini.google.com
+DOMAIN,notebooklm.google
 DOMAIN-SUFFIX,oaistatic.com
 DOMAIN-SUFFIX,oaiusercontent.com
 DOMAIN-SUFFIX,bing.com
