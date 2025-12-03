@@ -8,9 +8,9 @@ DOMAIN-SUFFIX,chatgpt.com
 DOMAIN-SUFFIX,grok.com
 DOMAIN-SUFFIX,anthropic.com
 DOMAIN-SUFFIX,claude.ai
-DOMAIN,copilot.microsoft.com
-DOMAIN,gemini.google.com
-DOMAIN,notebooklm.google
+DOMAIN-SUFFIX,copilot.microsoft.com
+DOMAIN-KEYWORD,gemini.google
+DOMAIN-KEYWORD,notebooklm.google
 DOMAIN-SUFFIX,oaistatic.com
 DOMAIN-SUFFIX,oaiusercontent.com
 DOMAIN-SUFFIX,bing.com
