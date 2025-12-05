@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.12.1
+// @version       5.12.4
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2005,7 +2005,7 @@ function onInit() {
                                 var script = document.createElement('script');
                                 script.type = 'text/javascript'; script.text = xhr.responseText; document.body.appendChild(script);
                                 unsafeWindow.$(document.getElementById('statisticSelecter')).chosen();
-                                $("#statistic").css('overflow', 'visible'); $(".chosen-single").css("width", "240px");
+                                $("#statistic").css('overflow', 'visible'); $(".chosen-container").css("width", "240px"); $('.chosen-drop').css({'width': '360px', 'white-space': 'nowrap'});
                             }
                         }
                     };
