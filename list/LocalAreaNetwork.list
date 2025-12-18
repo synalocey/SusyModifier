@@ -51,3 +51,4 @@ IP-CIDR,188.188.1.88/24,no-resolve
 
 # Others
 DOMAIN-SUFFIX,api.dalaie.com
+DOMAIN-SUFFIX,syna.eu.org
