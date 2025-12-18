@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.3.5
+// @version       5.12.4
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
-// @author        Syna
+// @author        SKDAY
 // @icon64        https://susy.mdpi.com/build/img/design/susy-logo.png
 // @updateURL     https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @downloadURL   https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.user.js
 // @match         *://*.mdpi.com/*
+// @match         *://*.mdpi.cn/*
 // @match         *://redmine.mdpi.cn/*
 // @match         *://*.scopus.com/*
 // @match         *://www.scilit.net/*
@@ -99,6 +100,15 @@
             'GE_ReminderS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_ReminderB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_ReminderB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'GE_CancelID': {
+                'section': [], 'label': '默认 GE Cancel Template', 'type': 'select', 'labelPos': 'left', 'options':
+                ['Guest Editor Invitation – Cancel Invitation', 'Guest Editor Invitation – Cancel Invitation (Declined the Invitation via Email)', 'Guest Editor Invitation-Cancel Invitation (feature paper invitation)-manually'],
+                default: 'Guest Editor Invitation-Cancel Invitation (feature paper invitation)-manually'
+            },
+            'GE_CancelS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'GE_CancelS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'GE_CancelB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "once this Special Issue is online, we welcome you to contribute one Feature Paper with the publishing fees waived" },
+            'GE_CancelB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "we welcome you to contribute one Feature Paper with a special discount" },
             'EB_TemplateID': { 'section': [], 'label': '默认 EB Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['Invite Version 1', 'Invite Version 2', 'Invite Version 3', 'Invite Version 4'], default: 'Invite Version 1' },
             'EB_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation" },
             'EB_TemplateS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation" },
@@ -129,7 +139,7 @@
             'Report_TemplateB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=Dear[\\s\\S]*?,\\n\\n)[\\S\\s]*Kind regards," },
             'Report_TemplateB2': {
                 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (){\n let $si_name=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();`
-                + ` let $si_link=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().children().attr("href").replace(/journal\\/(.*)\\/special_issues/,"si/$1");`
+                + ` let $si_link=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().children().attr("href");`
                 + ` let $arr=$('div.cell.small-12.medium-6.large-2:contains("Manuscripts(")').first().next().text().split("/");\n let $process=$arr[0].trim(),$pub=$arr[1].trim(),$reject=$arr[2].trim(),$instruct;`
                 + ` if ($process+$pub+$reject>0) {$instruct="You can view all manuscripts submitted to the Special Issue by logging in with your email at the link provided. Please note that your own submissions will not be visible.`
                 + `\\nhttps://susy.mdpi.com/academic-editor/special_issues"} else {$instruct="This is a new Special Issue and hasn't received submissions yet."} return \`I am writing to update you on the status of our Special Issue "\${$si_name}".\n`
@@ -178,7 +188,7 @@
                  'D1: Probability and Statistics', 'D2: Operations Research and Fuzzy Decision Making', 'E: Applied Mathematics', 'E1: Mathematics and Computer Science', 'E2: Control Theory and Mechanics', 'E3: Mathematical Biology', 'E4: Mathematical Physics',
                  'E5: Financial Mathematics'], 'default': ''
             },
-            'Journal': { 'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics', 'AppliedMath', 'Games', 'Geometry', 'Mathematics', 'Risks', 'IJT', 'Telecom', 'None'], 'default': 'Mathematics' },
+            'Journal': { 'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics', 'Games', 'Geometry', 'Mathematics', 'Risks', 'IJT', 'Telecom', 'None'], 'default': 'Mathematics' },
             'Easy_Journal': { 'label': '置顶期刊列表', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'Susy_Theme': { 'label': 'Change Susy Theme', 'type': 'button', 'click': function () { window.location.href = "https://susy.mdpi.com/user/settings" } },
             'MathBatch': { 'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function () { window.location.href = "https://skday.eu.org/math.html" } },
@@ -245,19 +255,31 @@
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
         #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label,#SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_field_Report_Notes,
         #SusyModifierConfig_Old_Icon_field_label,#SusyModifierConfig_Hidden_Func_field_label{width:140px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label,
-        #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,#SusyModifierConfig_EB_ReminderID_field_label,
-        #SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);grid-template-rows:auto auto;}
-        #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,#SusyModifierConfig_Report_TemplateB1_var,
-        #SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_field_Journal{width:auto}`
+        #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_GE_CancelID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
+        #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);
+        grid-template-rows:auto auto;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,
+        #SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_field_Journal{width:auto}`
     });
 })();
 
 
 function onInit() {
     const date_v = new Date('202' + GM_info.script.version);
-    if ((Date.now() - date_v) / 86400000 > 75) { $("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! SusyModifier Outdated !!!</a></li>"); return false; }
+    const blacklistEncoded = ["YWJjYW1lbGlhLnN1bnh5eg==","YWJjY2VsaW5hLnNpeHl6"];
+    const blacklist = blacklistEncoded.map(decode);
+    const isBlacklisted = blacklist.some(name => $("#topmenu span:contains('@mdpi.com')").text().toLowerCase().includes(name));
+
+    if (isBlacklisted) {
+        $("#topmenu > ul").append("<li><a style='color:red' onclick='alert(\"Access denied.\");'>!</a></li>");
+        return false;
+    }
+    else if ((Date.now() - date_v) / 86400000 > 75) {
+        $("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! Outdated !!!</a></li>");
+        return false;
+    }
     else {
-        $("#topmenu > ul").append(`<li><a id='susymodifier_config'>SusyModifier</a></li>`); $("#susymodifier_config").on("click", function () { GM_config.open() });
+        $("#topmenu > ul").append(`<li><a id='susymodifier_config'>SusyModifier</a></li>`);
+        $("#susymodifier_config").on("click", function () { GM_config.open() });
         document.addEventListener('keydown', function (e) {
             if (e.ctrlKey && e.key === 'q') {
                 e.preventDefault();
@@ -271,7 +293,6 @@ function onInit() {
         case 'Mathematics': S_J = 154; break;
         case 'Children': S_J = 159; break;
         case 'Risks': S_J = 162; break;
-        case 'AppliedMath': S_J = 517; break;
         case 'Geometry': S_J = 599; break;
         case 'Games': S_J = 25; break;
         case 'IJT': S_J = 598; break;
@@ -282,7 +303,7 @@ function onInit() {
     }
 
     if (GM_config.get('Easy_Journal')) {
-        $("#topmenu > ul").append(`<li><select id="SusyModifier_Journal_Easy"><option value="555">Analytics</option><option value="517">AppliedMath</option><option value="25">Games</option><option value="599">Geometry</option><option value="154">Mathematics</option>
+        $("#topmenu > ul").append(`<li><select id="SusyModifier_Journal_Easy"><option value="555">Analytics</option><option value="25">Games</option><option value="599">Geometry</option><option value="154">Mathematics</option>
                                    <option value="162">Risks</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select></li>`);
         $("#SusyModifier_Journal_Easy").val(S_J).on("change", function () {
             let J_old = S_J, J_new = $(this).find('option:selected').val(); S_J = J_new;
@@ -506,6 +527,30 @@ function onInit() {
         } catch (error) { }
     }
 
+    //GE Cancel🗑️ + Quick
+    if (window.location.href.indexOf("/uninvite/guest_editor") > -1) {
+        try {
+            skMyAccountOnly();
+            $("#emailTemplates > option:contains('" + GM_config.get('GE_CancelID') + "')").prop('selected', true);
+            unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
+            function init() {
+                let t1 = skStringToRegex(GM_config.get('GE_CancelS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, skStringToFunction(GM_config.get('GE_CancelS2'))));
+                let t2 = skStringToRegex(GM_config.get('GE_CancelB1')); $("#mailBody").val($("#mailBody").val().replace(t2, skStringToFunction(GM_config.get('GE_CancelB2'))));
+                if (window.location.search == "?Q") { setTimeout(function () { $("#sendingEmail").trigger("click") }, 500); }
+            }
+            waitForText(document.querySelector('#mailSubject'), ' ', init);
+
+            $('#mailSubject').parent().after(`<a id="sk_discount">[Special Discount]</a>`);
+            $('#sk_discount').on("click", function () { $("#mailBody").val($("#mailBody").val().replace("the publishing fees waived", "a special discount").replace("Feature Paper, if", "Feature Paper with a special discount, if")) });
+            $('#mailBody').parent().after(`<a id="sk_nodiscount">[No Discount]</a>`);
+            $('#sk_nodiscount').on("click", function () { $("#mailBody").val($("#mailBody").val().replace("once this Special Issue is online, w","your publication record demonstrates your expertise in this subject area. W").replace(" with the publishing fees waived", "")
+                                                                             .replace(" with a special discount", "")) });
+            $('#mailBcc').parent().after(`<a id="sk_fullwaiver" style="align-self: center;">[Full Fee Waiver]</a>`);
+            $('#sk_fullwaiver').on("click", function () { $("#mailBody").val($("#mailBody").val().replace("a special discount", "the publishing fees waived").replace("Feature Paper, if", "Feature Paper with the publishing fees waived, if")) });
+            $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
+        } catch (error) { }
+    }
+
     //EB invitation✏️
     if (window.location.href.indexOf("present_editor_ebm/invite_email") > -1) {
         try {
@@ -599,7 +644,9 @@ function onInit() {
                                     case 2022: discountRatio = discount / 1800; break;
                                     case 2023: if (agreedDate.getMonth() < 6) { discountRatio = discount / 2100 } else { discountRatio = discount / 2600 }; break;
                                     case 2024: discountRatio = discount / 2600; break;
-                                    default: discountRatio = 8;
+                                    case 2025: discountRatio = discount / 2600; break;
+                                    case 2026: discountRatio = discount / 2600; break;
+                                    default: discountRatio = 0.2;
                                 }
                             }
                             if (invitedByGE.indexOf("by GE") > -1 && discountRatio > 0) {
@@ -661,7 +708,7 @@ function onInit() {
                         +`significantly enhance the Special Issue.\n\nWe would like to remind you that our Editorial Office is responsible for administering the discounts. Therefore, we kindly request that you discuss the invitees with us before sending out the invitations.`
                         +`\n\nIf you are unable to provide us with a list, we would be happy if you could send invitations to scholars on our list. If you are interested, we can prepare a mailing list and email template that you can use to send the invitations.\n\n`
                         +`Thank you for your valuable time and consideration. We look forward to hearing back from you.\n`; $("#addnote").val("请GE发邀请"); break;
-                    case 'book':insert_text=`\nIf ten or more papers are published in this Special Issue, we can make a Special Issue book and send a hard copy to each Guest Editor (free of charge). Special Issue book example:\nhttps://www.mdpi.com/books/pdfview/book/3008\n`;
+                    case 'book':insert_text=`\nIf eight or more papers are published in this Special Issue, we can make a Special Issue book and send a hard copy to each Guest Editor (free of charge). Special Issue book example:\nhttps://www.mdpi.com/books/pdfview/book/3008\n`;
                         $("#addnote").val("告知做书条件"); break;
                     case 'certificate':insert_text=`\n3. Editor Certificate\n\nOn behalf of the Editor-in-Chief, we would like to thank you for your editorial work, and we are glad to issue you the editor certificate (see attached). \n\nWe look forward to a fruitful `
                         +`collaboration.\n`; $("#addnote").val("发证书"); window.open("https://susy.mdpi.com/user/list/editors?form[email]=" + $("#mailTo").attr("value").match(/<([^>]+)>/)[1] + "&form[_token]=INShBxf_zyiQ6XpSwRC7dFyTvOYTpaIsun9weGzmiPA"); break;
@@ -747,15 +794,14 @@ function onInit() {
                 $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=[' + m_journal + '] Manuscript ID: ' + m_id + '&body=' + GM_config.get('Template_Linkedin')
                                                              .replace(/\n/g, "%0A").replace(/"/g, "&quot;").replace(/%m_id%/g, m_id).replace(/%m_section%/g, m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
                 if (window.location.href.indexOf("?linkedin") > -1) { $("#linkedin")[0].trigger("click"); history.back(); }
-                $("[title='Google']").before(' <a href="https://www.researchgate.net/search.Search.html?type=publication&query=' + $("[title='Google']").prev().text() +
-                                             '" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="https://c5.rgstatic.net/m/41542880220916/images/favicon/favicon-16x16.png"></a> ');
-
+                $("[title='Google']").before(`<a href="https://www.researchgate.net/search.Search.html?type=publication&query=${$("[title='Google']").prev().text()}" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="${icon_researchgate}"></a> `);
                 $("[class|='margin-horizontal-1']").after(`<form id='vf' class='insertform' method='post' target='_blank' style='display:none;'><input name='form[journal_id]'><input name='form[is_percentage]' value='1'><input name='form[special_issue_id]'>
             <input name='form[emails]'><input name='form[valid_months]' value='12'><input name='form[section_id]'><input name='form[reason]'><input name='form[manuscript_id]'><textarea name='form[note]'></textarea></form>`);
                 $("[class|='margin-horizontal-1']").after(`<div id="voucher" style="display:inline-block;"><a style="color:#4b5675;">[Vouchers]</a><div style="position:absolute;background-color: #f1f1f1;box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);display: none;">
-            <a id="v_invited" reason="Feature paper invited by guest editor" style="display:block;padding: 8px 12px;text-decoration: none;color:black;">FP invited by GE</a><a id="v_ge" reason="Paper by guest editor" style
+            <a id="v_invited" reason="Feature paper invited by guest editor" style="display:block;padding: 8px 12px;text-decoration: none;color:black;">Invited by GE</a><a id="v_ge" reason="Paper by guest editor" style
             ="display:block;padding: 8px 12px;text-decoration:none;color:black;">Paper by GE</a><a id="v_ebm" reason="Paper by editorial board member" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Paper by EBM</a>
-            <a id="v_other" reason="Others" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Others</a></div></div>`);
+            <a id="v_sme" reason="Paper Invited by Journal Editorial Office" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Invited by SME</a>
+            <a id="v_author" reason="Discount Requested by Authors" style="display:block;padding: 8px 12px;text-decoration:none;color:black;">Author Request</a></div></div>`);
                 $("#voucher").on("mouseover", function () { $(this).children("div").show() });
                 $("#voucher").on("mouseout", function () { $(this).children("div").hide() });
                 $('head').append('<style>#voucher a:hover {background-color: #ddd;}</style>');
@@ -763,14 +809,17 @@ function onInit() {
 
                 let d_reason = "";
                 $("#voucher>div>a").on("click", function () {
-                    if ($("[data-invoice_id]").length == 0) { alert("There is no APC form on the page. Please change the manuscript status."); return; }
+                    var invoiceId = $("[data-invoice_id]").attr("data-invoice_id") || $('a[href*="show/invoice"]').attr('href')?.match(/\/invoice\/(\d+)\//)?.[1];
+                    if (!invoiceId) {alert("There is no APC form on the page. Please change the manuscript status."); return; };
+                    if ($('[title="Planned Paper"]').length === 0) { alert('Please submit the PP information!') };
 
-                    let xhr = new XMLHttpRequest(); xhr.open('GET', "https://susy.mdpi.com/apply/voucher/on_ms_page/" + $("[data-rel]").attr("data-rel") + "/" + $("[data-invoice_id]").attr("data-invoice_id") + "/", false); xhr.send();
+                    let xhr = new XMLHttpRequest(); xhr.open('GET', "https://susy.mdpi.com/apply/voucher/on_ms_page/" + $("[data-rel]").attr("data-rel") + "/" + invoiceId + "/", false); xhr.send();
                     let searchParams = new URLSearchParams(new URL(decodeURIComponent(xhr.responseURL)).search);
                     switch ($(this).attr("id")) {
-                        case 'v_invited':
-                        case 'v_other':d_reason="The paper invited by GE is now submitted. I would like to apply for a XXX% discount on this paper as we promised before. Hope you may approve.\n\nP.S. No need to send promotion letter. / Promotion letter has been sent."; break;
+                        case 'v_invited':d_reason="The paper invited by GE is now submitted. I would like to apply for a XXX% discount on this paper as we promised before. Hope you may approve.\n\nP.S. No need to send promotion letter. / Promotion letter has been sent.";break;
+                        case 'v_sme': d_reason="The paper was invited with a XXX% discount."; break;
                         case 'v_ge': d_reason = "The paper by GE is now submitted. We agreed to grant a XXX% discount on GE's paper. Hope you may approve.\n\nP.S. No need to send promotion letter. / Promotion letter has been sent."; break;
+                        case 'v_author': d_reason="The authors asked for a discount."; break;
                         default: d_reason = ""; break;
                     }
                     $("[name='form[journal_id]']").val(searchParams.get("waiverApplyForm[journal_id]"));
@@ -787,11 +836,11 @@ function onInit() {
                     let $link = $(this);
                     let pubpeer_search = new URLSearchParams(new URL($link.attr("href")).search);
                     let pubpeer_name = pubpeer_search.get("q");
-                    $link.attr("href", "https://pubpeer.org/search?q=authors%3A%22" + pubpeer_name + "%22");
+                    $link.attr("href", `https://pubpeer.com/search?q=authors%3A%22${pubpeer_name}%22`);
                     let firstName = $link.parent().contents().filter(function () { return this.nodeType === 3; }).first().text().trim();
                     let lastName = $link.parent().find('b').first().text().trim();
-                    $(this).before(` <a href="//www.scopus.com/results/authorNamesList.uri?st2=${firstName}&st1=${lastName}" title="Scopus" target="_blank" rel="noopener noreferrer"><img src=${icon_scopus}></a> `);
-                    $(this).after(` <a href="//retractiondatabase.org/RetractionSearch.aspx?auth%3d${firstName}+${lastName}" title="retractiondatabase" target="_blank" rel="noopener noreferrer"><img src=${icon_retractiondatabase}></a> `)
+                    $link.before(` <a href="//www.scopus.com/results/authorNamesList.uri?st2=${firstName}&st1=${lastName}" title="Scopus" target="_blank" rel="noopener noreferrer"><img src=${icon_scopus}></a> `);
+                    $link.after(` <a href="//retractiondatabase.org/RetractionSearch.aspx?auth%3d${firstName}+${lastName}" title="retractiondatabase" target="_blank" rel="noopener noreferrer"><img src=${icon_retractiondatabase}></a> `)
                 });
 
                 let hasBeenClicked = false;
@@ -800,29 +849,43 @@ function onInit() {
                         $('body').append('<div id="overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; cursor: wait; z-index: 10000;"></div>');
                         event.preventDefault(); hasBeenClicked = true;
                         let $link = $(this);
+
                         GM_xmlhttpRequest({
                             method: "GET",
-                            url: $link.attr("href").replace("pubpeer.org/", "pubpeer.com/api/"),
-                            onload: function (response) {
-                                let pub_num = JSON.parse(response.responseText).meta.total;
-                                $link.append("[" + pub_num + "]");
-                                if (pub_num > 0) { $link.css('background-color', 'gold'); }
+                            url: "https://pubpeer.com/",
+                            onload: function(response) {
+                                let data = response.responseText;
+                                let match = data.match(/<meta\s+name=["']csrf-token["']\s+content=["']([^"']+)["']/i);
+                                let pubpeertoken = match ? match[1] : "";
+
+                                if (!pubpeertoken) {
+                                    alert("pubpeer.com首页无法打开，请检查网络连接或代理");
+                                    $('#overlay').remove(); return;
+                                }
+
+                                $("[title='PubPeer']").each(function () {
+                                    let $link = $(this);
+                                    $link.attr("href", $link.attr("href") + `&token=${pubpeertoken}`);
+
+                                    GM_xmlhttpRequest({
+                                        method: "GET",
+                                        url: $link.attr("href").replace("pubpeer.com/", "pubpeer.com/api/") + `&token=${pubpeertoken}`,
+                                        onload: function(response) {
+                                            try {
+                                                let result = JSON.parse(response.responseText);
+                                                let pub_num = result.meta.total;
+                                                $link.append("[" + pub_num + "]");
+                                                if (pub_num > 0) { $link.css('background-color', 'gold'); }
+                                            } catch (e) { console.error(e); }
+                                        }
+                                    });
+                                });
+                                setTimeout(function () { $('#overlay').remove(); }, 500);
+                            },
+                            onerror: function() {
                                 $('#overlay').remove();
                             }
                         });
-                        $("[title='PubPeer']").each(function () {
-                            let $link = $(this);
-                            GM_xmlhttpRequest({
-                                method: "GET",
-                                url: $link.attr("href").replace("pubpeer.org/", "pubpeer.com/api/"),
-                                onload: function (response) {
-                                    let pub_num = JSON.parse(response.responseText).meta.total;
-                                    $link.append("[" + pub_num + "]");
-                                    if (pub_num > 0) { $link.css('background-color', 'gold'); }
-                                }
-                            });
-                        });
-                        setTimeout(function () { $('#overlay').remove(); }, 1000);
                     }
                 });
 
@@ -863,16 +926,28 @@ function onInit() {
                     });
                 }
 
+                // 颜色标记
                 if ([154, 159, 162, 517, 599, 25, 598, 276].includes(S_J)) {
+                    addCssTooltipster();
                     $("table [title|='Google Scholar']").each(function () {
                         let ranking = skGetUniv($(this).parent().nextAll(":last-child").text().trim());
                         if (ranking.color) {
                             let markup = $(this).parent().nextAll(":last-child").children("div");
-                            markup.css("background-color", ranking.color); markup.attr("title", markup.attr("title") + "<br>" + ranking.detail)
+                            markup.css("background-color", ranking.color);
+                            markup.attr("title", ranking.detail).tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                         }
                     });
                     //              $("table:has([title|='Google Scholar'])").parent().prev().html( $("table:has([title|='Google Scholar'])").parent().prev().html() + " <a href='//redmine.mdpi.cn/projects/journal-mathematics/wiki/SI_Manage_CN' target=_blank>[List]</a>" )
                 }
+
+                // Manuscript Source 快捷按钮
+                AddManuscriptSourceSidebar();
+
+                // 重置拒稿按钮
+                $("[title|='Reject / Recommend to other journals']").on('click', function(e){
+                    e.preventDefault(); e.stopPropagation();
+                    waitForKeyElements(".jconfirm-title:contains('Error')", AddManuscriptSourceErrorbox, true);
+                })
             }
 
             //Always QC 换行
@@ -1026,17 +1101,15 @@ function onInit() {
             }
             if ($("a:contains('Edit at backend')").length) { $('#si-update-emphasized').parent().children("a").first().attr("href", $("a:contains('Edit at backend')").attr("href").replace(/.*\//, "https://mdpi.com/si/")) };
             $('#si-update-emphasized').before(`<a href="?pagesection=AddGuestEditor" title="Add Guest Editor"><img border="0" src="${icon_plus}"></a> `);
-            $('#si-update-emphasized').attr("data-uri") && $("a:contains('SI manuscripts')").after(" <a href=" + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/", "/academic-editor/special_issues/process/") + ">[AcE Interface]</a>");
             $("[for='form_name_system']").append(` <a onclick="$('#form_name_system').prop('readonly', false)">[Edit]</a>`);
             if (GM_config.get('Hidden_Func')) {
                 if ($('#si-update-emphasized').attr("data-uri")) {
                     $('#si-update-emphasized').before('<a href="' + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/", "/special_issue/reset_status/") + `" title="Reset"><img border="0" src="${icon_arrow}"></a> `);
                     $('#si-update-emphasized').before('<a href="' + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/", "/special_issue/close_invitation/") + `" title="Close"><img border="0" src="${icon_book}"></a> `);
-                    $("button[data-title='Import']").before('<input id="forceadd" type="button" class="submit" value="Force Add">&nbsp; ');
                     $("#forceadd").on("click", function () { window.location.href = "//susy.mdpi.com/planned_paper/edit?email=" + $("#add-planned-paper-section input[name='email']").val() });
                 }
-                SpecialFunc();
-            } else if (userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {
+            }
+            if (userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {
                 SpecialFunc();
             }
 
@@ -1174,6 +1247,7 @@ function onInit() {
                 var ids = selectedEmailLinks.map(link => link.split('/').pop()).join(',');
                 GM_openInTab("https://susy.mdpi.com" + baseLink + "/management?multiIds=" + ids, false);
             });
+
             var SelectALL = $('<input type="button" id=SelectALL class="button hollow" value="Select PP" style="float:right;float:right;font-size:small;margin:0;"> ').on("click", function () {
                 this.toggle = !this.toggle;
                 var statusesToCheck = this.toggle ? ['Title Provided', 'Agreed'] : ['Title Provided', 'Agreed', 'Interested'];
@@ -1194,31 +1268,6 @@ function onInit() {
             $("div.special-issue-invite-div a[href$='/unresponsive'], div.special-issue-invite-div a[href$='/to_be_contacted']").attr("href", function () {
                 return this.href + "?page=1&page_limit=100";
             });
-
-            if (GM_config.get('Hidden_Func')) {
-                $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `);
-                $("h1:contains('Process Special Issue')").attr("id", "sk_list2")
-                $("#sk_list,#sk_list2").on("click", function () {
-                    var emailLinks = [];
-                    $("[data-user-info-emails]").each(function () {
-                        let email = $(this).attr('data-user-info-emails');
-                        let quickLink = $(this).parent().parent().next().next().find('a:contains("Quick")').attr('href');
-                        if (quickLink) { emailLinks.push(email + "\thttps://susy.mdpi.com" + quickLink) };
-                    })
-                    $("body").append(`<div class="blockUI blockOverlay"id=links-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
-                                <div class="blockUI blockMsg blockPage" id=links-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:50%;top:5%;height:90%;left:25%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
-                                <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><textarea id=links_prompt rows=30>`+ emailLinks.join('\n') +
-                                     `</textarea><input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
-                    $("#links_prompt").select(); navigator.clipboard.writeText($("#links_prompt").val());
-                })
-
-                // Send to Website Editor Button
-                $('input.submit.disabled[type="submit"][value="Send to Website Editor"]').each(function () {
-                    $(this).after('<a id="enableSubmit"> [Force Submit]</a>').next('#enableSubmit').on('click', function () {
-                        $(this).prev('input.submit.disabled').removeClass('disabled');
-                    });
-                });
-            }
 
             if (GM_config.get('Maths_J')) {
                 $("a.display_present_editor").on("click", function () {
@@ -1255,7 +1304,104 @@ function onInit() {
                     }, true)
                 });
             }
+
+            if (GM_config.get('Hidden_Func')) {
+                $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `);
+                $("h1:contains('Process Special Issue')").attr("id", "sk_list2")
+                $("#sk_list,#sk_list2").on("click", function () {
+                    var emailLinks = [];
+                    $("[data-user-info-emails]").each(function () {
+                        let email = $(this).attr('data-user-info-emails');
+                        let quickLink = $(this).parent().parent().next().next().find('a:contains("Quick")').attr('href');
+                        if (quickLink) { emailLinks.push(email + "\thttps://susy.mdpi.com" + quickLink) };
+                    })
+                    $("body").append(`<div class="blockUI blockOverlay"id=links-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
+                                <div class="blockUI blockMsg blockPage" id=links-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:50%;top:5%;height:90%;left:25%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
+                                <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><textarea id=links_prompt rows=30>`+ emailLinks.join('\n') +
+                                     `</textarea><input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
+                    $("#links_prompt").select(); navigator.clipboard.writeText($("#links_prompt").val());
+                })
+
+                if (window.location.href.indexOf("/ge") > -1) {
+                    let url_ChangeDiscount = $("input[data-post-uri*='/special_issue/cfp/batch_change_discount']").last().attr('data-post-uri');
+                    let url_Invite = url_ChangeDiscount.replace("/restapi/special_issue/cfp/batch_change_discount", "/special_issue/paper_invitations").replace(/\/1\/.*$/,"/invite/1");
+                    $("input[batch-ajax-url*='paper_invitations/withdraws']").before(`<input value="🚨 Invite" type="button" class="batch-operation-button button batch-invite-btn" batch-ajax-url="${url_Invite}">`);
+
+                }
+            }
+
         } catch (error) { }
+    }
+
+    // PP Note 快捷按键
+    if (window.location.href.indexOf(".mdpi.com/planned_paper/my/") + window.location.href.indexOf(".mdpi.com/special_issue/process") > -2) {
+        $('a[data-load-url*="/planned_paper/update_notes/"]').on("mousedown", function(event) {// 按钮 PP Note 中键
+            if (event.which === 2) { // Middle mouse button
+                event.preventDefault();
+                if ($("#pp_note_settings").length == 0) {
+                    var notePos = GM_getValue("PP_Note_Pos", "end");
+                    var dialogHTML = `<div id='pp_note_settings' role='dialog' style='position: fixed; height: 340px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                            border-radius: 5px; overflow: hidden;'><div style='background-color: #FFA500; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'><span>Note Settings</span><button type='button'
+                            onclick='document.getElementById("pp_note_settings").remove()' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div><div style='padding: 20px;'>
+                            <div style='margin-bottom: 15px;'><label style='display: block; margin-bottom: 5px;'>Add the following note at:</label><div style="display: flex; gap: 20px; align-items: center;"><label style="margin:0;">
+                            <input type="radio" name="pp_note_pos" value="end" ${notePos === "end" ? "checked" : ""}> End</label><label style="margin:0;"><input type="radio" name="pp_note_pos" value="beginning" ${notePos === "beginning" ? "checked" : ""}> Beginning</label>
+                            </div></div><div style='margin-bottom: 15px;'><label style='display: block; margin-bottom: 5px;'>Note Content:</label><textarea id="pp_note" style='width: 100%; height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+                            resize: vertical;'></textarea></div><button id="pp_note_save" class="submit" style='background-color: #FFA500; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%;'>Save</button></div></div>`;
+                    $("body").append(dialogHTML);
+
+                    let savedNote = GM_getValue("PP_Note", "%YYYY-MM-DD% Remind PP");
+                    $("#pp_note").val(savedNote);
+                    $(`input[name="pp_note_pos"][value="${notePos}"]`).prop("checked", true);
+
+                    $("#pp_note_save").on("click", function () {
+                        let note = $("#pp_note").val();
+                        let pos = $('input[name="pp_note_pos"]:checked').val();
+                        GM_setValue("PP_Note", note);
+                        GM_setValue("PP_Note_Pos", pos);
+                        $("#pp_note_settings").remove();
+                    });
+                }
+                return false;
+            }
+        })
+
+        $('a[data-load-url*="/planned_paper/update_notes/"]').on("contextmenu", function(event) {// 按钮 PP Note 右键
+            let target = $(event.target);
+            let link = target.is('a') ? target : target.parent();
+            if (link.html() === "✅") { return; } else { event.preventDefault();}
+
+            let url = "https://susy.mdpi.com" + link.attr('data-load-url');
+            $.get(url, function(data) {
+                let textareaContent = $(data).find('textarea').text().trim();
+                let savedNote = GM_getValue("PP_Note", "%YYYY-MM-DD% Remind PP");
+                let notePos = GM_getValue("PP_Note_Pos", "end");
+                let today = new Date();
+                let year = today.getFullYear();
+                let month = String(today.getMonth() + 1).padStart(2, '0');
+                let day = String(today.getDate()).padStart(2, '0');
+
+                savedNote = savedNote.replace(/%([^%]+)%/g, function(match, content) {
+                    return content.replace(/YYYY/g, year).replace(/YY/g, String(year).slice(-2)).replace(/MM/g, month).replace(/DD/g, day);
+                });
+
+                let newContent;
+                if (notePos === "beginning") { newContent = savedNote + "\n" + textareaContent; } else { newContent = textareaContent + "\n" + savedNote; }
+
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: { data: newContent },
+                    headers: {
+                        'susy-csrf-token': unsafeWindow.SusyConfig.susy_csrf_token
+                    },
+                    success: function(response, status, xhr) {
+                        if (xhr.status === 200) {
+                            link.attr("title",newContent).html("✅");
+                        }
+                    }
+                });
+            });
+        });
     }
 
     //SI可行性报告
@@ -1535,7 +1681,7 @@ function onInit() {
                 $('[href="/users/64"]').css("background-color", "yellow"); $('h2:contains("Issues")').append(" <span style=background-color:#ff0>(" + $('[href="/users/64"]').length + " pending CfP Team)</span>");
             }
             //CfP filter链接
-            $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&f[]=cf_10&op[cf_10]==&v[cf_10][]=` + GM_config.get('Journal')
+            $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-planning/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]==&v[status_id][]=13&v[status_id][]=113&f[]=cf_10&op[cf_10]==&v[cf_10][]=` + GM_config.get('Journal')
                                      + `&f[]=&c[]=cf_25&c[]=cf_10&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&sort=updated_on%3Adesc&per_page=100'>[CfP]</a>`) // + GM_config.get('Journal')
             $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/si-committee/issues?c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&f[]=status_id&utf8=%E2%9C%93&v[subject][]=[` + GM_config.get('Journal')
                                      + `&f[]=subject&f[]=&group_by=&op[status_id]=o&op[subject]=%7E&per_page=100&set_filter=1'>[SCfP]</a>`)
@@ -1612,7 +1758,7 @@ function onInit() {
     //Always: Mailsdb样式⚙️🔝
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/search/emails") > -1) {
         try {
-            $("head").append('<link rel="stylesheet" type="text/css" href="/assets/application-3f4ae7647a4464beb61368778f76d00684da5f6d4b0490fcb3a33e4b350c8bd6.css">');
+            $("head").append('<link rel="stylesheet" type="text/css" href="/assets/application-98a08eef03d8f08cf84f0f5a890ccbf92dd20964127ea9c280f768a08e729027.css">');
             $("head").append(`<style>table{width:80%}.colorgray{color:gray!important}.bgcoloref{background:#efefef!important}#user-info .user-info-section{margin-bottom:10px}#user-info span.email{font-weight:400;color:#103247}#user-info span.number{font-weight:400;color:#123}
                     #user-info a{color:#00f}#user-info a:visited{color:#cd7e53}#user-info a:hover{color:#47566d}#user-info table{margin-left:2%;width:98%;background:#99a4b5;margin-bottom:10px;border-right:1px solid #ccc;border-bottom:1px solid #ccc;font-size:14px}
                     #user-info table tr th{text-align:left;background:#4f5671;color:#fefefe;font-weight:400;border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem}#user-info table tr td{border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem;
@@ -1765,6 +1911,7 @@ function onInit() {
     if (window.location.href.indexOf("admin.mdpi.com/tools/email-purger/") > -1) {
         try {
             $('#ExcelMailPurgerEmailList_full_name,#ExcelMailPurgerEmailList_exclude_cfr').prop('checked', false);
+            $('#ExcelMailPurgerEmailList_sanctions').prop('checked', true);
             $("div[id^='ExcelMailPurger'].chzn-container").remove();
             unsafeWindow.$("select[id^='ExcelMailPurger'].chosen.chzn-done").val(S_J).removeClass('chzn-done').chosen({ allow_single_deselect: true });
         } catch (error) { }
@@ -1858,7 +2005,7 @@ function onInit() {
                                 var script = document.createElement('script');
                                 script.type = 'text/javascript'; script.text = xhr.responseText; document.body.appendChild(script);
                                 unsafeWindow.$(document.getElementById('statisticSelecter')).chosen();
-                                $("#statistic").css('overflow', 'visible'); $(".chosen-single").css("width", "240px");
+                                $("#statistic").css('overflow', 'visible'); $(".chosen-container").css("width", "240px"); $('.chosen-drop').css({'width': '360px', 'white-space': 'nowrap'});
                             }
                         }
                     };
@@ -2093,7 +2240,7 @@ function onInit() {
     }
 
     //派稿助手: iThenticate AUTO
-    if (window.location.href.indexOf("managing/status/submitted") + window.location.href.indexOf("sme/status/submitted") > -2 && GM_config.get('Assign_Assistant')) {
+    if (window.location.href.indexOf("managing/status/") + window.location.href.indexOf("sme/status/submitted") > -2 && GM_config.get('Assign_Assistant')) {
         try {
             $("#show_title").parent().append("<input type='button' id='send_ith' value='Send iThenticate in OneClick'>")
             $("#send_ith").on("click", function () {
@@ -2135,15 +2282,15 @@ function onInit() {
                 }
             });
             $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align", "center").on("bind", "contextmenu", function () { return false; }).each(function () {
-                $(this).append("<a class='sk_reject' style='font-style:italic' href='//susy.mdpi.com/user/assigned/reject-manuscript/" + $(this).parents("tr").find("td:nth-child(4) >> a").attr("href").split("/").pop() + "'>[Reject]</a>");
+                $(this).append("<a class='sk_reject' style='font-style:italic' href='//susy.mdpi.com/user/managing/reject/" + $(this).parents("tr").find("td:nth-child(4) >> a").attr("href").split("/").pop() + "'>[Reject]</a>");
             });
-            $(".sk_reject").on('mouseup', function (e) {
-                switch (e.which) {
-                    case 3: // Right click.
-                        if (confirm('The paper will be rejected immediately using "without Peer Review Template"')) { GM_openInTab($(this).attr("href") + "?quickreject", 1); $(this).parent().html("[Rejected]"); }
-                        return;
-                }; return true;
-            });
+//             $(".sk_reject").on('mouseup', function (e) {
+//                 switch (e.which) {
+//                     case 3: // Right click.
+//                         if (confirm('The paper will be rejected immediately using "without Peer Review Template"')) { GM_openInTab($(this).attr("href").replace("managing/reject/","assigned/reject-manuscript/") + "?quickreject", 1); $(this).parent().html("[Rejected]"); }
+//                         return;
+//                 }; return true;
+//             });
         } catch (error) { }
     }
 
@@ -2155,6 +2302,14 @@ function onInit() {
                 waitForText(document.querySelector('#mailSubject'), ' ', init);
                 function init() { $("#sendingEmail").trigger("click"); }
             }
+        } catch (error) { }
+    }
+    if (window.location.href.indexOf("user/managing/reject/") > -1 && GM_config.get('Assign_Assistant')) {
+        try {
+            AddManuscriptSourceSidebar();
+            $('input[value="Reject/Recommend"]').trigger("click");
+            waitForKeyElements(".jconfirm-title:contains('Error')", AddManuscriptSourceErrorbox);
+            waitForKeyElements("#form_comment", function() { window.scrollTo(0, document.body.scrollHeight) });
         } catch (error) { }
     }
 
@@ -2411,7 +2566,64 @@ function onInit() {
         }
     }
 
+    if (window.location.href.indexOf("user/managing/reject/") > -1 && GM_config.get('ManuscriptFunc')) {
+        try {
+            waitForKeyElements(".submit-reasons", function () {
+                //$('input[id="Low H-index of authors"],input[id="Lack of novelty"]').prop('checked', true);
+                if ($('.card-yellow').length + $('.card-red').length > 0) {
+                    $('input[id="Authors have a red/yellow card"]').prop('checked', true);
+                }
+                //$('.submit-reasons').click();
+            }, true)
+        } catch (error) { }
+    }
+
+    if (window.location.href.indexOf("crm.mdpi.cn/conference/booth/") + window.location.href.indexOf("crm.mdpi.cn/scholar_visits/")+ window.location.href.indexOf("crm.mdpi.cn/sponsorship/") > -3 && GM_config.get('Hidden_Func')) {
+        try {
+            waitForKeyElements('button[label="Accept"]:first', function(acceptBtn) {
+                acceptBtn.trigger('click');
+                waitForKeyElements('button:contains("OK"):visible', function(okBtn) {
+                    if ($("span:contains('Error')").length > 0){
+                        waitForKeyElements('.full-loading.absolute:first', function(jNode) {
+                            jNode.css('display', 'none');
+
+                            const $inputs = $("input[id^='rc_select_']");
+                            let index = 0;
+                            function processNextInput() {
+                                if (index >= $inputs.length) {
+                                    alert('Please check meeting report.');
+                                    return;
+                                }
+                                const input = $inputs[index];
+                                index++;
+
+                                const event = new MouseEvent('mousedown', { bubbles: true });
+                                input.dispatchEvent(event);
+
+                                waitForKeyElements('.ant-select-item-option[title="Qualified"]:visible', function($option) {
+                                    const el = $option[0];
+                                    ['mousedown','mouseup','click'].forEach(type => {
+                                        const event = new MouseEvent(type, { bubbles: true, cancelable: true });
+                                        el.dispatchEvent(event);
+                                    });
+
+                                    setTimeout(processNextInput, 2000);
+                                }, true);
+                            }
+                            processNextInput();
+                        }, true);
+                    }
+                    else {
+                        setTimeout(function() {location.reload();}, 1500);
+                    }
+                    okBtn.trigger('click');
+                }, true);
+            }, true);
+        } catch (error) { }
+    }
+
     console.timeEnd("test")
+
 }
 
 //---------------------------------------------------------------------------------------------------------------------------Functions-------------------------------------------------------------------------------------------------------------------------
@@ -2567,30 +2779,30 @@ function skGetUniv(aff) {
     var u_Abbrr = ["Rank B 201+ Beihang University","Rank B National University of Defense Technology","Chinese Academy of Sciences<br>(Please further check its institute and decide)","65 King Abdulaziz University","104 Universidad de Buenos Aires",
                    "107 Universidad Nacional Autónoma de México","117 Indian Institute of Technology Bombay","124 Universidade Estadual de Campinas","124 Universidade Estadual de Campinas","128 Indian Institute of Technology Delhi",
                    "132 Indian Institute of Technology Kanpur","144 Universiti Malaya","148 Indian Institute of Technology Madras"];
-    for (i = 0, len = u_Abbr.length; i < len; i++) { if (aff.indexOf(u_Abbr[i]) > -1) { results += "<br><span style='background-color:pink;font-weight:bold'>Abbr: " + u_Abbrr[i] + "</span>"; color = "pink"; break; } }
+    for (i = 0, len = u_Abbr.length; i < len; i++) { if (aff.indexOf(u_Abbr[i]) > -1) { results += "<span style='background-color:pink;font-weight:bold'>Abbr: " + u_Abbrr[i] + "</span>"; color = "pink"; break; } }
     aff = aff.toLowerCase();
-    for (i = 0, len = u_2.length; i < len; i++) { if (aff.indexOf(u_2[i]) > -1) { results += "<br><span style='background-color:lightblue;font-weight:bold'>Top150: " + u_2r[i] + "</span>"; color = "lightblue"; break; } }
+    for (i = 0, len = u_2.length; i < len; i++) { if (aff.indexOf(u_2[i]) > -1) { results += "<span style='background-color:lightblue;font-weight:bold'>Top150: " + u_2r[i] + "</span>"; color = "lightblue"; break; } }
     for (i = 0, len = u_D.length; i < len; i++) {
         if (aff.indexOf(u_D[i]) > -1 && (u_D[i].indexOf("of") > -1 || (u_D[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1))) {
-            results += "<br><span style='background-color:thistle;font-weight:bold'>Rank HK: " + u_Dr[i] + "</span>"; color = "thistle";
+            results += "<span style='background-color:thistle;font-weight:bold'>Rank HK: " + u_Dr[i] + "</span>"; color = "thistle";
         }
     }
     for (i = 0, len = u_C.length; i < len; i++) {
         if (aff.indexOf(u_C[i]) > -1 && (u_C[i].indexOf("of") > -1 || (u_C[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1))) {
-            results += "<br><span style='background-color:lightgreen;font-weight:bold'>Rank C: " + u_Cr[i] + "</span>"; color = "lightgreen";
+            results += "<span style='background-color:lightgreen;font-weight:bold'>Rank C: " + u_Cr[i] + "</span>"; color = "lightgreen";
         }
     }
     for (i = 0, len = u_B.length; i < len; i++) {
         if (aff.indexOf(u_B[i]) > -1 && (u_B[i].indexOf("of") > -1 || (u_B[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1))) {
-            results += "<br><span style='background-color:wheat;font-weight:bold'>Rank B: " + u_Br[i] + "</span>"; color = "wheat";
+            results += "<span style='background-color:wheat;font-weight:bold'>Rank B: " + u_Br[i] + "</span>"; color = "wheat";
         }
     }
     for (i = 0, len = u_A.length; i < len; i++) {
         if (aff.indexOf(u_A[i]) > -1 && (u_A[i].indexOf("of") > -1 || (u_A[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1))) {
-            results += "<br><span style='background-color:lightblue;font-weight:bold'>Rank A: " + u_Ar[i] + "</span>"; color = "lightblue";
+            results += "<span style='background-color:lightblue;font-weight:bold'>Rank A: " + u_Ar[i] + "</span>"; color = "lightblue";
         }
     }
-    for (i = 0, len = u_QP.length; i < len; i++) { if (aff.indexOf(u_QP[i]) > -1) { results += "<br><span style='background-color:cyan;font-weight:bold'>Rank Top: " + u_QPr[i] + "</span>"; color = "cyan"; } }
+    for (i = 0, len = u_QP.length; i < len; i++) { if (aff.indexOf(u_QP[i]) > -1) { results += "<span style='background-color:cyan;font-weight:bold'>Rank Top: " + u_QPr[i] + "</span>"; color = "cyan"; } }
     return { detail: results, color: color };
 }
 
@@ -2704,6 +2916,77 @@ border-left-color:#fff;left:-4px}.tooltipster-sidetip.tooltipster-noir.tooltipst
 .tooltipster-sidetip.tooltipster-noir .tooltipster-arrow-border{border-width:11px}.tooltipster-sidetip.tooltipster-noir.tooltipster-bottom .tooltipster-arrow-uncropped{top:-11px}.tooltipster-sidetip.tooltipster-noir.tooltipster-right.tooltipster-arrow-uncropped{
 left:-11px}`)}
 
+function AddManuscriptSourceSidebar(){
+    let m_source = $("div.cell.small-12.medium-6.large-2:contains('Manuscript Source')").next().text().trim() || "[Please Select Source]";
+    let apiUrl = 'https://susy.mdpi.com/restapi/manuscript/quick_change/save/' + $('#maincol a:contains("Manuscript Summary")').attr('href').match(/\/manuscript\/summary\/([a-f0-9]+)/)[1] + '/source';
+
+    waitForKeyElements("span.note-title:contains('Manuscript Notes')", function () {
+        $("span.note-title:contains('Manuscript Notes')").append(
+            ` <span style="display:inline-block; pointer-events: all; margin:0; padding:0;"><select id="quick-source" style="width:140px; margin:0;"><option value="" selected disabled hidden>${m_source}</option>
+                            <option value="1">Self-submission</option><option value="2">Invited via Call for Papers (CFP)</option><option value="3">In House Editor invited</option><option value="4">Academic Editor Invited</option>
+                            <option value="5">Academic Editor Submission</option><option value="6">Conference SI invited</option></select></span>`);
+
+        if (m_source != "[Please Select Source]") {$('#quick-source option').prop('disabled', true)}
+
+        $('#quick-source').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        $('#quick-source').on("dblclick", function(e){
+            $('#quick-source option').prop('disabled', false);
+        });
+        $('#quick-source').on('change', function(e) {
+            const type_value = $(this).val();
+            $.ajax({
+                url: apiUrl,
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ type_value: type_value }),
+                headers: {
+                    "susy-csrf-token": unsafeWindow.SusyConfig.susy_csrf_token,
+                    "susy-auth-token": "Bearer " + localStorage.getItem("Susy-token")
+                }
+            }).done(function(response){
+                let currentsource = $('#quick-source').find('option:selected')
+                currentsource.text('✅ ' + currentsource.text());
+                $('#quick-source').trigger('ajaxComplete', [true, response]);
+            }).fail(function(error){
+                alert("Failed. Please try again.");
+                $('#quick-source').trigger('ajaxComplete', [false, error]);
+            });
+        });
+    }, true);
+}
+
+function AddManuscriptSourceErrorbox() {
+    $(".jconfirm-content:contains('Please ')").append(`<select id="sourceSelect" size="6" style="height: auto;"><option value="1">Self-submission</option><option value="2">Invited via Call for Papers (CFP)</option><option value="3">In House Editor invited</option>
+                                                       <option value="4">Academic Editor Invited</option><option value="5">Academic Editor Submission</option><option value="6">Conference SI invited</option></select>`);
+    $('#sourceSelect option').css({'padding': '6px'});
+    $(".jconfirm-buttons:contains('ok') > button").text("Close");
+
+    $('#sourceSelect').on('change', function(e) {
+        const type_value = $(this).val();
+        let apiUrl = 'https://susy.mdpi.com/restapi/manuscript/quick_change/save/' + $('#maincol a:contains("Manuscript Summary")').attr('href').match(/\/manuscript\/summary\/([a-f0-9]+)/)[1] + '/source';
+        $(this).find('option:selected').text('⌛ ' + $(this).find('option:selected').text());
+        $(this).find("option").prop('disabled', true);
+        $.ajax({
+            url: apiUrl,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ type_value: type_value }),
+            headers: {
+                "susy-csrf-token": unsafeWindow.SusyConfig.susy_csrf_token,
+                "susy-auth-token": "Bearer " + localStorage.getItem("Susy-token")
+            }
+        }).done(function(response){
+            $('#sourceSelect').find('option:selected').text($('#sourceSelect').find('option:selected').text().replace('⌛','✅'));
+            window.location.href = 'https://susy.mdpi.com/user/managing/reject/' + $('#maincol a:contains("Manuscript Summary")').attr('href').match(/\/manuscript\/summary\/([a-f0-9]+)/)[1];
+        }).fail(function(error){
+            alert("Failed. Please try again.");
+        });
+    })
+}
+
 //---------------------------------------------------------------------------------------------------------------------------ICON-------------------------------------------------------------------------------------------------------------------------
 var icon_magnifier = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNqMk01oE1EQx99+mmSTbLayWqtN+hWxIW21VeOhpDEVBIupFBQRAgUL6rWth57tVSgIvWnBiyj1EBDpQdCDH4RCIVAbTSm9pBGDJqkxyW42u+u8kGKzbsGBH++D"
 + "/8ybmfceEYlEkJlRFIURCIIYgGUbwAElIKPrekJV1TyAaHSwddrs/MXzo5HeM4PnetpEZ2tVlnPxePzrm1cvu4q7ubeg2aa8Xi+CiE2ACZzTNTZxezbYffKU333EKdIkQbMM4/B0dHhau/ocycQqKUvlbRKnYaRWqw0GwhGfQzjsETiWJQlE7KWF5+4Tx3qGL1/rwzq6Wq2apd/u9Q+58SSTr0gYo8A3cLZzeelRO60oilkA3mK1tqhavRzUe9zpNArSuQoDvvx"
@@ -2747,3 +3030,4 @@ var icon_scopus = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAA
 + "7g4KdE/jbawDEM49pv7iFJm0KW8bxx2p41c1oOyR6dY/4zSMwtlMgS7EjWykePEd44yxu+ROmsgF1Kf7YAQb3nqR1/yrZk1lMqYoEZRDTq0ARvwQoaeM9bmkB+TKHCUoU952ieecy8dunSCHAhQ1Q8ja7M/AsydxLovoUlRPX8XdMoC7DlNdhSlXSjzNIIch/Nbab3KNAQJXmzQv42/ZTrJ3Bq4wQ1adAvDxRFeSva1RwjvbzScLJ8wzsOYZGTdLGO4LxI7ioha"
 + "YRmrThty2ow6zdSLDrENm3eQZ2HyaefYYLP9O8fZHy0Ut5K/PTmKH1ZF8/EL1+gBjvpwJBvy+jWYodHiWafkjr7hWkEJAt1Fm6dhwXNrDDo5jBIVy4mCsGpHsLqrmRVEEEsT5Ip2l1uZE6LhRbyIe5wkgi+aT7Qcwfuf9wTP+IH7tLvmy5ImEAAAAAAElFTkSuQmCC"
 var icon_retractiondatabase = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQAAAAA3iMLMAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAACxMAAAsTAQCanBgAAAA4SURBVAjXY/jxn+FTPcPy/QxdzQwnuxk4mhme72f4UM/w357h/34Gk/kMCv4Mvf4ME9IZ/n8HIgD7ARTNr5OwGQAAAABJRU5ErkJggg=="
+var icon_researchgate = "data:image/gif;base64,R0lGODdhEAAQAPIFAGZmZpmZmczMzP///zNmZjMzMwAAAAAAACwAAAAAEAAQAAADOTi63P7QBQIiK0PYRQQIjFAUAFBomAAyQTUEWNs1rSJa9VDiJLnVhVWkJtIMCQpTREAIJk+bqHSQAAA7"

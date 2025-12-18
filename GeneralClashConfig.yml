@@ -59,15 +59,17 @@ experimental:
 # 静态的域名 比 通配域名 具有更高的优先级 (foo.example.com 优先于 *.example.com)
 # 注意: hosts 在 fake-ip 模式下不生效
 hosts:
-    "mail.mdpi.com": 212.243.204.123
+    "mail.mdpi.com": 195.65.194.210
     "*.mdpi.lab": 210.51.191.4
     "*.*.mdpi.lab": 210.51.191.4
     "merrin5.mdpi.lab": 210.51.191.7
     "feedback.mdpi.cn": 210.51.191.4
     "*.mdpi.test": 195.65.177.76
     "*.mdpi.intra": 195.65.177.76
+    "*.mdpi.dev": 195.65.177.78
     "*.*.mdpi.test": 195.65.177.76
     "*.*.mdpi.intra": 195.65.177.76
+    "*.*.mdpi.dev": 195.65.177.78
     "api.dalaie.com": 140.238.9.12
 tun:
   enable: false
@@ -125,6 +127,8 @@ dns:
     - "xbox.*.*.microsoft.com"
     - "*.ipv6.microsoft.com"
     - "*.*.xboxlive.com"
+    - "*.bambulab.com"
+    - "*.bambulab.cn"
   nameserver:
     - 114.114.114.114
     - 180.76.76.76
