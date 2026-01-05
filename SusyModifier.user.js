@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       5.12.4
+// @version       6.1.4
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2134,12 +2134,25 @@ function onInit() {
         } catch (error) { }
     }
 
-    //Always: 自动填写签名
+    //Always: SI First/Final Decision
     if (window.location.href.indexOf("special_issue/eic_decision/") + window.location.href.indexOf("special_issue/si_decision/") > -2) {
         try {
             let str = $("#topmenu span:contains('@mdpi.com')").text().replace("@mdpi.com", "").replace(".", " ");
             let sk_signature = str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
             $("#form_signature").val(sk_signature);
+            $("#form_decision_0").prop("checked", true);
+            if ($("#selectEBMForOversee").length) {
+                $("#selectEBMForOversee").after('<input type="button" id="autoDetectEBM" style="margin-left: 8px; cursor: pointer;" value="Auto Detect">');
+                runAutoDetect();
+            }
+            $("#autoDetectEBM").on("click", runAutoDetect);
+            function runAutoDetect() {
+                let email = $("div.decisionHistory:contains('first approval')").find("a[href^='mailto:']").text();
+                $("#selectEBMForOversee")[0].click();
+                waitForKeyElements("#filter_1", function () {
+                    $("td:contains('" + email + "')").parent().find("td a:contains('Select')")[0].click();
+                }, true);
+            }
         } catch (error) { }
     }
 
