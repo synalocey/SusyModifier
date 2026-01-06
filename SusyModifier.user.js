@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.1.4
+// @version       6.1.6
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -404,7 +404,7 @@ function onInit() {
                 $(".menu [href='/user/manuscript/list/owner']").attr("href", '/user/manuscript/list/owner/my_journal');
                 $(".menu [href='/user/manuscript/special_approval_list']").attr("href", '/user/manuscript/special_approval_list/my_journal');
                 $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a> <a href='/user/public_forum/list?form[journal_id]=" + S_J + "'>[P]</a>");
-                $(".menu [href='/publisher/manuscripts']").attr("href", "/publisher/manuscripts?form[journal_id]=" + S_J);
+                $(".menu [href='/publisher/manuscripts']").after(" <a href='/publisher/manuscripts?form[journal_id]=" + S_J + "'>[J1]</a> <a href='/publisher/manuscripts/unchecked?form[journal_id]=" + S_J + "'>[J2]</a>");
             }
             $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC&page_limit=100'>Special Issues</a> <a href='/user/sme/status/submitted'>[MS]</a> ");
             $(".menu [href='/special_issue_pending/list']").text("Manage").attr("href", "/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC&page_limit=100")
@@ -1895,15 +1895,6 @@ function onInit() {
     //Always: Unsubscribe link to page
     if (window.location.href.indexOf(".mdpi.com/user/get/unsubscribe_manage_link") > -1) { try { $.get(window.location.href, function (res) { window.location.href = res.link }) } catch (error) { } }
 
-    //Hidden_Func: MRS ALL journals
-    if (window.location.href.indexOf("//mrs.mdpi.com/data/role/") > -1 && GM_config.get('Hidden_Func')) {
-        try {
-            $('#demo-form2').before(` <a onclick='$("#journal > option")[0].value="250,77,145,362,13,524,534,341,456,390,90,480,517,491,523,35,118,471,323,47,82,346,67,427,240,103,515,299,305,143,487,531,441,123,26,214,440,467,213,176,416,259,428,385,356,142,151,`
-                                    + `84,404,306,397,127,449,7,402,5,412,83,509,192,301,42,492,275,395,19,460,53,25,413,409,453,79,474,481,163,50,225,215,148,221,355,203,499,37,51,435,170,290,49,432,199,14,407,231,154,81,92,59,522,465,438,314,457,365,359,360,444,`
-                                    + `165,419,511,358,436,271,353,16,252,114,162,130,206,246,3,233,265,528,518,414,173,296,466,294,15,376,44,131,417,150,276,133,228,291,269,36,504";'>[All Journal]</a>`);
-        } catch (error) { }
-    }
-
     //Hidden_Func: PSAN Redirect
     if (window.location.href == 'https://admin.mdpi.com/' && GM_config.get('Hidden_Func')) { try { window.location.href = 'https://admin.mdpi.com/tools/email-purger/email-list' } catch (error) { } }
 
@@ -1941,11 +1932,6 @@ function onInit() {
             }
         } catch (error) { }
     }
-
-    //     //Hidden_Func: Remind 2nd Round Reviewer
-    //     if (window.location.href.indexOf("assigned/remind_reviewer") > -1 && GM_config.get('Hidden_Func')){try{
-    //         $('#emailTemplates').val(21).trigger("change"); document.getElementById("emailTemplates").dispatchEvent(new CustomEvent('change'));
-    //     } catch (error){ }}
 
     //Always: MRS Chosen
     if (window.location.href.indexOf("//mrs.mdpi.com/statistics") > -1) {
@@ -2419,6 +2405,55 @@ function onInit() {
                 let newVal = $(this).val().replace("We suggest compiling a list of potential contributors alongside myself as your MDPI in-house Editor. I will help to ensure that the excel file is formatted correctly and that the appropriate scholars are contacted. ", "");
                 $(this).val(newVal);
             });
+        } catch (error) { }
+    }
+
+    //Pre-peer-review approval
+    if (window.location.href.indexOf(".mdpi.com/user/manuscript/affiliation_approval_list") > -1) {
+        try {
+            if (S_J > 0) {
+                unsafeWindow.$("#form_journal_id").val(S_J).trigger("chosen:updated");
+                $("a:contains('Discard')").after(' <input id="checkall" type="button" style="margin-left: 8px; cursor: pointer" value="Check All">')
+                $("#checkall").on("click", function () {
+                    if (confirm("ALL manuscripts in this page were checked and can be approved!") == true) {
+                        // 收集所有包含 /approved 的 data-url 链接
+                        var approveUrls = [];
+                        $('a[data-url*="/approved"]').each(function () {
+                            approveUrls.push($(this).attr('data-url'));
+                        });
+
+                        if (approveUrls.length === 0) { return }
+
+                        // 创建进度显示
+                        $("body").append(`<div id="approve-progress" style="position: fixed; top: 10px; right: 10px; z-index: 9999; background: #4CAF50; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); font-size: 14px;">
+                            <div style="font-weight: bold; margin-bottom: 5px;">Approving Manuscripts...</div>
+                            <div id="approve-status">Progress: <span id="approve-current">0</span> / <span id="approve-total">${approveUrls.length}</span></div>
+                            <div id="approve-bar" style="width: 200px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 5px; margin-top: 8px; overflow: hidden;">
+                                <div id="approve-bar-fill" style="width: 0%; height: 100%; background: white; transition: width 0.3s;"></div>
+                            </div>
+                        </div>`);
+
+                        var completed = 0;
+                        var total = approveUrls.length;
+
+                        // 并行发起所有请求
+                        approveUrls.forEach(function(url) {
+                            $.get(url).always(function() {
+                                completed++;
+                                $("#approve-current").text(completed);
+                                $("#approve-bar-fill").css("width", (completed / total * 100) + "%");
+
+                                if (completed >= total) {
+                                    $("#approve-progress").css("background", "#2196F3").find("div:first").text("All Done!");
+                                    setTimeout(function() {
+                                        $("#approve-progress").fadeOut(500, function() { $(this).remove(); });
+                                    }, 2000);
+                                }
+                            });
+                        });
+                    }
+                })
+            }
         } catch (error) { }
     }
 
