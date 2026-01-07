@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.1.6
+// @version       6.1.7
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2133,7 +2133,7 @@ function onInit() {
             }
             $("#autoDetectEBM").on("click", runAutoDetect);
             function runAutoDetect() {
-                let email = $("div.decisionHistory:contains('first approval')").find("a[href^='mailto:']").text();
+                let email = $("div.decisionHistory:contains('first approval')").find("a[href^='mailto:']").last().text();
                 $("#selectEBMForOversee")[0].click();
                 waitForKeyElements("#filter_1", function () {
                     $("td:contains('" + email + "')").parent().find("td a:contains('Select')")[0].click();
@@ -2626,7 +2626,7 @@ function onInit() {
         } catch (error) { }
     }
 
-    if (window.location.href.indexOf("crm.mdpi.cn/conference/booth/") + window.location.href.indexOf("crm.mdpi.cn/scholar_visits/")+ window.location.href.indexOf("crm.mdpi.cn/sponsorship/") > -3 && GM_config.get('Hidden_Func')) {
+    if (window.location.href.indexOf("crm.mdpi.cn/conference/") + window.location.href.indexOf("crm.mdpi.cn/scholar_visits/")+ window.location.href.indexOf("crm.mdpi.cn/sponsorship/") > -3 && GM_config.get('Hidden_Func')) {
         try {
             waitForKeyElements('button[label="Accept"]:first', function(acceptBtn) {
                 acceptBtn.trigger('click');
