@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.1.7
+// @version       6.1.10
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -204,10 +204,14 @@
             'save': function () { if ($("#SusyModifierConfig").length > 0) { location.reload() }; },
             'open': function () {
                 var f_settings = $("#SusyModifierConfig").contents();
-                //Experimental警告
-                GM_config.fields.Hidden_Func.node.addEventListener('change', function () {
+                GM_config.fields.Hidden_Func.node.addEventListener('change', function () { //Experimental警告
                     if (f_settings.find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {
                         alert('Dangerous! \n\nDon\'t turn it on unless you are familiar with ALL susy functions. \nOtherwise, it will cause serious problems.')
+                    }
+                });
+                GM_config.fields.Old_Icon.node.addEventListener('change', function () { //Old Icon提示
+                    if (f_settings.find("#SusyModifierConfig_field_Old_Icon")[0].checked) {
+                        alert('It is recommended to set the browser zoom to 90%.')
                     }
                 });
                 //隐藏推广信模板
@@ -2345,9 +2349,22 @@ function onInit() {
     //Interface: 修改图标
     if (window.location.href.indexOf("susy.mdpi.com") > -1 && GM_config.get('Old_Icon')) {
         try {
+            var customStyle = `#leftcol .menu li{text-align: left !important;justify-content: flex-start !important;position: relative !important;padding: 2px 0 2px 15px !important;font-size: 13px !important; border-bottom: 1px solid rgb(204, 204, 204) !important;}
+            #maincol .user_box_item,#maincol .user_box {font-size: 13px !important;}
+            #leftcol .menu li::before{background-color: rgb(79, 86, 113);content: "";height: 6px;width: 6px;position: absolute;left: 4px;top: 7px;z-index: 10}
+            #leftcol .menu-hr {display: none !important;}
+            .light_green_theme #leftcol .menu li::before {background-color: rgb(76, 142, 101) !important;}
+            .light_green_theme #leftcol .menu li {border-bottom: 1px solid rgb(197, 222, 208) !important;}
+            .light_green_theme #leftcol .menu li:not(.active) a:not(.active) {color: rgb(46, 57, 36) !important;}
+            #topmenu ul {padding-top: 0px !important;padding-bottom: 0px !important;}`;
+            var styleSheet = document.createElement("style");
+            styleSheet.type = "text/css";
+            styleSheet.innerText = customStyle;
+            document.head.appendChild(styleSheet);
+
             $("._removeEmail:contains('x')").text(" x");
             $('head').append(
-                `<style>.ms-edit:before, .ms-note:before, .ms-note-add:before, .ms-mail:before{content: ''; display: inline-block; height: 16px; width: 16px; position: relative; top: -2px; background-size: contain;}
+            `<style>.ms-edit:before, .ms-note:before, .ms-note-add:before, .ms-mail:before{content: ''; display: inline-block; height: 16px; width: 16px; position: relative; top: -2px; background-size: contain;}
             .ms-edit:before{background: url('${icon_pencil}') no-repeat center center;}
             .ms-note:before{background: url('${icon_note}') no-repeat center center;}
             .ms-note-add:before{background: url('${icon_note_add}') no-repeat center center;}
