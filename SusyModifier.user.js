@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.1.10
+// @version       6.1.17
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -81,7 +81,6 @@
             },
             'SInote': { 'section': [, 'Special Issue Pages'], 'label': 'Special Issue Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true },
             'SIpages': { 'label': '特刊列表免翻页', 'labelPos': 'right', 'type': 'checkbox', 'default': true },
-            'LinkShort': { 'label': 'SI Webpage 短链接', 'labelPos': 'right', 'type': 'checkbox', 'default': true },
             'Cfp_checker': { 'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'GE_TemplateID': {
                 'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
@@ -422,7 +421,7 @@ function onInit() {
 
             $(".menu [href='/user/managing/status/submitted']").attr("href", "/user/managing/status/submitted?form[journal_id]=" + S_J);
             $(".menu [href='/manuscript/quality/check/list']").attr("href", '/manuscript/quality/check/list?form[journal_id]=' + S_J);
-            $("#owner").on("click", function () { $.getJSON("/user/ajax/search_manuscript_owner?term=" + $("#topmenu span:contains('@mdpi.com')").text(), function (data) { window.location.href = '/user/managing/status/submitted?form[owner_id]=' + data[0].value }); });
+            $("#owner").on("click", function () { $.getJSON("/user/ajax/search_manuscript_owner?term=" + $("#topmenu span:contains('@mdpi.com')").text(), function (data) { window.location.href = '/user/managing/status/submitted?form[owner_id][]=' + data[0].value }); });
 
             if (GM_config.get('Assign_Assistant')) { //派稿助手
                 $(".menu [href*='/list/list_volunteer_reviewers']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").on("click", skAddReviewers);
@@ -1616,13 +1615,6 @@ function onInit() {
         } catch (error) { }
     }
 
-    //特刊网页短链接
-    if (window.location.href.indexOf("mdpi.com/journal/") > -1 && window.location.href.indexOf("/special_issues/") > -1 && window.location.href.indexOf("/abstract") == -1 && window.location.href.indexOf("/ge_instructions") == -1 && GM_config.get('LinkShort')) {
-        try {
-            window.location.href = window.location.href.replace(/\/journal\/(.*)\/special_issues\//, "/si/$1/");
-        } catch (error) { }
-    }
-
     //会议相关
     if (window.location.href.indexOf("mdpi.com/user/conference/") > -1 && window.location.href.indexOf("/view") > -1) { try { $("[name=journal_id]").val(S_J); } catch (error) { } }
     if (window.location.href.indexOf("mdpi.com/user/conference/add") > -1) {
@@ -2351,7 +2343,7 @@ function onInit() {
         try {
             var customStyle = `#leftcol .menu li{text-align: left !important;justify-content: flex-start !important;position: relative !important;padding: 2px 0 2px 15px !important;font-size: 13px !important; border-bottom: 1px solid rgb(204, 204, 204) !important;}
             #maincol .user_box_item,#maincol .user_box {font-size: 13px !important;}
-            #leftcol .menu li::before{background-color: rgb(79, 86, 113);content: "";height: 6px;width: 6px;position: absolute;left: 4px;top: 7px;z-index: 10}
+            #leftcol .menu li::before{background-color: rgb(79, 86, 113);content: "";height: 6px;width: 6px;position: absolute;left: 4px;top: 8px;z-index: 1}
             #leftcol .menu-hr {display: none !important;}
             .light_green_theme #leftcol .menu li::before {background-color: rgb(76, 142, 101) !important;}
             .light_green_theme #leftcol .menu li {border-bottom: 1px solid rgb(197, 222, 208) !important;}
