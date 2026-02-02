@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.1.17
+// @version       6.2.2
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -36,10 +36,10 @@
 // @match         *://*.google.co.id/*
 // @match         *://*.google.com.my/*
 // @match         *://i.mdpi.cn/team/dinner*
-// @require       https://gcore.jsdelivr.net/npm/jquery@4.0.0-beta.2/dist/jquery.js
+// @require       https://gcore.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
-// @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.js
+// @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM.getValue
@@ -338,13 +338,15 @@ function onInit() {
     //susy侧边栏的按钮🔎
     if (window.location.href.indexOf("susy.mdpi.com/") > -1 && GM_config.get('Interface_sidebar') && $('#leftcol').length) {
         try {
-            $("body").append(`<div id='si_search' role='dialog' style='display: none; position: absolute; height: 350px; width: 500px; top: 500px; left: 242.5px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
-        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix ui-draggable-handle'><span class='ui-dialog-title'>Quick Search</span><button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close'
-        onclick='document.getElementById(\"si_search\").style.display=\"none\"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div><div class='ui-dialog-content ui-widget-content'> <form class='insertform' method='get'
-        action='/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>SI Title: <input type='text' name='form[si_name]' style='display:inline-block; width:65%;'>
-        <input type='submit' class='submit' value='SI Search'></form><hr><form class='insertform' method='get' action='/user/ebm-new/management/all/my_journals' target='_blank'>Name: <input type='text' id='form_name2' name='form[name]'
-        style='display:inline-block; width:65%;'><br>Email: <input type='email' name='form[email]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='EBM Search'></form><hr>
-        <form class='insertform' method='get' action='/user/conference/list' target='_blank'>Conference: <input type='text' name='form[conference_name]' style='display:inline-block; width:65%;'> <input type='submit' class='submit' value='Search'></form>`);
+            $("body").append(`<div id='si_search' role='dialog' style='display: none; position: fixed; height: auto; width: 500px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #F5F5F5; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); border-radius: 5px; overflow: hidden;'>
+        <div id='si_search_header' style='background-color: #616161; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px; cursor: move;'><span>Quick Search</span>
+        <button type='button' onclick='document.getElementById("si_search").style.display="none"' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div>
+        <div style='padding: 20px;'> <form class='insertform' method='get' action='/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>SI Title: <input type='text' name='form[si_name]' style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'>
+        <input type='submit' class='submit' value='SI Search' style='background-color: #616161; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;'></form><hr style='border: none; border-top: 1px solid #ccc; margin: 15px 0;'>
+        <form class='insertform' method='get' action='/user/ebm-new/management/all/my_journals' target='_blank'>Name: <input type='text' id='form_name2' name='form[name]' style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'><br>
+        Email: <input type='email' name='form[email]' style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 8px;'> <input type='submit' class='submit' value='EBM Search' style='background-color: #616161; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;'></form><hr style='border: none; border-top: 1px solid #ccc; margin: 15px 0;'>
+        <form class='insertform' method='get' action='/user/conference/list' target='_blank'>Conference: <input type='text' name='form[conference_name]' style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'> <input type='submit' class='submit' value='Search' style='background-color: #616161; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;'></form></div></div>`);
+            skMakeDraggable(document.getElementById("si_search"), document.getElementById("si_search_header"));
 
             S_S = -1;
             if (S_J == 154) {
@@ -415,7 +417,7 @@ function onInit() {
             $(".menu [href='/submission/topic/list']").attr("href", "/submission/topic/list/online");
             $(".menu [href='/user/manuscript/approval/manage']").attr("href", "/user/manuscript/special_approval_list/my_journal");
             $(".menu [href='/planned_paper/my/list']").after(" <a href='/planned_paper/my/list?form[submission_topic_id]=-1&form[special_issue_id]=-1'>[Reg.]</a>");
-            $(".menu [href='/user/ebm-new/management']").after(`<div style='float:right;'><a onclick='$(\"#si_search\").show(); $(\"#si_search\").draggable({handle: \"#mover\"});'><img src='${icon_magnifier}'></a> </div> `);
+            $(".menu [href='/user/ebm-new/management']").after(`<div style='float:right;'><a onclick='$("#si_search").toggle();'><img src='${icon_magnifier}'></a> </div> `);
 
             $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_webs}'></a></div>`); $("#sf_b").on("click", skOpenUrls)
 
@@ -2863,16 +2865,54 @@ function skGetUniv(aff) {
     return { detail: results, color: color };
 }
 
+function skMakeDraggable(elmnt, header) {
+    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    header.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // 移除 transform 以便直接使用 top/left 定位
+        if (elmnt.style.transform) {
+            var rect = elmnt.getBoundingClientRect();
+            elmnt.style.top = rect.top + "px";
+            elmnt.style.left = rect.left + "px";
+            elmnt.style.transform = "none";
+        }
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}
+
 function skOpenUrls() {
     if ($("#add_r").length) {
         if ($("#add_r").css("display") == "none") { $("#add_r").css("display", "block") } else { $("#add_r").css("display", "none") }
     } else {
         $("body").append(`<div id='add_r' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); border-radius: 5px;
-        overflow: hidden;'> <div style='background-color: #4CAF50; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'> <span>Open Urls, IDs & Emails [Ctrl+Q]</span>
+        overflow: hidden;'> <div id='add_r_header' style='background-color: #4CAF50; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px; cursor: move;'> <span>Open Urls, IDs & Emails [Ctrl+Q]</span>
         <button type='button' onclick='document.getElementById("add_r").style.display="none"' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button> </div> <div style='padding: 20px;'>
         <textarea id="add_r_t" class="manuscript-add-note-form" placeholder="Example:\nmathematics-11111111\nmathematics-2222222\n\nhttps://www.scopus.com/detail.uri?authorId=333\nhttps://scholar.google.com/citations?user=444\n\naaa@aaa.edu\nbbb@bbb.edu" minlength="1"
         rows="10" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 4px;'></textarea>
         <button id="add_r_b" class="submit" style='background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Submit</button></div></div>`);
+        skMakeDraggable(document.getElementById("add_r"), document.getElementById("add_r_header"));
         $("#add_r_t").trigger("focus");
         $("#add_r_b").on("click", function () {
             var textContent = String($("#add_r_t").val());
@@ -2904,11 +2944,13 @@ function skAddReviewers() {
     if ($("#add_susie").length) {
         if ($("#add_susie").css("display") == "none") { $("#add_susie").css("display", "block"); } else { $("#add_susie").css("display", "none") }
     } else {
-        $("body").append(`<div id='add_susie' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 300px; left: 500px; z-index: 101;' class='ui-dialog ui-corner-all ui-widget ui-widget-content ui-front'>
-        <div class='ui-dialog-titlebar ui-corner-all ui-widget-header ui-helper-clearfix'><span class='ui-dialog-title'>Add Reviewers [Ctrl+E] <a href='/user/settings#reviewer' target=_blank>[Full Version]</a></span>
-        <button type='button' class='ui-button ui-corner-all ui-widget ui-button-icon-only ui-dialog-titlebar-close' onclick='document.getElementById("add_susie").style.display="none"'><span class='ui-button-icon ui-icon ui-icon-closethick'></span></button></div>
-        <div class='ui-dialog-content ui-widget-content'><textarea id="add_susie_t" class="manuscript-add-note-form" placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu (in USA now)\nhttps://susy.mdpi.com/user/xxxxxxxxxxxx\nccc@ccc.edu ddd@ddd.edu"
-        minlength="1" maxlength="20000" rows="10" spellcheck="false"></textarea><button id="add_susie_b" class="submit">Submit</button></div></div>`);
+        $("body").append(`<div id='add_susie' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #ECEFF1; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); border-radius: 5px;
+        overflow: hidden;'> <div id='add_susie_header' style='background-color: #546E7A; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px; cursor: move;'> <span>Add Reviewers [Ctrl+E] <a href='/user/settings#reviewer' target=_blank style='color: #CFD8DC;'>[Full Version]</a></span>
+        <button type='button' onclick='document.getElementById("add_susie").style.display="none"' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button> </div> <div style='padding: 20px;'>
+        <textarea id="add_susie_t" class="manuscript-add-note-form" placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu (in USA now)\nhttps://susy.mdpi.com/user/xxxxxxxxxxxx\nccc@ccc.edu ddd@ddd.edu" minlength="1" maxlength="20000"
+        rows="10" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 4px;'></textarea>
+        <button id="add_susie_b" class="submit" style='background-color: #546E7A; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Submit</button></div></div>`);
+        skMakeDraggable(document.getElementById("add_susie"), document.getElementById("add_susie_header"));
         $("#add_susie_t").trigger("focus");
         $("#add_susie_b").on("click", function () {
             let myArray, add_id, emailArray, rdline = String($("#add_susie_t").val()).split("\n");
