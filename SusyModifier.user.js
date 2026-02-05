@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.2.2
+// @version       6.2.4
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -1689,8 +1689,37 @@ function onInit() {
                                      + `]&f[]=&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on%3Adesc&per_page=100'>[FP]</a>`)
             $("#header > h1").append(` <a href='https://redmine.mdpi.cn/projects/ethic-committee/issues?utf8=%E2%9C%93&set_filter=1&f[]=status_id&op[status_id]=o&f[]=subject&op[subject]=%7E&v[subject][]=` + GM_config.get('Journal')
                                      + `]&f[]=&c[]=tracker&c[]=subject&c[]=status&c[]=assigned_to&c[]=author&c[]=updated_on&group_by=&per_page=100'>[EC]</a>`)
+
+            //Assignee切换时自动添加Dear问候语
+            unsafeWindow.$(document).on("select2:select", "#issue_assigned_to_id", function(e) {
+                let selectedText = e.params.data.text.trim();
+                let greeting = "Dear Colleagues,";
+                let nameToUse = selectedText;
+                
+                if (selectedText.toLowerCase().includes("author")) {
+                    let authorEl = document.querySelector('.author a');
+                    if (authorEl) { nameToUse = authorEl.innerText.trim(); }
+                }
+                if (nameToUse && !nameToUse.startsWith("<<") && !nameToUse.startsWith("--")) {
+                    let firstName = nameToUse.split(" ")[0];
+                    if (firstName && firstName.length >= 2 && /^[A-Za-z]+$/.test(firstName)) {
+                        greeting = "Dear " + firstName + ",";
+                    }
+                }
+                let currentNotes = $("#issue_notes").val();
+                if (!currentNotes.trim().startsWith("Dear ")) {
+                    $("#issue_notes").val(greeting + "\n\n" + (currentNotes.trim() ? currentNotes : ""));
+                } else {
+                    let lines = currentNotes.split("\n\n");
+                    lines[0] = greeting;
+                    $("#issue_notes").val(lines.join("\n\n"));
+                }
+            });
+
             //Checker功能和检测函数
             $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").on("click", sk_cfpcheck_func);
+
+            
             function sk_cfpcheck_func() {
                 let Today = new Date();
                 $("#issue_pe_note").val($("#issue_pe_note").val() + "--- Checked on " + Today.getFullYear() + "-" + (Today.getMonth() + 1) + "-" + Today.getDate() + " ---\n");
