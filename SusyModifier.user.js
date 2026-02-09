@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.2.4
+// @version       6.2.8
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -1696,7 +1696,13 @@ function onInit() {
                 let greeting = "Dear Colleagues,";
                 let nameToUse = selectedText;
                 
-                if (selectedText.toLowerCase().includes("author")) {
+                const specialKeywords = ["editor", "group", "team", "reprint", "website", "english", "admin", "manager", "coordinator", "epc", "sic", "cfp"];
+                const isSpecialAssignee = specialKeywords.some(kw => selectedText.toLowerCase().includes(kw));
+                
+                if (isSpecialAssignee) {
+                    greeting = "Dear " + selectedText + ",";
+                    nameToUse = null;
+                } else if (selectedText.toLowerCase().includes("author")) {
                     let authorEl = document.querySelector('.author a');
                     if (authorEl) { nameToUse = authorEl.innerText.trim(); }
                 }
