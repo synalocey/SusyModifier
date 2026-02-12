@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.2.8
+// @version       6.2.11
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -51,6 +51,7 @@
 // @connect       i.mdpi.cn
 // @connect       titlecaseconverter.com
 // @connect       google.com
+// @connect       scholar.google.com
 // @connect       webofknowledge.com
 // @connect       skday.com
 // @connect       pubpeer.com
@@ -2346,10 +2347,66 @@ function onInit() {
     }
 
     //ManuscriptFunc: 文章页面加[Linkedin]
-    if (window.location.href.indexOf("www.mdpi.com/2227-7390/") > -1 && GM_config.get('ManuscriptFunc')) {
+    if ((window.location.href.indexOf("www.mdpi.com/2") + window.location.href.indexOf("www.mdpi.com/3")) > -2 && GM_config.get('ManuscriptFunc')) {
         try {
             $("a:contains('Peer-Reviewed')").parent().after('<a id="s_linkedin" href="' + $("a:contains('Peer-Reviewed')").attr("href") + '?linkedin"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a"></a>');
             $("#s_linkedin").on("click", function () { $("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`) });
+        } catch (error) { }
+
+        try { //检测参考文献是否缺少[CrossRef]
+            let refCount = 0, gsLinks = [];
+            $("a.google-scholar").each(function () {
+                let $entry = $(this).closest("li");
+                if ($entry.length && $entry.find("a.cross-ref").length === 0) {
+                    $(this).css("background-color", "yellow");
+                    gsLinks.push(this);
+                    refCount++;
+                }
+            });
+            let refBtnText = refCount > 0 ? `[U.Ref:${refCount}]` : "[U.Ref✓]";
+            let refBtnColor = refCount > 0 ? "color:orange;font-weight:bold;" : "color:green;";
+            $("#s_linkedin").after(` <a id="s_refcheck" style="cursor:pointer;font-size:12px;${refBtnColor}">${refBtnText}</a>`);
+            // 点击后才开始验证Google Scholar链接
+            let gsVerifying = false;
+            $("#s_refcheck").on("click", function () {
+                if (refCount === 0) return;
+                // 跳转到第一个有问题的条目
+                let firstHighlight = $("a.google-scholar").filter(function () { let bg = $(this).css("background-color"); return bg === "rgb(255, 107, 107)" || bg === "rgb(255, 255, 0)"; }).first();
+                if (firstHighlight.length) { $("html, body").animate({ scrollTop: firstHighlight.offset().top - 100 }, 500); }
+                // 首次点击时启动验证
+                if (!gsVerifying && gsLinks.length > 0) {
+                    gsVerifying = true;
+                    let noResult = 0;
+                    function verifyGS(index) {
+                        if (index >= gsLinks.length) {
+                            let finalText = noResult > 0 ? `[U.Ref⚠${noResult}/${gsLinks.length}]` : `[U.Ref✓${gsLinks.length}]`;
+                            let finalColor = noResult > 0 ? "color:red;font-weight:bold;" : "color:green;";
+                            $("#s_refcheck").attr("style", `cursor:pointer;font-size:12px;${finalColor}`).text(finalText);
+                            return;
+                        }
+                        let $a = $(gsLinks[index]);
+                        let url = $a.attr("href");
+                        $("#s_refcheck").text(`[U.Ref ${index + 1}/${gsLinks.length}...]`);
+                        GM_xmlhttpRequest({
+                            method: 'GET', url: url,
+                            onload: function (res) {
+                                let doc = new DOMParser().parseFromString(res.responseText, 'text/html');
+                                if (doc.querySelector('.gs_ri')) {
+                                    $a.css("background-color", "#90EE90");
+                                } else {
+                                    $a.css("background-color", "#FF6B6B");
+                                    noResult++;
+                                }
+                                setTimeout(function () { verifyGS(index + 1); }, 1500);
+                            },
+                            onerror: function () {
+                                setTimeout(function () { verifyGS(index + 1); }, 1500);
+                            }
+                        });
+                    }
+                    verifyGS(0);
+                }
+            });
         } catch (error) { }
     }
 
