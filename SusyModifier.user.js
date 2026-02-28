@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.2.11
+// @version       6.2.27
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -55,6 +55,8 @@
 // @connect       webofknowledge.com
 // @connect       skday.com
 // @connect       pubpeer.com
+// @connect       script.google.com
+// @connect       script.googleusercontent.com
 // ==/UserScript==
 /* globals jQuery, $, GM_config */
 
@@ -339,14 +341,15 @@ function onInit() {
     //susy侧边栏的按钮🔎
     if (window.location.href.indexOf("susy.mdpi.com/") > -1 && GM_config.get('Interface_sidebar') && $('#leftcol').length) {
         try {
-            $("body").append(`<div id='si_search' role='dialog' style='display: none; position: fixed; height: auto; width: 500px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #F5F5F5; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); border-radius: 5px; overflow: hidden;'>
-        <div id='si_search_header' style='background-color: #616161; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px; cursor: move;'><span>Quick Search</span>
-        <button type='button' onclick='document.getElementById("si_search").style.display="none"' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div>
-        <div style='padding: 20px;'> <form class='insertform' method='get' action='/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>SI Title: <input type='text' name='form[si_name]' style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'>
-        <input type='submit' class='submit' value='SI Search' style='background-color: #616161; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;'></form><hr style='border: none; border-top: 1px solid #ccc; margin: 15px 0;'>
-        <form class='insertform' method='get' action='/user/ebm-new/management/all/my_journals' target='_blank'>Name: <input type='text' id='form_name2' name='form[name]' style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'><br>
-        Email: <input type='email' name='form[email]' style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 8px;'> <input type='submit' class='submit' value='EBM Search' style='background-color: #616161; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;'></form><hr style='border: none; border-top: 1px solid #ccc; margin: 15px 0;'>
-        <form class='insertform' method='get' action='/user/conference/list' target='_blank'>Conference: <input type='text' name='form[conference_name]' style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'> <input type='submit' class='submit' value='Search' style='background-color: #616161; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;'></form></div></div>`);
+            $("body").append(`<div id='si_search' role='dialog' style='display: none; position: fixed; height: auto; width: 500px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #F5F5F5; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            border-radius: 5px; overflow: hidden;'><div id='si_search_header' style='background-color: #616161; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px; cursor: move;'><span>Quick Search</span>
+            <button type='button' onclick='document.getElementById("si_search").style.display="none"' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div>
+            <div style='padding: 20px;'> <form class='insertform' method='get' action='/special_issue_pending/list/search' target='_blank'><input type='text' name='show_all' value='my_journals' style='display:none;'>SI Title: <input type='text' name='form[si_name]'
+            style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'><input type='submit' class='submit' value='SI Search' style='background-color: #616161; color: white; padding: 8px 16px; border: none; border-radius: 4px;
+            cursor: pointer;'></form><hr style='border: none; border-top: 1px solid #ccc; margin: 15px 0;'><form class='insertform' method='get' action='/user/ebm-new/management/all/my_journals' target='_blank'>Name: <input type='text' id='form_name2' name='form[name]'
+            style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'><br>Email: <input type='email' name='form[email]' style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 8px;'>
+            <form class='insertform' method='get' action='/user/conference/list' target='_blank'>Conference: <input type='text' name='form[conference_name]' style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'> <input
+            type='submit' class='submit' value='Search' style='background-color: #616161; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;'></form></div></div>`);
             skMakeDraggable(document.getElementById("si_search"), document.getElementById("si_search_header"));
 
             S_S = -1;
@@ -1334,8 +1337,38 @@ function onInit() {
                     $("input[batch-ajax-url*='paper_invitations/withdraws']").before(`<input value="🚨 Invite" type="button" class="batch-operation-button button batch-invite-btn" batch-ajax-url="${url_Invite}">`);
 
                 }
-            }
 
+                // 自动修改Deadline：URL含DL=日期时触发，CL=单元格时同步更新Google Sheet
+                let dlMatch = window.location.href.match(/[?&]DL=(\d{4}-\d{2}-\d{2})/);
+                let clMatch = window.location.href.match(/[?&]CL=([A-Z]+\d+)/);
+                if (dlMatch) {
+                    let dlDate = dlMatch[1];
+                    let $extendBtn = $('a[data-url*="/si/extend/deadline/"]');
+                    if ($extendBtn.length > 0) {
+                        $extendBtn[0].click();
+                    } else {
+                        $('a[data-url*="/user/special_issue/deadline/"]')[0].click();
+                    }
+                    let dlWait = setInterval(function () {
+                        if ($("#form_date").length === 0) return;
+                        clearInterval(dlWait);
+                        $("#form_date").attr("readonly", false).val(dlDate);
+                        if (clMatch) {
+                            let cell = clMatch[1];
+                            let today = new Date();
+                            let todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+                            GM_xmlhttpRequest({
+                                method: "GET",
+                                url: "https://script.google.com/macros/s/AKfycbxSqaUXvXUPZ-I8BCcO_iIKisSdrHVdWisQspLs5RpAT961HgauYTjKWjjZBT7o7HzFlg/exec?cell=" + cell + "&value=" + todayStr,
+                                onload: function () { $("input.submit[type='submit'][value='Submit']").trigger("click"); },
+                                onerror: function () { alert("Google Sheet 更新失败，请检查 Web App URL"); }
+                            });
+                        } else {
+                            $("input.submit[type='submit'][value='Submit']").trigger("click");
+                        }
+                    }, 500);
+                }
+            }
         } catch (error) { }
     }
 
@@ -1578,7 +1611,6 @@ function onInit() {
             $("input[value='Edit']").before(`<input class="submit" type="submit" value="Edit">`).remove();
             if (window.location.href.indexOf("/edit/0") > -1 && S_J > 0) {
                 unsafeWindow.$('#form_id_journal').val(S_J).trigger("chosen:updated").trigger("change");
-                unsafeWindow.$('#form_type').val(0).trigger("chosen:updated").trigger('change');
                 $("input[value='Add']").before(`<input class="submit" type="submit" value="Add">`).remove();
                 if (window.location.href.indexOf("/edit/0?") > -1) { $("#form_owner_email").val(window.location.search.split('?')[1]); }
             }
@@ -1696,10 +1728,10 @@ function onInit() {
                 let selectedText = e.params.data.text.trim();
                 let greeting = "Dear Colleagues,";
                 let nameToUse = selectedText;
-                
+
                 const specialKeywords = ["editor", "group", "team", "reprint", "website", "english", "admin", "manager", "coordinator", "epc", "sic", "cfp"];
                 const isSpecialAssignee = specialKeywords.some(kw => selectedText.toLowerCase().includes(kw));
-                
+
                 if (isSpecialAssignee) {
                     greeting = "Dear " + selectedText + ",";
                     nameToUse = null;
@@ -1726,7 +1758,7 @@ function onInit() {
             //Checker功能和检测函数
             $('label:contains("From CFP Checkers")').after(" <a id='S_C'><u>[Start Check]</u></a>"); $("#S_C").on("click", sk_cfpcheck_func);
 
-            
+
             function sk_cfpcheck_func() {
                 let Today = new Date();
                 $("#issue_pe_note").val($("#issue_pe_note").val() + "--- Checked on " + Today.getFullYear() + "-" + (Today.getMonth() + 1) + "-" + Today.getDate() + " ---\n");
@@ -2161,16 +2193,67 @@ function onInit() {
             let sk_signature = str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
             $("#form_signature").val(sk_signature);
             $("#form_decision_0").prop("checked", true);
+
+            // 从页面检测当前 SI 所属 Section（在弹窗打开前调用）
+            function detectSection() {
+                let sectionText = $("div.cell.small-12.medium-6.large-2:contains('Section')").next().text().trim();
+                if (!sectionText) return null;
+                // 提取 Section 代号，如 "A: Algebra and Logic" → "A"，"C2: Dynamical Systems" → "C2"
+                let match = sectionText.match(/^([A-E]\d?)/);
+                return match ? match[1] : null;
+            }
+
             if ($("#selectEBMForOversee").length) {
-                $("#selectEBMForOversee").after('<input type="button" id="autoDetectEBM" style="margin-left: 8px; cursor: pointer;" value="Auto Detect">');
+                // $("#selectEBMForOversee").after('<input type="button" id="autoDetectEBM" style="margin-left: 8px; cursor: pointer;" value="Auto Detect">');
                 runAutoDetect();
             }
             $("#autoDetectEBM").on("click", runAutoDetect);
             function runAutoDetect() {
                 let email = $("div.decisionHistory:contains('first approval')").find("a[href^='mailto:']").last().text();
+                let section = detectSection(); // 在弹窗打开前检测 Section
                 $("#selectEBMForOversee")[0].click();
                 waitForKeyElements("#filter_1", function () {
-                    $("td:contains('" + email + "')").parent().find("td a:contains('Select')")[0].click();
+                    let $matchRow = $("td:contains('" + email + "')").parent();
+                    if ($matchRow.length === 0) return;
+
+                    let rowText = $matchRow.text();
+                    if (rowText.indexOf("Editor-in-Chief") > -1 && section && SK_SectionCandidatesMap[section]) {
+                        let candidates = SK_SectionCandidatesMap[section];
+                        // 获取 SI 标题关键词（去除常见停用词，长度>2）
+                        let siTitle = $("div.cell.small-12.medium-6.large-2:contains('Special Issue Title')").next().text().trim();
+                        let stopWords = ['and','the','for','with','from','into','its','any','all','new','via','using'];
+                        let titleWords = siTitle.split(/[\s,;:()\/]+/).filter(w => w.length > 2 && !stopWords.includes(w.toLowerCase())).map(w => w.toLowerCase());
+                        // 先检查候选人是否存在于表格中
+                        let candidateRowCount = 0;
+                        $("#select-ebm-for-oversee tbody tr").each(function () {
+                            if (candidates.includes($(this).find("td").eq(1).text().trim())) candidateRowCount++;
+                        });
+                        if (candidateRowCount === 0) {
+                            // 候选人都不在列表中，直接选择 EiC
+                            $matchRow.find("td a:contains('Select')")[0].click();
+                        } else {
+                            // 删除非候选人行，保留候选人行
+                            $("#select-ebm-for-oversee tbody tr").each(function () {
+                                let rowEmail = $(this).find("td").eq(1).text().trim();
+                                if (!candidates.includes(rowEmail)) {
+                                    $(this).remove();
+                                } else if (titleWords.length > 0) {
+                                    let $riCell = $(this).find("td").eq(3);
+                                    let riText = $riCell.text();
+                                    let escapedWords = titleWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                                    let regex = new RegExp('\\b(' + escapedWords.join('|') + ')\\b', 'gi');
+                                    let riHtml = riText.replace(regex, '<span style="background-color:#FFA500;">$1</span>');
+                                    if (riHtml !== riText) $riCell.html(riHtml);
+                                    else $(this).css("opacity", "0.35");
+                                }
+                            });
+                            if ($("#select-ebm-for-oversee tbody tr").length === 1) {
+                                $("#select-ebm-for-oversee tbody tr").first().find("td a:contains('Select')")[0].click();
+                            }
+                        }
+                    } else {
+                        $matchRow.find("td a:contains('Select')")[0].click();
+                    }
                 }, true);
             }
         } catch (error) { }
@@ -3037,7 +3120,8 @@ function skAddReviewers() {
         if ($("#add_susie").css("display") == "none") { $("#add_susie").css("display", "block"); } else { $("#add_susie").css("display", "none") }
     } else {
         $("body").append(`<div id='add_susie' role='dialog' style='position: fixed; height: 350px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #ECEFF1; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); border-radius: 5px;
-        overflow: hidden;'> <div id='add_susie_header' style='background-color: #546E7A; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px; cursor: move;'> <span>Add Reviewers [Ctrl+E] <a href='/user/settings#reviewer' target=_blank style='color: #CFD8DC;'>[Full Version]</a></span>
+        overflow: hidden;'> <div id='add_susie_header' style='background-color: #546E7A; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px; cursor: move;'> <span>Add Reviewers [Ctrl+E] <a href='/user/settings#reviewer'
+        target=_blank style='color: #CFD8DC;'>[Full Version]</a></span>
         <button type='button' onclick='document.getElementById("add_susie").style.display="none"' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button> </div> <div style='padding: 20px;'>
         <textarea id="add_susie_t" class="manuscript-add-note-form" placeholder="Example:\nmathematics-xxxxxx\naaa@aaa.edu\nbbb@bbb.edu (in USA now)\nhttps://susy.mdpi.com/user/xxxxxxxxxxxx\nccc@ccc.edu ddd@ddd.edu" minlength="1" maxlength="20000"
         rows="10" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 4px;'></textarea>
@@ -3177,6 +3261,36 @@ function AddManuscriptSourceErrorbox() {
         });
     })
 }
+
+var SK_SectionNames = {
+    'A': 'Algebra and Logic', 'B': 'Geometry and Topology', 'C': 'Mathematical Analysis',
+    'C1': 'Difference and Differential Equations', 'C2': 'Dynamical Systems', 'C3': 'Real Analysis', 'C4': 'Complex Analysis',
+    'D': 'Statistics and Operations Research', 'D1': 'Probability and Statistics', 'D2': 'Operations Research and Fuzzy Decision Making',
+    'E': 'Applied Mathematics', 'E1': 'Mathematics and Computer Science', 'E2': 'Control Theory and Mechanics',
+    'E3': 'Mathematical Biology', 'E4': 'Mathematical Physics', 'E5': 'Financial Mathematics'
+};
+var SK_SectionCandidatesMap = {
+    'A': ['lkadison@broadpark.no','gigel.militaru@fmi.unibuc.ro','maietti@math.unipd.it','thomas.tucker@rochester.edu','cristina.sernadas@tecnico.ulisboa.pt'],
+    'B': ['ggerla@unisa.it','eric.grinberg@umb.edu','jhh8@cornell.edu','alexander.kasprzyk@warwick.ac.uk'],
+    'C': ['tomasd@us.es','mchen@eitech.edu.cn','amontes@us.es'],
+    'C1': ['serblaza@imm.upv.es','boccardo@mat.uniroma1.it','chengq@maths.ox.ac.uk','sscheng@math.nthu.edu.tw','derfel@bgu.ac.il','zhaosheng.feng@utrgv.edu','kondrat@mathematik.uni-bielefeld.de','congming.li@sjtu.edu.cn','mmei@champlaincollege.qc.ca','mmihailes@yahoo.com',
+           'lni@math.ucsd.edu','wangzhch@lzu.edu.cn'],
+    'C2': ['edward.belbruno@yu.edu','sandra.carillo@uniroma1.it','stefania.cherubini@poliba.it','henar.herrero@uclm.es','danielle.hilhorst@universite-paris-saclay.fr','jinyf@bit.edu.cn','wtli@lzu.edu.cn','hrsun@lzu.edu.cn','weijj@hit.edu.cn'],
+    'C4': ['jjahangi@kent.edu'],
+    'D': ['herminia@unizar.es'],
+    'D1': ['x.mao@strath.ac.uk','chinshan@buffalo.edu','ganastss@memphis.edu','brani@stat.tamu.edu','wangfy@tju.edu.cn','xli82@stevens.edu','mfranco@um.es','guolian.kang@stjude.org','ipinelis@mtu.edu','alba.sofi@unirc.it'],
+    'D2': ['kostas@dpem.tuc.gr','baranyi@sze.hu','xiaojiechen@uestc.edu.cn','irina.perfilieva@osu.cz','aroldan@ugr.es','mjesus.campion@unavarra.es','jalcala@decsai.ugr.es','pasi.luukka@lut.fi','jpaulo@fe.uc.pt','lihait@umsl.edu','pgrzeg@ibspan.waw.pl'],
+    'E': ['tucker.carrington@queensu.ca','estrada@ifisc.uib-csic.es','sjliao@sjtu.edu.cn','geguo@yeah.net','umberto.morbiducci@polito.it','nick.sh.chung@polyu.edu.hk','andre.nicolet@fresnel.fr','lihe-wang@uiowa.edu','yzhang10@nd.edu','lshen03@syr.edu'],
+    'E1': ['wangzhb@lzu.edu.cn','hendrik.richter@htwk-leipzig.de','ahs_zadeh@yahoo.com','yangyunyun@hit.edu.cn','valeriu.beiu@uav.ro','andrej.brodnik@upr.si','beatriz.lopez@udg.edu','eroanes@mat.ucm.es','ryanlhu@um.edu.mo','miura.kenjiro@shizuoka.ac.jp',
+           'manuelchica@ugr.es','michal.baczynski@us.edu.pl','cerquide@iiia.csic.es','ltorgo@dal.ca','gtsek@ct.aegean.gr','pmat@math.tecnico.ulisboa.pt','cyanez@cic.ipn.mx','skala@kiv.zcu.cz','giovanni.squillero@polito.it','catalin.stoean@fmi.unibuc.ro',
+           'chxuwh@swu.edu.cn','zhengxiangtao@opt.cn','zxh@fudan.edu.cn','robin.hankin@aut.ac.nz','emilio.turco@uniss.it','r_caballero@uma.es','pnelson@ltu.edu','mehdi.salimi@mcmaster.ca','zsh@amss.ac.cn','x.zeng@manchester.ac.uk',
+           'tollis@csd.uoc.gr','gianluigi.greco@unical.it','mehdi.toloo@vsb.cz','liguo@rutgers.edu','jean-francois.remacle@uclouvain.be','osan@utk.edu','rayteam@yeah.net','siarry@u-pec.fr','wangxy@dlut.edu.cn','marina.andrade@iscte.pt'],
+    'E2': ['xbli@csu.edu.cn','zhuang@iop.uni-hannover.de','rmagin@uic.edu','hcyan@ecust.edu.cn','j.r.banerjee@city.ac.uk','huangxia_qd@126.com','zhaolin1585@163.com','tinh.buiquoc@gmail.com','chunyin@uestc.edu.cn','josep.masdemont@upc.edu',
+           'lin_peng@csu.edu.cn','santolo.meo@unina.it','wangh6@ornl.gov','mcszhtsh@mail.sysu.edu.cn'],
+    'E3': ['li.shen@pennmedicine.upenn.edu','mxz721106@sdust.edu.cn','mkulenovic@uri.edu','sochen@math.tau.ac.il','tianhai.tian@sci.monash.edu.au'],
+    'E4': ['antoniad@lpthe.jussieu.fr','t.fokas@damtp.cam.ac.uk','grigo@unt.edu','gts@physics.uoc.gr','tarasov@theory.sinp.msu.ru','polyanin@ipmnet.ru','michael.s.zhdanov@gmail.com','ratiu@sjtu.edu.cn','yazad@phys.uni-sofia.bg','vdodonov@fis.unb.br'],
+    'E5': ['luca.passalacqua@uniroma1.it','youri.kabanov@univ-fcomte.fr','yaozhong@ualberta.ca','li.xun@polyu.edu.hk','g.peters@hw.ac.uk','wim.schoutens@kuleuven.be']
+};
 
 //---------------------------------------------------------------------------------------------------------------------------ICON-------------------------------------------------------------------------------------------------------------------------
 var icon_magnifier = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNqMk01oE1EQx99+mmSTbLayWqtN+hWxIW21VeOhpDEVBIupFBQRAgUL6rWth57tVSgIvWnBiyj1EBDpQdCDH4RCIVAbTSm9pBGDJqkxyW42u+u8kGKzbsGBH++D"
