@@ -1343,6 +1343,8 @@ function onInit() {
                 let clMatch = window.location.href.match(/[?&]CL=([A-Z]+\d+)/);
                 if (dlMatch) {
                     let dlDate = dlMatch[1];
+                    let cleanUrl = window.location.href.replace(/[?&]DL=\d{4}-\d{2}-\d{2}/g, '').replace(/[?&]CL=[A-Z]+\d+/g, '').replace(/\?&/, '?').replace(/\?$/, '');
+                    history.replaceState(null, '', cleanUrl);
                     let $extendBtn = $('a[data-url*="/si/extend/deadline/"]');
                     if ($extendBtn.length > 0) {
                         $extendBtn[0].click();
@@ -1350,9 +1352,9 @@ function onInit() {
                         $('a[data-url*="/user/special_issue/deadline/"]')[0].click();
                     }
                     let dlWait = setInterval(function () {
-                        if ($("#form_date").length === 0) return;
+                        if ($("#form_date, #form_deadline").length === 0) return;
                         clearInterval(dlWait);
-                        $("#form_date").attr("readonly", false).val(dlDate);
+                        $("#form_date, #form_deadline").attr("readonly", false).val(dlDate);
                         if (clMatch) {
                             let cell = clMatch[1];
                             let today = new Date();
@@ -1360,11 +1362,11 @@ function onInit() {
                             GM_xmlhttpRequest({
                                 method: "GET",
                                 url: "https://script.google.com/macros/s/AKfycbxSqaUXvXUPZ-I8BCcO_iIKisSdrHVdWisQspLs5RpAT961HgauYTjKWjjZBT7o7HzFlg/exec?cell=" + cell + "&value=" + todayStr,
-                                onload: function () { $("input.submit[type='submit'][value='Submit']").trigger("click"); },
+                                onload: function () { $("div.quickform input.submit[type='submit'][value='Submit'], div.quickform input.submit[type='submit'][value='Save']").trigger("click"); },
                                 onerror: function () { alert("Google Sheet 更新失败，请检查 Web App URL"); }
                             });
                         } else {
-                            $("input.submit[type='submit'][value='Submit']").trigger("click");
+                            $("div.quickform input.submit[type='submit'][value='Submit'], div.quickform input.submit[type='submit'][value='Save']").trigger("click");
                         }
                     }, 500);
                 }
