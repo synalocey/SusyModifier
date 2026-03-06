@@ -2219,7 +2219,7 @@ function onInit() {
                     if ($matchRow.length === 0) return;
 
                     let rowText = $matchRow.text();
-                    if (rowText.indexOf("Editor-in-Chief") > -1 && section && SK_SectionCandidatesMap[section]) {
+                    if ((rowText.indexOf("Editor-in-Chief") > -1 || rowText.indexOf("Associate Editor") > -1) && section && SK_SectionCandidatesMap[section]) {
                         let candidates = SK_SectionCandidatesMap[section];
                         // 获取 SI 标题关键词（去除常见停用词，长度>2）
                         let siTitle = $("div.cell.small-12.medium-6.large-2:contains('Special Issue Title')").next().text().trim();
