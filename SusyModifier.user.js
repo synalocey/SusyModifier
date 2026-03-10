@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.2.27
+// @version       6.3.9
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -3015,8 +3015,11 @@ function skGetUniv(aff) {
     var u_Abbrr = ["Rank B 201+ Beihang University","Rank B National University of Defense Technology","Chinese Academy of Sciences<br>(Please further check its institute and decide)","65 King Abdulaziz University","104 Universidad de Buenos Aires",
                    "107 Universidad Nacional Autónoma de México","117 Indian Institute of Technology Bombay","124 Universidade Estadual de Campinas","124 Universidade Estadual de Campinas","128 Indian Institute of Technology Delhi",
                    "132 Indian Institute of Technology Kanpur","144 Universiti Malaya","148 Indian Institute of Technology Madras"];
+    var u_Black = ["taizhou institute of zhejiang"];
+    var u_Blackr = ["Taizhou Institute of Zhejiang"];
     for (i = 0, len = u_Abbr.length; i < len; i++) { if (aff.indexOf(u_Abbr[i]) > -1) { results += "<span style='background-color:pink;font-weight:bold'>Abbr: " + u_Abbrr[i] + "</span>"; color = "pink"; break; } }
     aff = aff.toLowerCase();
+
     for (i = 0, len = u_2.length; i < len; i++) { if (aff.indexOf(u_2[i]) > -1) { results += "<span style='background-color:lightblue;font-weight:bold'>Top150: " + u_2r[i] + "</span>"; color = "lightblue"; break; } }
     for (i = 0, len = u_D.length; i < len; i++) {
         if (aff.indexOf(u_D[i]) > -1 && (u_D[i].indexOf("of") > -1 || (u_D[i].indexOf("of") == -1 && aff.indexOf("versity of") == -1))) {
@@ -3039,6 +3042,7 @@ function skGetUniv(aff) {
         }
     }
     for (i = 0, len = u_QP.length; i < len; i++) { if (aff.indexOf(u_QP[i]) > -1) { results += "<span style='background-color:cyan;font-weight:bold'>Rank Top: " + u_QPr[i] + "</span>"; color = "cyan"; } }
+    for (i = 0, len = u_Black.length; i < len; i++) { if (aff.indexOf(u_Black[i]) > -1) { results = "<span style='background-color:#ffc1c1;color:#c33;font-weight:bold'>⛔ Blacklist: " + u_Blackr[i] + "</span>"; color = "#111111"; } }
     return { detail: results, color: color };
 }
 
