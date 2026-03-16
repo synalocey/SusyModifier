@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.3.9
+// @version       6.3.15
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -949,9 +949,6 @@ function onInit() {
                     //              $("table:has([title|='Google Scholar'])").parent().prev().html( $("table:has([title|='Google Scholar'])").parent().prev().html() + " <a href='//redmine.mdpi.cn/projects/journal-mathematics/wiki/SI_Manage_CN' target=_blank>[List]</a>" )
                 }
 
-                // Manuscript Source 快捷按钮
-                AddManuscriptSourceSidebar();
-
                 // 重置拒稿按钮
                 $("[title|='Reject / Recommend to other journals']").on('click', function(e){
                     e.preventDefault(); e.stopPropagation();
@@ -1610,10 +1607,8 @@ function onInit() {
                     })()
                 }
             });
-            $("input[value='Edit']").before(`<input class="submit" type="submit" value="Edit">`).remove();
             if (window.location.href.indexOf("/edit/0") > -1 && S_J > 0) {
                 unsafeWindow.$('#form_id_journal').val(S_J).trigger("chosen:updated").trigger("change");
-                $("input[value='Add']").before(`<input class="submit" type="submit" value="Add">`).remove();
                 if (window.location.href.indexOf("/edit/0?") > -1) { $("#form_owner_email").val(window.location.search.split('?')[1]); }
             }
         } catch (error) { }
@@ -2424,7 +2419,6 @@ function onInit() {
     }
     if (window.location.href.indexOf("user/managing/reject/") > -1 && GM_config.get('Assign_Assistant')) {
         try {
-            AddManuscriptSourceSidebar();
             $('input[value="Reject/Recommend"]').trigger("click");
             waitForKeyElements(".jconfirm-title:contains('Error')", AddManuscriptSourceErrorbox);
             waitForKeyElements("#form_comment", function() { window.scrollTo(0, document.body.scrollHeight) });
@@ -3196,48 +3190,6 @@ width:22px}.tooltipster-sidetip.tooltipster-noir.tooltipster-left .tooltipster-a
 border-left-color:#fff;left:-4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-right .tooltipster-arrow-background{border-right-color:#fff;left:4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-top .tooltipster-arrow-background{border-top-color:#fff;top:-4px}
 .tooltipster-sidetip.tooltipster-noir .tooltipster-arrow-border{border-width:11px}.tooltipster-sidetip.tooltipster-noir.tooltipster-bottom .tooltipster-arrow-uncropped{top:-11px}.tooltipster-sidetip.tooltipster-noir.tooltipster-right.tooltipster-arrow-uncropped{
 left:-11px}`)}
-
-function AddManuscriptSourceSidebar(){
-    let m_source = $("div.cell.small-12.medium-6.large-2:contains('Manuscript Source')").next().text().trim() || "[Please Select Source]";
-    let apiUrl = 'https://susy.mdpi.com/restapi/manuscript/quick_change/save/' + $('#maincol a:contains("Manuscript Summary")').attr('href').match(/\/manuscript\/summary\/([a-f0-9]+)/)[1] + '/source';
-
-    waitForKeyElements("span.note-title:contains('Manuscript Notes')", function () {
-        $("span.note-title:contains('Manuscript Notes')").append(
-            ` <span style="display:inline-block; pointer-events: all; margin:0; padding:0;"><select id="quick-source" style="width:140px; margin:0;"><option value="" selected disabled hidden>${m_source}</option>
-                            <option value="1">Self-submission</option><option value="2">Invited via Call for Papers (CFP)</option><option value="3">In House Editor invited</option><option value="4">Academic Editor Invited</option>
-                            <option value="5">Academic Editor Submission</option><option value="6">Conference SI invited</option></select></span>`);
-
-        if (m_source != "[Please Select Source]") {$('#quick-source option').prop('disabled', true)}
-
-        $('#quick-source').on('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        });
-        $('#quick-source').on("dblclick", function(e){
-            $('#quick-source option').prop('disabled', false);
-        });
-        $('#quick-source').on('change', function(e) {
-            const type_value = $(this).val();
-            $.ajax({
-                url: apiUrl,
-                method: "POST",
-                contentType: "application/json",
-                data: JSON.stringify({ type_value: type_value }),
-                headers: {
-                    "susy-csrf-token": unsafeWindow.SusyConfig.susy_csrf_token,
-                    "susy-auth-token": "Bearer " + localStorage.getItem("Susy-token")
-                }
-            }).done(function(response){
-                let currentsource = $('#quick-source').find('option:selected')
-                currentsource.text('✅ ' + currentsource.text());
-                $('#quick-source').trigger('ajaxComplete', [true, response]);
-            }).fail(function(error){
-                alert("Failed. Please try again.");
-                $('#quick-source').trigger('ajaxComplete', [false, error]);
-            });
-        });
-    }, true);
-}
 
 function AddManuscriptSourceErrorbox() {
     $(".jconfirm-content:contains('Please ')").append(`<select id="sourceSelect" size="6" style="height: auto;"><option value="1">Self-submission</option><option value="2">Invited via Call for Papers (CFP)</option><option value="3">In House Editor invited</option>
