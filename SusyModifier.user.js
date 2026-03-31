@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.3.15
+// @version       6.3.30
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -1338,34 +1338,40 @@ function onInit() {
                 // 自动修改Deadline：URL含DL=日期时触发，CL=单元格时同步更新Google Sheet
                 let dlMatch = window.location.href.match(/[?&]DL=(\d{4}-\d{2}-\d{2})/);
                 let clMatch = window.location.href.match(/[?&]CL=([A-Z]+\d+)/);
+                let OnlineDate = $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().text().trim()
                 if (dlMatch) {
-                    let dlDate = dlMatch[1];
-                    let cleanUrl = window.location.href.replace(/[?&]DL=\d{4}-\d{2}-\d{2}/g, '').replace(/[?&]CL=[A-Z]+\d+/g, '').replace(/\?&/, '?').replace(/\?$/, '');
-                    history.replaceState(null, '', cleanUrl);
-                    let $extendBtn = $('a[data-url*="/si/extend/deadline/"]');
-                    if ($extendBtn.length > 0) {
-                        $extendBtn[0].click();
+                    let onlineYear = parseInt(OnlineDate.match(/\d{4}/)?.[0] || '0', 10);
+                    if (onlineYear < 2024) {
+                        alert('Online Date is ' + OnlineDate + '.\nDo not extend the deadline.');
                     } else {
-                        $('a[data-url*="/user/special_issue/deadline/"]')[0].click();
-                    }
-                    let dlWait = setInterval(function () {
-                        if ($("#form_date, #form_deadline").length === 0) return;
-                        clearInterval(dlWait);
-                        $("#form_date, #form_deadline").attr("readonly", false).val(dlDate);
-                        if (clMatch) {
-                            let cell = clMatch[1];
-                            let today = new Date();
-                            let todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-                            GM_xmlhttpRequest({
-                                method: "GET",
-                                url: "https://script.google.com/macros/s/AKfycbxSqaUXvXUPZ-I8BCcO_iIKisSdrHVdWisQspLs5RpAT961HgauYTjKWjjZBT7o7HzFlg/exec?cell=" + cell + "&value=" + todayStr,
-                                onload: function () { $("div.quickform input.submit[type='submit'][value='Submit'], div.quickform input.submit[type='submit'][value='Save']").trigger("click"); },
-                                onerror: function () { alert("Google Sheet 更新失败，请检查 Web App URL"); }
-                            });
+                        let dlDate = dlMatch[1];
+                        let cleanUrl = window.location.href.replace(/[?&]DL=\d{4}-\d{2}-\d{2}/g, '').replace(/[?&]CL=[A-Z]+\d+/g, '').replace(/\?&/, '?').replace(/\?$/, '');
+                        history.replaceState(null, '', cleanUrl);
+                        let $extendBtn = $('a[data-url*="/si/extend/deadline/"]');
+                        if ($extendBtn.length > 0) {
+                            $extendBtn[0].click();
                         } else {
-                            $("div.quickform input.submit[type='submit'][value='Submit'], div.quickform input.submit[type='submit'][value='Save']").trigger("click");
+                            $('a[data-url*="/user/special_issue/deadline/"]')[0].click();
                         }
-                    }, 500);
+                        let dlWait = setInterval(function () {
+                            if ($("#form_date, #form_deadline").length === 0) return;
+                            clearInterval(dlWait);
+                            $("#form_date, #form_deadline").attr("readonly", false).val(dlDate);
+                            if (clMatch) {
+                                let cell = clMatch[1];
+                                let today = new Date();
+                                let todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+                                GM_xmlhttpRequest({
+                                    method: "GET",
+                                    url: "https://script.google.com/macros/s/AKfycbxSqaUXvXUPZ-I8BCcO_iIKisSdrHVdWisQspLs5RpAT961HgauYTjKWjjZBT7o7HzFlg/exec?cell=" + cell + "&value=" + todayStr,
+                                    onload: function () { $("div.quickform input.submit[type='submit'][value='Submit'], div.quickform input.submit[type='submit'][value='Save']").trigger("click"); },
+                                    onerror: function () { alert("Google Sheet 更新失败，请检查 Web App URL"); }
+                                });
+                            } else {
+                                $("div.quickform input.submit[type='submit'][value='Submit'], div.quickform input.submit[type='submit'][value='Save']").trigger("click");
+                            }
+                        }, 500);
+                    }
                 }
             }
         } catch (error) { }
@@ -2811,43 +2817,41 @@ function onInit() {
     if (window.location.href.indexOf("crm.mdpi.cn/conference/") + window.location.href.indexOf("crm.mdpi.cn/scholar_visits/")+ window.location.href.indexOf("crm.mdpi.cn/sponsorship/") > -3 && GM_config.get('Hidden_Func')) {
         try {
             waitForKeyElements('button[label="Accept"]:first', function(acceptBtn) {
-                acceptBtn.trigger('click');
-                waitForKeyElements('button:contains("OK"):visible', function(okBtn) {
-                    if ($("span:contains('Error')").length > 0){
-                        waitForKeyElements('.full-loading.absolute:first', function(jNode) {
-                            jNode.css('display', 'none');
+                function doAccept() {
+                    acceptBtn.trigger('click');
+                    waitForKeyElements('button:contains("OK"):visible', function(okBtn) {
+                        setTimeout(function() {location.reload();}, 1500);
+                        okBtn.trigger('click');
+                    }, true);
+                }
+                if ($("input[id^='rc_select_']").length > 0){
+                    const $inputs = $("input[id^='rc_select_']");
+                    let index = 0;
+                    function processNextInput() {
+                        if (index >= $inputs.length) {
+                            alert('Please check meeting report.');
+                            return;
+                        }
+                        const input = $inputs[index];
+                        index++;
 
-                            const $inputs = $("input[id^='rc_select_']");
-                            let index = 0;
-                            function processNextInput() {
-                                if (index >= $inputs.length) {
-                                    alert('Please check meeting report.');
-                                    return;
-                                }
-                                const input = $inputs[index];
-                                index++;
+                        const event = new MouseEvent('mousedown', { bubbles: true });
+                        input.dispatchEvent(event);
 
-                                const event = new MouseEvent('mousedown', { bubbles: true });
-                                input.dispatchEvent(event);
+                        waitForKeyElements('.ant-select-item-option[title="Qualified"]:visible', function($option) {
+                            const el = $option[0];
+                            ['mousedown','mouseup','click'].forEach(type => {
+                                const event = new MouseEvent(type, { bubbles: true, cancelable: true });
+                                el.dispatchEvent(event);
+                            });
 
-                                waitForKeyElements('.ant-select-item-option[title="Qualified"]:visible', function($option) {
-                                    const el = $option[0];
-                                    ['mousedown','mouseup','click'].forEach(type => {
-                                        const event = new MouseEvent(type, { bubbles: true, cancelable: true });
-                                        el.dispatchEvent(event);
-                                    });
-
-                                    setTimeout(processNextInput, 2000);
-                                }, true);
-                            }
-                            processNextInput();
+                            setTimeout(processNextInput, 2000);
                         }, true);
                     }
-                    else {
-                        setTimeout(function() {location.reload();}, 1500);
-                    }
-                    okBtn.trigger('click');
-                }, true);
+                    processNextInput();
+                } else {
+                    doAccept();
+                }
             }, true);
         } catch (error) { }
     }
