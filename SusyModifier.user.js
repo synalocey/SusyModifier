@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.3.30
+// @version       6.4.6
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2819,10 +2819,10 @@ function onInit() {
             waitForKeyElements('button[label="Accept"]:first', function(acceptBtn) {
                 function doAccept() {
                     acceptBtn.trigger('click');
-                    waitForKeyElements('button:contains("OK"):visible', function(okBtn) {
-                        setTimeout(function() {location.reload();}, 1500);
-                        okBtn.trigger('click');
-                    }, true);
+                    pollForElement('button:contains("OK"):visible', function($okBtn) {
+                        $okBtn.first().trigger('click');
+                        setTimeout(function() { location.reload(); }, 1500);
+                    }, 10000);
                 }
                 if ($("input[id^='rc_select_']").length > 0){
                     const $inputs = $("input[id^='rc_select_']");
@@ -2834,18 +2834,13 @@ function onInit() {
                         }
                         const input = $inputs[index];
                         index++;
-
-                        const event = new MouseEvent('mousedown', { bubbles: true });
-                        input.dispatchEvent(event);
+                        input.focus();
+                        const arrowDownEvent = new KeyboardEvent('keydown', {bubbles: true, cancelable: true, key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, which: 40});
+                        input.dispatchEvent(arrowDownEvent);
 
                         waitForKeyElements('.ant-select-item-option[title="Qualified"]:visible', function($option) {
-                            const el = $option[0];
-                            ['mousedown','mouseup','click'].forEach(type => {
-                                const event = new MouseEvent(type, { bubbles: true, cancelable: true });
-                                el.dispatchEvent(event);
-                            });
-
-                            setTimeout(processNextInput, 2000);
+                            $option[0].click();
+                            setTimeout(processNextInput, 1500);
                         }, true);
                     }
                     processNextInput();
