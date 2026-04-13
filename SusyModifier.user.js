@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.4.6
+// @version       6.4.12
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2819,7 +2819,7 @@ function onInit() {
             waitForKeyElements('button[label="Accept"]:first', function(acceptBtn) {
                 function doAccept() {
                     acceptBtn.trigger('click');
-                    pollForElement('button:contains("OK"):visible', function($okBtn) {
+                    waitForKeyElements('button:contains("OK"):visible', function($okBtn) {
                         $okBtn.first().trigger('click');
                         setTimeout(function() { location.reload(); }, 1500);
                     }, 10000);
