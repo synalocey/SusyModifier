@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.4.12
+// @version       6.4.15
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -1345,6 +1345,7 @@ function onInit() {
                         alert('Online Date is ' + OnlineDate + '.\nDo not extend the deadline.');
                     } else {
                         let dlDate = dlMatch[1];
+                        sessionStorage.setItem("DL_pending_date", dlDate);
                         let cleanUrl = window.location.href.replace(/[?&]DL=\d{4}-\d{2}-\d{2}/g, '').replace(/[?&]CL=[A-Z]+\d+/g, '').replace(/\?&/, '?').replace(/\?$/, '');
                         history.replaceState(null, '', cleanUrl);
                         let $extendBtn = $('a[data-url*="/si/extend/deadline/"]');
@@ -1363,7 +1364,7 @@ function onInit() {
                                 let todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
                                 GM_xmlhttpRequest({
                                     method: "GET",
-                                    url: "https://script.google.com/macros/s/AKfycbxSqaUXvXUPZ-I8BCcO_iIKisSdrHVdWisQspLs5RpAT961HgauYTjKWjjZBT7o7HzFlg/exec?cell=" + cell + "&value=" + todayStr,
+                                    url: "https://script.google.com/macros/s/AKfycbzPrOYlVXip3M8u3Ty2oHfKF6Irf8TkuTRYeNO4HAY5LvIO8c_JZYx9r7CBfsC4Mlc81w/exec?sheetId=1910704665&cell=" + cell + "&value=" + todayStr,
                                     onload: function () { $("div.quickform input.submit[type='submit'][value='Submit'], div.quickform input.submit[type='submit'][value='Save']").trigger("click"); },
                                     onerror: function () { alert("Google Sheet 更新失败，请检查 Web App URL"); }
                                 });
@@ -1371,6 +1372,70 @@ function onInit() {
                                 $("div.quickform input.submit[type='submit'][value='Submit'], div.quickform input.submit[type='submit'][value='Save']").trigger("click");
                             }
                         }, 500);
+                    }
+                } else {
+                    // 检查Deadline修改结果（页面刷新后）
+                    let dlPendingDate = sessionStorage.getItem("DL_pending_date");
+                    if (dlPendingDate) {
+                        sessionStorage.removeItem("DL_pending_date");
+                        let deadlineText = $('div.cell.small-12.medium-6.large-2:contains("Deadline")').next().text().trim();
+                        if (deadlineText.includes(dlPendingDate)) {
+                            alert("✅ Deadline 修改成功：" + dlPendingDate);
+                        } else {
+                            alert("❌ Deadline 修改失败，当前：" + deadlineText);
+                        }
+                    }
+                }
+
+                // 自动填入GE邮箱：URL含GE=邮箱时，自动填入form_email并点击guestNextBtn
+                let geMatch = window.location.href.match(/[?&]GE=([^&@]+@[^&.]+\.[^&]+)/);
+                if (geMatch) {
+                    let geEmail = decodeURIComponent(geMatch[1]);
+                    let cleanUrl = window.location.href.replace(/[?&]GE=[^&]+/g, '').replace(/\?&/, '?').replace(/\?$/, '');
+                    history.replaceState(null, '', cleanUrl);
+                    if ($("#form_email").length > 0) {
+                        document.getElementById('form_email').scrollIntoView();
+                        $("#form_email").val(geEmail);
+                        sessionStorage.setItem("GE_pending_email", geEmail);
+                        let geClMatch = window.location.href.match(/[?&]CL=([A-Z]+\d+)/);
+                        if (geClMatch) { sessionStorage.setItem("GE_pending_cell", geClMatch[1]); }
+                        $("#guestNextBtn").trigger("click");
+                        // 等待Cloudflare验证成功后自动点击Proceed
+                        waitForKeyElements("#process-special-issue-guest-editor", function () {
+                            let geStartTime = Date.now();
+                            let geCheckInterval = setInterval(function () {
+                                let cfResponse = document.querySelector('[name="cf-turnstile-response"]');
+                                if (cfResponse && cfResponse.value) {
+                                    clearInterval(geCheckInterval);
+                                    $("#process-special-issue-guest-editor").trigger("click");
+                                } else if (Date.now() - geStartTime > 20000) {
+                                    clearInterval(geCheckInterval);
+                                    alert("Cloudflare 验证超时");
+                                }
+                            }, 500);
+                        }, true);
+                    }
+                } else {
+                    // 检查GE添加结果（页面刷新后）
+                    let gePendingEmail = sessionStorage.getItem("GE_pending_email");
+                    if (gePendingEmail) {
+                        sessionStorage.removeItem("GE_pending_email");
+                        if (document.body.innerText.includes(gePendingEmail)) {
+                            let gePendingCell = sessionStorage.getItem("GE_pending_cell");
+                            if (gePendingCell) {
+                                sessionStorage.removeItem("GE_pending_cell");
+                                let today = new Date();
+                                let todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+                                GM_xmlhttpRequest({
+                                    method: "GET",
+                                    url: "https://script.google.com/macros/s/AKfycbzPrOYlVXip3M8u3Ty2oHfKF6Irf8TkuTRYeNO4HAY5LvIO8c_JZYx9r7CBfsC4Mlc81w/exec?sheetId=185189532&cell=" + gePendingCell + "&value=" + todayStr,
+                                    onerror: function () { alert("Google Sheet 更新失败"); }
+                                });
+                            }
+                            alert("✅ GE添加成功：" + gePendingEmail);
+                        } else {
+                            alert("❌ GE添加失败：" + gePendingEmail);
+                        }
                     }
                 }
             }
