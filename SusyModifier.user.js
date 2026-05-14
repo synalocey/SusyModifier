@@ -2351,6 +2351,7 @@ function onInit() {
         } catch (error) { }
     }
 
+
     //Maths-Related Journal Search + Rank ABC
     if (window.location.hostname.indexOf("google") + window.location.hostname.indexOf("scopus") > -2 && GM_config.get('Maths_J')) {
         try {
@@ -2386,7 +2387,220 @@ function onInit() {
                         }
                     });
                 }, true);
+                // 作者详情页：内联显示邮箱（点击复制）+ Hirsch数据按钮
+                if (window.location.pathname.indexOf('authid/detail.uri') > -1) {
+                    waitForKeyElements('h1[data-testid="author-profile-name"]', function (h1node) {
+                        if (h1node.find('#sk-scopus-email-inline').length) return;
+                        const authorId = new URLSearchParams(location.search).get('authorId');
+                        if (!authorId) return;
+
+                        // ── 邮箱 span ──
+                        const emailSpan = $('<span id="sk-scopus-email-inline">…</span>').css({fontSize: '0.5em', color: '#1a73e8', marginLeft: '50px', verticalAlign: 'middle', cursor: 'pointer', borderBottom: '1px dashed #1a73e8'}).attr('title', 'Click to copy');
+                        const tipSpan = $('<span id="sk-scopus-email-tip"></span>').css({fontSize: '0.5em', color: '#888', marginLeft: '5px', verticalAlign: 'middle', fontWeight: 'normal'});
+
+                        // ── 内联加载按钮（与 See All Publications 相同功能）──
+                        const inlineLoadBtn = $('<span>📊</span>').css({fontSize: '0.45em', marginLeft: '8px', cursor: 'pointer', verticalAlign: 'middle', opacity: '0.7', transition: 'opacity .2s'}).attr('title', 'Load Publications & Co-authors')
+                        .on('mouseover', function(){ $(this).css('opacity','1'); })
+                        .on('mouseout', function(){ $(this).css('opacity','0.5'); });
+                        h1node.append(emailSpan).append(tipSpan).append(inlineLoadBtn);
+                        fetch('https://www.scopus.com/api/authors/' + authorId).then(r => r.json()).then(d => {
+                            const email = d.emailAddress || '';
+                            if (email && email !== 'null') { emailSpan.text(email); }
+                            else { emailSpan.text('--').css({ color: '#aaa', borderBottom: 'none', cursor: 'default' }); }
+                        }).catch(() => emailSpan.text('--').css({ color: '#aaa', borderBottom: 'none', cursor: 'default' }));
+                        emailSpan.on('click', function () {
+                            const email = emailSpan.text();
+                            if (!email || email.startsWith('-') || email === '…') return;
+                            navigator.clipboard.writeText(email)
+                                .then(() => { tipSpan.text('✓ Copied').css('color', '#1e8e3e'); setTimeout(() => tipSpan.text(''), 1500); })
+                                .catch(() => { tipSpan.text('Failed').css('color', '#d93025'); setTimeout(() => tipSpan.text(''), 1500); });
+                        });
+
+                        // ── Hirsch: 注入按钮 ──
+                        function skInjectHirschSection() {
+                            if ($('#sk-hirsch-section').length) return;
+                            const authorName = h1node.clone().children().remove().end().text().trim();
+                            const hirschPageUrl = 'https://www.scopus.com/hirsch/author.uri?accessor=authorProfile&auidList=' + authorId + '&origin=AuthorProfile';
+                            const dataUrl = 'https://www.scopus.com/hirsch/author/data.uri';
+                            const baseBody = 'authorName=' + encodeURIComponent(authorName) + '&accessor=authorProfile&keyEventCutState=n&auidList=' + authorId + '&origin=AuthorEval&ajax=true';
+
+                            function postData(display) {
+                                return fetch(dataUrl, {
+                                    method: 'POST', credentials: 'include',
+                                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest' },
+                                    referrer: hirschPageUrl,
+                                    body: 'display=' + display + '&' + baseBody
+                                }).then(r => r.json());
+                            }
+
+                            // 按钮样式
+                            function makeBtn(text) {
+                                const btn = $('<button>' + text + '</button>').css({
+                                    background: 'linear-gradient(135deg,#1a73e8,#4285f4)', color: '#fff', border: 'none',
+                                    borderRadius: '8px', padding: '10px 28px', fontSize: '14px', fontWeight: '600',
+                                    cursor: 'pointer', boxShadow: '0 2px 8px rgba(26,115,232,0.3)',
+                                    transition: 'all .2s', display: 'block', margin: '12px auto'
+                                });
+                                btn.on('mouseover', function () { $(this).css({ transform: 'scale(1.03)', boxShadow: '0 4px 14px rgba(26,115,232,0.4)' }); });
+                                btn.on('mouseout', function () { $(this).css({ transform: 'scale(1)', boxShadow: '0 2px 8px rgba(26,115,232,0.3)' }); });
+                                return btn;
+                            }
+
+                            // 左栏按钮
+                            const section = $('<div id="sk-hirsch-section"></div>').css({ padding: '16px 0' });
+                            const seeAllBtn = makeBtn('See All Publications');
+                            section.append(seeAllBtn);
+                            const hr = $('#documents-panel hr').first();
+                            if (hr.length) { hr.after(section); } else { h1node.closest('section, div[class*="Author"]').first().append(section); }
+
+                            // 右栏按钮
+                            const seeCoBtn = makeBtn('See Co-authors');
+                            const authorPos = $('section.author-position').first();
+                            if (authorPos.length) { authorPos.append(seeCoBtn); }
+
+                            // 共享加载逻辑
+                            let loaded = false;
+                            function triggerLoad() {
+                                if (loaded) return;
+                                loaded = true;
+                                seeAllBtn.text('Loading…').prop('disabled', true).css({ opacity: '0.7' });
+                                seeCoBtn.text('Loading…').prop('disabled', true).css({ opacity: '0.7' });
+                                inlineLoadBtn.text('⏳').css({ cursor: 'default', opacity: '0.5' }).off('click');
+
+                                fetch(hirschPageUrl, { credentials: 'include' }).then(r => r.text()).then(html => {
+                                    // 从初始页面 HTML 解析内嵌的 JSON（包含 source / subject area 数据）
+                                    let docData = {};
+                                    try {
+                                        const pageDoc = new DOMParser().parseFromString(html, 'text/html');
+                                        const jsonPre = pageDoc.getElementById('getAuthEvalJsonData');
+                                        if (jsonPre) { docData = JSON.parse(jsonPre.textContent); }
+                                    } catch (e) { /* ignore parse errors */ }
+                                    return Promise.all([postData('hIndex'), postData('CoAuthors')]).then(([hData, coData]) => [hData, coData, docData]);
+                                }).then(([hData, coData, docData]) => {
+                                    seeAllBtn.remove();
+                                    seeCoBtn.remove();
+                                    inlineLoadBtn.text('✅').css({ cursor: 'default', opacity: '1' }).off('click');
+                                    const content = $('<div id="sk-hirsch-content"></div>');
+
+                                    // ── Subject Areas → 固定悬浮在右侧面板上 ──
+                                    const subjectAreas = docData.documentSubjectAreaViewBeans || [];
+                                    if (subjectAreas.length) {
+                                        const saTotal = docData.totalDataForSubjectAreaData ? docData.totalDataForSubjectAreaData.noOfDocuments : subjectAreas.reduce((a,b) => a + b.noOfDocuments, 0);
+                                        const saColors = ['#1a73e8','#e8710a','#0d652d','#a142f4','#d93025','#129eaf','#7b1fa2','#c2185b'];
+                                        const saOverlay = $('<div id="sk-subject-overlay"></div>').css({
+                                            background: 'rgba(255,255,255,0.97)', borderRadius: '12px',
+                                            boxShadow: '0 2px 12px rgba(0,0,0,0.1)', padding: '14px 18px',
+                                            fontSize: '13px', lineHeight: '1.8', marginBottom: '16px'
+                                        });
+                                        saOverlay.append($('<strong></strong>').text('Subject Areas').css({ display: 'block', marginBottom: '6px', fontSize: '14px' }));
+                                        subjectAreas.forEach((s, i) => {
+                                            const bg = saColors[i % saColors.length];
+                                            const pct = saTotal > 0 ? (s.noOfDocuments / saTotal * 100).toFixed(1) + '%' : '';
+                                            const isMath = /^Mathematics$/i.test(s.displayName);
+                                            saOverlay.append($('<span></span>').text(s.displayName + ' · ' + s.noOfDocuments + ' (' + pct + ')').css({
+                                                display: 'inline-block', padding: '3px 12px', borderRadius: '12px', margin: '2px 4px 2px 0',
+                                                background: bg + '18', color: bg, border: '1px solid ' + bg + '40',
+                                                fontWeight: isMath ? '800' : '500', fontSize: isMath ? '16px' : '14px'
+                                            }));
+                                        });
+                                        if (authorPos.length) { $('#scopus-author-profile-page-control-microui__general-information-content').append(saOverlay); }
+                                    }
+
+                                    // ── 文章列表 ──
+                                    const docs = hData.hirschGraphData || [];
+                                    if (docs.length) {
+                                        content.append($('<h3></h3>').css({ fontSize: '16px', fontWeight: '600', margin: '16px 0 8px', color: '#202124' }).text('All Publications (' + docs.length + ')'));
+                                        const table = $('<table></table>').css({ width: '100%', borderCollapse: 'collapse', fontSize: '15px' });
+                                        table.append($('<thead><tr><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600">#</th><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600">Title</th><th style="text-align:right;padding:6px 8px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600">Cited</th></tr></thead>'));
+                                        const tbody = $('<tbody></tbody>');
+                                        docs.forEach((d, i) => {
+                                            const tr = $('<tr></tr>').css({ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fafafa' : '#fff' });
+                                            const title = d.documentTitle || '?';
+                                            const titleLink = $('<a target="_blank"></a>').attr('href', d.detailsUrl || '#').css({ color: '#1a0dab', textDecoration: 'none' }).text(title);
+                                            // 只高亮文字链接，不高亮整行
+                                            if (geometry_regex.test(title)) { titleLink.css({ background: 'Aquamarine', padding: '1px 4px', borderRadius: '3px' }); }
+                                            else if (maths_regex.test(title)) { titleLink.css({ background: 'Wheat', padding: '1px 4px', borderRadius: '3px' }); }
+                                            tr.append($('<td></td>').css({ padding: '8px', color: '#999', width: '30px' }).text(i + 1));
+                                            tr.append($('<td></td>').css({ padding: '8px' }).append(titleLink));
+                                            const cited = d.count ?? 0;
+                                            tr.append($('<td></td>').css({ padding: '8px', textAlign: 'right', color: cited > 0 ? '#1a73e8' : '#ccc', fontWeight: cited > 0 ? '600' : 'normal' }).text(cited));
+                                            tbody.append(tr);
+                                        });
+                                        table.append(tbody);
+                                        content.append(table);
+                                    }
+
+                                    // 合作者 → 插入右栏
+                                    const coauthors = coData.coAuthorsViewBeans || [];
+                                    if (coauthors.length && authorPos.length) {
+                                        const coSection = $('<div id="sk-coauthors-section"></div>').css({ padding: '16px 0' });
+                                        coSection.append($('<strong></strong>').css({ fontSize: '15px', display: 'block', marginBottom: '10px', color: '#202124' }).text('Co-authors (' + coauthors.length + ')'));
+                                        const coaWrap = $('<div></div>').css({ display: 'flex', flexWrap: 'wrap', gap: '8px' });
+                                        coauthors.forEach(c => {
+                                            const name = decodeURIComponent((c.coAuthorName || '?').replace(/\+/g, ' '));
+                                            const href = 'https://www.scopus.com/authid/detail.uri?authorId=' + (c.coAuthorId || '');
+                                            coaWrap.append($('<a target="_blank"></a>').attr('href', href).text(name + ' (' + (c.noOfCoAuthoredDocuments || '') + ')').css({
+                                                display: 'inline-block', padding: '3px 14px', borderRadius: '16px',
+                                                background: '#e8f0fe', color: '#1558d6', textDecoration: 'none', fontSize: '14px', lineHeight: '1.6',
+                                                transition: 'background .2s'
+                                            }).on('mouseover', function () { $(this).css('background', '#d2e3fc'); }).on('mouseout', function () { $(this).css('background', '#e8f0fe'); }));
+                                        });
+                                        coSection.append(coaWrap);
+                                        authorPos.append(coSection);
+                                    }
+
+                                    // ── 期刊来源表格 → 插入右栏（Co-authors 下方）──
+                                    const sources = docData.documentSourceDataViewBeans || [];
+                                    if (sources.length && authorPos.length) {
+                                        const srcSection = $('<div id="sk-sources-section"></div>').css({ padding: '16px 0' });
+                                        srcSection.append($('<strong></strong>').css({ fontSize: '15px', display: 'block', marginBottom: '10px', color: '#202124' }).text('Sources (' + sources.length + ' journals)'));
+                                        const srcTable = $('<table></table>').css({ width: '100%', borderCollapse: 'collapse', fontSize: '13px' });
+                                        srcTable.append($('<thead><tr><th style="text-align:left;padding:4px 6px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600">Journal</th><th style="text-align:right;padding:4px 6px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600;width:40px">Docs</th></tr></thead>'));
+                                        const srcTbody = $('<tbody></tbody>');
+                                        sources.forEach((s, i) => {
+                                            const srcTr = $('<tr></tr>').css({ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fafafa' : '#fff' });
+                                            const jName = s.displayName || s.code || '?';
+                                            const jCell = $('<td></td>').css({ padding: '4px 6px' });
+                                            const jLink = s.url ? $('<a target="_blank"></a>').attr('href', s.url).css({ color: '#1a0dab', textDecoration: 'none' }).text(jName) : $('<span></span>').text(jName);
+                                            // 只高亮文字，不高亮整行
+                                            if (geometry_regex.test(jName)) { jLink.css({ background: 'Aquamarine', padding: '1px 3px', borderRadius: '3px' }); }
+                                            else if (maths_regex.test(jName)) { jLink.css({ background: 'Wheat', padding: '1px 3px', borderRadius: '3px' }); }
+                                            jCell.append(jLink);
+                                            srcTr.append(jCell);
+                                            srcTr.append($('<td></td>').css({ padding: '4px 6px', textAlign: 'right', fontWeight: '600', color: '#1a73e8' }).text(s.noOfDocuments));
+                                            srcTbody.append(srcTr);
+                                        });
+                                        if (docData.totalDataForSourceData) {
+                                            const totalTr = $('<tr></tr>').css({ borderTop: '2px solid #e0e0e0', background: '#f5f5f5', fontWeight: '600' });
+                                            totalTr.append($('<td></td>').css({ padding: '4px 6px' }).text('Total'));
+                                            totalTr.append($('<td></td>').css({ padding: '4px 6px', textAlign: 'right', color: '#202124' }).text(docData.totalDataForSourceData.noOfDocuments));
+                                            srcTbody.append(totalTr);
+                                        }
+                                        srcTable.append(srcTbody);
+                                        srcSection.append(srcTable);
+                                        authorPos.append(srcSection);
+                                    }
+
+                                    section.append(content);
+                                }).catch(() => {
+                                    loaded = false;
+                                    seeAllBtn.text('See All Publications').prop('disabled', false).css({ opacity: '1' });
+                                    seeCoBtn.text('See Coauthors').prop('disabled', false).css({ opacity: '1' });
+                                    window.open(hirschPageUrl, '_blank');
+                                });
+                            }
+
+                            seeAllBtn.on('click', triggerLoad);
+                            seeCoBtn.on('click', triggerLoad);
+                            inlineLoadBtn.on('click', triggerLoad);
+                        }
+                        // 等 hr 分割线出现再注入
+                        waitForKeyElements('#documents-panel hr', skInjectHirschSection, true);
+                    }, true);
+                }
+
             } else { //Google Scholar
+
                 mark_journals();
                 $("#gsc_bpf_more").on("click", function () {
                     let targetNode = document.querySelector('#gsc_a_nn')
