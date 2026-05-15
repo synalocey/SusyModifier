@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.5.13
+// @version       6.5.14
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2539,32 +2539,52 @@ function onInit() {
                                     const coauthors = coData.coAuthorsViewBeans || [];
                                     if (coauthors.length && authorPos.length) {
                                         const coSection = $('<div id="sk-coauthors-section"></div>').css({ padding: '16px 0' });
-                                        const coauthorText = coauthors.map(c => decodeURIComponent((c.coAuthorName || '?').replace(/\+/g, ' ')) + '\thttps://www.scopus.com/authid/detail.uri?authorId=' + (c.coAuthorId || '')).join('\n');
+                                        const coauthorText = coauthors.map(c => {
+                                            const raw = decodeURIComponent((c.coAuthorName || '?').replace(/\+/g, ' '));
+                                            const nm = raw.match(/^(.+?),\s*(.+)$/);
+                                            const first = nm ? nm[2].trim() : raw;
+                                            const last = nm ? nm[1].trim() : '';
+                                            return first + '\t' + last + '\t' + (c.noOfCoAuthoredDocuments || '') + '\thttps://www.scopus.com/authid/detail.uri?authorId=' + (c.coAuthorId || '');
+                                        }).join('\n');
+                                        const coauthorHeader = 'First Name\tLast Name\tCo-Docs\tScopus Link';
+                                        const coauthorTextWithHeader = coauthorHeader + '\n' + coauthorText;
                                         const coTitle = $('<strong></strong>').css({ fontSize: '15px', display: 'inline', marginBottom: '10px', color: '#202124' }).text('Co-authors (' + coauthors.length + ')');
                                         const coExportIcon = $('<span>📋</span>').css({ cursor: 'pointer', fontSize: '14px', marginLeft: '6px', opacity: '0.6' }).on('mouseover', function(){$(this).css('opacity', '1')}).on('mouseout', function(){$(this).css('opacity', '0.6')});
+                                        coExportIcon.on('mousedown', function (e) {if (e.which === 2) e.preventDefault();}).on('auxclick', function (e) {
+                                            if (!$('#sk-coa-overlay').length) { $(this).trigger('click'); }
+                                            $('#sk-inner-copy-btn').trigger($.Event('auxclick', { originalEvent: { button: 1 } }));
+                                        });
                                         coExportIcon.on('click', function () {
                                             if ($('#sk-coa-overlay').length) { $('#sk-coa-overlay').remove(); return; }
                                             const tip = $('<span></span>').css({ fontSize: '12px', color: '#888', marginLeft: '8px' });
-                                            const copyIcon = $('<span>📋</span>').css({ cursor: 'pointer', fontSize: '16px', marginLeft: '6px' }).attr('title', 'Copy').on('click', function () {
+                                            const copyIcon = $('<span id="sk-inner-copy-btn">📋</span>').css({ cursor: 'pointer', fontSize: '16px', marginLeft: '6px' }).attr('title', 'Copy').on('click', function () {
                                                 navigator.clipboard.writeText(ta.val()).then(() => { tip.text('✓').css('color', '#1e8e3e'); setTimeout(() => tip.text(''), 1500); }).catch(() => { ta[0].select(); document.execCommand('copy'); });
                                             }).on('mousedown', function (e) { if (e.which === 2 && GM_config.get('Remind_Dinner')) e.preventDefault(); }).on('auxclick', function (e) {
                                                 if (e.originalEvent.button !== 1 || !GM_config.get('Remind_Dinner')) return;
-                                                const lines = ta.val().split('\n'); let i = 0;
-                                                tip.text('⏳ 0/' + lines.length).css('color', '#1a73e8');
+                                                const lines = ta.val().split('\n');
+                                                // Replace header row with full header
+                                                lines[0] = lines[0].replace('First Name\tLast Name\tCo-Docs\tScopus Link','Email\tH-Index\tInstitution\tSubject Areas\tFirst Name\tLast Name\tCo-Docs\tScopus Link');
+                                                ta.val(lines.join('\n'));
+                                                let i = 1; // start from 1 to skip header
+                                                const total = lines.length - 1; // exclude header from count
+                                                tip.text('⏳ 0/' + total).css('color', '#1a73e8');
                                                 (function next() {
                                                     if (i >= lines.length) { tip.text('✅ done').css('color', '#1e8e3e'); setTimeout(() => tip.text(''), 2000); return; }
                                                     const m = lines[i].match(/authorId=(\d+)/);
-                                                    if (!m) { i++; tip.text('⏳ ' + i + '/' + lines.length); next(); return; }
+                                                    if (!m) { i++; tip.text('⏳ ' + (i - 1) + '/' + total); next(); return; }
                                                     fetch('https://www.scopus.com/api/authors/' + m[1]).then(r => r.json()).then(d => {
                                                         const email = (d.emailAddress && d.emailAddress !== 'null') ? d.emailAddress : '--';
-                                                        lines[i] = email + '\t' + lines[i]; i++; ta.val(lines.join('\n'));
-                                                        tip.text('⏳ ' + i + '/' + lines.length);
+                                                        const hindex = (d.hindex != null) ? d.hindex : '--';
+                                                        const institution = (d.latestAffiliatedInstitution && d.latestAffiliatedInstitution.name) ? d.latestAffiliatedInstitution.name : '--';
+                                                        const subjects = (d.publishedSubjectAreas && d.publishedSubjectAreas.length) ? d.publishedSubjectAreas.slice(0, 5).map(s => s.name).join('; ') : '--';
+                                                        lines[i] = email + '\t' + hindex + '\t' + institution + '\t' + subjects + '\t' + lines[i]; i++; ta.val(lines.join('\n'));
+                                                        tip.text('⏳ ' + (i - 1) + '/' + total);
                                                         setTimeout(next, 1000);
-                                                    }).catch(() => { lines[i] = '--\t' + lines[i]; i++; ta.val(lines.join('\n')); tip.text('⏳ ' + i + '/' + lines.length); setTimeout(next, 1000); });
+                                                    }).catch(() => { lines[i] = '--\t--\t--\t--\t' + lines[i]; i++; ta.val(lines.join('\n')); tip.text('⏳ ' + (i - 1) + '/' + total); setTimeout(next, 1000); });
                                                 })();
                                             });
                                             const ta = $('<textarea></textarea>').css({ width: '100%', flex: 1, border: '1px solid #e0e0e0', borderRadius: '8px', padding: '12px', fontSize: '13px', fontFamily: 'Consolas,monospace', lineHeight: '1.8', resize: 'none',
-                                                                                                color: '#333', background: '#fafafa', boxSizing: 'border-box' }).val(coauthorText);
+                                                                                                color: '#333', background: '#fafafa', boxSizing: 'border-box', whiteSpace: 'pre'}).val(coauthorTextWithHeader);
                                             const popup = $('<div></div>').css({ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.25)', width: '80vw', height: '80vh', display: 'flex', flexDirection: 'column', gap: '10px' });
                                             popup.append($('<div></div>').css({ display: 'flex', alignItems: 'center' }).append($('<span></span>').text('Co-authors (' + coauthors.length + ')').css({ fontWeight: '600' })).append(copyIcon).append(tip)).append(ta);
                                             const overlay = $('<div id="sk-coa-overlay"></div>').css({position:'fixed', top:0, left:0, width:'100%', height:'100%', background:'rgba(0,0,0,0.5)', zIndex:10000, display:'flex', alignItems:'center', justifyContent:'center'});
