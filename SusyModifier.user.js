@@ -2466,6 +2466,7 @@ function onInit() {
                                 seeAllBtn.text('Loading…').prop('disabled', true).css({ opacity: '0.7' });
                                 seeCoBtn.text('Loading…').prop('disabled', true).css({ opacity: '0.7' });
                                 inlineLoadBtn.text('⏳').css({ cursor: 'default', opacity: '0.5' }).off('click');
+                                $('[class*="AuthorHeader-module"]').filter((i, el) => $(el).text().includes('Scopus Preview')).remove();
 
                                 fetch(hirschPageUrl, { credentials: 'include' }).then(r => r.text()).then(html => {
                                     // 从初始页面 HTML 解析内嵌的 JSON（包含 source / subject area 数据）
@@ -2509,9 +2510,13 @@ function onInit() {
                                     // ── 文章列表 ──
                                     const docs = hData.hirschGraphData || [];
                                     if (docs.length) {
-                                        content.append($('<h3></h3>').css({ fontSize: '16px', fontWeight: '600', margin: '16px 0 8px', color: '#202124' }).text('All Publications (' + docs.length + ')'));
+                                        const pubH3 = $('<h3></h3>').css({ fontSize: '16px', fontWeight: '600', margin: '16px 0 8px', color: '#202124', display: 'inline' }).text('All Publications (' + docs.length + ')');
+                                        const pubLinkIcon = $('<span>🔗</span>').css({ cursor: 'pointer', fontSize: '14px', marginLeft: '6px', opacity: '0.6' }).on('mouseover', function(){$(this).css('opacity', '1')})
+                                        .on('mouseout', function(){$(this).css('opacity', '0.6')}).on('click', function(){ window.open(hirschPageUrl, '_blank'); });
+                                        content.append($('<div></div>').css({ margin: '16px 0 8px' }).append(pubH3).append(pubLinkIcon));
                                         const table = $('<table></table>').css({ width: '100%', borderCollapse: 'collapse', fontSize: '15px' });
-                                        table.append($('<thead><tr><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600">#</th><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600">Title</th><th style="text-align:right;padding:6px 8px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600">Cited</th></tr></thead>'));
+                                        table.append($(`<thead><tr><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600">#</th><th style="text-align:left;padding:6px 8px;border-bottom:2px solid #e0e0e0;color:#666;
+                                        font-weight:600">Title</th><th style="text-align:right;padding:6px 8px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600">Cited</th></tr></thead>`));
                                         const tbody = $('<tbody></tbody>');
                                         docs.forEach((d, i) => {
                                             const tr = $('<tr></tr>').css({ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fafafa' : '#fff' });
@@ -2534,7 +2539,40 @@ function onInit() {
                                     const coauthors = coData.coAuthorsViewBeans || [];
                                     if (coauthors.length && authorPos.length) {
                                         const coSection = $('<div id="sk-coauthors-section"></div>').css({ padding: '16px 0' });
-                                        coSection.append($('<strong></strong>').css({ fontSize: '15px', display: 'block', marginBottom: '10px', color: '#202124' }).text('Co-authors (' + coauthors.length + ')'));
+                                        const coauthorText = coauthors.map(c => decodeURIComponent((c.coAuthorName || '?').replace(/\+/g, ' ')) + '\thttps://www.scopus.com/authid/detail.uri?authorId=' + (c.coAuthorId || '')).join('\n');
+                                        const coTitle = $('<strong></strong>').css({ fontSize: '15px', display: 'inline', marginBottom: '10px', color: '#202124' }).text('Co-authors (' + coauthors.length + ')');
+                                        const coExportIcon = $('<span>📋</span>').css({ cursor: 'pointer', fontSize: '14px', marginLeft: '6px', opacity: '0.6' }).on('mouseover', function(){$(this).css('opacity', '1')}).on('mouseout', function(){$(this).css('opacity', '0.6')});
+                                        coExportIcon.on('click', function () {
+                                            if ($('#sk-coa-overlay').length) { $('#sk-coa-overlay').remove(); return; }
+                                            const tip = $('<span></span>').css({ fontSize: '12px', color: '#888', marginLeft: '8px' });
+                                            const copyIcon = $('<span>📋</span>').css({ cursor: 'pointer', fontSize: '16px', marginLeft: '6px' }).attr('title', 'Copy').on('click', function () {
+                                                navigator.clipboard.writeText(ta.val()).then(() => { tip.text('✓').css('color', '#1e8e3e'); setTimeout(() => tip.text(''), 1500); }).catch(() => { ta[0].select(); document.execCommand('copy'); });
+                                            }).on('mousedown', function (e) { if (e.which === 2 && GM_config.get('Remind_Dinner')) e.preventDefault(); }).on('auxclick', function (e) {
+                                                if (e.originalEvent.button !== 1 || !GM_config.get('Remind_Dinner')) return;
+                                                const lines = ta.val().split('\n'); let i = 0;
+                                                tip.text('⏳ 0/' + lines.length).css('color', '#1a73e8');
+                                                (function next() {
+                                                    if (i >= lines.length) { tip.text('✅ done').css('color', '#1e8e3e'); setTimeout(() => tip.text(''), 2000); return; }
+                                                    const m = lines[i].match(/authorId=(\d+)/);
+                                                    if (!m) { i++; tip.text('⏳ ' + i + '/' + lines.length); next(); return; }
+                                                    fetch('https://www.scopus.com/api/authors/' + m[1]).then(r => r.json()).then(d => {
+                                                        const email = (d.emailAddress && d.emailAddress !== 'null') ? d.emailAddress : '--';
+                                                        lines[i] = email + '\t' + lines[i]; i++; ta.val(lines.join('\n'));
+                                                        tip.text('⏳ ' + i + '/' + lines.length);
+                                                        setTimeout(next, 1000);
+                                                    }).catch(() => { lines[i] = '--\t' + lines[i]; i++; ta.val(lines.join('\n')); tip.text('⏳ ' + i + '/' + lines.length); setTimeout(next, 1000); });
+                                                })();
+                                            });
+                                            const ta = $('<textarea></textarea>').css({ width: '100%', flex: 1, border: '1px solid #e0e0e0', borderRadius: '8px', padding: '12px', fontSize: '13px', fontFamily: 'Consolas,monospace', lineHeight: '1.8', resize: 'none',
+                                                                                                color: '#333', background: '#fafafa', boxSizing: 'border-box' }).val(coauthorText);
+                                            const popup = $('<div></div>').css({ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.25)', width: '80vw', height: '80vh', display: 'flex', flexDirection: 'column', gap: '10px' });
+                                            popup.append($('<div></div>').css({ display: 'flex', alignItems: 'center' }).append($('<span></span>').text('Co-authors (' + coauthors.length + ')').css({ fontWeight: '600' })).append(copyIcon).append(tip)).append(ta);
+                                            const overlay = $('<div id="sk-coa-overlay"></div>').css({position:'fixed', top:0, left:0, width:'100%', height:'100%', background:'rgba(0,0,0,0.5)', zIndex:10000, display:'flex', alignItems:'center', justifyContent:'center'});
+                                            overlay.append(popup).on('click', function (e) { if (e.target === overlay[0]) overlay.remove(); });
+                                            $('body').append(overlay); ta[0].select();
+                                            navigator.clipboard.writeText(ta.val()).then(() => { tip.text('✓ copied').css('color', '#1e8e3e'); setTimeout(() => tip.text(''), 1500); }).catch(() => {});
+                                        });
+                                        coSection.append($('<div></div>').css({ marginBottom: '10px' }).append(coTitle).append(coExportIcon));
                                         const coaWrap = $('<div></div>').css({ display: 'flex', flexWrap: 'wrap', gap: '8px' });
                                         coauthors.forEach(c => {
                                             const name = decodeURIComponent((c.coAuthorName || '?').replace(/\+/g, ' '));
@@ -2555,7 +2593,8 @@ function onInit() {
                                         const srcSection = $('<div id="sk-sources-section"></div>').css({ padding: '16px 0' });
                                         srcSection.append($('<strong></strong>').css({ fontSize: '15px', display: 'block', marginBottom: '10px', color: '#202124' }).text('Sources (' + sources.length + ' journals)'));
                                         const srcTable = $('<table></table>').css({ width: '100%', borderCollapse: 'collapse', fontSize: '13px' });
-                                        srcTable.append($('<thead><tr><th style="text-align:left;padding:4px 6px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600">Journal</th><th style="text-align:right;padding:4px 6px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600;width:40px">Docs</th></tr></thead>'));
+                                        srcTable.append($(`<thead><tr><th style="text-align:left;padding:4px 6px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600">Journal</th><th style="text-align:right;padding:4px 6px;border-bottom:2px solid #e0e0e0;color:#666;
+                                        font-weight:600;width:40px">Docs</th></tr></thead>`));
                                         const srcTbody = $('<tbody></tbody>');
                                         sources.forEach((s, i) => {
                                             const srcTr = $('<tr></tr>').css({ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fafafa' : '#fff' });
