@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.5.14
+// @version       6.5.15
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2607,7 +2607,30 @@ function onInit() {
                                         authorPos.append(coSection);
                                     }
 
-                                    // ── 期刊来源表格 → 插入右栏（Co-authors 下方）──
+                                    // ── 年份发表表格 → 插入右栏（Co-authors 下方）──
+                                    const years = docData.documentYearDataViewBeans || [];
+                                    if (years.length && authorPos.length) {
+                                        const yrSection = $('<div id="sk-years-section"></div>').css({ padding: '16px 0' });
+                                        yrSection.append($('<strong></strong>').css({ fontSize: '15px', display: 'block', marginBottom: '10px', color: '#202124' }).text('Documents by Year'));
+                                        const yrTable = $('<table></table>').css({ width: '100%', borderCollapse: 'collapse', fontSize: '13px' });
+                                        yrTable.append($(`<thead><tr><th style="text-align:left;padding:4px 6px;border-bottom:2px solid #e0e0e0;color:#666;font-weight:600">Year</th><th style="text-align:right;padding:4px 6px;border-bottom:2px solid #e0e0e0;color:#666;
+                                        font-weight:600;width:40px">Docs</th></tr></thead>`));
+                                        const yrTbody = $('<tbody></tbody>');
+                                        years.forEach((y, i) => {
+                                            const yrTr = $('<tr></tr>').css({ borderBottom: '1px solid #f0f0f0', background: i % 2 === 0 ? '#fafafa' : '#fff' });
+                                            const yrCell = $('<td></td>').css({ padding: '4px 6px' });
+                                            const yrLink = y.url ? $('<a target="_blank"></a>').attr('href', y.url).css({ color: '#1a0dab', textDecoration: 'none' }).text(y.displayName || y.code) : $('<span></span>').text(y.displayName || y.code);
+                                            yrCell.append(yrLink);
+                                            yrTr.append(yrCell);
+                                            yrTr.append($('<td></td>').css({ padding: '4px 6px', textAlign: 'right', fontWeight: '600', color: '#1a73e8' }).text(y.noOfDocuments));
+                                            yrTbody.append(yrTr);
+                                        });
+                                        yrTable.append(yrTbody);
+                                        yrSection.append(yrTable);
+                                        authorPos.append(yrSection);
+                                    }
+
+                                    // ── 期刊来源表格 → 插入右栏（Documents by Year 下方）──
                                     const sources = docData.documentSourceDataViewBeans || [];
                                     if (sources.length && authorPos.length) {
                                         const srcSection = $('<div id="sk-sources-section"></div>').css({ padding: '16px 0' });
