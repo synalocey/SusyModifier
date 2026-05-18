@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.5.15
+// @version       6.5.17
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -36,6 +36,7 @@
 // @match         *://*.google.co.id/*
 // @match         *://*.google.com.my/*
 // @match         *://i.mdpi.cn/team/dinner*
+// @match         *://forms.office.com/*
 // @require       https://gcore.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
@@ -1335,52 +1336,58 @@ function onInit() {
 
                 }
 
-                // 自动修改Deadline：URL含DL=日期时触发，CL=单元格时同步更新Google Sheet
-                let dlMatch = window.location.href.match(/[?&]DL=(\d{4}-\d{2}-\d{2})/);
-                let clMatch = window.location.href.match(/[?&]CL=([A-Z]+\d+)/);
-                let OnlineDate = $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().text().trim()
+                // 自动修改Deadline：URL含DL=日期时触发，CL=单元格时同步更新
+                let dlMatch = window.location.href.match(/[?&]DL=([^&]+)/);
+                let OnlineDateElem = $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next();
+                let OnlineDate = OnlineDateElem.length ? OnlineDateElem.text().trim() : "";
+                const FORM_URL = "https://forms.office.com/e/gaQVDih0BU";
+
                 if (dlMatch) {
                     let onlineYear = parseInt(OnlineDate.match(/\d{4}/)?.[0] || '0', 10);
-                    if (onlineYear < 2024) {
+                    if (onlineYear > 0 && onlineYear < 2024) {
                         alert('Online Date is ' + OnlineDate + '.\nDo not extend the deadline.');
                     } else {
-                        let dlDate = dlMatch[1];
-                        sessionStorage.setItem("DL_pending_date", dlDate);
-                        let cleanUrl = window.location.href.replace(/[?&]DL=\d{4}-\d{2}-\d{2}/g, '').replace(/[?&]CL=[A-Z]+\d+/g, '').replace(/\?&/, '?').replace(/\?$/, '');
+                        let rawDate = decodeURIComponent(dlMatch[1]);
+                        let pureUrl = window.location.href.split('?')[0];
+                        let pubUid = pureUrl + rawDate;
+                        let dlDateForWeb = formatToIso(rawDate);
+
+                        sessionStorage.setItem("DL_pending_date", dlDateForWeb);
+                        sessionStorage.setItem("DL_pending_uid", pubUid);
+
+                        let cleanUrl = window.location.href.replace(/[?&]DL=[^&]+/g, '').replace(/[?&]CL=[A-Z]+\d+/g, '').replace(/\?&/, '?').replace(/\?$/, '');
                         history.replaceState(null, '', cleanUrl);
+
                         let $extendBtn = $('a[data-url*="/si/extend/deadline/"]');
                         if ($extendBtn.length > 0) {
                             $extendBtn[0].click();
                         } else {
-                            $('a[data-url*="/user/special_issue/deadline/"]')[0].click();
+                            let altBtn = $('a[data-url*="/user/special_issue/deadline/"]');
+                            if(altBtn.length > 0) altBtn[0].click();
                         }
+
                         let dlWait = setInterval(function () {
                             if ($("#form_date, #form_deadline").length === 0) return;
                             clearInterval(dlWait);
-                            $("#form_date, #form_deadline").attr("readonly", false).val(dlDate);
-                            if (clMatch) {
-                                let cell = clMatch[1];
-                                let today = new Date();
-                                let todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-                                GM_xmlhttpRequest({
-                                    method: "GET",
-                                    url: "https://script.google.com/macros/s/AKfycbzPrOYlVXip3M8u3Ty2oHfKF6Irf8TkuTRYeNO4HAY5LvIO8c_JZYx9r7CBfsC4Mlc81w/exec?sheetId=1910704665&cell=" + cell + "&value=" + todayStr,
-                                    onload: function () { $("div.quickform input.submit[type='submit'][value='Submit'], div.quickform input.submit[type='submit'][value='Save']").trigger("click"); },
-                                    onerror: function () { alert("Google Sheet 更新失败，请检查 Web App URL"); }
-                                });
-                            } else {
-                                $("div.quickform input.submit[type='submit'][value='Submit'], div.quickform input.submit[type='submit'][value='Save']").trigger("click");
-                            }
+                            $("#form_date, #form_deadline").attr("readonly", false).val(dlDateForWeb);
+                            $("div.quickform input.submit[type='submit'][value='Submit'], div.quickform input.submit[type='submit'][value='Save']").trigger("click");
                         }, 500);
                     }
-                } else {
-                    // 检查Deadline修改结果（页面刷新后）
+                }
+                else {
                     let dlPendingDate = sessionStorage.getItem("DL_pending_date");
-                    if (dlPendingDate) {
+                    let dlPendingUid = sessionStorage.getItem("DL_pending_uid");
+                    if (dlPendingDate && dlPendingUid) {
                         sessionStorage.removeItem("DL_pending_date");
+                        sessionStorage.removeItem("DL_pending_uid");
                         let deadlineText = $('div.cell.small-12.medium-6.large-2:contains("Deadline")').next().text().trim();
                         if (deadlineText.includes(dlPendingDate)) {
-                            alert("✅ Deadline 修改成功：" + dlPendingDate);
+                            let taskPayload = JSON.stringify({
+                                uid: dlPendingUid,
+                                taskName: "SI New Deadline"
+                            });
+                            let targetUrl = FORM_URL + "#syncData=" + encodeURIComponent(taskPayload);
+                            GM_openInTab(targetUrl, { active: false });
                         } else {
                             alert("❌ Deadline 修改失败，当前：" + deadlineText);
                         }
@@ -1440,6 +1447,55 @@ function onInit() {
                 }
             }
         } catch (error) { }
+    }
+
+    if (window.location.href.includes("forms.office.com")) {
+        let hash = window.location.hash;
+        if (hash && hash.includes("#syncData=")) {
+            try {
+                let dataStr = decodeURIComponent(hash.replace("#syncData=", ""));
+                let taskData = JSON.parse(dataStr);
+                let uid = taskData.uid;
+                let taskName = taskData.taskName;
+
+                function setNativeValue(element, value) {
+                    const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                    const prototype = Object.getPrototypeOf(element);
+                    const prototypeValueSetter = Object.getOwnPropertyDescriptor(prototype, "value").set;
+                    if (valueSetter && valueSetter !== prototypeValueSetter) {
+                        prototypeValueSetter.call(element, value);
+                    } else {
+                        valueSetter.call(element, value);
+                    }
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                let checkForm = setInterval(() => {
+                    let inputs = document.querySelectorAll('input[data-automation-id="textInput"]');
+                    if (inputs.length >= 3) {
+                        clearInterval(checkForm);
+
+                        let today = new Date();
+                        let todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+
+                        setNativeValue(inputs[0], uid);
+                        setNativeValue(inputs[1], todayStr);
+                        setNativeValue(inputs[2], taskName);
+
+                        setTimeout(() => {
+                            let submitBtn = document.querySelector("button[data-automation-id='submitButton']");
+                            if(submitBtn) submitBtn.click();
+
+                            history.replaceState(null, null, ' ');
+                            setTimeout(() => { window.close(); }, 3000);
+                        }, 1000);
+                    }
+                }, 1000);
+            } catch (e) {
+                alert("解析任务数据失败", e);
+            }
+        }
+        return; // 结束 Forms 页面的逻辑
     }
 
     // PP Note 快捷按键
@@ -2549,7 +2605,7 @@ function onInit() {
                                         const coauthorHeader = 'First Name\tLast Name\tCo-Docs\tScopus Link';
                                         const coauthorTextWithHeader = coauthorHeader + '\n' + coauthorText;
                                         const coTitle = $('<strong></strong>').css({ fontSize: '15px', display: 'inline', marginBottom: '10px', color: '#202124' }).text('Co-authors (' + coauthors.length + ')');
-                                        const coExportIcon = $('<span>📋</span>').css({ cursor: 'pointer', fontSize: '14px', marginLeft: '6px', opacity: '0.6' }).on('mouseover', function(){$(this).css('opacity', '1')}).on('mouseout', function(){$(this).css('opacity', '0.6')});
+                                        const coExportIcon = $('<span>📋</span>').css({ cursor: 'pointer', fontSize: '14px', marginLeft: '6px', opacity: '0.6' }).on('mouseover', function(){$(this).css('opacity','1')}).on('mouseout', function(){$(this).css('opacity','0.6')});
                                         coExportIcon.on('mousedown', function (e) {if (e.which === 2) e.preventDefault();}).on('auxclick', function (e) {
                                             if (!$('#sk-coa-overlay').length) { $(this).trigger('click'); }
                                             $('#sk-inner-copy-btn').trigger($.Event('auxclick', { originalEvent: { button: 1 } }));
@@ -3238,6 +3294,16 @@ function waitForText(element, text, callback, freq) {
         if (!element.parentNode) { window.clearInterval(interval); }
         if (element.value.indexOf(text) > -1) { window.clearInterval(interval); callback.call(element); }
     }
+}
+
+function formatToIso(dateStr) {
+    let clean = dateStr.trim();
+    let matchYMD = clean.match(/^(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})$/);
+    if (matchYMD) { return `${matchYMD[1]}-${matchYMD[2].padStart(2, '0')}-${matchYMD[3].padStart(2, '0')}`; }
+    let matchDMY = clean.match(/^(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})$/);
+    if (matchDMY) { return `${matchDMY[3]}-${matchDMY[2].padStart(2, '0')}-${matchDMY[1].padStart(2, '0')}`; }
+    alert(`非法的日期数据: ${dateStr}`);
+    throw new Error(`非法的日期数据: ${dateStr}`);
 }
 
 function skGMFetchGet(url) { return new Promise(resolve => { GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve }); }) };
