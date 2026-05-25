@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.5.17
+// @version       6.5.23
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -1117,7 +1117,10 @@ function onInit() {
                 }
             }
             if (userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {
+                GM_setValue('isUserNameMatch', true);
                 SpecialFunc();
+            } else {
+                GM_setValue('isUserNameMatch', false);
             }
 
             function SpecialFunc() {
@@ -1338,24 +1341,30 @@ function onInit() {
 
                 // 自动修改Deadline：URL含DL=日期时触发，CL=单元格时同步更新
                 let dlMatch = window.location.href.match(/[?&]DL=([^&]+)/);
+                let uidMatch = window.location.href.match(/[?&]UID=([^&]+)/);
                 let OnlineDateElem = $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next();
                 let OnlineDate = OnlineDateElem.length ? OnlineDateElem.text().trim() : "";
                 const FORM_URL = "https://forms.office.com/e/gaQVDih0BU";
 
-                if (dlMatch) {
+                if (dlMatch && uidMatch) {
                     let onlineYear = parseInt(OnlineDate.match(/\d{4}/)?.[0] || '0', 10);
                     if (onlineYear > 0 && onlineYear < 2024) {
                         alert('Online Date is ' + OnlineDate + '.\nDo not extend the deadline.');
                     } else {
-                        let rawDate = decodeURIComponent(dlMatch[1]);
-                        let pureUrl = window.location.href.split('?')[0];
-                        let pubUid = pureUrl + rawDate;
-                        let dlDateForWeb = formatToIso(rawDate);
+                        let dlRaw = decodeURIComponent(dlMatch[1]).trim();
+                        let dlDateForWeb;
+                        let mYMD = dlRaw.match(/^(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})$/);
+                        if (mYMD) { dlDateForWeb = `${mYMD[1]}-${mYMD[2].padStart(2,'0')}-${mYMD[3].padStart(2,'0')}`; }
+                        else {
+                            let mDMY = dlRaw.match(/^(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})$/);
+                            if (mDMY) { dlDateForWeb = `${mDMY[3]}-${mDMY[2].padStart(2,'0')}-${mDMY[1].padStart(2,'0')}`; }
+                            else { alert(`非法的日期数据: ${dlRaw}`); throw new Error(`非法的日期数据: ${dlRaw}`); }
+                        }
 
                         sessionStorage.setItem("DL_pending_date", dlDateForWeb);
-                        sessionStorage.setItem("DL_pending_uid", pubUid);
+                        sessionStorage.setItem("DL_pending_uid", decodeURIComponent(uidMatch[1]));
 
-                        let cleanUrl = window.location.href.replace(/[?&]DL=[^&]+/g, '').replace(/[?&]CL=[A-Z]+\d+/g, '').replace(/\?&/, '?').replace(/\?$/, '');
+                        let cleanUrl = window.location.href.replace(/[?&]DL=[^&]+/g, '').replace(/[?&]UID=[^&]+/g, '').replace(/[?&]CL=[A-Z]+\d+/g, '').replace(/\?&/, '?').replace(/\?$/, '');
                         history.replaceState(null, '', cleanUrl);
 
                         let $extendBtn = $('a[data-url*="/si/extend/deadline/"]');
@@ -2615,8 +2624,8 @@ function onInit() {
                                             const tip = $('<span></span>').css({ fontSize: '12px', color: '#888', marginLeft: '8px' });
                                             const copyIcon = $('<span id="sk-inner-copy-btn">📋</span>').css({ cursor: 'pointer', fontSize: '16px', marginLeft: '6px' }).attr('title', 'Copy').on('click', function () {
                                                 navigator.clipboard.writeText(ta.val()).then(() => { tip.text('✓').css('color', '#1e8e3e'); setTimeout(() => tip.text(''), 1500); }).catch(() => { ta[0].select(); document.execCommand('copy'); });
-                                            }).on('mousedown', function (e) { if (e.which === 2 && GM_config.get('Remind_Dinner')) e.preventDefault(); }).on('auxclick', function (e) {
-                                                if (e.originalEvent.button !== 1 || !GM_config.get('Remind_Dinner')) return;
+                                            }).on('mousedown', function (e) { if (e.which === 2 && GM_getValue('isUserNameMatch', false)) e.preventDefault(); }).on('auxclick', function (e) {
+                                                if (e.originalEvent.button !== 1 || !GM_getValue('isUserNameMatch', false)) return;
                                                 const lines = ta.val().split('\n');
                                                 // Replace header row with full header
                                                 lines[0] = lines[0].replace('First Name\tLast Name\tCo-Docs\tScopus Link','Email\tH-Index\tInstitution\tSubject Areas\tFirst Name\tLast Name\tCo-Docs\tScopus Link');
@@ -2642,9 +2651,10 @@ function onInit() {
                                             const ta = $('<textarea></textarea>').css({ width: '100%', flex: 1, border: '1px solid #e0e0e0', borderRadius: '8px', padding: '12px', fontSize: '13px', fontFamily: 'Consolas,monospace', lineHeight: '1.8', resize: 'none',
                                                                                                 color: '#333', background: '#fafafa', boxSizing: 'border-box', whiteSpace: 'pre'}).val(coauthorTextWithHeader);
                                             const popup = $('<div></div>').css({ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.25)', width: '80vw', height: '80vh', display: 'flex', flexDirection: 'column', gap: '10px' });
-                                            popup.append($('<div></div>').css({ display: 'flex', alignItems: 'center' }).append($('<span></span>').text('Co-authors (' + coauthors.length + ')').css({ fontWeight: '600' })).append(copyIcon).append(tip)).append(ta);
+                                            const closeBtn = $('<button>✕</button>').css({ marginLeft: 'auto', border: 'none', background: '#f0f0f0', color: '#555', fontSize: '16px', fontWeight: '700', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', lineHeight: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', flexShrink: '0' }).on('mouseover', function(){ $(this).css({ background:'#e53935', color:'#fff' }); }).on('mouseout', function(){ $(this).css({ background:'#f0f0f0', color:'#555' }); }).on('click', function(){ $('#sk-coa-overlay').remove(); });
+                                            popup.append($('<div></div>').css({ display: 'flex', alignItems: 'center' }).append($('<span></span>').text('Co-authors (' + coauthors.length + ')').css({ fontWeight: '600' })).append(copyIcon).append(tip).append(closeBtn)).append(ta);
                                             const overlay = $('<div id="sk-coa-overlay"></div>').css({position:'fixed', top:0, left:0, width:'100%', height:'100%', background:'rgba(0,0,0,0.5)', zIndex:10000, display:'flex', alignItems:'center', justifyContent:'center'});
-                                            overlay.append(popup).on('click', function (e) { if (e.target === overlay[0]) overlay.remove(); });
+                                            overlay.append(popup);
                                             $('body').append(overlay); ta[0].select();
                                             navigator.clipboard.writeText(ta.val()).then(() => { tip.text('✓ copied').css('color', '#1e8e3e'); setTimeout(() => tip.text(''), 1500); }).catch(() => {});
                                         });
@@ -3296,15 +3306,6 @@ function waitForText(element, text, callback, freq) {
     }
 }
 
-function formatToIso(dateStr) {
-    let clean = dateStr.trim();
-    let matchYMD = clean.match(/^(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})$/);
-    if (matchYMD) { return `${matchYMD[1]}-${matchYMD[2].padStart(2, '0')}-${matchYMD[3].padStart(2, '0')}`; }
-    let matchDMY = clean.match(/^(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})$/);
-    if (matchDMY) { return `${matchDMY[3]}-${matchDMY[2].padStart(2, '0')}-${matchDMY[1].padStart(2, '0')}`; }
-    alert(`非法的日期数据: ${dateStr}`);
-    throw new Error(`非法的日期数据: ${dateStr}`);
-}
 
 function skGMFetchGet(url) { return new Promise(resolve => { GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve }); }) };
 function skStringToRegex(str) { if (str.startsWith("[Regex]")) { return RegExp(str.substring(7), "g"); } else { return str } };
