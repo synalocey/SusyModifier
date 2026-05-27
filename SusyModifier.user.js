@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.5.23
+// @version       6.5.24
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -105,7 +105,8 @@
             'GE_ReminderB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_CancelID': {
                 'section': [], 'label': '默认 GE Cancel Template', 'type': 'select', 'labelPos': 'left', 'options':
-                ['Guest Editor Invitation – Cancel Invitation', 'Guest Editor Invitation – Cancel Invitation (Declined the Invitation via Email)', 'Guest Editor Invitation-Cancel Invitation (feature paper invitation)-manually'],
+                ['Guest Editor Invitation – Cancel Invitation', 'Guest Editor Invitation – Cancel Invitation (Declined the Invitation via Email)', 'Guest Editor Invitation-Cancel Invitation (paper invitation – free of charge)-manually',
+                 'Guest Editor Invitation-Cancel Invitation (paper invitation with full APC)-manually'],
                 default: 'Guest Editor Invitation-Cancel Invitation (feature paper invitation)-manually'
             },
             'GE_CancelS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
