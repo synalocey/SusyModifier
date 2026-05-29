@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.5.24
+// @version       6.5.28
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -1496,8 +1496,14 @@ function onInit() {
                             let submitBtn = document.querySelector("button[data-automation-id='submitButton']");
                             if(submitBtn) submitBtn.click();
 
-                            history.replaceState(null, null, ' ');
-                            setTimeout(() => { window.close(); }, 3000);
+                            let checkSuccess = setInterval(() => {
+                                let isSuccess = document.body.innerText.includes("Your response was submitted");
+                                if (isSuccess) {
+                                    clearInterval(checkSuccess);
+                                    history.replaceState(null, null, ' ');
+                                    window.close();
+                                }
+                            }, 1000);
                         }, 1000);
                     }
                 }, 1000);
@@ -2652,8 +2658,10 @@ function onInit() {
                                             const ta = $('<textarea></textarea>').css({ width: '100%', flex: 1, border: '1px solid #e0e0e0', borderRadius: '8px', padding: '12px', fontSize: '13px', fontFamily: 'Consolas,monospace', lineHeight: '1.8', resize: 'none',
                                                                                                 color: '#333', background: '#fafafa', boxSizing: 'border-box', whiteSpace: 'pre'}).val(coauthorTextWithHeader);
                                             const popup = $('<div></div>').css({ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 8px 32px rgba(0,0,0,0.25)', width: '80vw', height: '80vh', display: 'flex', flexDirection: 'column', gap: '10px' });
-                                            const closeBtn = $('<button>✕</button>').css({ marginLeft: 'auto', border: 'none', background: '#f0f0f0', color: '#555', fontSize: '16px', fontWeight: '700', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', lineHeight: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', flexShrink: '0' }).on('mouseover', function(){ $(this).css({ background:'#e53935', color:'#fff' }); }).on('mouseout', function(){ $(this).css({ background:'#f0f0f0', color:'#555' }); }).on('click', function(){ $('#sk-coa-overlay').remove(); });
-                                            popup.append($('<div></div>').css({ display: 'flex', alignItems: 'center' }).append($('<span></span>').text('Co-authors (' + coauthors.length + ')').css({ fontWeight: '600' })).append(copyIcon).append(tip).append(closeBtn)).append(ta);
+                                            const closeBtn = $('<button>✕</button>').css({ marginLeft: 'auto', border: 'none', background: '#f0f0f0', color: '#555', fontSize: '16px', fontWeight: '700', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer',
+                                                                                          lineHeight: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s', flexShrink: '0' }).on('mouseover', function(){ $(this)
+                                                .css({background:'#e53935', color:'#fff' }); }).on('mouseout', function(){ $(this).css({ background:'#f0f0f0', color:'#555' }); }).on('click', function(){ $('#sk-coa-overlay').remove(); });
+                                            popup.append($('<div></div>').css({display:'flex',alignItems:'center'}).append($('<span></span>').text('Co-authors (' + coauthors.length + ')').css({ fontWeight: '600' })).append(copyIcon).append(tip).append(closeBtn)).append(ta);
                                             const overlay = $('<div id="sk-coa-overlay"></div>').css({position:'fixed', top:0, left:0, width:'100%', height:'100%', background:'rgba(0,0,0,0.5)', zIndex:10000, display:'flex', alignItems:'center', justifyContent:'center'});
                                             overlay.append(popup);
                                             $('body').append(overlay); ta[0].select();
