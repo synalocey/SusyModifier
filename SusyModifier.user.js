@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.5.28
+// @version       6.6.2
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -192,7 +192,7 @@
                  'D1: Probability and Statistics', 'D2: Operations Research and Fuzzy Decision Making', 'E: Applied Mathematics', 'E1: Mathematics and Computer Science', 'E2: Control Theory and Mechanics', 'E3: Mathematical Biology', 'E4: Mathematical Physics',
                  'E5: Financial Mathematics'], 'default': ''
             },
-            'Journal': { 'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics', 'Games', 'Geometry', 'Mathematics', 'Risks', 'IJT', 'Telecom', 'None'], 'default': 'Mathematics' },
+            'Journal': { 'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics', 'Games', 'Geometry', 'Mathematics', 'MCB', 'Risks', 'IJT', 'Telecom', 'None'], 'default': 'Mathematics' },
             'Easy_Journal': { 'label': '置顶期刊列表', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'Susy_Theme': { 'label': 'Change Susy Theme', 'type': 'button', 'click': function () { window.location.href = "https://susy.mdpi.com/user/settings" } },
             'MathBatch': { 'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function () { window.location.href = "https://skday.eu.org/math.html" } },
@@ -303,6 +303,7 @@ function onInit() {
         case 'Risks': S_J = 162; break;
         case 'Geometry': S_J = 599; break;
         case 'Games': S_J = 25; break;
+        case 'MCB': S_J = 743; break;
         case 'IJT': S_J = 598; break;
         case 'Telecom': S_J = 276; break;
         case 'Analytics': S_J = 555; break;
@@ -312,7 +313,7 @@ function onInit() {
 
     if (GM_config.get('Easy_Journal')) {
         $("#topmenu > ul").append(`<li><select id="SusyModifier_Journal_Easy"><option value="555">Analytics</option><option value="25">Games</option><option value="599">Geometry</option><option value="154">Mathematics</option>
-                                   <option value="162">Risks</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select></li>`);
+                                   <option value="743">MCB</option><option value="162">Risks</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select></li>`);
         $("#SusyModifier_Journal_Easy").val(S_J).on("change", function () {
             let J_old = S_J, J_new = $(this).find('option:selected').val(); S_J = J_new;
             GM_config.set('Journal', $(this).find('option:selected').text());
@@ -2218,6 +2219,7 @@ function onInit() {
                     { id: '25', label: 'Games' },
                     { id: '599', label: 'Geometry' },
                     { id: '154', label: 'Mathematics' },
+                    { id: '743', label: 'MCB' },
                     { id: '162', label: 'Risks' },
                     { id: '598', label: 'IJT' },
                     { id: '276', label: 'Telecom' },
@@ -2800,7 +2802,7 @@ function onInit() {
             $("#show_title").parent().append("<input type='button' id='send_ith' value='Send iThenticate in OneClick'>")
             $("#send_ith").on("click", function () {
                 if (confirm("I will send ALL manuscripts in this page to iThenticate!") == true) {
-                    $("a:contains('math')[href*='/process_form/'],a:contains('games')[href*='/process_form/'],a:contains('children')[href*='/process_form/'],a:contains('geometry')[href*='/process_form/']").each(function () { chk_ith($(this).attr('href'), $(this).text()) });
+                    $("a:contains('math')[href*='/process_form/'],a:contains('games')[href*='/process_form/'],a:contains('mcb')[href*='/process_form/'],a:contains('geometry')[href*='/process_form/']").each(function () { chk_ith($(this).attr('href'), $(this).text()) });
                     $("body").append(`<div class="blockUI blockOverlay"id=ith-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
                                 <div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:30%;top:5%;height:90%;left:35%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
                                 <input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><p id=ith_prompt></p>
@@ -3336,47 +3338,39 @@ function skLineBreakForQC() {
     }
 }
 
-function skGetJid(sysname) {const journalMap = [
-    {id:"250",j:"acoustics"},{id:"77",j:"actuators"},{id:"88",j:"admsci"},{id:"437",j:"adolescents"},{id:"573",j:"arm"},{id:"145",j:"aerospace"},{id:"95",j:"agriculture"},{id:"336",j:"agriengineering"},{id:"554",j:"agrochemicals"},{id:"34",j:"agronomy"},
-    {id:"557",j:"air"},{id:"13",j:"algorithms"},{id:"210",j:"allergies"},{id:"524",j:"alloys"},{id:"285",j:"analytica"},{id:"555",j:"analytics"},{id:"552",j:"anatomia"},{id:"570",j:"anesthesia"},{id:"74",j:"animals"},{id:"116",j:"antibiotics"},{id:"40",j:"antibodies"},
-    {id:"75",j:"antioxidants"},{id:"534",j:"applbiosci"},{id:"341",j:"applmech"},{id:"456",j:"applmicrobiol"},{id:"390",j:"applnano"},{id:"90",j:"applsci"},{id:"302",j:"asi"},{id:"480",j:"appliedchem"},{id:"517",j:"appliedmath"},{id:"335",j:"aquacj"},
-    {id:"491",j:"architecture"},{id:"78",j:"arts"},{id:"523",j:"astronomy"},{id:"35",j:"atmosphere"},{id:"118",j:"atoms"},{id:"471",j:"audiolres"},{id:"323",j:"automation"},{id:"47",j:"axioms"},{id:"496",j:"bacteria"},{id:"201",j:"batteries"},{id:"82",j:"behavsci"},
-    {id:"174",j:"beverages"},{id:"245",j:"BDCC"},{id:"459",j:"biochem"},{id:"175",j:"bioengineering"},{id:"420",j:"biologics"},{id:"120",j:"biology"},{id:"510",j:"blsf"},{id:"494",j:"biomass"},{id:"458",j:"biomechanics"},{id:"477",j:"biomed"},{id:"158",j:"biomedicines"},
-    {id:"410",j:"biomedinformatics"},{id:"208",j:"biomimetics"},{id:"111",j:"biomolecules"},{id:"346",j:"biophysica"},{id:"108",j:"biosensors"},{id:"462",j:"biotech"},{id:"415",j:"birds"},{id:"91",j:"brainsci"},{id:"67",j:"buildings"},{id:"427",j:"businesses"},
-    {id:"195",j:"carbon"},{id:"23",j:"cancers"},{id:"473",j:"cardiogenetics"},{id:"27",j:"catalysts"},{id:"32",j:"cells"},{id:"240",j:"ceramics"},{id:"103",j:"challenges"},{id:"155",j:"ChemEngineering"},{id:"350",j:"chemistry"},{id:"406",j:"chemproc"},
-    {id:"161",j:"chemosensors"},{id:"159",j:"children"},{id:"515",j:"chips"},{id:"299",j:"civileng"},{id:"305",j:"cleantechnol"},{id:"143",j:"climate"},{id:"495",j:"ctn"},{id:"482",j:"clinpract"},{id:"487",j:"coasts"},{id:"107",j:"coatings"},{id:"288",j:"clockssleep"},
-    {id:"253",j:"colloids"},{id:"501",j:"colorants"},{id:"531",j:"commodities"},{id:"441",j:"compounds"},{id:"123",j:"computation"},{id:"543",j:"csmf"},{id:"26",j:"computers"},{id:"214",j:"condensedmatter"},{id:"440",j:"conservation"},{id:"467",j:"constrmater"},
-    {id:"125",j:"cosmetics"},{id:"493",j:"covid"},{id:"451",j:"crops"},{id:"213",j:"cryptography"},{id:"28",j:"crystals"},{id:"497",j:"cimb"},{id:"476",j:"curroncol"},{id:"289",j:"dairy"},{id:"176",j:"data"},{id:"144",j:"dentistry"},{id:"396",j:"dermato"},
-    {id:"400",j:"dermatopathology"},{id:"227",j:"designs"},{id:"572",j:"devices"},{id:"389",j:"diabetology"},{id:"41",j:"diagnostics"},{id:"520",j:"dietetics"},{id:"416",j:"digital"},{id:"426",j:"disabilities"},{id:"126",j:"diseases"},{id:"17",j:"diversity"},
-    {id:"450",j:"dna"},{id:"259",j:"drones"},{id:"575",j:"ddc"},{id:"428",j:"dynamics"},{id:"385",j:"earth"},{id:"356",j:"ecologies"},{id:"142",j:"econometrics"},{id:"151",j:"economies"},{id:"84",j:"education"},{id:"404",j:"electricity"},{id:"306",j:"electrochem"},
-    {id:"397",j:"electronicmat"},{id:"127",j:"electronics"},{id:"449",j:"encyclopedia"},{id:"386",j:"endocrines"},{id:"7",j:"energies"},{id:"391",j:"eng"},{id:"402",j:"engproc"},{id:"533",j:"entomology"},{id:"5",j:"entropy"},{id:"412",j:"environsciproc"},
-    {id:"83",j:"environments"},{id:"388",j:"epidemiologia"},{id:"198",j:"epigenomes"},{id:"468",j:"ebj"},{id:"361",j:"ejihpe"},{id:"196",j:"fermentation"},{id:"128",j:"fibers"},{id:"509",j:"fintech"},{id:"319",j:"fire"},{id:"212",j:"fishes"},{id:"192",j:"fluids"},
-    {id:"169",j:"foods"},{id:"301",j:"forecasting"},{id:"443",j:"forensicsci"},{id:"42",j:"forests"},{id:"492",j:"foundations"},{id:"275",j:"fractalfract"},{id:"395",j:"fuels"},{id:"571",j:"future"},{id:"19",j:"futureinternet"},{id:"448",j:"futurepharmacol"},
-    {id:"460",j:"futuretransp"},{id:"53",j:"galaxies"},{id:"25",j:"games"},{id:"413",j:"gases"},{id:"434",j:"gastroent"},{id:"255",j:"gastrointestdisord"},{id:"191",j:"gels"},{id:"209",j:"genealogy"},{id:"31",j:"genes"},{id:"409",j:"geographies"},{id:"347",j:"geohazards"},
-    {id:"453",j:"geomatics"},{id:"79",j:"geosciences"},{id:"474",j:"geotechnics"},{id:"179",j:"geriatrics"},{id:"556",j:"grasses"},{id:"157",j:"healthcare"},{id:"379",j:"hearts"},{id:"464",j:"hemato"},{id:"559",j:"hematolrep"},{id:"320",j:"heritage"},
-    {id:"205",j:"histories"},{id:"197",j:"horticulturae"},{id:"63",j:"humanities"},{id:"481",j:"humans"},{id:"514",j:"hydrobiology"},{id:"382",j:"hydrogen"},{id:"177",j:"hydrology"},{id:"439",j:"hygiene"},{id:"381",j:"immuno"},{id:"469",j:"idr"},{id:"163",j:"informatics"},
-    {id:"50",j:"information"},{id:"225",j:"infrastructures"},{id:"167",j:"inorganics"},{id:"54",j:"insects"},{id:"215",j:"instruments"},{id:"6",j:"ijerph"},{id:"148",j:"ijfs"},{id:"2",j:"ijms"},{id:"211",j:"IJNS"},{id:"558",j:"ijpb"},{id:"423",j:"ijtm"},
-    {id:"564",j:"ime"},{id:"221",j:"inventions"},{id:"355",j:"IoT"},{id:"113",j:"ijgi"},{id:"318",j:"J"},{id:"488",j:"jal"},{id:"180",j:"jcdd"},{id:"529",j:"jcto"},{id:"93",j:"jcm"},{id:"244",j:"jcs"},{id:"311",j:"jcp"},{id:"134",j:"jdb"},{id:"542",j:"jeta"},
-    {id:"104",j:"jfb"},{id:"222",j:"jfmk"},{id:"186",j:"jof"},{id:"203",j:"jimaging"},{id:"106",j:"jintelligence"},{id:"110",j:"jlpea"},{id:"279",j:"jmmp"},{id:"99",j:"jmse"},{id:"418",j:"jmp"},{id:"351",j:"jnt"},{id:"394",j:"jne"},{id:"339",j:"JOItmC"},{id:"235",j:"ohbm"},
-    {id:"65",j:"jpm"},{id:"401",j:"jor"},{id:"185",j:"jrfm"},{id:"138",j:"jsan"},{id:"454",j:"jtaer"},{id:"566",j:"jvd"},{id:"433",j:"jox"},{id:"399",j:"jzbg"},{id:"405",j:"journalmedia"},{id:"461",j:"kidneydial"},{id:"561",j:"kinasesphosphatases"},{id:"499",j:"knowledge"},
-    {id:"37",j:"land"},{id:"146",j:"languages"},{id:"60",j:"laws"},{id:"435",j:"liquids"},{id:"393",j:"livers"},{id:"217",j:"literature"},{id:"538",j:"logics"},{id:"170",j:"logistics"},{id:"52",j:"lubricants"},{id:"539",j:"lymphatics"},{id:"290",j:"make"},
-    {id:"49",j:"machines"},{id:"425",j:"macromol"},{id:"432",j:"magnetism"},{id:"199",j:"magnetochemistry"},{id:"4",j:"marinedrugs"},{id:"14",j:"materials"},{id:"407",j:"materproc"},{id:"231",j:"mca"},{id:"154",j:"mathematics"},{id:"81",j:"medsci"},{id:"512",j:"msf"},
-    {id:"340",j:"medicina"},{id:"172",j:"medicines"},{id:"92",j:"membranes"},{id:"484",j:"merits"},{id:"112",j:"metabolites"},{id:"59",j:"metals"},{id:"522",j:"meteorology"},{id:"525",j:"methane"},{id:"207",j:"mps"},{id:"465",j:"metrology"},{id:"438",j:"micro"},
-    {id:"483",j:"microbiolres"},{id:"22",j:"micromachines"},{id:"73",j:"microorganisms"},{id:"498",j:"microplastics"},{id:"45",j:"minerals"},{id:"447",j:"mining"},{id:"314",j:"modelling"},{id:"11",j:"molbank"},{id:"1",j:"molecules"},{id:"537",j:"muscles"},
-    {id:"479",j:"nanoenergyadv"},{id:"442",j:"nanomanufacturing"},{id:"105",j:"nanomaterials"},{id:"457",j:"network"},{id:"292",j:"neuroglia"},{id:"472",j:"neurolint"},{id:"365",j:"neurosci"},{id:"239",j:"nitrogen"},{id:"193",j:"ncrna"},{id:"429",j:"nursrep"},
-    {id:"478",j:"nutraceuticals"},{id:"20",j:"nutrients"},{id:"384",j:"obesities"},{id:"359",j:"oceans"},{id:"475",j:"onco"},{id:"360",j:"optics"},{id:"422",j:"oral"},{id:"392",j:"organics"},{id:"527",j:"organoids"},{id:"398",j:"osteology"},{id:"445",j:"oxygen"},
-    {id:"431",j:"parasitologia"},{id:"272",j:"particles"},{id:"64",j:"pathogens"},{id:"463",j:"pathophysiology"},{id:"470",j:"pediatrrep"},{id:"18",j:"pharmaceuticals"},{id:"9",j:"pharmaceutics"},{id:"536",j:"pharmacoepidemiology"},{id:"147",j:"pharmacy"},
-    {id:"219",j:"philosophies"},{id:"444",j:"photochem"},{id:"165",j:"photonics"},{id:"500",j:"phycology"},{id:"419",j:"physchem"},{id:"511",j:"psf"},{id:"358",j:"physics"},{id:"436",j:"physiologia"},{id:"137",j:"plants"},{id:"271",j:"plasma"},{id:"383",j:"pollutants"},
-    {id:"29",j:"polymers"},{id:"304",j:"polysaccharides"},{id:"503",j:"poultry"},{id:"508",j:"powders"},{id:"247",j:"proceedings"},{id:"164",j:"processes"},{id:"364",j:"prosthesis"},{id:"153",j:"proteomes"},{id:"343",j:"psych"},{id:"380",j:"psychiatryint"},
-    {id:"532",j:"psychoactives"},{id:"168",j:"publications"},{id:"224",j:"qubs"},{id:"353",j:"quantumrep"},{id:"277",j:"quaternary"},{id:"411",j:"radiation"},{id:"342",j:"reactions"},{id:"545",j:"receptors"},{id:"202",j:"recycling"},{id:"102",j:"religions"},
-    {id:"16",j:"remotesensing"},{id:"252",j:"reports"},{id:"268",j:"reprodmed"},{id:"114",j:"resources"},{id:"506",j:"rheumato"},{id:"162",j:"risks"},{id:"130",j:"robotics"},{id:"505",j:"ruminants"},{id:"206",j:"safety"},{id:"246",j:"sci"},{id:"238",j:"scipharm"},
-    {id:"568",j:"sclerosis"},{id:"332",j:"seeds"},{id:"3",j:"sensors"},{id:"233",j:"separations"},{id:"218",j:"sexes"},{id:"265",j:"signals"},{id:"200",j:"sinusitis"},{id:"337",j:"smartcities"},{id:"71",j:"socsci"},{id:"58",j:"societies"},{id:"528",j:"software"},
-    {id:"344",j:"soilsystems"},{id:"518",j:"solar"},{id:"414",j:"solids"},{id:"562",j:"spectroscj"},{id:"56",j:"sports"},{id:"173",j:"standards"},{id:"296",j:"stats"},{id:"466",j:"stresses"},{id:"294",j:"surfaces"},{id:"295",j:"surgeries"},{id:"560",j:"std"},
-    {id:"15",j:"sustainability"},{id:"376",j:"suschem"},{id:"44",j:"symmetry"},{id:"521",j:"synbio"},{id:"131",j:"systems"},{id:"417",j:"taxonomy"},{id:"150",j:"technologies"},{id:"276",j:"telecom"},{id:"446",j:"textiles"},{id:"544",j:"thalassrep"},{id:"408",j:"thermo"},
-    {id:"489",j:"tomography"},{id:"378",j:"tourismhosp"},{id:"171",j:"toxics"},{id:"21",j:"toxins"},{id:"352",j:"transplantology"},{id:"502",j:"traumacare"},{id:"567",j:"higheredu"},{id:"230",j:"tropicalmed"},{id:"133",j:"universe"},{id:"228",j:"urbansci"},
-    {id:"403",j:"uro"},{id:"76",j:"vaccines"},{id:"291",j:"vehicles"},{id:"490",j:"venereology"},{id:"178",j:"vetsci"},{id:"269",j:"vibration"},{id:"553",j:"virtualworlds"},{id:"8",j:"viruses"},{id:"223",j:"vision"},{id:"530",j:"waste"},{id:"36",j:"water"},
-    {id:"504",j:"wind"},{id:"349",j:"women"},{id:"377",j:"world"},{id:"354",j:"wevj"},{id:"519",j:"youth"},{id:"362",j:"ai"},{id:"541",j:"zoonoticdis"}];
-                            const journal = journalMap.find(b => b.j === sysname); return journal ? journal.id : 0;}
+function skGetJid(s){return{
+    acoustics:250,actuators:77,accdings:627,admsci:88,adolescents:437,addictionprevention:709,adhesives:597,advpetrolsci:705,acn:703,arm:573,aerobiology:579,aerospace:145,agriculture:95,agriengineering:336,agrochemicals:554,agronomy:34,ai:362,aipa:670,
+    aichem:652,aieng:667,aisociety:702,aiedu:658,aimed:653,aimat:654,aisensors:631,air:557,algorithms:13,allergies:210,alloys:524,analog:674,analytica:285,analytics:555,anatomia:552,anesthres:577,anesthesia:570,animals:74,antibiotics:116,antibodies:40,
+    antioxidants:75,applbiosci:534,applmech:341,applmicrobiol:456,applnano:390,applsci:90,asi:302,appliedchem:480,appliedmath:517,appliedphys:616,aquacj:335,archstud:691,architecture:491,arthropoda:578,arts:78,astronautics:661,astronomy:523,
+    atmosphere:35,atoms:118,audiolres:471,automation:323,axioms:47,bacteria:496,batteries:201,behavsci:82,beverages:174,BDCC:245,biochem:459,bioengineering:175,biologics:420,biology:120,blsf:510,biomass:494,biomechanics:458,biomed:477,biomedicines:158,
+    biomedinformatics:410,biomimetics:208,biomolecules:111,biophysica:346,bioresprod:648,biosensors:108,biosphere:645,biotech:462,birds:415,blockchains:516,brainsci:91,bcrc:722,buildings:67,businesses:427,carbon:195,cancers:23,cardiogenetics:473,
+    cardiovascmed:679,catalysts:27,cells:32,ceramics:240,challenges:103,ChemEngineering:155,chemistry:350,chemproc:406,chemosensors:161,children:159,chips:515,civileng:299,cleantechnol:305,climate:143,ctn:495,clinbioenerg:625,clinpract:482,
+    clockssleep:288,coasts:487,coatings:107,colloids:253,colorants:501,commodities:531,complexities:647,complications:582,compounds:441,computation:123,csmf:543,computers:26,condensedmatter:214,conservation:440,constrmater:467,cmd:330,cosmetics:125,
+    covid:493,crafts:660,cmtr:629,crops:451,cryo:591,cryptography:213,crystals:28,culture:672,cimb:497,curroncol:476,dairy:289,data:176,dentistry:144,dermato:396,dermatopathology:400,designs:227,devices:572,diabetology:389,diagnostics:41,dietetics:520,
+    digital:416,dhi:684,disabilities:426,diseases:126,diversity:17,dna:450,drones:259,drugreactions:713,ddc:575,drylands:704,dynamics:428,earth:385,ecologies:356,econometrics:142,economies:151,education:84,electricity:404,electrochem:306,
+    electronicmat:397,electronics:127,embodiedintelligence:717,emergcareandmed:585,encyclopedia:449,endocrines:386,energies:7,esa:613,eng:391,engtechmanag:720,engproc:402,edm:662,entomology:533,entropy:5,eesp:632,environremediat:676,environsciproc:412,
+    environments:83,epidemiologia:388,epigenomes:198,ebj:468,ejihpe:361,familysci:601,fermentation:196,fibers:128,fintech:509,fire:319,fishes:212,fluids:192,foodeng:729,foods:169,forecasting:301,forensicsci:443,forests:42,fossilstud:608,foundations:492,
+    fractalfract:275,freshwater:714,fuels:395,future:571,fclam:719,futureinternet:19,futurepharmacol:448,futuretransp:460,galaxies:53,games:25,gases:413,gastroent:434,gastrointestdisord:255,gastronomy:583,gels:191,genealogy:209,genes:31,geochem:725,
+    geographies:409,geohazards:347,geomatics:453,geometry:599,geosciences:79,geotechnics:474,geriatrics:179,germs:681,glacies:586,gucdd:580,grainscience:712,grasses:556,green:685,greenhealth:628,gynecolcancer:715,hardware:588,hep:673,healthcare:157,
+    healthcaremat:701,hearts:379,hemato:464,hematolrep:559,heritage:320,histories:205,horticulturae:197,hospitals:574,humanities:63,humans:481,hydrobiology:514,hydrogen:382,hydrology:177,hydrometeorology:686,hydropower:663,hygiene:439,immuno:381,
+    industries:682,idr:469,inflammationj:723,informatics:163,information:50,infrastructures:225,inorganics:167,insects:54,instruments:215,iiac:620,ijcs:650,ijem:656,ijerph:6,ijfs:148,ijmd:602,ijms:2,IJNS:211,ijom:643,ijphenomics:733,ijpb:558,ijtst:734,
+    ijtopology:598,ijtm:423,ijtpp:237,ime:564,inventions:221,investment:716,IoT:355,iron:695,ijgi:113,J:318,jaestheticmed:649,jal:488,jcrm:655,jcdd:180,jcto:529,jcm:93,jcs:244,jcp:311,jdad:594,jdb:134,jeta:542,jemr:644,jfth:742,jfb:104,jfmk:222,jof:186,
+    jgbg:680,jgg:689,jimaging:203,jinnovation:677,jintelligence:106,jdream:675,jlpea:110,jmmp:279,jmse:99,jmahp:596,jmms:641,jmp:418,jnt:351,jne:394,joptmat:671,JOItmC:339,ohbm:235,jparks:630,jpm:65,jpbi:609,jphytomed:669,jor:401,jrfm:185,jsan:138,
+    jsam:692,jsuperintelligence:697,japma:696,joma:605,jtaer:454,jvd:566,jox:433,jzbg:399,journalmedia:405,kidneydial:461,kinasesphosphatases:561,knowledge:499,labmed:606,laboratories:584,land:37,languages:146,lasers:724,laws:60,legumes:740,life:51,
+    lights:615,limnolrev:590,lipidology:313,liquids:435,literature:217,livers:393,logics:538,logistics:170,lowaltitudeeconomy:693,lubricants:52,lymphatics:539,make:290,machines:49,macromol:425,magnetism:432,magnetochemistry:199,marinedrugs:4,
+    maritime:706,materials:14,materproc:407,mca:231,mathematics:154,medsci:81,msf:512,medicina:340,medicines:172,membranes:92,merits:484,metabolites:112,metals:59,meteorology:522,methane:525,mps:207,metrics:617,metrology:465,micro:438,microbiolres:483,
+    microelectronics:624,micromachines:22,microorganisms:73,microplastics:498,microwave:623,minerals:45,mining:447,modelling:314,modernmathphys:619,molbank:11,molecules:1,mollusca:735,multimedia:621,mti:229,muscles:537,nanoenergyadv:479,
+    nanomanufacturing:442,nanomaterials:105,ndt:581,network:457,neuroglia:292,neuroimaging:657,neurolint:472,neurosci:365,nitrogen:239,ncrna:193,nursrep:429,nutraceuticals:478,nutrients:20,obesities:384,occupationalhealth:678,oceans:359,onco:475,
+    optics:360,oral:422,organics:392,organoids:527,osteology:398,oxygen:445,pandemics:664,parasitologia:431,particles:272,pathogens:64,pathophysiology:463,peacestudies:642,pediatrrep:470,pets:589,pharmaceuticals:18,pharmaceutics:9,
+    pharmacoepidemiology:536,pharmacy:147,philosophies:219,photochem:444,photonics:165,photovoltaics:721,phycology:500,physchem:419,psf:511,physics:358,physiologia:436,plants:137,plasma:271,platforms:576,pollutants:383,polymers:29,polysaccharides:304,
+    populations:612,poultry:503,powders:508,precision:732,precisiononcol:646,phc:707,proceedings:247,processes:164,projectmanaghoriz:718,prosthesis:364,proteomes:153,psych:343,psychiatryint:380,psychoactives:532,psychologyint:610,publications:168,
+    purification:600,qubs:224,quantumrep:353,quaternary:277,radiation:411,rdt:690,rareearths:688,reactions:342,realestate:595,receptors:545,recycling:202,rsee:618,religions:102,remotesensing:16,reports:252,reprodmed:268,resources:114,rheumato:506,
+    risks:162,robotics:130,rjpm:659,ruminants:505,safety:206,sci:246,scipharm:238,sclerosis:568,seeds:332,semicondhetinteg:668,sensors:3,separations:233,sexes:218,signals:265,sinusitis:200,smartcities:337,smartfisheries:698,socsci:71,siuj:603,
+    societies:58,software:528,soilsystems:344,solar:518,solids:414,spectroscj:562,sports:56,standards:173,stats:296,stemcelladv:736,stratigraphysedimentol:665,stresses:466,strokerep:699,surfaces:294,surgeries:295,std:560,sustainability:15,suschem:376,
+    susfoods:711,suspackaging:739,sanpp:708,symmetry:44,synbio:521,systems:131,targets:569,taxonomy:417,technologies:150,telecom:276,textiles:446,thalassrep:544,theorapplergonom:622,therapeutics:611,thermo:408,timespace:592,tomography:489,
+    tourismhosp:378,toxics:171,toxins:21,transplantology:352,traumacare:502,higheredu:567,trendspubhealth:593,trendsciedu:710,tropicalmed:230,universe:133,urbansci:228,uro:403,vaccines:76,vehicles:291,venereology:490,vetsci:178,vibration:269,
+    virtualworlds:553,viruses:8,vision:223,waste:530,water:36,welding:683,wild:614,wind:504,women:349,world:377,wevj:354,youth:519,zoonoticdis:541,amh:604
+}[s]||0}
 
 function skGetUniv(aff) {
     let results = "", color = "", i, len;
