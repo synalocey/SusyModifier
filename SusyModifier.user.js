@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.6.2
+// @version       6.6.3
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -264,8 +264,8 @@
         #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label,#SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_field_Report_Notes,
         #SusyModifierConfig_Old_Icon_field_label,#SusyModifierConfig_Hidden_Func_field_label{width:140px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label,
         #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_GE_CancelID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
-        #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_6{display:inline-grid;grid-template-columns:repeat(5, auto);
-        grid-template-rows:auto auto;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,
+        #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_7{display:inline-grid;grid-template-columns:repeat(5, auto);
+        grid-template-rows:auto auto;} #SusyModifierConfig_Report_TemplateID_var{grid-row:1;grid-column:1;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,
         #SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_field_Journal{width:auto}`
     });
 })();
@@ -351,6 +351,7 @@ function onInit() {
             style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'><input type='submit' class='submit' value='SI Search' style='background-color: #616161; color: white; padding: 8px 16px; border: none; border-radius: 4px;
             cursor: pointer;'></form><hr style='border: none; border-top: 1px solid #ccc; margin: 15px 0;'><form class='insertform' method='get' action='/user/ebm-new/management/all/my_journals' target='_blank'>Name: <input type='text' id='form_name2' name='form[name]'
             style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'><br>Email: <input type='email' name='form[email]' style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 8px;'>
+            <input type='submit' class='submit' value='EBM Search' style='background-color: #616161; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;'></form><hr style='border: none; border-top: 1px solid #ccc; margin: 15px 0;'>
             <form class='insertform' method='get' action='/user/conference/list' target='_blank'>Conference: <input type='text' name='form[conference_name]' style='display:inline-block; width:65%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;'> <input
             type='submit' class='submit' value='Search' style='background-color: #616161; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;'></form></div></div>`);
             skMakeDraggable(document.getElementById("si_search"), document.getElementById("si_search_header"));
