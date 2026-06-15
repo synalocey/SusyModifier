@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.6.3
+// @version       6.6.14
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -195,7 +195,7 @@
             'Journal': { 'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics', 'Games', 'Geometry', 'Mathematics', 'MCB', 'Risks', 'IJT', 'Telecom', 'None'], 'default': 'Mathematics' },
             'Easy_Journal': { 'label': '置顶期刊列表', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'Susy_Theme': { 'label': 'Change Susy Theme', 'type': 'button', 'click': function () { window.location.href = "https://susy.mdpi.com/user/settings" } },
-            'MathBatch': { 'label': 'Get Unsubscribe Link', 'type': 'button', 'click': function () { window.location.href = "https://skday.eu.org/math.html" } },
+            'MathBatch': { 'label': 'Scopus Enhance', 'type': 'button', 'click': function () { GM_openInTab("https://update.greasyfork.org.cn/scripts/447389/SciHub%20CRX.user.js", { active: true }) } },
             'Interface_sidebar': { 'section': [], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true },
             'Old_Icon': { 'label': '使用旧图标', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'Regular_Color': { 'label': '橙色标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
@@ -265,8 +265,8 @@
         #SusyModifierConfig_Old_Icon_field_label,#SusyModifierConfig_Hidden_Func_field_label{width:140px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label,
         #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_GE_CancelID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
         #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_7{display:inline-grid;grid-template-columns:repeat(5, auto);
-        grid-template-rows:auto auto;} #SusyModifierConfig_Report_TemplateID_var{grid-row:1;grid-column:1;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;} #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var,
-        #SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_field_Journal{width:auto}`
+        grid-template-rows:auto auto;} #SusyModifierConfig_Report_TemplateID_var{grid-row:1;grid-column:1;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;}
+        #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var, #SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_field_Journal{width:auto}`
     });
 })();
 
