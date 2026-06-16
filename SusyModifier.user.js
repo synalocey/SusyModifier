@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.6.14
+// @version       6.6.15
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -286,7 +286,7 @@ function onInit() {
         return false;
     }
     else {
-        $("#topmenu > ul").append(`<li><a id='susymodifier_config'>SusyModifier</a></li>`);
+        $("#topmenu > ul").append(`<li><a id=susymodifier_config class="topmenu-tab">SusyMod</a></li>`);
         $("#susymodifier_config").on("click", function () { GM_config.open() });
         document.addEventListener('keydown', function (e) {
             if (e.ctrlKey && e.key === 'q') {
@@ -2966,7 +2966,9 @@ function onInit() {
             .light_green_theme #leftcol .menu li::before {background-color: rgb(76, 142, 101) !important;}
             .light_green_theme #leftcol .menu li {border-bottom: 1px solid rgb(197, 222, 208) !important;}
             .light_green_theme #leftcol .menu li:not(.active) a:not(.active) {color: rgb(46, 57, 36) !important;}
-            #topmenu ul {padding-top: 0px !important;padding-bottom: 0px !important;}`;
+            #topmenu ul {padding: 3px 0 !important;}
+            #topmenu ul a {padding: 0 0.6rem !important;}`;
+
             var styleSheet = document.createElement("style");
             styleSheet.type = "text/css";
             styleSheet.innerText = customStyle;
