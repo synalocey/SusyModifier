@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.6.15
+// @version       6.6.16
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2352,7 +2352,7 @@ function onInit() {
             }
             $("#autoDetectEBM").on("click", runAutoDetect);
             function runAutoDetect() {
-                let email = $("div.decisionHistory:contains('first approval')").find("a[href^='mailto:']").last().text();
+                let email = $("div.decisionHistory:contains('First Approval')").find("a[href^='mailto:']").last().text();
                 let section = detectSection(); // 在弹窗打开前检测 Section
                 $("#selectEBMForOversee")[0].click();
                 waitForKeyElements("#filter_1", function () {
