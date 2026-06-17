@@ -2568,6 +2568,7 @@ function onInit() {
                                             boxShadow: '0 2px 12px rgba(0,0,0,0.1)', padding: '14px 18px',
                                             fontSize: '13px', lineHeight: '1.8', marginBottom: '16px'
                                         });
+
                                         saOverlay.append($('<strong></strong>').text('Subject Areas').css({ display: 'block', marginBottom: '6px', fontSize: '14px' }));
                                         subjectAreas.forEach((s, i) => {
                                             const bg = saColors[i % saColors.length];
@@ -2579,7 +2580,7 @@ function onInit() {
                                                 fontWeight: isMath ? '800' : '500', fontSize: isMath ? '16px' : '14px'
                                             }));
                                         });
-                                        if (authorPos.length) { $('#scopus-author-profile-page-control-microui__general-information-content').append(saOverlay); }
+                                        if (authorPos.length) { $('h1[data-testid="author-profile-name"]').parent().append(saOverlay); }
                                     }
 
                                     // ── 文章列表 ──
@@ -2753,6 +2754,7 @@ function onInit() {
                             seeAllBtn.on('click', triggerLoad);
                             seeCoBtn.on('click', triggerLoad);
                             inlineLoadBtn.on('click', triggerLoad);
+                            triggerLoad(); // 页面加载完成后自动触发
                         }
                         // 等 hr 分割线出现再注入
                         waitForKeyElements('#documents-panel hr', skInjectHirschSection, true);
