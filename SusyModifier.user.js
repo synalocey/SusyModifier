@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.6.16
+// @version       6.6.17
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -256,6 +256,15 @@
                     }
                     else { f_settings.find("#SusyModifierConfig_field_Interface_SME").hide() }
                 });
+                // 显示今天首次访问时间 ☀
+                let storedData = GM_getValue("firstVisitData", ""), todayStr = new Date().toISOString().slice(0, 10);
+                if (storedData && storedData.startsWith(todayStr + "|")) {
+                    let firstVisitTime = storedData.split("|")[1];
+                    f_settings.find("#SusyModifierConfig_header").after(`<div id="sk_first_visit" style="text-align:center;color:#666;font-size:13px;margin:-5px 0 5px;cursor:pointer;" title="点击查看系统开机时间命令">☀ 今日首次访问: ${firstVisitTime}</div>`);
+                    f_settings.find("#sk_first_visit").on("click", function () {
+                        prompt("在 PowerShell 中运行以下命令查看系统开机时间：", "Get-WinEvent -FilterHashtable @{LogName='System'; Id=1; ProviderName='Microsoft-Windows-Kernel-General'} -MaxEvents 5 -ErrorAction SilentlyContinue | Select-Object TimeCreated");
+                    });
+                }
             },
             'init': onInit,
         },
@@ -288,6 +297,16 @@ function onInit() {
     else {
         $("#topmenu > ul").append(`<li><a id=susymodifier_config class="topmenu-tab">SusyMod</a></li>`);
         $("#susymodifier_config").on("click", function () { GM_config.open() });
+        // 记录今天首次访问时间 ☀
+        (function () {
+            let now = new Date(), todayStr = now.toISOString().slice(0, 10), hour = now.getHours();
+            let storedData = GM_getValue("firstVisitData", "");
+            if (!(storedData && storedData.startsWith(todayStr + "|"))) {
+                if (hour >= 7 && hour < 17) {
+                    GM_setValue("firstVisitData", todayStr + "|" + now.toTimeString().slice(0, 5));
+                }
+            }
+        })();
         document.addEventListener('keydown', function (e) {
             if (e.ctrlKey && e.key === 'q') {
                 e.preventDefault();
