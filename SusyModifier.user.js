@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.6.17
+// @version       6.6.23
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2267,17 +2267,6 @@ function onInit() {
         } catch (error) { }
     }
 
-    //Always: Volunteer Reviewer
-    if (window.location.href.indexOf("/volunteer_reviewer_info/view/") > -1) {
-        try {
-            $("button:contains('Accept')").attr("onclick", "window.location.href='/volunteer_reviewer_info/operate/" + location.href.split('/view/')[1] + "/accept'");
-            $("button:contains('Reject')").attr("onclick", "window.location.href='/volunteer_reviewer_info/operate/" + location.href.split('/view/')[1] + "/reject'");
-            $("div.small-12.large-2:contains('Email')").next().append(`<a href="//scholar.google.com/scholar?hl=en&q=` + $("div.small-12.large-2:contains('Email')").next().text().trim() + `" target=_blank><img src="/bundles/mdpisusy/img/design/google_logo.png"></a>`)
-                .append(` <a href="//mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=` + $("div.small-12.large-2:contains('Email')").next().text().trim() + `" target=_blank>[Mailsdb]</a>`)
-            $("div.small-12.large-2:contains('First name')").next().append(`<a href="//www.scopus.com/results/authorNamesList.uri?st2=` + $("div.small-12.large-2:contains('First name')").next().text().trim() + `&st1=`
-                                                                           + $("div.small-12.large-2:contains('Last name')").next().text().trim() + `" target=_blank><img src="//www.scopus.com/static/proteus-images/favicon.ico" width=16px height=16px></a>`)
-        } catch (error) { }
-    }
     if (window.location.href.indexOf("/volunteer/reviewer/email/") > -1) {
         try {
             $('html, body').scrollTop($('#mailSubject').offset().top);
