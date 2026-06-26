@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.6.23
+// @version       6.6.24
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2354,54 +2354,76 @@ function onInit() {
                 return match ? match[1] : null;
             }
 
+            let stopWords = ['and','the','for','with','from','into','its','any','all','new','via','using','of','mathematical','mathematics','methods','method','applications','application'];
+            function getSITitleWords() {
+                let siTitle = $("div.cell.small-12.medium-6.large-2:contains('Special Issue Title')").next().text().trim();
+                return siTitle.split(/[\s,;:()\/]+/).filter(w => w.length > 2 && !stopWords.includes(w.toLowerCase())).map(w => w.toLowerCase());
+            }
+            function highlightRI($row, titleWords) {
+                if (titleWords.length === 0) return true;
+                let $riCell = $row.find("td").eq(3);
+                let riText = $riCell.text();
+                let escapedWords = titleWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                let regex = new RegExp('\\b(' + escapedWords.join('|') + ')\\b', 'gi');
+                let riHtml = riText.replace(regex, '<span style="background-color:#FFA500;">$1</span>');
+                if (riHtml !== riText) { $riCell.html(riHtml); return true; }
+                else { $row.css("opacity", "0.35"); return false; }
+            }
+
             if ($("#selectEBMForOversee").length) {
                 // $("#selectEBMForOversee").after('<input type="button" id="autoDetectEBM" style="margin-left: 8px; cursor: pointer;" value="Auto Detect">');
                 runAutoDetect();
             }
             $("#autoDetectEBM").on("click", runAutoDetect);
+            // 在 form_decision 中添加手动触发 Choose Editor + 高亮匹配的链接
+            if ($("#form_decision").length && $("#selectEBMForOversee").length) {
+                $("#form_decision").append(' <a href="javascript:void(0);" id="sk-choose-editor-link" style="color: #3156A2; cursor: pointer; margin-left: 8px;">[Choose Editor]</a>');
+                $("#sk-choose-editor-link").on("click", function () {
+                    $("#selectEBMForOversee")[0].click();
+                    setTimeout(function () {
+                        let pollTimer = setInterval(function () {
+                            let $rows = $("#select-ebm-for-oversee:visible tbody tr");
+                            if ($rows.length === 0) return;
+                            clearInterval(pollTimer);
+                            let titleWords = getSITitleWords();
+                            let $tbody = $("#select-ebm-for-oversee:visible tbody");
+                            $rows.each(function () { if (!highlightRI($(this), titleWords)) $tbody.append(this); });
+                        }, 300);
+                    }, 500);
+                });
+            }
             function runAutoDetect() {
                 let email = $("div.decisionHistory:contains('First Approval')").find("a[href^='mailto:']").last().text();
-                let section = detectSection(); // 在弹窗打开前检测 Section
+                let section = detectSection();
                 $("#selectEBMForOversee")[0].click();
                 waitForKeyElements("#filter_1", function () {
                     let $matchRow = $("td:contains('" + email + "')").parent();
                     if ($matchRow.length === 0) return;
 
                     let rowText = $matchRow.text();
-                    if ((rowText.indexOf("Editor-in-Chief") > -1 || rowText.indexOf("Associate Editor") > -1) && section && SK_SectionCandidatesMap[section]) {
+                    let overseeCount = parseInt($matchRow.find("td").eq(4).text().trim(), 10) || 0;
+                    let needCandidateFilter = (rowText.indexOf("Editor-in-Chief") > -1 || rowText.indexOf("Associate Editor") > -1 || overseeCount >= 3);
+                    if (needCandidateFilter && section && SK_SectionCandidatesMap[section]) {
                         let candidates = SK_SectionCandidatesMap[section];
-                        // 获取 SI 标题关键词（去除常见停用词，长度>2）
-                        let siTitle = $("div.cell.small-12.medium-6.large-2:contains('Special Issue Title')").next().text().trim();
-                        let stopWords = ['and','the','for','with','from','into','its','any','all','new','via','using'];
-                        let titleWords = siTitle.split(/[\s,;:()\/]+/).filter(w => w.length > 2 && !stopWords.includes(w.toLowerCase())).map(w => w.toLowerCase());
-                        // 先检查候选人是否存在于表格中
-                        let candidateRowCount = 0;
-                        $("#select-ebm-for-oversee tbody tr").each(function () {
-                            if (candidates.includes($(this).find("td").eq(1).text().trim())) candidateRowCount++;
-                        });
+                        let titleWords = getSITitleWords();
+                        let candidateRowCount = $("#select-ebm-for-oversee tbody tr").filter(function () {
+                            return candidates.includes($(this).find("td").eq(1).text().trim());
+                        }).length;
                         if (candidateRowCount === 0) {
-                            // 候选人都不在列表中，直接选择 EiC
                             $matchRow.find("td a:contains('Select')")[0].click();
                         } else {
-                            // 删除非候选人行，保留候选人行
+                            let $dimmed = $();
                             $("#select-ebm-for-oversee tbody tr").each(function () {
-                                let rowEmail = $(this).find("td").eq(1).text().trim();
-                                if (!candidates.includes(rowEmail)) {
+                                if (!candidates.includes($(this).find("td").eq(1).text().trim())) {
                                     $(this).remove();
-                                } else if (titleWords.length > 0) {
-                                    let $riCell = $(this).find("td").eq(3);
-                                    let riText = $riCell.text();
-                                    let escapedWords = titleWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-                                    let regex = new RegExp('\\b(' + escapedWords.join('|') + ')\\b', 'gi');
-                                    let riHtml = riText.replace(regex, '<span style="background-color:#FFA500;">$1</span>');
-                                    if (riHtml !== riText) $riCell.html(riHtml);
-                                    else $(this).css("opacity", "0.35");
+                                } else if (!highlightRI($(this), titleWords)) {
+                                    $dimmed = $dimmed.add(this);
                                 }
                             });
-                            if ($("#select-ebm-for-oversee tbody tr").length === 1) {
-                                $("#select-ebm-for-oversee tbody tr").first().find("td a:contains('Select')")[0].click();
-                            }
+                            $("#select-ebm-for-oversee tbody").append($dimmed);
                         }
+                    } else if (needCandidateFilter) {
+                        // EiC/AE/Oversee>=3 但无 Section 匹配，不自动选中
                     } else {
                         $matchRow.find("td a:contains('Select')")[0].click();
                     }
