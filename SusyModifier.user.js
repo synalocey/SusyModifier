@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.6.24
+// @version       6.6.28
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2337,8 +2337,8 @@ function onInit() {
         } catch (error) { }
     }
 
-    //Always: SI First/Final Decision
-    if (window.location.href.indexOf("special_issue/eic_decision/") + window.location.href.indexOf("special_issue/si_decision/") > -2) {
+    //Experimental: SI First/Final Decision
+    if (window.location.href.indexOf("special_issue/eic_decision/") + window.location.href.indexOf("special_issue/si_decision/") > -2 && GM_config.get('Hidden_Func')) {
         try {
             let str = $("#topmenu span:contains('@mdpi.com')").text().replace("@mdpi.com", "").replace(".", " ");
             let sk_signature = str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
