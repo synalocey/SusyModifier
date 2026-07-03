@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.6.28
+// @version       6.6.29
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -3287,7 +3287,7 @@ function onInit() {
         } catch (error) { }
     }
 
-    if (window.location.href.indexOf("crm.mdpi.cn/conference/") + window.location.href.indexOf("crm.mdpi.cn/scholar_visits/")+ window.location.href.indexOf("crm.mdpi.cn/sponsorship/") > -3 && GM_config.get('Hidden_Func')) {
+    if (window.location.href.indexOf("crm.mdpi.cn/conference/") + window.location.href.indexOf("crm.mdpi.cn/scholar_visits/") + window.location.href.indexOf("crm.mdpi.cn/sponsorship/") + window.location.href.indexOf("crm.mdpi.cn/email/") > -4 && GM_config.get('Hidden_Func')) {
         try {
             waitForKeyElements('button[label="Accept"]:first', function(acceptBtn) {
                 function doAccept() {
