@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.6.29
+// @version       6.7.5
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2337,8 +2337,8 @@ function onInit() {
         } catch (error) { }
     }
 
-    //Experimental: SI First/Final Decision
-    if (window.location.href.indexOf("special_issue/eic_decision/") + window.location.href.indexOf("special_issue/si_decision/") > -2 && GM_config.get('Hidden_Func')) {
+    //Always: SI First/Final Decision
+    if (window.location.href.indexOf("special_issue/eic_decision/") + window.location.href.indexOf("special_issue/si_decision/") > -2) {
         try {
             let str = $("#topmenu span:contains('@mdpi.com')").text().replace("@mdpi.com", "").replace(".", " ");
             let sk_signature = str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -3289,7 +3289,7 @@ function onInit() {
 
     if (window.location.href.indexOf("crm.mdpi.cn/conference/") + window.location.href.indexOf("crm.mdpi.cn/scholar_visits/") + window.location.href.indexOf("crm.mdpi.cn/sponsorship/") + window.location.href.indexOf("crm.mdpi.cn/email/") > -4 && GM_config.get('Hidden_Func')) {
         try {
-            waitForKeyElements('button[label="Accept"]:first', function(acceptBtn) {
+            waitForKeyElements('button[label="Accept"]:visible:last', function(acceptBtn) {
                 function doAccept() {
                     acceptBtn.trigger('click');
                     waitForKeyElements('button:contains("OK"):visible', function($okBtn) {
@@ -3360,8 +3360,8 @@ function skSidebarSize() {
     $(".note-list-container").css("padding", "0"); $(".note-box-component").css("margin-bottom", "10px");
     if ($(".section-note-box .manuscript-note-item-content").height() || 0 > 200) { $(".section-note-box .manuscript-note-item-content").height(200).css("overflow-y", "auto") }
     if ($(".apc-container .manuscript-note-item-content").height() || 0 > 200) { $(".apc-container .manuscript-note-item-content").height(200).css("overflow-y", "auto") }
-    if ($('.special-issue-note-box').length > 1) { $(".special-issue-note-box .manuscript-add-note-form").slice(1).prop("rows", 22) }
-    else if ($('.special-issue-note-box').length > 0) { $(".manuscript-note-box .manuscript-note-item-content").height(200).css("overflow-y", "auto") }
+    $(".special-issue-note-box,.manuscript-add-note-form").prop("rows", 22)
+    if ($('.special-issue-note-box').length > 0) { $(".manuscript-note-box .manuscript-note-item-content").height(200).css("overflow-y", "auto") }
 }
 function skLineBreakForQC() {
     $("span:contains('Quality Check')").text("QC");
