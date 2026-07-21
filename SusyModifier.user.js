@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.7.5
+// @version       6.7.19
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -958,19 +958,32 @@ function onInit() {
                     });
                 }
 
-                // 颜色标记
-                if ([154, 159, 162, 517, 599, 25, 598, 276].includes(S_J)) {
-                    addCssTooltipster();
-                    $("table [title|='Google Scholar']").each(function () {
-                        let ranking = skGetUniv($(this).parent().nextAll(":last-child").text().trim());
-                        if (ranking.color) {
-                            let markup = $(this).parent().nextAll(":last-child").children("div");
-                            markup.css("background-color", ranking.color);
-                            markup.attr("title", ranking.detail).tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
+                // 颜色标记Affiliation
+                addCssTooltipster();
+                $("table [title|='Google Scholar']").each(function () {
+                    let ranking = skGetUniv($(this).parent().nextAll(":last-child").text().trim());
+                    if (ranking.color) {
+                        let markup = $(this).parent().nextAll(":last-child").children("div");
+                        markup.css("background-color", ranking.color);
+                        markup.attr("title", ranking.detail).tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
+                    }
+                });
+
+                // 标题关键词高亮
+                (function highlightTitleKeywords() {
+                    const titleEl = $("span.article-title, a[title='View the published paper']");
+                    if (!titleEl.length) return;
+                    const keywords = skTitleKeywords;
+                    const escaped = keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                    const regex = new RegExp('(' + escaped.join('|') + ')', 'gi');
+                    titleEl.each(function () {
+                        const html = $(this).html();
+                        if (regex.test(html)) {
+                            regex.lastIndex = 0;
+                            $(this).html(html.replace(regex, '<span style="background-color: yellow; color: red;">$1</span>'));
                         }
                     });
-                    //              $("table:has([title|='Google Scholar'])").parent().prev().html( $("table:has([title|='Google Scholar'])").parent().prev().html() + " <a href='//redmine.mdpi.cn/projects/journal-mathematics/wiki/SI_Manage_CN' target=_blank>[List]</a>" )
-                }
+                })();
 
                 // 重置拒稿按钮
                 $("[title|='Reject / Recommend to other journals']").on('click', function(e){
@@ -1899,6 +1912,15 @@ function onInit() {
                 } else if (selectedText.toLowerCase().includes("author")) {
                     let authorEl = document.querySelector('.author a');
                     if (authorEl) { nameToUse = authorEl.innerText.trim(); }
+                } else if (selectedText.toLowerCase().includes("applicant")) {
+                    let applicantThs = document.querySelectorAll('th.assigned-to');
+                    for (let th of applicantThs) {
+                        if (th.textContent.trim().startsWith('Applicant')) {
+                            let applicantLink = th.nextElementSibling?.querySelector('a.user');
+                            if (applicantLink) { nameToUse = applicantLink.innerText.trim(); }
+                            break;
+                        }
+                    }
                 }
                 if (nameToUse && !nameToUse.startsWith("<<") && !nameToUse.startsWith("--")) {
                     let firstName = nameToUse.split(" ")[0];
@@ -3406,6 +3428,10 @@ function skGetJid(s){return{
     tourismhosp:378,toxics:171,toxins:21,transplantology:352,traumacare:502,higheredu:567,trendspubhealth:593,trendsciedu:710,tropicalmed:230,universe:133,urbansci:228,uro:403,vaccines:76,vehicles:291,venereology:490,vetsci:178,vibration:269,
     virtualworlds:553,viruses:8,vision:223,waste:530,water:36,welding:683,wild:614,wind:504,women:349,world:377,wevj:354,youth:519,zoonoticdis:541,amh:604
 }[s]||0}
+
+var skTitleKeywords = [
+    "Pythagorean","Neutrosophic","Picture fuzzy","Grey fuzzy","q-rung Orthopair","Spherical Fuzzy","Conformable","Jumarie","Atangana-Baleanu","Atangana–Baleanu","Caputo-Fabrizio","Caputo–Fabrizio","Katugampola"
+];
 
 function skGetUniv(aff) {
     let results = "", color = "", i, len;
