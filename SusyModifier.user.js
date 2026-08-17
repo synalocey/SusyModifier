@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.7.19
+// @version       6.8.15
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -37,6 +37,7 @@
 // @match         *://*.google.com.my/*
 // @match         *://i.mdpi.cn/team/dinner*
 // @match         *://forms.office.com/*
+// @match         *://forms.cloud.microsoft/*
 // @require       https://gcore.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
@@ -1493,7 +1494,7 @@ function onInit() {
         } catch (error) { }
     }
 
-    if (window.location.href.includes("forms.office.com")) {
+    if (window.location.href.includes("forms.office.com") || window.location.href.includes("forms.cloud.microsoft")) {
         let hash = window.location.hash;
         if (hash && hash.includes("#syncData=")) {
             try {
@@ -2515,10 +2516,10 @@ function onInit() {
                     });
                 }, true);
                 // 作者详情页：内联显示邮箱（点击复制）+ Hirsch数据按钮
-                if (window.location.pathname.indexOf('authid/detail.uri') > -1) {
+                if (window.location.pathname.indexOf('authid/detail.uri') > -1 || /\/pages\/authors\/\d+/.test(window.location.pathname)) {
                     waitForKeyElements('h1[data-testid="author-profile-name"]', function (h1node) {
                         if (h1node.find('#sk-scopus-email-inline').length) return;
-                        const authorId = new URLSearchParams(location.search).get('authorId');
+                        const authorId = new URLSearchParams(location.search).get('authorId') || (window.location.pathname.match(/\/pages\/authors\/(\d+)/) || [])[1];
                         if (!authorId) return;
 
                         // ── 邮箱 span ──
