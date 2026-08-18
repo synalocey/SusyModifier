@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.8.15
+// @version       6.8.16
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -1352,12 +1352,12 @@ function onInit() {
             }
 
             if (GM_config.get('Hidden_Func')) {
-                $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="button small secondary margin-0">Links</a> `);
+                $("a:contains('Show Cancelled Guest Editors')").before(`<a id=sk_list class="btn--secondary small  margin-0">Links</a> `);
                 $("h1:contains('Process Special Issue')").attr("id", "sk_list2")
                 $("#sk_list,#sk_list2").on("click", function () {
                     var emailLinks = [];
-                    $("[data-user-info-emails]").each(function () {
-                        let email = $(this).attr('data-user-info-emails');
+                    $("[data-user-publication-history-emails]").each(function () {
+                        let email = $(this).attr('data-user-publication-history-emails');
                         let quickLink = $(this).parent().parent().next().next().find('a:contains("Quick")').attr('href');
                         if (quickLink) { emailLinks.push(email + "\thttps://susy.mdpi.com" + quickLink) };
                     })
