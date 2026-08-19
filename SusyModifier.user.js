@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.8.16
+// @version       6.8.18
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -104,6 +104,7 @@
             'GE_ReminderS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_ReminderB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_ReminderB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'GE_ReminderPrefix': { 'type': 'hidden', 'default': 'Follow Up: ' },
             'GE_CancelID': {
                 'section': [], 'label': '默认 GE Cancel Template', 'type': 'select', 'labelPos': 'left', 'options':
                 ['Guest Editor Invitation – Cancel Invitation', 'Guest Editor Invitation – Cancel Invitation (Declined the Invitation via Email)', 'Guest Editor Invitation-Cancel Invitation (paper invitation – free of charge)-manually',
@@ -555,7 +556,8 @@ function onInit() {
             waitForText(document.querySelector('#mailSubject'), ' ', init);
 
             $('#mailSubject').parent().after(`<a id="Awaiting"><img src="${icon_pencil}"></a>`);
-            $('#Awaiting').on("click", function () { if ($('#mailSubject').val().indexOf("Awaiting Your Reply") == -1) { $('#mailSubject').val("Awaiting Your Reply: " + $('#mailSubject').val()) } });
+            $('#Awaiting').on("click", function () { let p = GM_config.get('GE_ReminderPrefix'); if ($('#mailSubject').val().indexOf(p.trim()) == -1) { $('#mailSubject').val(p + $('#mailSubject').val()) } });
+            $('#Awaiting').on("mousedown", function (e) { if (e.button === 1) { e.preventDefault(); let v = prompt('Enter subject prefix:', GM_config.get('GE_ReminderPrefix')); if (v !== null) { GM_config.set('GE_ReminderPrefix', v); GM_config.save(); } } });
             $('html, body').scrollTop($('#emailTemplates_chosen').offset().top);
         } catch (error) { }
     }
