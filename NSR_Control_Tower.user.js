@@ -1,6 +1,5 @@
 // ==UserScript==
 // @name         NSR Flow Control Tower
-// @namespace    https://github.com/synalocey/SusyModifier
 // @version      6.8.24
 // @description  NSR Flow Control Tower
 // @author       Kyra
