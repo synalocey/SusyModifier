@@ -12,17 +12,28 @@
 // @require      https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require      https://gcore.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js
 // @grant        GM_registerMenuCommand
+// @grant        GM_xmlhttpRequest
+// @grant        GM.xmlHttpRequest
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
 // @grant        unsafeWindow
+// @connect      127.0.0.1
 // ==/UserScript==
-/* globals jQuery, XLSX */
+/* globals jQuery, XLSX, GM, GM_info, GM_registerMenuCommand, GM_xmlhttpRequest, GM_getValue, GM_setValue, GM_deleteValue, unsafeWindow */
 
 (function(){
 'use strict';
-const date_v = new Date('20' + GM_info.script.version);
+const versionDateParts=String(typeof GM_info==='object'&&GM_info&&GM_info.script?GM_info.script.version:'').split('.').slice(0,3).map(Number);
+const date_v=versionDateParts.length===3&&versionDateParts.every(Number.isFinite)?new Date(2000+versionDateParts[0],versionDateParts[1]-1,versionDateParts[2]):new Date(NaN);
 const APP_PATH='/k1.png';
+const BRIDGE_PATH='/k2.png';
 const FLAG='nsrCtLaunch';
+const BRIDGE_FLAG='nsrSapBridgeLaunch';
 const FLP='/flp#ZNSR-display-1';
 const PROBE="/sap/opu/odata/sap/ZNSR_CD_SRV/WorkflowSet/?$filter=Nsrnum%20%20eq%20%27%27";
+const BRIDGE_URL='http://127.0.0.1:8765';
+const BRIDGE_TOKEN_KEY='nsrSapGuiBridgeTokenV1';
 const APP_CSS=`
 .chosen-container{position:relative;display:inline-block;vertical-align:middle;font-size:13px;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.chosen-container *{-webkit-box-sizing:border-box;box-sizing:border-box}.chosen-container .chosen-drop{position:absolute;top:100%;z-index:1010;width:100%;border:1px solid #aaa;border-top:0;background:#fff;-webkit-box-shadow:0 4px 5px rgb(0 0 0 / .15);box-shadow:0 4px 5px rgb(0 0 0 / .15);clip:rect(0,0,0,0);-webkit-clip-path:inset(100% 100%);clip-path:inset(100% 100%)}.chosen-container.chosen-with-drop .chosen-drop{clip:auto;-webkit-clip-path:none;clip-path:none}.chosen-container a{cursor:pointer}.chosen-container .search-choice .group-name,.chosen-container .chosen-single .group-name{margin-right:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:400;color:#999}.chosen-container .search-choice .group-name:after,.chosen-container .chosen-single .group-name:after{content:":";padding-left:2px;vertical-align:top}.chosen-container-single .chosen-single{position:relative;display:block;overflow:hidden;padding:0 0 0 8px;height:25px;border:1px solid #aaa;border-radius:5px;background-color:#fff;background:-webkit-gradient(linear,left top,left bottom,color-stop(20%,#fff),color-stop(50%,#f6f6f6),color-stop(52%,#eee),to(#f4f4f4));background:linear-gradient(#fff 20%,#f6f6f6 50%,#eee 52%,#f4f4f4 100%);background-clip:padding-box;-webkit-box-shadow:0 0 3px #fff inset,0 1px 1px rgb(0 0 0 / .1);box-shadow:0 0 3px #fff inset,0 1px 1px rgb(0 0 0 / .1);color:#444;text-decoration:none;white-space:nowrap;line-height:24px}.chosen-container-single .chosen-default{color:#999}.chosen-container-single .chosen-single span{display:block;overflow:hidden;margin-right:26px;text-overflow:ellipsis;white-space:nowrap}.chosen-container-single .chosen-single-with-deselect span{margin-right:38px}.chosen-container-single .chosen-single abbr{position:absolute;top:6px;right:26px;display:block;width:12px;height:12px;background:url(data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==) -42px 1px no-repeat;font-size:1px}.chosen-container-single .chosen-single abbr:hover{background-position:-42px -10px}.chosen-container-single.chosen-disabled .chosen-single abbr:hover{background-position:-42px -10px}.chosen-container-single .chosen-single div{position:absolute;top:0;right:0;display:block;width:18px;height:100%}.chosen-container-single .chosen-single div b{display:block;width:100%;height:100%;background:url(data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==) no-repeat 0 2px}.chosen-container-single .chosen-search{position:relative;z-index:1010;margin:0;padding:3px 4px;white-space:nowrap}.chosen-container-single .chosen-search input[type="text"]{margin:1px 0;padding:4px 20px 4px 5px;width:100%;height:auto;outline:0;border:1px solid #aaa;background:url(data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==) no-repeat 100% -20px;font-size:1em;font-family:sans-serif;line-height:normal;border-radius:0}.chosen-container-single .chosen-drop{margin-top:-1px;border-radius:0 0 4px 4px;background-clip:padding-box}.chosen-container-single.chosen-container-single-nosearch .chosen-search{position:absolute;clip:rect(0,0,0,0);-webkit-clip-path:inset(100% 100%);clip-path:inset(100% 100%)}.chosen-container .chosen-results{color:#444;position:relative;overflow-x:hidden;overflow-y:auto;margin:0 4px 4px 0;padding:0 0 0 4px;max-height:600px;-webkit-overflow-scrolling:touch}.chosen-container .chosen-results li{display:none;margin:0;padding:5px 6px;list-style:none;line-height:15px;word-wrap:break-word;-webkit-touch-callout:none}.chosen-container .chosen-results li.active-result{display:list-item;cursor:pointer}.chosen-container .chosen-results li.disabled-result{display:list-item;color:#ccc;cursor:default}.chosen-container .chosen-results li.highlighted{background-color:#3875d7;background-image:-webkit-gradient(linear,left top,left bottom,color-stop(20%,#3875d7),color-stop(90%,#2a62bc));background-image:linear-gradient(#3875d7 20%,#2a62bc 90%);color:#fff}.chosen-container .chosen-results li.no-results{color:#777;display:list-item;background:#f4f4f4}.chosen-container .chosen-results li.group-result{display:list-item;font-weight:700;cursor:default}.chosen-container .chosen-results li.group-option{padding-left:15px}.chosen-container .chosen-results li em{font-style:normal;text-decoration:underline}.chosen-container-multi .chosen-choices{position:relative;overflow:hidden;margin:0;padding:0 5px;width:100%;height:auto;border:1px solid #aaa;background-color:#fff;background-image:-webkit-gradient(linear,left top,left bottom,color-stop(1%,#eee),color-stop(15%,#fff));background-image:linear-gradient(#eee 1%,#fff 15%);cursor:text}.chosen-container-multi .chosen-choices li{float:left;list-style:none}.chosen-container-multi .chosen-choices li.search-field{margin:0;padding:0;white-space:nowrap}.chosen-container-multi .chosen-choices li.search-field input[type="text"]{margin:1px 0;padding:0;height:25px;outline:0;border:0!important;background:transparent!important;-webkit-box-shadow:none;box-shadow:none;color:#999;font-size:100%;font-family:sans-serif;line-height:normal;border-radius:0;width:25px}.chosen-container-multi .chosen-choices li.search-choice{position:relative;margin:3px 5px 3px 0;padding:3px 20px 3px 5px;border:1px solid #aaa;max-width:100%;border-radius:3px;background-color:#eee;background-image:-webkit-gradient(linear,left top,left bottom,color-stop(20%,#f4f4f4),color-stop(50%,#f0f0f0),color-stop(52%,#e8e8e8),to(#eee));background-image:linear-gradient(#f4f4f4 20%,#f0f0f0 50%,#e8e8e8 52%,#eee 100%);background-size:100% 19px;background-repeat:repeat-x;background-clip:padding-box;-webkit-box-shadow:0 0 2px #fff inset,0 1px 0 rgb(0 0 0 / .05);box-shadow:0 0 2px #fff inset,0 1px 0 rgb(0 0 0 / .05);color:#333;line-height:13px;cursor:default}.chosen-container-multi .chosen-choices li.search-choice span{word-wrap:break-word}.chosen-container-multi .chosen-choices li.search-choice .search-choice-close{position:absolute;top:4px;right:3px;display:block;width:12px;height:12px;background:url(data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==) -42px 1px no-repeat;font-size:1px}.chosen-container-multi .chosen-choices li.search-choice .search-choice-close:hover{background-position:-42px -10px}.chosen-container-multi .chosen-choices li.search-choice-disabled{padding-right:5px;border:1px solid #ccc;background-color:#e4e4e4;background-image:-webkit-gradient(linear,left top,left bottom,color-stop(20%,#f4f4f4),color-stop(50%,#f0f0f0),color-stop(52%,#e8e8e8),to(#eee));background-image:linear-gradient(#f4f4f4 20%,#f0f0f0 50%,#e8e8e8 52%,#eee 100%);color:#666}.chosen-container-multi .chosen-choices li.search-choice-focus{background:#d4d4d4}.chosen-container-multi .chosen-choices li.search-choice-focus .search-choice-close{background-position:-42px -10px}.chosen-container-multi .chosen-results{margin:0;padding:0}.chosen-container-multi .chosen-drop .result-selected{display:list-item;color:#ccc;cursor:default}.chosen-container-active .chosen-single{border:1px solid #5897fb;-webkit-box-shadow:0 0 5px rgb(0 0 0 / .3);box-shadow:0 0 5px rgb(0 0 0 / .3)}.chosen-container-active.chosen-with-drop .chosen-single{border:1px solid #aaa;border-bottom-right-radius:0;border-bottom-left-radius:0;background-image:-webkit-gradient(linear,left top,left bottom,color-stop(20%,#eee),color-stop(80%,#fff));background-image:linear-gradient(#eee 20%,#fff 80%);-webkit-box-shadow:0 1px 0 #fff inset;box-shadow:0 1px 0 #fff inset}.chosen-container-active.chosen-with-drop .chosen-single div{border-left:none;background:#fff0}.chosen-container-active.chosen-with-drop .chosen-single div b{background-position:-18px 2px}.chosen-container-active .chosen-choices{border:1px solid #5897fb;-webkit-box-shadow:0 0 5px rgb(0 0 0 / .3);box-shadow:0 0 5px rgb(0 0 0 / .3)}.chosen-container-active .chosen-choices li.search-field input[type="text"]{color:#222!important}.chosen-disabled{opacity:0.5!important;cursor:default}.chosen-disabled .chosen-single{cursor:default}.chosen-disabled .chosen-choices .search-choice .search-choice-close{cursor:default}.chosen-rtl{text-align:right}.chosen-rtl .chosen-single{overflow:visible;padding:0 8px 0 0}.chosen-rtl .chosen-single span{margin-right:0;margin-left:26px;direction:rtl}.chosen-rtl .chosen-single-with-deselect span{margin-left:38px}.chosen-rtl .chosen-single div{right:auto;left:3px}.chosen-rtl .chosen-single abbr{right:auto;left:26px}.chosen-rtl .chosen-choices li{float:right}.chosen-rtl .chosen-choices li.search-field input[type="text"]{direction:rtl}.chosen-rtl .chosen-choices li.search-choice{margin:3px 5px 3px 0;padding:3px 5px 3px 19px}.chosen-rtl .chosen-choices li.search-choice .search-choice-close{right:auto;left:4px}.chosen-rtl.chosen-container-single .chosen-results{margin:0 0 4px 4px;padding:0 4px 0 0}.chosen-rtl .chosen-results li.group-option{padding-right:15px;padding-left:0}.chosen-rtl.chosen-container-active.chosen-with-drop .chosen-single div{border-right:none}.chosen-rtl .chosen-search input[type="text"]{padding:4px 5px 4px 20px;background:url(data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==) no-repeat -30px -20px;direction:rtl}.chosen-rtl.chosen-container-single .chosen-single div b{background-position:6px 2px}.chosen-rtl.chosen-container-single.chosen-with-drop .chosen-single div b{background-position:-12px 2px}@media only screen and (-webkit-min-device-pixel-ratio:1.5),only screen and (min-resolution:144dpi),only screen and (min-resolution:1.5dppx){.chosen-rtl .chosen-search input[type="text"],.chosen-container-single .chosen-single abbr,.chosen-container-single .chosen-single div b,.chosen-container-single .chosen-search input[type="text"],.chosen-container-multi .chosen-choices .search-choice .search-choice-close,.chosen-container .chosen-results-scroll-down span,.chosen-container .chosen-results-scroll-up span{background-image:url(data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==)!important;background-size:52px 37px!important;background-repeat:no-repeat!important}}
 :root{
@@ -145,7 +156,7 @@ tbody tr:nth-child(even) td{background:#fbfdff}tbody tr:hover td{background:#f0f
 .tab-list{display:flex;gap:7px}.tab-btn{border:1px solid #cbd5e1;background:#f8fafc;color:#475569;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:850;cursor:pointer}.tab-btn:hover{border-color:#38bdf8;color:#075985}.tab-btn.active{border-color:var(--teal);background:#ccfbf1;color:#115e59}
 .tab-page{display:none}.tab-page.active{display:block}.cycle-shell{display:grid;gap:16px;max-width:1900px;margin:auto;padding:16px}
 .cycle-label{display:block;color:#334155;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.45px;margin-bottom:6px}.cycle-input{display:block;width:100%;resize:vertical;min-height:120px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);padding:11px 12px;font:12px/1.55 Consolas,"Segoe UI",sans-serif}.cycle-input:focus{outline:3px solid rgba(14,165,233,.2);border-color:#38bdf8}
-.cycle-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.cycle-note{color:var(--muted);font-size:10px}.cycle-progress{display:block;width:100%;height:8px;margin-top:12px;accent-color:var(--teal)}.cycle-status{margin-top:7px;color:var(--muted);font-size:11px;line-height:1.45}.cycle-wrap{max-height:690px}#cycleTable{width:2572px;min-width:2572px}
+.cycle-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.cycle-note{color:var(--muted);font-size:10px}.cycle-progress{display:block;width:100%;height:8px;margin-top:12px;accent-color:var(--teal)}.cycle-status{margin-top:7px;color:var(--muted);font-size:11px;line-height:1.45}.cycle-wrap{max-height:690px}#cycleTable{width:2422px;min-width:2422px}
 .ct-link{border:0;background:none;color:#0369a1;padding:0;font:inherit;font-weight:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}.ct-link:hover{color:#0f766e}.ct-link:focus-visible{outline:2px solid #38bdf8;outline-offset:3px;border-radius:2px}
 .duration-over,.duration-over .ct-link{color:var(--red)!important}
 .wf-modal[hidden]{display:none}.wf-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px}.wf-bg{position:absolute;inset:0;width:100%;height:100%;border:0;background:rgba(15,23,42,.62);cursor:default}.wf-box{position:relative;display:flex;flex-direction:column;width:min(1180px,calc(100vw - 40px));max-height:calc(100vh - 40px);overflow:hidden;border:1px solid #cbd5e1;border-radius:16px;background:#fff;box-shadow:0 24px 80px rgba(15,23,42,.35)}.wf-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 17px;border-bottom:1px solid var(--line);background:#f8fafc}.wf-head h2{margin:0;color:#0f172a;font-size:17px}.wf-head p{margin:3px 0 0;color:var(--muted);font-size:11px}.wf-actions{display:flex;align-items:center;gap:8px}.wf-wrap{overflow:auto;max-height:calc(100vh - 120px)}#wfTable{width:1120px;min-width:1120px;table-layout:fixed}#wfTable th:nth-child(1){width:190px}#wfTable th:nth-child(2){width:120px}#wfTable th:nth-child(3){width:160px}#wfTable th:nth-child(4){width:95px}#wfTable th:nth-child(5){width:120px}#wfTable th:nth-child(6){width:435px}#wfTable td{white-space:normal;overflow-wrap:anywhere;vertical-align:top;line-height:1.45}#wfTable td:nth-child(6){white-space:pre-wrap}body.wf-open{overflow:hidden}.toast{z-index:1100}
@@ -274,13 +285,97 @@ const APP_HTML=`<div id="loadingLine" class="loading-line"></div>
   </section>
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>`;
-let launchLoop=false;
+const BRIDGE_CSS=`
+:root{--bg:#f3f7fb;--panel:#fff;--ink:#0f172a;--muted:#64748b;--line:#d8e3ee;--navy:#052e44;--blue:#2563eb;--teal:#0f766e;--green:#16a34a;--amber:#d97706;--red:#dc2626;--shadow:0 14px 34px rgba(15,23,42,.08);--radius:18px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Arial,"Microsoft YaHei",sans-serif}button,input,select,textarea{font:inherit}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(14,165,233,.3);outline-offset:2px}
+.bridge-hero{background:linear-gradient(128deg,#052e44 0%,#075985 52%,#0f766e 100%);color:#fff;padding:24px 28px;box-shadow:0 9px 24px rgba(3,46,70,.18)}.bridge-hero-inner{max-width:1180px;margin:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:22px}.bridge-hero h1{margin:0 0 6px;font-size:29px;letter-spacing:-.45px}.bridge-hero p{max-width:720px;margin:0;color:#d8fbf5;font-size:13px;line-height:1.55}.bridge-hero-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.bridge-shell{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:1180px;margin:auto;padding:18px}.bridge-card{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:17px}.bridge-card.wide{grid-column:1/-1}.bridge-card h2{margin:0;font-size:17px}.bridge-card p{margin:4px 0 0;color:var(--muted);font-size:11px;line-height:1.5}.bridge-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+.bridge-btn{border:0;border-radius:10px;background:var(--teal);color:#fff;font-weight:800;padding:9px 12px;cursor:pointer;transition:transform .12s ease,filter .12s ease}.bridge-btn:hover{filter:brightness(1.06);transform:translateY(-1px)}.bridge-btn.blue{background:var(--blue)}.bridge-btn.light{background:#e2e8f0;color:#0f172a}.bridge-btn.ghost{border:1px solid #ffffff66;background:#ffffff18}.bridge-btn:disabled{cursor:not-allowed;opacity:.5;filter:none;transform:none}
+.bridge-badge{display:inline-flex;align-items:center;gap:7px;border-radius:999px;background:#f1f5f9;color:#475569;padding:6px 10px;font-size:11px;font-weight:850;white-space:nowrap}.bridge-badge::before{content:"";width:8px;height:8px;border-radius:50%;background:#94a3b8}.bridge-badge.ok{background:#dcfce7;color:#166534}.bridge-badge.ok::before{background:var(--green)}.bridge-badge.warn{background:#fef3c7;color:#92400e}.bridge-badge.warn::before{background:var(--amber)}.bridge-badge.error{background:#fee2e2;color:#991b1b}.bridge-badge.error::before{background:var(--red)}
+.bridge-status{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.bridge-status-item{border:1px solid #e2e8f0;border-radius:13px;background:#f8fafc;padding:11px}.bridge-status-item small{display:block;color:var(--muted);font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.45px}.bridge-status-item strong{display:block;margin-top:5px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bridge-help{margin-top:11px;border-left:4px solid var(--teal);border-radius:10px;background:#ecfeff;color:#164e63;padding:9px 11px;font-size:11px;line-height:1.5}
+.bridge-field{display:grid;gap:6px;margin-top:11px}.bridge-field label{color:#475569;font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.4px}.bridge-field input,.bridge-field select,.bridge-field textarea{display:block;width:100%;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:var(--ink);padding:10px 11px;font-size:12px}.bridge-field textarea{min-height:145px;resize:vertical;font:11px/1.5 Consolas,"Courier New",monospace}.bridge-field input:disabled,.bridge-field select:disabled,.bridge-field textarea:disabled{background:#f1f5f9;color:#94a3b8}.bridge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.bridge-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.bridge-inline{display:grid;grid-template-columns:1fr 110px;gap:10px}
+.bridge-result{min-height:130px;max-height:320px;overflow:auto;margin:0;border:1px solid #dbe5ee;border-radius:13px;background:#071521;color:#d8fbf5;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.55 Consolas,"Courier New",monospace}.bridge-note{color:var(--muted);font-size:10px;line-height:1.45}.bridge-divider{height:1px;background:#e2e8f0;margin:15px 0}.bridge-card details summary{cursor:pointer;color:#334155;font-size:12px;font-weight:800}.bridge-card details[open] summary{margin-bottom:10px}
+@media(max-width:820px){.bridge-hero-inner{align-items:flex-start;flex-direction:column}.bridge-hero-actions{justify-content:flex-start}.bridge-shell{grid-template-columns:1fr}.bridge-card.wide{grid-column:auto}.bridge-status,.bridge-grid,.bridge-inline{grid-template-columns:1fr}}
+`;
+const BRIDGE_HTML=`
+<header class="bridge-hero">
+  <div class="bridge-hero-inner">
+    <div><h1>SAP GUI Bridge</h1><p>Control the signed-in SAP GUI on this computer through the local PowerShell bridge. Commands stay on 127.0.0.1 and pairing runs automatically.</p></div>
+    <div class="bridge-hero-actions">
+      <button id="bridgeRefresh" class="bridge-btn ghost" type="button" data-bridge-action>Refresh</button>
+    </div>
+  </div>
+</header>
+<main class="bridge-shell">
+  <section class="bridge-card wide">
+    <div class="bridge-card-head"><div><h2>Connection</h2><p>Local service, browser authorization, and current SAP GUI availability.</p></div><span id="bridgeBadge" class="bridge-badge">Checking</span></div>
+    <div class="bridge-status">
+      <div class="bridge-status-item"><small>Local service</small><strong id="bridgeService">Checking 127.0.0.1:8765…</strong></div>
+      <div class="bridge-status-item"><small>Browser pairing</small><strong id="bridgePairing">Not checked</strong></div>
+      <div class="bridge-status-item"><small>SAP GUI</small><strong id="bridgeSap">Not checked</strong></div>
+    </div>
+    <div id="bridgeHelp" class="bridge-help">Start NSR_SAP_GUI_Bridge.ps1 before opening this page. Pairing starts automatically.</div>
+    <div class="bridge-field"><label for="sapSession">SAP session</label><select id="sapSession" disabled><option value="">Connecting to the local bridge…</option></select></div>
+  </section>
+
+  <section class="bridge-card">
+    <div class="bridge-card-head"><div><h2>Open Transaction</h2><p>Starts a transaction in the selected SAP GUI session.</p></div></div>
+    <div class="bridge-field"><label for="sapTransaction">Transaction code</label><input id="sapTransaction" type="text" maxlength="20" placeholder="For example: VA03 or SE16N" autocomplete="off"></div>
+    <div class="bridge-actions"><button id="sapRunTransaction" class="bridge-btn blue" type="button" data-bridge-action disabled>Open transaction</button></div>
+    <p class="bridge-note">Enter the transaction code without /n. System commands and arbitrary PowerShell code are not accepted.</p>
+  </section>
+
+  <section class="bridge-card">
+    <div class="bridge-card-head"><div><h2>Control Inspector</h2><p>Read or operate one SAP GUI Scripting control by its ID.</p></div></div>
+    <div class="bridge-field"><label for="sapControlId">SAP control ID</label><input id="sapControlId" type="text" maxlength="300" placeholder="wnd[0]/usr/ctxt…" autocomplete="off"></div>
+    <div class="bridge-field"><label for="sapControlValue">Value</label><input id="sapControlValue" type="text" maxlength="4000" placeholder="Text or key to write" autocomplete="off"></div>
+    <div class="bridge-actions">
+      <button id="sapReadText" class="bridge-btn light" type="button" data-bridge-action disabled>Read text</button>
+      <button id="sapSetText" class="bridge-btn blue" type="button" data-bridge-action disabled>Set text</button>
+      <button id="sapSetKey" class="bridge-btn light" type="button" data-bridge-action disabled>Set key</button>
+      <button id="sapPress" class="bridge-btn light" type="button" data-bridge-action disabled>Press</button>
+      <button id="sapSelect" class="bridge-btn light" type="button" data-bridge-action disabled>Select</button>
+    </div>
+    <div class="bridge-divider"></div>
+    <div class="bridge-inline">
+      <div class="bridge-field"><label for="sapVKeyTarget">Window ID</label><input id="sapVKeyTarget" type="text" maxlength="300" value="wnd[0]" autocomplete="off"></div>
+      <div class="bridge-field"><label for="sapVKey">VKey</label><input id="sapVKey" type="number" min="0" max="99" value="0"></div>
+    </div>
+    <div class="bridge-actions"><button id="sapSendVKey" class="bridge-btn light" type="button" data-bridge-action disabled>Send VKey</button></div>
+  </section>
+
+  <section class="bridge-card wide">
+    <div class="bridge-card-head"><div><h2>Result</h2><p>The latest response from the local bridge. SAP status-bar text is returned when available.</p></div></div>
+    <pre id="sapResult" class="bridge-result" aria-live="polite">Waiting for the local bridge…</pre>
+  </section>
+
+  <section class="bridge-card wide">
+    <details>
+      <summary>Advanced: run a small action list</summary>
+      <p>Allowed operations: setText, setKey, press, select, sendVKey, readText, and wait. The bridge runs at most 50 actions per request.</p>
+      <div class="bridge-field"><label for="sapActions">JSON actions</label><textarea id="sapActions" spellcheck="false">[
+  {"operation":"setText","controlId":"wnd[0]/usr/ctxtEXAMPLE","value":"12345"},
+  {"operation":"press","controlId":"wnd[0]/tbar[1]/btn[8]"}
+]</textarea></div>
+      <div class="bridge-actions"><button id="sapRunActions" class="bridge-btn blue" type="button" data-bridge-action disabled>Run action list</button></div>
+    </details>
+  </section>
+</main>`;
+const launchLoops=new Set();
+let bridgeBusy=false,bridgeSessions=[];
 
 GM_registerMenuCommand('Open NSR Flow Control Tower',beginLaunch);
+GM_registerMenuCommand('Open SAP GUI Bridge',beginBridgeLaunch);
 
-if(unsafeWindow.location.pathname.toLowerCase()===APP_PATH){
-  clearLaunch();whenBody(mountApp);
-}else resumeLaunch();
+const currentPath=unsafeWindow.location.pathname.toLowerCase();
+if(currentPath===APP_PATH){
+  clearLaunch(FLAG);whenBody(mountApp);
+}else if(currentPath===BRIDGE_PATH){
+  clearLaunch(BRIDGE_FLAG);whenBody(mountBridgeApp);
+}else{
+  resumeLaunch(FLAG,APP_PATH+'?nsrct=1');
+  resumeLaunch(BRIDGE_FLAG,BRIDGE_PATH+'?nsrbridge=1');
+}
 
 function whenBody(callback){
   if(document.body)callback();else document.addEventListener('DOMContentLoaded',callback,{once:true});
@@ -291,17 +386,25 @@ function store(){
 }
 
 function beginLaunch(){
-  store().setItem(FLAG,String(Date.now()+15*60*1000));
-  unsafeWindow.location.assign(FLP);resumeLaunch();
+  beginRoute(FLAG,APP_PATH+'?nsrct=1');
 }
 
-function clearLaunch(){
-  try{store().removeItem(FLAG)}catch(_){/* ignore */}
+function beginBridgeLaunch(){
+  beginRoute(BRIDGE_FLAG,BRIDGE_PATH+'?nsrbridge=1');
 }
 
-function launchPending(){
-  const until=Number(store().getItem(FLAG)||0);
-  if(!until||until<Date.now()){clearLaunch();return false}
+function beginRoute(flag,target){
+  store().setItem(flag,String(Date.now()+15*60*1000));
+  unsafeWindow.location.assign(FLP);resumeLaunch(flag,target);
+}
+
+function clearLaunch(flag){
+  try{store().removeItem(flag)}catch(_){/* ignore */}
+}
+
+function launchPending(flag){
+  const until=Number(store().getItem(flag)||0);
+  if(!until||until<Date.now()){clearLaunch(flag);return false}
   return true;
 }
 
@@ -314,28 +417,215 @@ async function signedIn(){
   }catch(_){return false}
 }
 
-async function resumeLaunch(){
-  if(launchLoop||!launchPending())return;launchLoop=true;
+async function resumeLaunch(flag,target){
+  if(launchLoops.has(flag)||!launchPending(flag))return;launchLoops.add(flag);
   try{
-    for(let attempt=0;attempt<300&&launchPending();attempt++){
+    for(let attempt=0;attempt<300&&launchPending(flag);attempt++){
       if(await signedIn()){
-        clearLaunch();unsafeWindow.location.replace(APP_PATH+'?nsrct=1');return;
+        clearLaunch(flag);unsafeWindow.location.replace(target);return;
       }
       await new Promise(resolve=>setTimeout(resolve,2000));
     }
-  }finally{launchLoop=false}
+  }finally{launchLoops.delete(flag)}
 }
 
 function mountApp(){
   if(document.documentElement.dataset.nsrCtMounted)return;
-  if((Date.now()-date_v)/86400000>270){alert('The data format has changed. Please update to the latest version.');return;}
-  document.documentElement.dataset.nsrCtMounted='1';document.documentElement.lang='en';document.title='NSR Flow Control Tower';
+  if(Number.isFinite(date_v.getTime())&&(Date.now()-date_v.getTime())/86400000>270){unsafeWindow.alert('The data format has changed. Please update to the latest version.');return}
+  document.documentElement.dataset.nsrCtMounted='1';document.documentElement.lang='en';
   const charset=document.createElement('meta');charset.charset='utf-8';
   const viewport=document.createElement('meta');viewport.name='viewport';viewport.content='width=device-width,initial-scale=1';
+  const title=document.createElement('title');title.textContent='NSR Flow Control Tower';
   const style=document.createElement('style');style.textContent=APP_CSS;
-  document.head.replaceChildren(charset,viewport,style);document.body.innerHTML=APP_HTML;
+  document.head.replaceChildren(charset,viewport,title,style);document.body.innerHTML=APP_HTML;
   if(window.jQuery&&!jQuery.trim)jQuery.trim=value=>value==null?'':String(value).trim();
   runDashboard();
+}
+
+function mountBridgeApp(){
+  if(document.documentElement.dataset.nsrSapBridgeMounted)return;
+  document.documentElement.dataset.nsrSapBridgeMounted='1';document.documentElement.lang='en';
+  const charset=document.createElement('meta');charset.charset='utf-8';
+  const viewport=document.createElement('meta');viewport.name='viewport';viewport.content='width=device-width,initial-scale=1';
+  const title=document.createElement('title');title.textContent='NSR SAP GUI Bridge';
+  const style=document.createElement('style');style.textContent=BRIDGE_CSS;
+  document.head.replaceChildren(charset,viewport,title,style);document.body.innerHTML=BRIDGE_HTML;
+  bindBridgeEvents();refreshBridge();
+}
+
+function bridgeId(id){return document.getElementById(id)}
+
+function getBridgeToken(){
+  try{return String(GM_getValue(BRIDGE_TOKEN_KEY,'')||'')}catch(_){return ''}
+}
+
+function setBridgeToken(token){
+  try{GM_setValue(BRIDGE_TOKEN_KEY,String(token||''))}catch(_){/* ignore */}
+}
+
+function forgetBridgeToken(){
+  try{GM_deleteValue(BRIDGE_TOKEN_KEY)}catch(_){/* ignore */}
+}
+
+function bridgeRequest(method,path,payload,auth,timeout){
+  return new Promise((resolve,reject)=>{
+    const modern=typeof GM==='object'&&GM&&typeof GM.xmlHttpRequest==='function'?GM.xmlHttpRequest.bind(GM):null;
+    const legacy=typeof GM_xmlhttpRequest==='function'?GM_xmlhttpRequest:null;
+    const send=legacy||modern;
+    if(!send){reject(new Error('Tampermonkey bridge permission is unavailable. Update this userscript.'));return}
+    const headers={Accept:'application/json','X-NSR-Page-Origin':unsafeWindow.location.origin};
+    const token=getBridgeToken();
+    if(payload!==undefined)headers['Content-Type']='application/json';
+    if(auth!==false&&token)headers['X-NSR-Bridge-Token']=token;
+    let settled=false;
+    const finish=callback=>value=>{if(settled)return;settled=true;callback(value)};
+    const transportError=detail=>{
+      const suffix=detail?' ('+String(detail)+')':'',error=new Error('Cannot reach the local PowerShell bridge at 127.0.0.1:8765. Confirm the PowerShell window is running and Tampermonkey Site access is set to All sites.'+suffix);
+      error.transport=true;return error;
+    };
+    const options={method:method,url:BRIDGE_URL+path,headers:headers,timeout:timeout||20000,nocache:true,fetch:false,
+      onload:response=>{
+        if(!response||!Number(response.status)){reject(transportError(response&&response.statusText));return}
+        let data={};
+        try{data=response.responseText?JSON.parse(response.responseText):{}}catch(_){data={message:response.responseText||'Invalid bridge response.'}}
+        if(response.status>=200&&response.status<300){resolve(data);return}
+        const error=new Error(data.message||('Local bridge returned HTTP '+response.status+'.'));error.status=response.status;error.data=data;
+        if(response.status===401)forgetBridgeToken();reject(error);
+      },
+      onerror:response=>reject(transportError(response&&(response.error||response.statusText))),
+      ontimeout:()=>reject(transportError('request timed out')),
+      onabort:()=>reject(transportError('request was aborted'))
+    };
+    options.onload=finish(options.onload);options.onerror=finish(options.onerror);options.ontimeout=finish(options.ontimeout);options.onabort=finish(options.onabort);
+    if(payload!==undefined)options.data=JSON.stringify(payload);
+    try{
+      const result=send(options);
+      if(send===modern&&result&&typeof result.then==='function')result.then(options.onload,options.onerror);
+    }catch(error){options.onerror(error&&error.message)}
+  });
+}
+
+function setBridgeBadge(text,kind){
+  const badge=bridgeId('bridgeBadge');badge.textContent=text;badge.className='bridge-badge'+(kind?' '+kind:'');
+}
+
+function showBridgeResult(value,label){
+  const prefix=label?label+'\n':'';
+  bridgeId('sapResult').textContent=prefix+(typeof value==='string'?value:JSON.stringify(value,null,2));
+}
+
+function bridgeError(error){
+  return error&&error.message?error.message:String(error||'Unknown bridge error.');
+}
+
+function setBridgeBusy(value){
+  bridgeBusy=Boolean(value);
+  document.querySelectorAll('[data-bridge-action]').forEach(button=>{
+    const needsSession=button.id.indexOf('sap')===0;
+    button.disabled=bridgeBusy||(needsSession&&!selectedBridgeSession());
+  });
+}
+
+function selectedBridgeSession(){
+  const select=bridgeId('sapSession'),value=select&&select.value;
+  if(!value)return null;
+  const parts=value.split(':');
+  if(parts.length!==2)return null;
+  return {connectionIndex:Number(parts[0]),sessionIndex:Number(parts[1])};
+}
+
+function renderBridgeSessions(sessions){
+  bridgeSessions=Array.isArray(sessions)?sessions:[];
+  const select=bridgeId('sapSession'),previous=select.value;select.replaceChildren();
+  if(!bridgeSessions.length){
+    const option=document.createElement('option');option.value='';option.textContent='No SAP GUI sessions found';select.appendChild(option);select.disabled=true;
+  }else{
+    bridgeSessions.forEach((session,index)=>{
+      const option=document.createElement('option');option.value=String(session.connectionIndex)+':'+String(session.sessionIndex);
+      option.textContent=(session.system||'SAP')+' '+(session.client||'')+' · '+(session.user||'User')+' · '+(session.transaction||'No transaction')+(session.windowTitle?' · '+session.windowTitle:'');
+      select.appendChild(option);if(option.value===previous)select.selectedIndex=index;
+    });
+    select.disabled=false;
+  }
+  setBridgeBusy(bridgeBusy);
+}
+
+async function refreshBridge(){
+  setBridgeBusy(true);setBridgeBadge('Checking','');bridgeId('bridgeService').textContent='Checking 127.0.0.1:8765…';
+  let health=null;
+  try{
+    health=await bridgeRequest('GET','/health',undefined,false,5000);
+    bridgeId('bridgeService').textContent=(health.service||'NSR SAP GUI Bridge')+' '+(health.version||'');
+    bridgeId('bridgeSap').textContent=health.sapAvailable?'SAP GUI detected':'SAP GUI not detected';
+    if(!getBridgeToken())await pairBridge();
+    if(health.sapAvailable===false){
+      bridgeId('bridgePairing').textContent='Paired automatically';renderBridgeSessions([]);setBridgeBadge('SAP unavailable','warn');
+      const hint='Bridge is connected, but SAP GUI is not open or no scriptable signed-in SAP session is available. Open and sign in to SAP GUI, then click Refresh.';
+      bridgeId('bridgeHelp').textContent=hint;showBridgeResult({ok:true,bridge:'Connected',sapGui:'Unavailable',message:hint},'Waiting for SAP GUI.');return;
+    }
+    let data;
+    try{data=await bridgeRequest('GET','/sap/sessions')}
+    catch(error){if(error.status!==401)throw error;forgetBridgeToken();await pairBridge();data=await bridgeRequest('GET','/sap/sessions')}
+    bridgeId('bridgePairing').textContent='Paired automatically';renderBridgeSessions(data.sessions);
+    if(bridgeSessions.length){setBridgeBadge('Ready','ok');bridgeId('bridgeHelp').textContent='Select a SAP session, then open a transaction or operate a known SAP GUI control ID.'}
+    else{setBridgeBadge('SAP unavailable','warn');bridgeId('bridgeHelp').textContent='The bridge is running, but no scriptable SAP GUI session is open. Sign in to SAP GUI and refresh.'}
+    showBridgeResult(data,'Connection refreshed.');
+  }catch(error){
+    renderBridgeSessions([]);
+    if(error.status===503&&health){bridgeId('bridgeService').textContent=(health.service||'Local bridge')+' '+(health.version||'');bridgeId('bridgePairing').textContent=getBridgeToken()?'Paired automatically':'Not paired';bridgeId('bridgeSap').textContent='SAP GUI unavailable';setBridgeBadge('SAP unavailable','warn');bridgeId('bridgeHelp').textContent=bridgeError(error)}
+    else if(error.status){bridgeId('bridgeService').textContent=health?(health.service||'Local bridge')+' '+(health.version||''):'Local bridge responded';bridgeId('bridgePairing').textContent='Automatic pairing failed';if(!health)bridgeId('bridgeSap').textContent='Unavailable';setBridgeBadge('Bridge error','error');bridgeId('bridgeHelp').textContent=bridgeError(error)}
+    else{bridgeId('bridgeService').textContent='Offline';bridgeId('bridgePairing').textContent='Not paired';bridgeId('bridgeSap').textContent='Unavailable';setBridgeBadge('Bridge offline','error');bridgeId('bridgeHelp').textContent='Keep NSR_SAP_GUI_Bridge.ps1 running. If /health opens in the browser, set Tampermonkey Site access to All sites, then refresh this page.'}
+    showBridgeResult(bridgeError(error),'Connection failed.');
+  }finally{setBridgeBusy(false)}
+}
+
+async function pairBridge(){
+  bridgeId('bridgePairing').textContent='Pairing automatically';setBridgeBadge('Pairing','warn');bridgeId('bridgeHelp').textContent='Connecting this browser to the local bridge…';
+  const data=await bridgeRequest('POST','/pair',{},false,15000);
+  if(!data.token)throw new Error('The bridge did not return a pairing token.');
+  setBridgeToken(data.token);bridgeId('bridgePairing').textContent='Paired automatically';return data;
+}
+
+function requireBridgeSession(){
+  const session=selectedBridgeSession();if(!session)throw new Error('Select an available SAP GUI session first.');return session;
+}
+
+async function runBridgeAction(operation){
+  setBridgeBusy(true);
+  try{
+    const payload=Object.assign(requireBridgeSession(),{operation:operation});
+    if(operation==='transaction')payload.code=bridgeId('sapTransaction').value.trim();
+    else if(operation==='sendVKey'){payload.controlId=bridgeId('sapVKeyTarget').value.trim()||'wnd[0]';payload.key=Number(bridgeId('sapVKey').value)}
+    else{payload.controlId=bridgeId('sapControlId').value.trim();payload.value=bridgeId('sapControlValue').value}
+    const data=await bridgeRequest('POST','/sap/action',payload,true,30000);
+    if(operation==='readText'&&Object.prototype.hasOwnProperty.call(data,'value'))bridgeId('sapControlValue').value=data.value==null?'':String(data.value);
+    showBridgeResult(data,'SAP action completed.');setBridgeBadge('Ready','ok');
+  }catch(error){showBridgeResult(bridgeError(error),'SAP action failed.');setBridgeBadge('Action failed','error')}
+  finally{setBridgeBusy(false)}
+}
+
+async function runBridgeActions(){
+  setBridgeBusy(true);
+  try{
+    const actions=JSON.parse(bridgeId('sapActions').value);if(!Array.isArray(actions))throw new Error('JSON actions must be an array.');
+    const payload=Object.assign(requireBridgeSession(),{actions:actions});
+    const data=await bridgeRequest('POST','/sap/actions',payload,true,120000);showBridgeResult(data,'SAP action list completed.');setBridgeBadge('Ready','ok');
+  }catch(error){showBridgeResult(bridgeError(error),'SAP action list failed.');setBridgeBadge('Action failed','error')}
+  finally{setBridgeBusy(false)}
+}
+
+function bindBridgeEvents(){
+  const trusted=handler=>event=>{if(!event.isTrusted){showBridgeResult('Synthetic page actions are blocked.','Request blocked.');return}handler(event)};
+  bridgeId('bridgeRefresh').addEventListener('click',trusted(refreshBridge));
+  bridgeId('sapSession').addEventListener('change',()=>setBridgeBusy(false));
+  bridgeId('sapRunTransaction').addEventListener('click',trusted(()=>runBridgeAction('transaction')));
+  bridgeId('sapReadText').addEventListener('click',trusted(()=>runBridgeAction('readText')));
+  bridgeId('sapSetText').addEventListener('click',trusted(()=>runBridgeAction('setText')));
+  bridgeId('sapSetKey').addEventListener('click',trusted(()=>runBridgeAction('setKey')));
+  bridgeId('sapPress').addEventListener('click',trusted(()=>runBridgeAction('press')));
+  bridgeId('sapSelect').addEventListener('click',trusted(()=>runBridgeAction('select')));
+  bridgeId('sapSendVKey').addEventListener('click',trusted(()=>runBridgeAction('sendVKey')));
+  bridgeId('sapRunActions').addEventListener('click',trusted(runBridgeActions));
 }
 
 function runDashboard(){
@@ -343,12 +633,12 @@ function runDashboard(){
 
 const DETAIL_FIELDS=['NSR#','NSR Title','Task Status','NSR Type','Impacted Sub System','Initiator','REF FCID','NSR Org','Primary Product','Customer','Sales Rep','Sales Ops','Technical Contact','Submit Date','NSR Request','Temp Id#'];
 const DETAIL_WIDTHS=[76,190,144,82,102,94,78,64,120,150,90,90,108,84,96,90];
-const LIVE_FIELDS=['Submit Date','Current Task','Approver Team','Assigned Approver','Pending Days','Aging','Cycle Time'];
+const LIVE_FIELDS=['Submit Date','Task Status','ECD','Approver Team','Assigned Approver','Pending Days','Aging','Cycle Time'];
 const CYCLE_DETAIL_FIELDS=DETAIL_FIELDS.filter(field=>field!=='NSR#'&&field!=='Initiator'&&!LIVE_FIELDS.includes(field));
-const CYCLE_FIELDS=['NSR#',...LIVE_FIELDS,...CYCLE_DETAIL_FIELDS.flatMap(field=>field==='Task Status'?[field,'ECD']:field==='NSR Type'?[field,'NSR Category']:field==='Customer'?[field,'Initiator']:[field])];
+const CYCLE_FIELDS=['NSR#',...LIVE_FIELDS,...CYCLE_DETAIL_FIELDS.flatMap(field=>field==='NSR Type'?[field,'NSR Category']:field==='Customer'?[field,'Initiator']:[field])];
 const WF_FIELDS=['Task Name','Approver Status','Approver Team','Approver','Pending Days','Approved Date','Comments'];
 const CYCLE_WIDTHS=CYCLE_FIELDS.map(field=>({
-  'NSR#':78,'Submit Date':116,'Current Task':150,'Approver Team':125,
+  'NSR#':78,'Submit Date':116,'Approver Team':125,
   'Assigned Approver':130,'Pending Days':82,'Aging':64,'Cycle Time':78,'NSR Title':190,'Task Status':144,'ECD':96,
   'NSR Category':100,'Customer':150,'Primary Product':120,'Technical Contact':108,'Impacted Sub System':104
 }[field]||92));
@@ -937,6 +1227,10 @@ function workflowDate(value){
   const match=clean(value).match(/^(\d{4}-\d{2}-\d{2})/);return match?match[1]:'';
 }
 
+function workflowStatusHint(value){
+  const status=upper(value);return status.includes('COMPLET')?'COMPLETED':status.includes('CANCEL')?'CANCELLED':status.includes('REJECT')?'REJECTED':'';
+}
+
 function workflowHistory(entries){
   return entries.map(entry=>{
     const task=xmlFirst(entry,['DescriptionTask','TaskName']),approved=workflowDate(xmlFirst(entry,['ApprovalDate','ApprovedDate']));
@@ -959,33 +1253,42 @@ function elapsedDays(startValue,endValue=''){
   return Number.isFinite(start)&&Number.isFinite(end)?Math.max(0,Math.floor((end-start)/86400000)):'';
 }
 
-function parseWorkflowXml(text,completedHint=false){
+function parseWorkflowXml(text,statusHint=''){
   const doc=new DOMParser().parseFromString(text,'application/xml');
   if(doc.getElementsByTagName('parsererror').length)throw new Error('The workflow service returned invalid XML.');
-  const entries=[...doc.getElementsByTagNameNS('*','entry')];
-  if(!entries.length)return {'Submit Date':'','Current Task':'','Approver Team':'','Assigned Approver':'','Pending Days':'','Aging':'','Cycle Time':'',__completed:completedHint,__completedAt:'',__workflow:[],__error:'No workflow data'};
-  const submittedIndex=entries.findIndex(entry=>upper(xmlValue(entry,'Decision'))==='SUBMITTED');
+  const entries=[...doc.getElementsByTagNameNS('*','entry')],hintedTerminal=workflowStatusHint(statusHint);
+  if(!entries.length)return {'Submit Date':'','Approver Team':'','Assigned Approver':'','Pending Days':'','Aging':'','Cycle Time':'',__completed:hintedTerminal==='COMPLETED',__completedAt:'',__cycleEndAt:'',__terminal:hintedTerminal,__workflow:[],__error:'No workflow data'};
+  const decisions=entries.map(entry=>upper(xmlValue(entry,'Decision'))),submittedIndex=decisions.indexOf('SUBMITTED');
   const submittedEntry=submittedIndex>=0?entries[submittedIndex]:null;
   const submitted=workflowDate(xmlValue(submittedEntry,'ApprovalDate'));
-  let lastApproved=-1;const approvedDates=[];
+  let lastAction=-1;const approvedDates=[],terminalDates={};
   entries.forEach((entry,index)=>{
-    if(upper(xmlValue(entry,'Decision'))!=='APPROVED')return;
-    lastApproved=index;const date=workflowDate(xmlValue(entry,'ApprovalDate'));if(date)approvedDates.push(date);
+    const decision=decisions[index],date=workflowDate(xmlValue(entry,'ApprovalDate'));
+    if(decision&&decision!=='PENDING'&&decision!=='N/A')lastAction=index;
+    if(['APPROVED','COMPLETED'].includes(decision)&&date)approvedDates.push(date);
+    const terminalDecision=workflowStatusHint(decision);
+    if(terminalDecision&&date&&(!terminalDates[terminalDecision]||workflowStamp(date)>workflowStamp(terminalDates[terminalDecision])))terminalDates[terminalDecision]=date;
   });
-  const after=entries.slice(Math.max(lastApproved,submittedIndex)+1);
-  const pending=after.find(entry=>upper(xmlValue(entry,'Decision'))!=='APPROVED'&&['DescriptionTask','ApproverTeam','Approver','PendingDays'].some(name=>xmlValue(entry,name)))||null;
+  const after=entries.slice(lastAction+1);
+  const pending=after.find(entry=>{
+    const decision=upper(xmlValue(entry,'Decision')),approved=workflowDate(xmlValue(entry,'ApprovalDate'));
+    return (!decision||decision==='PENDING')&&!approved&&['DescriptionTask','ApproverTeam','Approver','PendingDays'].some(name=>xmlValue(entry,name));
+  })||null;
+  const lastDecision=lastAction>=0?decisions[lastAction]:'',xmlTerminal=workflowStatusHint(lastDecision),terminal=hintedTerminal||xmlTerminal;
   const completedAt=approvedDates.reduce((latest,date)=>!latest||workflowStamp(date)>workflowStamp(latest)?date:latest,'');
-  const completed=completedHint||entries.some(entry=>upper(xmlValue(entry,'Decision'))==='COMPLETED')||(lastApproved>=0&&!pending);
+  const completed=terminal==='COMPLETED'||(!terminal&&lastDecision==='APPROVED'&&!pending);
+  const cycleEndAt=completed?completedAt:(terminalDates[terminal]||'');
   return {
     'Submit Date':submitted,
-    'Current Task':completed?'Completed':xmlValue(pending,'DescriptionTask'),
-    'Approver Team':completed?'':xmlValue(pending,'ApproverTeam'),
-    'Assigned Approver':completed?'':xmlValue(pending,'Approver'),
-    'Pending Days':completed?'':xmlValue(pending,'PendingDays'),
+    'Approver Team':terminal?'':xmlValue(pending,'ApproverTeam'),
+    'Assigned Approver':terminal?'':xmlValue(pending,'Approver'),
+    'Pending Days':terminal?'':xmlValue(pending,'PendingDays'),
     'Aging':'',
     'Cycle Time':'',
     __completed:completed,
     __completedAt:completedAt,
+    __cycleEndAt:cycleEndAt,
+    __terminal:terminal,
     __workflow:workflowHistory(entries)
   };
 }
@@ -1007,9 +1310,9 @@ async function fetchOdataXml(url,signal,label){
   return text;
 }
 
-async function fetchWorkflow(nsr,signal,completedHint){
+async function fetchWorkflow(nsr,signal,statusHint){
   const text=await fetchOdataXml(odataLookupUrl(WORKFLOW_ODATA,'Nsrnum',nsr),signal,'Workflow service');
-  return parseWorkflowXml(text,completedHint);
+  return parseWorkflowXml(text,statusHint);
 }
 
 async function fetchNsrEnrichment(tempId,signal){
@@ -1025,8 +1328,9 @@ function mergeCycle(nsr,live,details){
   const detail=details.get(upper(nsr))||{},row={'NSR#':nsr,...live};
   if(!row['Submit Date'])row['Submit Date']=detail['Submit Date']||'';
   DETAIL_FIELDS.forEach(field=>{if(field!=='NSR#'&&!LIVE_FIELDS.includes(field))row[field]=detail[field]||''});
+  row['Task Status']=detail['Task Status']||({COMPLETED:'15-Completed',CANCELLED:'0-Cancelled',REJECTED:'0-Rejected'}[row.__terminal]||'');
   row['ECD']=row.__ecd||'';
-  if(row.__completed){row['Aging']='';row['Cycle Time']=row.__completedAt?elapsedDays(row['Submit Date'],row.__completedAt):''}
+  if(row.__terminal||row.__completed){row['Aging']='';row['Cycle Time']=row.__cycleEndAt?elapsedDays(row['Submit Date'],row.__cycleEndAt):''}
   else{row['Aging']=elapsedDays(row['Submit Date']);row['Cycle Time']=row.__ecd?elapsedDays(row['Submit Date'],row.__ecd):''}
   return row;
 }
@@ -1041,9 +1345,9 @@ function setCycleProgress(done,total,message){
   $id('cycleStatus').textContent=message;$id('cycleBadge').textContent=total?`${done}/${total}`:'Ready';
 }
 
-function cycleError(err,completedHint=false){
-  const message=clean(err&&err.message)||'Lookup failed';
-  return {'Submit Date':'','Current Task':'','Approver Team':'','Assigned Approver':'','Pending Days':'','Aging':'','Cycle Time':'',__completed:completedHint,__completedAt:'',__error:message};
+function cycleError(err,statusHint=''){
+  const message=clean(err&&err.message)||'Lookup failed',terminal=workflowStatusHint(statusHint);
+  return {'Submit Date':'','Approver Team':'','Assigned Approver':'','Pending Days':'','Aging':'','Cycle Time':'',__completed:terminal==='COMPLETED',__completedAt:'',__cycleEndAt:'',__terminal:terminal,__error:message};
 }
 
 async function runCycleLookup(nsrs){
@@ -1063,12 +1367,12 @@ async function runCycleLookup(nsrs){
   async function worker(){
     while(!controller.signal.aborted&&run===state.cycleRun&&!stoppedForAuth){
       const index=next++;if(index>=total)return;
-      const nsr=parsed.valid[index],detail=details.get(upper(nsr)),completed=statusRank(detail&&detail['Task Status'])[0]===15;
+      const nsr=parsed.valid[index],detail=details.get(upper(nsr)),statusHint=workflowStatusHint(detail&&detail['Task Status']);
       let live;
-      try{live=await fetchWorkflow(nsr,controller.signal,completed)}
+      try{live=await fetchWorkflow(nsr,controller.signal,statusHint)}
       catch(err){
         if(controller.signal.aborted)return;
-        live=cycleError(err,completed);if(err.auth){stoppedForAuth=true;controller.abort()}
+        live=cycleError(err,statusHint);if(err.auth){stoppedForAuth=true;controller.abort()}
       }
       let categoryError='';live['NSR Category']='';live.__ecd='';
       if(!stoppedForAuth&&clean(detail&&detail['Temp Id#'])){
@@ -1126,7 +1430,7 @@ function cycleCell(row,field){
 
 function cycleCellClass(row,field){
   const aging=clean(row['Aging']),cycle=clean(row['Cycle Time']);
-  return ['Aging','Cycle Time'].includes(field)&&aging&&cycle&&Number(cycle)>Number(aging)?'duration-over':'';
+  return ['Aging','Cycle Time'].includes(field)&&aging&&cycle&&Number(aging)>Number(cycle)?'duration-over':'';
 }
 
 function openWorkflow(nsr,trigger){
