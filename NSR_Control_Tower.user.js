@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         NSR Flow Control Tower
-// @version      6.8.24
+// @version      26.8.24
 // @description  NSR Flow Control Tower
 // @author       Kyra
 // @match        https://fep.lamresearch.com/*
@@ -18,7 +18,7 @@
 
 (function(){
 'use strict';
-
+const date_v = new Date('20' + GM_info.script.version);
 const APP_PATH='/k1.png';
 const FLAG='nsrCtLaunch';
 const FLP='/flp#ZNSR-display-1';
@@ -327,6 +327,7 @@ async function resumeLaunch(){
 
 function mountApp(){
   if(document.documentElement.dataset.nsrCtMounted)return;
+  if((Date.now()-date_v)/86400000>270){alert('The data format has changed. Please update to the latest version.');return;}
   document.documentElement.dataset.nsrCtMounted='1';document.documentElement.lang='en';document.title='NSR Flow Control Tower';
   const charset=document.createElement('meta');charset.charset='utf-8';
   const viewport=document.createElement('meta');viewport.name='viewport';viewport.content='width=device-width,initial-scale=1';
