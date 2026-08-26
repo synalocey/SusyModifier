@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         NSR Flow Control Tower
-// @version      26.8.24
+// @version      26.8.25
 // @description  NSR Flow Control Tower
 // @author       Kyra
 // @match        https://fep.lamresearch.com/*
@@ -145,7 +145,7 @@ tbody tr:nth-child(even) td{background:#fbfdff}tbody tr:hover td{background:#f0f
 .tab-list{display:flex;gap:7px}.tab-btn{border:1px solid #cbd5e1;background:#f8fafc;color:#475569;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:850;cursor:pointer}.tab-btn:hover{border-color:#38bdf8;color:#075985}.tab-btn.active{border-color:var(--teal);background:#ccfbf1;color:#115e59}
 .tab-page{display:none}.tab-page.active{display:block}.cycle-shell{display:grid;gap:16px;max-width:1900px;margin:auto;padding:16px}
 .cycle-label{display:block;color:#334155;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.45px;margin-bottom:6px}.cycle-input{display:block;width:100%;resize:vertical;min-height:120px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);padding:11px 12px;font:12px/1.55 Consolas,"Segoe UI",sans-serif}.cycle-input:focus{outline:3px solid rgba(14,165,233,.2);border-color:#38bdf8}
-.cycle-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.cycle-note{color:var(--muted);font-size:10px}.cycle-progress{display:block;width:100%;height:8px;margin-top:12px;accent-color:var(--teal)}.cycle-status{margin-top:7px;color:var(--muted);font-size:11px;line-height:1.45}.cycle-wrap{max-height:690px}#cycleTable{width:2440px;min-width:2440px}
+.cycle-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.cycle-note{color:var(--muted);font-size:10px}.cycle-progress{display:block;width:100%;height:8px;margin-top:12px;accent-color:var(--teal)}.cycle-status{margin-top:7px;color:var(--muted);font-size:11px;line-height:1.45}.cycle-wrap{max-height:690px}#cycleTable{width:2520px;min-width:2520px}
 .ct-link{border:0;background:none;color:#0369a1;padding:0;font:inherit;font-weight:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}.ct-link:hover{color:#0f766e}.ct-link:focus-visible{outline:2px solid #38bdf8;outline-offset:3px;border-radius:2px}
 .wf-modal[hidden]{display:none}.wf-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px}.wf-bg{position:absolute;inset:0;width:100%;height:100%;border:0;background:rgba(15,23,42,.62);cursor:default}.wf-box{position:relative;display:flex;flex-direction:column;width:min(1180px,calc(100vw - 40px));max-height:calc(100vh - 40px);overflow:hidden;border:1px solid #cbd5e1;border-radius:16px;background:#fff;box-shadow:0 24px 80px rgba(15,23,42,.35)}.wf-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 17px;border-bottom:1px solid var(--line);background:#f8fafc}.wf-head h2{margin:0;color:#0f172a;font-size:17px}.wf-head p{margin:3px 0 0;color:var(--muted);font-size:11px}.wf-actions{display:flex;align-items:center;gap:8px}.wf-wrap{overflow:auto;max-height:calc(100vh - 120px)}#wfTable{width:1120px;min-width:1120px;table-layout:fixed}#wfTable th:nth-child(1){width:190px}#wfTable th:nth-child(2){width:120px}#wfTable th:nth-child(3){width:160px}#wfTable th:nth-child(4){width:95px}#wfTable th:nth-child(5){width:120px}#wfTable th:nth-child(6){width:435px}#wfTable td{white-space:normal;overflow-wrap:anywhere;vertical-align:top;line-height:1.45}#wfTable td:nth-child(6){white-space:pre-wrap}body.wf-open{overflow:hidden}.toast{z-index:1100}
 #wfTable th{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25;cursor:default}
@@ -342,13 +342,13 @@ function runDashboard(){
 
 const DETAIL_FIELDS=['NSR#','NSR Title','Task Status','NSR Type','Impacted Sub System','Initiator','REF FCID','NSR Org','Primary Product','Customer','Sales Rep','Sales Ops','Technical Contact','Submit Date','NSR Request','Temp Id#'];
 const DETAIL_WIDTHS=[76,190,144,82,102,94,78,64,120,150,90,90,108,84,96,90];
-const LIVE_FIELDS=['Submit Date','Current Task','Approver Team','Assigned Approver','Pending Days','Cycle Time'];
+const LIVE_FIELDS=['Submit Date','Current Task','Approver Team','Assigned Approver','Pending Days','Aging','Cycle Time'];
 const CYCLE_DETAIL_FIELDS=DETAIL_FIELDS.filter(field=>field!=='NSR#'&&field!=='Initiator'&&!LIVE_FIELDS.includes(field));
 const CYCLE_FIELDS=['NSR#',...LIVE_FIELDS,...CYCLE_DETAIL_FIELDS.flatMap(field=>field==='NSR Type'?[field,'NSR Category']:field==='Customer'?[field,'Initiator']:[field])];
 const WF_FIELDS=['Task Name','Approver Status','Approver Team','Approver','Pending Days','Approved Date','Comments'];
 const CYCLE_WIDTHS=CYCLE_FIELDS.map(field=>({
   'NSR#':78,'Submit Date':116,'Current Task':180,'Approver Team':125,
-  'Assigned Approver':130,'Pending Days':82,'Cycle Time':78,'NSR Title':190,'Task Status':144,
+  'Assigned Approver':130,'Pending Days':82,'Aging':78,'Cycle Time':78,'NSR Title':190,'Task Status':144,
   'NSR Category':100,'Customer':150,'Primary Product':120,'Technical Contact':108,'Impacted Sub System':104
 }[field]||92));
 const CYCLE_CONCURRENCY=8,CYCLE_WARN_AT=100,CYCLE_LIMIT=500;
@@ -962,7 +962,7 @@ function parseWorkflowXml(text,completedHint=false){
   const doc=new DOMParser().parseFromString(text,'application/xml');
   if(doc.getElementsByTagName('parsererror').length)throw new Error('The workflow service returned invalid XML.');
   const entries=[...doc.getElementsByTagNameNS('*','entry')];
-  if(!entries.length)return {'Submit Date':'','Current Task':'','Approver Team':'','Assigned Approver':'','Pending Days':'','Cycle Time':'',__workflow:[],__error:'No workflow data'};
+  if(!entries.length)return {'Submit Date':'','Current Task':'','Approver Team':'','Assigned Approver':'','Pending Days':'','Aging':'','Cycle Time':'',__completed:completedHint,__completedAt:'',__workflow:[],__error:'No workflow data'};
   const submittedEntry=entries.find(entry=>upper(xmlValue(entry,'Decision'))==='SUBMITTED'&&xmlValue(entry,'ApprovalDate'));
   const submitted=workflowDate(xmlValue(submittedEntry,'ApprovalDate'));
   let lastApproved=-1;const approvedDates=[];
@@ -980,7 +980,10 @@ function parseWorkflowXml(text,completedHint=false){
     'Approver Team':completed?'':xmlValue(pending,'ApproverTeam'),
     'Assigned Approver':completed?'':xmlValue(pending,'Approver'),
     'Pending Days':completed?'':xmlValue(pending,'PendingDays'),
-    'Cycle Time':elapsedDays(submitted,completed?completedAt:''),
+    'Aging':'',
+    'Cycle Time':'',
+    __completed:completed,
+    __completedAt:completedAt,
     __workflow:workflowHistory(entries)
   };
 }
@@ -1007,18 +1010,21 @@ async function fetchWorkflow(nsr,signal,completedHint){
   return parseWorkflowXml(text,completedHint);
 }
 
-async function fetchNsrCategory(tempId,signal){
-  if(!clean(tempId))return '';
+async function fetchNsrEnrichment(tempId,signal){
+  if(!clean(tempId))return {category:'',ecd:''};
   const text=await fetchOdataXml(odataLookupUrl(NSR_DETAIL_ODATA,'TempId',tempId),signal,'NSR detail service');
   const doc=new DOMParser().parseFromString(text,'application/xml');
   if(doc.getElementsByTagName('parsererror').length)throw new Error('NSR detail service returned invalid XML.');
-  const entry=doc.getElementsByTagNameNS('*','entry')[0];return xmlValue(entry,'NsrCategory');
+  const entry=doc.getElementsByTagNameNS('*','entry')[0];
+  return {category:xmlValue(entry,'NsrCategory'),ecd:workflowDate(xmlValue(entry,'HwEngCommit'))};
 }
 
 function mergeCycle(nsr,live,details){
   const detail=details.get(upper(nsr))||{},row={'NSR#':nsr,...live};
   if(!row['Submit Date'])row['Submit Date']=detail['Submit Date']||'';
   DETAIL_FIELDS.forEach(field=>{if(field!=='NSR#'&&!LIVE_FIELDS.includes(field))row[field]=detail[field]||''});
+  if(row.__completed){row['Aging']='';row['Cycle Time']=row.__completedAt?elapsedDays(row['Submit Date'],row.__completedAt):''}
+  else{row['Aging']=elapsedDays(row['Submit Date']);row['Cycle Time']=row.__ecd?elapsedDays(row['Submit Date'],row.__ecd):''}
   return row;
 }
 
@@ -1032,9 +1038,9 @@ function setCycleProgress(done,total,message){
   $id('cycleStatus').textContent=message;$id('cycleBadge').textContent=total?`${done}/${total}`:'Ready';
 }
 
-function cycleError(err){
+function cycleError(err,completedHint=false){
   const message=clean(err&&err.message)||'Lookup failed';
-  return {'Submit Date':'','Current Task':'','Approver Team':'','Assigned Approver':'','Pending Days':'','Cycle Time':'',__error:message};
+  return {'Submit Date':'','Current Task':'','Approver Team':'','Assigned Approver':'','Pending Days':'','Aging':'','Cycle Time':'',__completed:completedHint,__completedAt:'',__error:message};
 }
 
 async function runCycleLookup(nsrs){
@@ -1059,11 +1065,11 @@ async function runCycleLookup(nsrs){
       try{live=await fetchWorkflow(nsr,controller.signal,completed)}
       catch(err){
         if(controller.signal.aborted)return;
-        live=cycleError(err);if(err.auth){stoppedForAuth=true;controller.abort()}
+        live=cycleError(err,completed);if(err.auth){stoppedForAuth=true;controller.abort()}
       }
-      let categoryError='';live['NSR Category']='';
+      let categoryError='';live['NSR Category']='';live.__ecd='';
       if(!stoppedForAuth&&clean(detail&&detail['Temp Id#'])){
-        try{live['NSR Category']=await fetchNsrCategory(detail['Temp Id#'],controller.signal)}
+        try{const enrichment=await fetchNsrEnrichment(detail['Temp Id#'],controller.signal);live['NSR Category']=enrichment.category;live.__ecd=enrichment.ecd}
         catch(err){
           if(controller.signal.aborted)return;
           categoryError=clean(err&&err.message)||'NSR Category unavailable';if(err.auth){stoppedForAuth=true;controller.abort()}
@@ -1091,7 +1097,7 @@ function cancelCycleLookup(){
 }
 
 function compareCycle(a,b,field){
-  if(['Pending Days','Cycle Time'].includes(field))return (Number(a[field])||0)-(Number(b[field])||0);
+  if(['Pending Days','Aging','Cycle Time'].includes(field))return (Number(a[field])||0)-(Number(b[field])||0);
   if(field.includes('Date'))return dateNumber(a[field])-dateNumber(b[field]);
   if(field==='Task Status')return compareStatus(a[field],b[field]);
   return collator.compare(clean(a[field]),clean(b[field]));
@@ -1109,7 +1115,7 @@ function cycleCell(row,field){
     const href=`${unsafeWindow.location.origin}${FIORI_DETAIL}${encodeURIComponent(clean(row['Temp Id#']))}/${encodeURIComponent(clean(row['NSR#']))}/Search`;
     return `<a class="ct-link" data-nsr-detail="${esc(row['NSR#'])}" href="${esc(href)}" target="_blank" rel="noopener noreferrer" title="Open ${esc(row['NSR#'])} in Fiori">${esc(row[field])}</a>`;
   }
-  if(field==='Cycle Time'&&clean(row[field])&&Array.isArray(row.__workflow)&&row.__workflow.length){
+  if(['Aging','Cycle Time'].includes(field)&&clean(row[field])&&Array.isArray(row.__workflow)&&row.__workflow.length){
     return `<button class="ct-link" type="button" data-wf-nsr="${esc(row['NSR#'])}" title="View full workflow for ${esc(row['NSR#'])}">${esc(row[field])}</button>`;
   }
   return esc(row[field]);
