@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.8.18
+// @version       6.8.26
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -13,7 +13,6 @@
 // @match         *://*.scopus.com/*
 // @match         *://www.scilit.net/*
 // @match         *://admin.scilit.net/articles*
-// @match         *://*.mdpi.com/*
 // @match         *://*.google.com/*
 // @match         *://*.google.com.hk/*
 // @match         *://*.google.co.uk/*
@@ -38,32 +37,55 @@
 // @match         *://i.mdpi.cn/team/dinner*
 // @match         *://forms.office.com/*
 // @match         *://forms.cloud.microsoft/*
+// @match         https://login.microsoftonline.com/*
 // @require       https://gcore.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
+// @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/Scholar-screening.user.js?v=6.8.26
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM.getValue
 // @grant         GM.setValue
+// @grant         GM.xmlHttpRequest
+// @grant         GM_deleteValue
+// @grant         GM_addValueChangeListener
+// @grant         GM_removeValueChangeListener
 // @grant         GM_xmlhttpRequest
 // @grant         GM_openInTab
 // @grant         GM_addStyle
+// @grant         GM_registerMenuCommand
+// @grant         window.close
 // @connect       mdpi.com
+// @connect       mdpi.cn
 // @connect       i.mdpi.cn
+// @connect       login.microsoftonline.com
 // @connect       titlecaseconverter.com
 // @connect       google.com
 // @connect       scholar.google.com
+// @connect       scopus.com
 // @connect       webofknowledge.com
 // @connect       skday.com
 // @connect       pubpeer.com
 // @connect       script.google.com
 // @connect       script.googleusercontent.com
+// @run-at        document-idle
 // ==/UserScript==
 /* globals jQuery, $, GM_config */
 
+const SK_WORK_LOGIN_SITES = [
+    { id: 'susy', name: 'SUSY', url: 'https://susy.mdpi.com/user/sme/status/submitted' },
+    { id: 'mdpi', name: 'MDPI', url: 'https://www.mdpi.com/user/login' },
+    { id: 'mailsdb', name: 'MailsDB', url: 'https://mailsdb.i.mdpi.com/' },
+    { id: 'mrs', name: 'MRS Statistics', url: 'https://mrs.mdpi.com/statistics' },
+    { id: 'mrs2', name: 'MRS 2.0', url: 'https://mrs.mdpi.cn/' },
+    { id: 'attendance', name: 'HRMS', url: 'https://i.mdpi.cn/team/attendance' },
+    { id: 'redmine', name: 'Redmine', url: 'https://redmine.mdpi.cn/' }
+];
+
 (function () {
-    'use strict'; console.time("test");
+    'use strict';
+    if (window.top === window) GM_registerMenuCommand('🔐 快捷登录', function(){GM_openInTab('https://www.mdpi.com/?login', { active: true });});
     GM_config.init({
         'id': 'SusyModifierConfig',
         'title': 'Settings of SusyModifier v' + GM_info.script.version,
@@ -88,7 +110,7 @@
             'SIpages': { 'label': '特刊列表免翻页', 'labelPos': 'right', 'type': 'checkbox', 'default': true },
             'Cfp_checker': { 'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'GE_TemplateID': {
-                'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
+                'section': [], 'label': '默认 Scholar Template', 'type': 'select', 'labelPos': 'left', 'options':
                 ['Guest Editor-Invite with Responsibility', 'Guest Editor-Invite with Benefits', 'Guest Editor-One Free Paper for GE team', 'Guest Editor-Why a Special Issue', 'Guest Editor-Optional', 'Guest Editor – Invite with Responsibilities and Benefits',
                  '*Guest Editor - SI Mentor Program'], default: 'Guest Editor-Invite with Responsibility'
             },
@@ -197,7 +219,6 @@
             'Journal': { 'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics', 'Games', 'Geometry', 'Mathematics', 'MCB', 'Risks', 'IJT', 'Telecom', 'None'], 'default': 'Mathematics' },
             'Easy_Journal': { 'label': '置顶期刊列表', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'Susy_Theme': { 'label': 'Change Susy Theme', 'type': 'button', 'click': function () { window.location.href = "https://susy.mdpi.com/user/settings" } },
-            'MathBatch': { 'label': 'Scopus Enhance', 'type': 'button', 'click': function () { GM_openInTab("https://update.greasyfork.org.cn/scripts/447389/SciHub%20CRX.user.js", { active: true }) } },
             'Interface_sidebar': { 'section': [], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true },
             'Old_Icon': { 'label': '使用旧图标', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'Regular_Color': { 'label': '橙色标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
@@ -281,7 +302,6 @@
     });
 })();
 
-
 function onInit() {
     const date_v = new Date('202' + GM_info.script.version);
     const blacklistEncoded = ["YWJjYW1lbGlhLnN1bnh5eg==","YWJjY2VsaW5hLnNpeHl6"];
@@ -316,6 +336,9 @@ function onInit() {
             }
         })
     }
+
+    if (window.location.href.indexOf("www.mdpi.com/?login") > -1) skOpenWorkLoginHub();
+    skWorkLoginHelper();
 
     var S_J, S_S;
     switch (GM_config.get('Journal')) {
@@ -358,8 +381,8 @@ function onInit() {
     }
 
     function decode(input) { const decoded = atob(input); return decoded.slice(3, -3); }
-    var userNamesEncoded = ["YWJjc3luYS5tdXh5eg==", "YWJjc3VzaWUuaHVhbmd4eXo=", "YWJjaGVsZW5lLmh1eHl6", "YWJjbGlubi5saXh5eg==", "YWJjZGViYnkucGVuZ3h5eg==", "YWJjZ2xhZHlzLmxpeHl6", "YWJjY29ubmVsbHkueWFuZ3h5eg==", "YWJjdGlmZmFueS5saXh5eg==", "YWJjbGlsaWEuZGluZ3h5eg==",
-                            "YWJjaW5uYS5odWFuZ3h5eg==", "YWJjY2FzcGVyLnhpZXh5eg==", "YWJjZGFuaWVsLmRhbnh5eg==", "YWJjZWlsZWVuLnpoYW5neHl6", "YWJjZWRlbi54aWF4eXo="];
+    var userNamesEncoded = ["YWJjc3luYS5tdXh5eg==", "YWJjc3VzaWUuaHVhbmd4eXo=", "YWJjaGVsZW5lLmh1eHl6", "YWJjbGlubi5saXh5eg==", "YWJjZGViYnkucGVuZ3h5eg==", "YWJjZ2xhZHlzLmxpeHl6", "YWJjY29ubmVsbHkueWFuZ3h5eg==", "YWJjZWxsZS5jYWl4eXo=", "YWJjaGFpbGV5LnRhbmd4eXo=",
+                            "YWJjaW5uYS5odWFuZ3h5eg==", "YWJjY2FzcGVyLnhpZXh5eg==", "YWJjZGFuaWVsLmRhbnh5eg==", "YWJjZWlsZWVuLnpoYW5neHl6", "YWJjZWRlbi54aWF4eXo=", "YWJjc2hlcnlsLnh1eHl6", "YWJjcnVvbmFuLmNoZW54eXo="];
     var userNames = userNamesEncoded.map(decode);
 
     //susy侧边栏的按钮🔎
@@ -452,8 +475,10 @@ function onInit() {
 
             $(".menu [href='/user/managing/status/submitted']").attr("href", "/user/managing/status/submitted?form[journal_id]=" + S_J);
             $(".menu [href='/manuscript/quality/check/list']").attr("href", '/manuscript/quality/check/list?form[journal_id]=' + S_J);
-            $("#owner").on("click", function () { $.getJSON("/user/ajax/search_manuscript_owner?term=" + $("#topmenu span:contains('@mdpi.com')").text(), function (data) { window.location.href = '/user/managing/status/submitted?form[owner_id][]=' + data[0].value }); });
-
+            $("#owner").click(function () {
+                let p = $("a[href='/user/super/status/ongoing']").length ? "super" : "managing";
+                $.getJSON("/user/ajax/search_manuscript_owner?term=" + $("#topmenu span:contains('@mdpi.com')").text(), d => location.href = `/user/${p}/status/submitted?form[owner_id][]=${d[0].value}`);
+            });
             if (GM_config.get('Assign_Assistant')) { //派稿助手
                 $(".menu [href*='/list/list_volunteer_reviewers']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").on("click", skAddReviewers);
                 document.addEventListener('keydown', function (e) { if (e.ctrlKey && e.key === 'e') { e.preventDefault(); skAddReviewers(); $("#add_susie_t").val(''); } });
@@ -497,7 +522,7 @@ function onInit() {
         } catch (error) { }
     }
 
-    //GE Invitation✏️ + Quick
+    //Scholar✏️ + Quick
     if (window.location.href.indexOf("/invite/guest_editor") > -1) {
         try {
             skMyAccountOnly();
@@ -3018,9 +3043,9 @@ function onInit() {
         try {
             var customStyle = `#leftcol .menu li{text-align: left !important;justify-content: flex-start !important;position: relative !important;padding: 2px 0 2px 15px !important;font-size: 13px !important; border-bottom: 1px solid rgb(204, 204, 204) !important;}
             #maincol .user_box_item,#maincol .user_box {font-size: 13px !important;}
-            #leftcol .menu li::before{background-color: rgb(79, 86, 113);content: "";height: 6px;width: 6px;position: absolute;left: 4px;top: 8px;z-index: 1}
+            #leftcol .menu li:not([class])::before{background-color: rgb(79, 86, 113);content: "";height: 6px;width: 6px;position: absolute;left: 4px;top: 8px;z-index: 1}
             #leftcol .menu-hr {display: none !important;}
-            .light_green_theme #leftcol .menu li::before {background-color: rgb(76, 142, 101) !important;}
+            .light_green_theme #leftcol .menu li:not([class])::before {background-color: rgb(76, 142, 101) !important;}
             .light_green_theme #leftcol .menu li {border-bottom: 1px solid rgb(197, 222, 208) !important;}
             .light_green_theme #leftcol .menu li:not(.active) a:not(.active) {color: rgb(46, 57, 36) !important;}
             #topmenu ul {padding: 3px 0 !important;}
@@ -3349,8 +3374,6 @@ function onInit() {
         } catch (error) { }
     }
 
-    console.timeEnd("test")
-
 }
 
 //---------------------------------------------------------------------------------------------------------------------------Functions-------------------------------------------------------------------------------------------------------------------------
@@ -3378,7 +3401,7 @@ function waitForText(element, text, callback, freq) {
 }
 
 
-function skGMFetchGet(url) { return new Promise(resolve => { GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve }); }) };
+function skGMFetchGet(url) { return new Promise(resolve => { GM_xmlhttpRequest({ method: "GET", url: url, onload: resolve, onerror: resolve, ontimeout: resolve }); }) };
 function skStringToRegex(str) { if (str.startsWith("[Regex]")) { return RegExp(str.substring(7), "g"); } else { return str } };
 function skStringToFunction(str) { if (str.indexOf("function ") == 0) { let funcTest = new Function('return ' + str); return funcTest(); } else { return str } };
 function skSidebarSize() {
@@ -3651,6 +3674,185 @@ function skMyAccountOnly() {
         <div id="alertBox" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; background: white; border: 1px solid black; z-index: 1001;"><p>You are now using: ${Current_Account}</p><button id="okBtn">[OK]</button></div>`);
         $('#okBtn').on("click", function () { $('#overlay, #alertBox').remove() });
     }
+}
+
+function skOpenWorkLoginHub() {
+    let hubRun = Date.now();
+    const siteUrl = id => SK_WORK_LOGIN_SITES.find(site => site.id === id).url;
+    let isUserNameMatch = GM_getValue('isUserNameMatch', false);
+
+    document.documentElement.innerHTML = `<!doctype html><html lang="zh-CN"><head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>快捷登录聚合页面</title>
+    <style id="sk-work-style">
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#f3f6f8;color:#26343d;font-family:Arial,"Microsoft YaHei",sans-serif}body{padding:42px 18px}
+    .sk-work-page{max-width:820px;margin:auto}.sk-work-head{margin-bottom:22px}.sk-work-head h1{margin:0;color:#244a63;font-size:28px}.sk-work-head p{margin:7px 0 0;color:#6b7881;font-size:14px}
+    .sk-work-card{overflow:hidden;background:#fff;border:1px solid #e0e6ea;border-radius:12px;box-shadow:0 8px 28px rgba(42,62,74,.09)}
+    .sk-work-summary{display:flex;align-items:center;gap:12px;padding:16px 20px;background:#f8fafb;border-bottom:1px solid #e7ecef}.sk-work-badge{min-width:72px;padding:5px 10px;color:#2563b8;background:#e7f0ff;border-radius:20px;font-size:12px;font-weight:bold;text-align:center}.sk-work-summary-text{color:#52616b;font-size:14px}
+    .sk-work-row{display:grid;grid-template-columns:18px minmax(135px,1fr) minmax(210px,1.5fr) 58px;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid #edf1f3;font-size:14px}.sk-work-dot{width:10px;height:10px;border-radius:50%;background:#3b82e6;box-shadow:0 0 0 4px #e8f1ff}.sk-work-name{font-weight:600}.sk-work-state{color:#2769b7}
+    .sk-work-open{padding:5px 8px;color:#405562;background:#fff;border:1px solid #b8c4cc;border-radius:6px;text-align:center;text-decoration:none}.sk-work-open:hover{color:#245e86;background:#f3f8fb}
+    .sk-work-row[data-state="ok"] .sk-work-dot{background:#22a060;box-shadow:none}.sk-work-row[data-state="ok"] .sk-work-state{color:#16804b;font-weight:600}.sk-work-row[data-state="login"] .sk-work-dot,.sk-work-row[data-state="unknown"] .sk-work-dot,.sk-work-row[data-state="manual"] .sk-work-dot{background:#e59622;box-shadow:none}.sk-work-row[data-state="login"] .sk-work-state,.sk-work-row[data-state="unknown"] .sk-work-state,.sk-work-row[data-state="manual"] .sk-work-state{color:#ad6700}
+    .sk-work-microsoft{margin:14px 20px 0;padding:10px 12px;color:#805900;background:#fff6dc;border-radius:7px;font-size:13px}.sk-work-microsoft[hidden]{display:none}.sk-work-actions{padding:18px 20px 20px}.sk-work-start{width:100%;padding:12px;color:#fff;background:#2f709b;border:0;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}.sk-work-start:disabled{background:#a0adb5;cursor:default}
+    .sk-work-extra-actions{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+    .sk-work-btn{width:100%;padding:10px 12px;color:#2f709b;background:#f0f6fa;border:1px solid #c4d7e5;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s ease;text-align:center}
+    .sk-work-btn:hover:not(.sk-work-btn-placeholder){background:#2f709b;color:#fff;border-color:#2f709b}
+    .sk-work-btn-placeholder{opacity:0.5;cursor:default;background:#f8fafb;border-style:dashed}
+    @media(max-width:620px){body{padding:24px 12px}.sk-work-row{grid-template-columns:14px 1fr 54px;gap:9px;padding:13px 15px}.sk-work-state{grid-column:2/4}}
+    </style></head><body><main id="sk-work-login-page" class="sk-work-page">
+    <section class="sk-work-card">
+    <div class="sk-work-summary"><span id="sk-work-badge" class="sk-work-badge">正在检查</span></div>
+    <div id="sk-work-microsoft" class="sk-work-microsoft" hidden></div>
+    <div class="sk-work-row" data-site="susy" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">SUSY</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('susy')}" target="_blank">查看</a></div>
+    <div class="sk-work-row" data-site="mdpi" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MDPI</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('mdpi')}" target="_blank">查看</a></div>
+    <div class="sk-work-row" data-site="mailsdb" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MailsDB</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('mailsdb')}" target="_blank">查看</a></div>
+    <div class="sk-work-row" data-site="mrs" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MRS Statistics</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('mrs')}" target="_blank">查看</a></div>
+    <div class="sk-work-row" data-site="mrs2" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MRS 2.0</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('mrs2')}" target="_blank">查看</a></div>
+    <div class="sk-work-row" data-site="attendance" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">HRMS</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('attendance')}" target="_blank">查看</a></div>
+    <div class="sk-work-row" data-site="redmine" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">Redmine CN</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('redmine')}" target="_blank">查看</a></div>
+    <div class="sk-work-actions">
+        <button type="button" id="sk-work-start" class="sk-work-start" disabled>正在检查登录状态…</button>
+        ${isUserNameMatch ? `
+        <div class="sk-work-extra-actions">
+            <button type="button" id="sk-scholar-check" class="sk-work-btn">Scholar Check</button>
+            <button type="button" class="sk-work-btn sk-work-btn-placeholder">            </button>
+        </div>` : ''}
+    </div>
+    </section></main></body></html>`;
+
+    function updateSiteStatus(siteId, isOk) {
+        $(`.sk-work-row[data-site="${siteId}"]`).attr('data-state', isOk ? 'ok' : 'login').find('.sk-work-state').text(isOk ? '已登录' : '未登录');
+        if (!$('.sk-work-row[data-state="checking"]').length) {
+            $('#sk-work-start').prop('disabled', false).text('开始批量登录');
+            $('#sk-work-badge').text('检查完成');
+        }
+    }
+
+    skGMFetchGet('https://susy.mdpi.com/user/info?emails=').then(res => updateSiteStatus('susy', res.responseText?.includes('reviewer-profile')));
+    skGMFetchGet('https://www.mdpi.com/journal/mathematics/special_issues/Math_Comput_Program_AI').then(res => updateSiteStatus('mdpi', res.responseText?.includes('Manage the SI')));
+    skGMFetchGet('https://mailsdb.i.mdpi.com/').then(res => updateSiteStatus('mailsdb', res.responseText?.includes('search will look through all from')));
+    skGMFetchGet('https://mrs.mdpi.com/data/').then(res => updateSiteStatus('mrs', res.responseText?.includes('Special Issue')));
+    skGMFetchGet('https://mrs.mdpi.cn/prod-api/api/download_center').then(res => updateSiteStatus('mrs2', res.responseText?.includes('success')));
+    skGMFetchGet('https://i.mdpi.cn/team/attendance').then(res => updateSiteStatus('attendance', res.responseText?.includes('Team List')));
+    skGMFetchGet('https://redmine.mdpi.cn/').then(res => updateSiteStatus('redmine', res.responseText?.includes('our internal platform')));
+
+    $('#sk-work-start').on('click', function () {
+        let needLoginSites = $('.sk-work-row[data-state="login"]').map((_, el) => $(el).data('site')).get();
+        if (needLoginSites.length === 0) { $(this).text('全部已登录'); return; }
+        $(this).prop('disabled', true).text('正在批量登录…');
+
+        GM_setValue('skWorkLoginUntil', Date.now() + 5 * 60 * 1000);
+        GM_setValue('skWorkLoginRun', hubRun);
+        GM_setValue('skWorkLoginStatus__microsoft', {});
+
+        needLoginSites.forEach(function (id) {
+            $(`.sk-work-row[data-site="${id}"]`).find('.sk-work-state').text('正在登录…');
+            let url = siteUrl(id);
+            if (url) {
+                GM_setValue('skWorkLoginAutoClose_' + id, hubRun);
+                GM_setValue('skWorkLoginStatus_' + id, { state: 'working', text: '正在登录…', run: hubRun });
+                GM_openInTab(url, { active: false, insert: true });
+            }
+        });
+
+        let timer = setInterval(() => {
+            needLoginSites = needLoginSites.filter(id => {
+                let s = GM_getValue('skWorkLoginStatus_' + id, {});
+                if (s.state === 'ok') updateSiteStatus(id, true);
+                else if (s.text) $(`.sk-work-row[data-site="${id}"]`).find('.sk-work-state').text(s.text);
+                return s.state !== 'ok';
+            });
+            let ms = GM_getValue('skWorkLoginStatus__microsoft', {});
+            $('#sk-work-microsoft').text(ms?.text || '').prop('hidden', !ms?.text);
+            if (!needLoginSites.length) {
+                clearInterval(timer);
+                $('#sk-work-start').text('全部登录完成');
+                $('#sk-work-badge').text('全部已登录');
+                GM_setValue('skWorkLoginUntil', 0);
+            }
+        }, 500);
+    });
+
+    $('#sk-scholar-check').on('click', function () {
+        let allOk = $('.sk-work-row').length > 0 && $('.sk-work-row[data-state!="ok"]').length === 0;
+        if (allOk) {
+            window.location.href = 'https://susy.mdpi.com/user/settings#G';
+        } else {
+            alert('请先完成所有站点的登录！');
+        }
+    });
+}
+
+function skWorkLoginHelper() {
+    if (Date.now() > Number(GM_getValue('skWorkLoginUntil', 0))) return;
+    let host = location.hostname, run = GM_getValue('skWorkLoginRun', 0);
+
+    const skSetWorkLoginStatus = (id, state, text) => {
+        let key = 'skWorkLoginStatus_' + id;
+        if (GM_getValue(key, {}).state === 'ok' && state !== 'ok') return;
+        GM_setValue(key, { state, text, run, time: Date.now() });
+    };
+
+    if (host === 'login.microsoftonline.com') { // 1. 微软统一登录页
+        let loginUrl = decodeURIComponent(location.href);
+        if (!['keycloak.mdpi.cn', 'auth.mdpi.com', 'auth.mdpi.cn'].some(k => loginUrl.includes(k))) return;
+        let tries = 0, timer = setInterval(() => {
+            let acc = [...document.querySelectorAll('button,[role="button"]')].find(el => /@mdpi\.com/i.test(el.textContent || ''));
+            if (acc) { clearInterval(timer); acc.click(); }
+            else if (++tries > 30) { clearInterval(timer); skSetWorkLoginStatus('_microsoft', 'manual', '请在 Microsoft 页面登陆 @mdpi.com 账户'); }
+        }, 500);
+        return;
+    }
+
+    if (host === 'auth.mdpi.com' || host === 'auth.mdpi.cn') { // 2. MDPI Keycloak
+        GM_setValue('skWorkLoginUntil', Date.now() + 5 * 60 * 1000);
+        let msBtn = document.querySelector('a[href="/mdpi_keycloak/login"]');
+        if (msBtn && !msBtn.dataset.skClicked) {
+            msBtn.dataset.skClicked = '1';
+            ['susy', 'mdpi'].forEach(id => skSetWorkLoginStatus(id, 'working', '正在使用 Microsoft 企业认证…'));
+            msBtn.click();
+        } else if ($('#username').length || $('#password').length || $('input[type="password"]').length) {
+            ['susy', 'mdpi'].forEach(id => skSetWorkLoginStatus(id, 'manual', '请填写账号密码并点击 Continue'));
+        }
+        return;
+    }
+
+    let site = SK_WORK_LOGIN_SITES.find(s => location.href.includes(new URL(s.url).hostname) || (s.id === 'mdpi' && (location.hostname === 'www.mdpi.com' || location.hostname === 'login.mdpi.com'))); // 3. 各业务系统页面
+    if (!site) return;
+
+    let tries = 0, pageTimer = setInterval(() => {
+        let text = document.body?.innerText || '', path = location.pathname;
+        let isAuthPage = path.includes('/login') || path.includes('/2fa') || location.hostname === 'login.mdpi.com';
+        let loggedIn = (site.id === 'susy' && path.startsWith('/user/sme/status/submitted')) ||
+            (site.id === 'mdpi' && !isAuthPage && ($('a[href*="logout"]').length || text.includes('Manage the SI') || (location.hostname === 'www.mdpi.com' && !$('a[href*="/user/login"]').length && text.length > 200))) ||
+            (site.id === 'mailsdb' && ($('a[href*="logout_by_keycloak"]').length || (path.startsWith('/reversion/') && !path.includes('/login')))) ||
+            (site.id === 'mrs' && path.startsWith('/statistics') && $('a[href*="logout"]').length) ||
+            (site.id === 'attendance' && path === '/team/attendance' && /@mdpi\.com/i.test(text)) ||
+            (site.id === 'mrs2' && location.hash && !location.hash.includes('/login') && document.title !== 'MRS') ||
+            (site.id === 'redmine' && $('a[href*="logout"]').length);
+
+        if (loggedIn) {
+            clearInterval(pageTimer);
+            skSetWorkLoginStatus(site.id, 'ok', '已登录');
+            if (GM_getValue('skWorkLoginAutoClose_' + site.id, 0) === run) {
+                GM_setValue('skWorkLoginAutoClose_' + site.id, 0);
+                setTimeout(() => window.close(), 700);
+            }
+            return;
+        }
+
+        // 自动点击企业认证 / 2FA 按钮
+        let btn = document.querySelector('a[href*="/mdpi_keycloak/login"]') || [...document.querySelectorAll('a,button')].find(el => /Continue as .*@mdpi\.com/i.test(el.textContent) || /(Microsoft MDPI|MDPI Microsoft) Authentication/i.test(el.textContent));
+        if (btn && !btn.dataset.skClicked) {
+            btn.dataset.skClicked = '1';
+            skSetWorkLoginStatus(site.id, 'working', '正在使用 Microsoft 企业认证…');
+            if (btn.href) window.location.href = btn.href;
+            else btn.click();
+        } else if ($('#username').length || $('#password').length || $('input[type="password"]').length) {
+            skSetWorkLoginStatus(site.id, 'manual', '请填写账号密码并点击 Continue');
+        } else if (++tries > 60) {
+            clearInterval(pageTimer);
+            skSetWorkLoginStatus(site.id, 'manual', '未能自动确认，请打开查看');
+        }
+    }, 500);
 }
 
 function addCssTooltipster() {GM_addStyle(`.tooltipster-fall,.tooltipster-grow.tooltipster-show{-webkit-transition-timing-function:cubic-bezier(.175,.885,.32,1);-moz-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);-ms-transition-timing-function:
