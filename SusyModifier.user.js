@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.8.27
+// @version       6.8.28
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -42,7 +42,7 @@
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
-// @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/Scholar-screening.user.js?v=6.8.27
+// @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/Scholar-screening.user.js?v=6.8.28
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM.getValue
@@ -3735,7 +3735,7 @@ function skOpenWorkLoginHub() {
     skGMFetchGet('https://www.mdpi.com/journal/mathematics/special_issues/Math_Comput_Program_AI').then(res => updateSiteStatus('mdpi', res.responseText?.includes('Manage the SI')));
     skGMFetchGet('https://mailsdb.i.mdpi.com/').then(res => updateSiteStatus('mailsdb', res.responseText?.includes('search will look through all from')));
     skGMFetchGet('https://mrs.mdpi.com/data/').then(res => updateSiteStatus('mrs', res.responseText?.includes('Special Issue')));
-    skGMFetchGet('https://mrs.mdpi.cn/prod-api/api/download_center').then(res => updateSiteStatus('mrs2', res.responseText?.includes('success')));
+    skGMFetchGet('https://mrs.mdpi.cn/prod-api/api/download_center').then(res => updateSiteStatus('mrs2', /success|Expired token/.test(res.responseText)));
     skGMFetchGet('https://i.mdpi.cn/team/attendance').then(res => updateSiteStatus('attendance', res.responseText?.includes('Team List')));
     skGMFetchGet('https://redmine.mdpi.cn/').then(res => updateSiteStatus('redmine', res.responseText?.includes('our internal platform')));
 

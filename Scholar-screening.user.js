@@ -1,9 +1,7 @@
 // ==UserScript==
-// @name         SuSy GE Invitation Screener
-// @namespace    https://susy.mdpi.com/
-// @version      6.8.27
-// @description  Screen Guest Editor candidates on SuSy Settings #G.
-// @author       Syna + Codex
+// @name         SuSy Scholar Screener
+// @version      6.8.28
+// @author       SKDAY
 // @match        https://susy.mdpi.com/user/settings*
 // @match        https://www.scopus.com/authid/detail.uri*
 // @require      https://gcore.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js
@@ -25,6 +23,7 @@
   'use strict';
 
   if (typeof window !== 'undefined' && window.top !== window) return;
+  if (typeof window !== 'undefined' && !globalThis.__GE_SCREEN_TEST__ && !GM_getValue('isUserNameMatch', false)) return;
 
   const $ = globalThis.jQuery;
   const STORAGE_PREFIX = 'susy_ge_screener_';
