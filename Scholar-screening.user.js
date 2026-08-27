@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         SuSy GE Invitation Screener
 // @namespace    https://susy.mdpi.com/
-// @version      6.8.26
+// @version      6.8.27
 // @description  Screen Guest Editor candidates on SuSy Settings #G.
 // @author       Syna + Codex
 // @match        https://susy.mdpi.com/user/settings*
@@ -1159,7 +1159,7 @@
 
   function readConfig($panel) {
     return {
-      queryMode: $panel.find('#ges-mode').val() === 'full' ? 'full' : 'scopus',
+      queryMode: $panel.find('#ges-mode').val() || '',
       minimumHIndex: clamp($panel.find('#ges-min-h').val(), 0, 500, DEFAULTS.minimumHIndex),
       subjectName: normalizeSpace($panel.find('#ges-subject').val()) || DEFAULTS.subjectName,
       maximumSubjectRank: clamp($panel.find('#ges-subject-rank').val(), 1, 50, DEFAULTS.maximumSubjectRank),
@@ -1295,7 +1295,7 @@
         </div>
       </details>
       <div class="ges-actions">
-        <select id="ges-mode" aria-label="查询范围"><option value="scopus">Only H-index</option><option value="full">Full record</option></select>
+        <select id="ges-mode" aria-label="查询范围"><option value="" selected disabled>选择查询范围</option><option value="scopus">Only H-index</option><option value="full">Full record</option></select>
         <button type="button" class="ges-btn primary" id="ges-start">开始筛选</button>
         <button type="button" class="ges-btn danger" id="ges-stop" disabled>停止</button>
         <button type="button" class="ges-btn" id="ges-export" disabled>导出 CSV</button>
@@ -1318,7 +1318,7 @@
       mailLookbackDays: getStored('mailLookbackDays', DEFAULTS.mailLookbackDays),
     };
     for (const [id, value] of Object.entries({
-      '#ges-mode': DEFAULTS.queryMode,
+      '#ges-mode': '',
       '#ges-min-h': savedConfig.minimumHIndex,
       '#ges-subject': savedConfig.subjectName,
       '#ges-subject-rank': savedConfig.maximumSubjectRank,
@@ -1366,6 +1366,11 @@
     async function startScreening() {
       if (state.running) return;
       const config = readConfig($panel);
+      if (!config.queryMode) {
+        $status.text('请选择 Only H-index 或 Full record。');
+        $panel.find('#ges-mode').trigger('focus');
+        return;
+      }
       const parsed = parseEmailList($emails.val());
       if (!parsed.ordered.length) {
         $status.text('请至少输入一个邮箱。');

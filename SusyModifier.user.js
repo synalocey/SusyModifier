@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.8.26
+// @version       6.8.27
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -42,7 +42,7 @@
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
-// @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/Scholar-screening.user.js?v=6.8.26
+// @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/Scholar-screening.user.js?v=6.8.27
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM.getValue
@@ -3676,6 +3676,8 @@ function skMyAccountOnly() {
     }
 }
 
+function skIsSusyLoggedIn() { return skGMFetchGet('https://susy.mdpi.com/user/info?emails=').then(res => !!res?.responseText?.includes('reviewer-profile')); }
+
 function skOpenWorkLoginHub() {
     let hubRun = Date.now();
     const siteUrl = id => SK_WORK_LOGIN_SITES.find(site => site.id === id).url;
@@ -3687,11 +3689,14 @@ function skOpenWorkLoginHub() {
     *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#f3f6f8;color:#26343d;font-family:Arial,"Microsoft YaHei",sans-serif}body{padding:42px 18px}
     .sk-work-page{max-width:820px;margin:auto}.sk-work-head{margin-bottom:22px}.sk-work-head h1{margin:0;color:#244a63;font-size:28px}.sk-work-head p{margin:7px 0 0;color:#6b7881;font-size:14px}
     .sk-work-card{overflow:hidden;background:#fff;border:1px solid #e0e6ea;border-radius:12px;box-shadow:0 8px 28px rgba(42,62,74,.09)}
-    .sk-work-summary{display:flex;align-items:center;gap:12px;padding:16px 20px;background:#f8fafb;border-bottom:1px solid #e7ecef}.sk-work-badge{min-width:72px;padding:5px 10px;color:#2563b8;background:#e7f0ff;border-radius:20px;font-size:12px;font-weight:bold;text-align:center}.sk-work-summary-text{color:#52616b;font-size:14px}
-    .sk-work-row{display:grid;grid-template-columns:18px minmax(135px,1fr) minmax(210px,1.5fr) 58px;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid #edf1f3;font-size:14px}.sk-work-dot{width:10px;height:10px;border-radius:50%;background:#3b82e6;box-shadow:0 0 0 4px #e8f1ff}.sk-work-name{font-weight:600}.sk-work-state{color:#2769b7}
+    .sk-work-summary{display:flex;align-items:center;gap:12px;padding:16px 20px;background:#f8fafb;border-bottom:1px solid #eee}.sk-work-badge{min-width:72px;padding:5px 10px;color:#26b;background:#e7f0ff;border-radius:20px;font-size:12px;font-weight:bold;text-align:center}
+    .sk-work-summary-text{color:#52616b;font-size:14px}.sk-work-row{display:grid;grid-template-columns:18px minmax(135px,1fr) minmax(210px,1.5fr) 58px;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid #edf1f3;font-size:14px}
+    .sk-work-dot{width:10px;height:10px;border-radius:50%;background:#3b82e6;box-shadow:0 0 0 4px #e8f1ff}.sk-work-name{font-weight:600}.sk-work-state{color:#2769b7}
     .sk-work-open{padding:5px 8px;color:#405562;background:#fff;border:1px solid #b8c4cc;border-radius:6px;text-align:center;text-decoration:none}.sk-work-open:hover{color:#245e86;background:#f3f8fb}
-    .sk-work-row[data-state="ok"] .sk-work-dot{background:#22a060;box-shadow:none}.sk-work-row[data-state="ok"] .sk-work-state{color:#16804b;font-weight:600}.sk-work-row[data-state="login"] .sk-work-dot,.sk-work-row[data-state="unknown"] .sk-work-dot,.sk-work-row[data-state="manual"] .sk-work-dot{background:#e59622;box-shadow:none}.sk-work-row[data-state="login"] .sk-work-state,.sk-work-row[data-state="unknown"] .sk-work-state,.sk-work-row[data-state="manual"] .sk-work-state{color:#ad6700}
-    .sk-work-microsoft{margin:14px 20px 0;padding:10px 12px;color:#805900;background:#fff6dc;border-radius:7px;font-size:13px}.sk-work-microsoft[hidden]{display:none}.sk-work-actions{padding:18px 20px 20px}.sk-work-start{width:100%;padding:12px;color:#fff;background:#2f709b;border:0;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}.sk-work-start:disabled{background:#a0adb5;cursor:default}
+    .sk-work-row[data-state="ok"] .sk-work-dot{background:#22a060;box-shadow:none}.sk-work-row[data-state="ok"] .sk-work-state{color:#16804b;font-weight:600}.sk-work-row[data-state="login"] .sk-work-dot,.sk-work-row[data-state="unknown"]
+    .sk-work-dot,.sk-work-row[data-state="manual"] .sk-work-dot{background:#e59622;box-shadow:none}.sk-work-row[data-state="login"] .sk-work-state,.sk-work-row[data-state="unknown"] .sk-work-state,.sk-work-row[data-state="manual"] .sk-work-state{color:#ad6700}
+    .sk-work-microsoft{margin:14px 20px 0;padding:10px 12px;color:#805900;background:#fff6dc;border-radius:7px;font-size:13px}.sk-work-microsoft[hidden]{display:none}.sk-work-actions{padding:18px 20px 20px}
+    .sk-work-start{width:100%;padding:12px;color:#fff;background:#2f709b;border:0;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}.sk-work-start:disabled{background:#a0adb5;cursor:default}
     .sk-work-extra-actions{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
     .sk-work-btn{width:100%;padding:10px 12px;color:#2f709b;background:#f0f6fa;border:1px solid #c4d7e5;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s ease;text-align:center}
     .sk-work-btn:hover:not(.sk-work-btn-placeholder){background:#2f709b;color:#fff;border-color:#2f709b}
@@ -3726,7 +3731,7 @@ function skOpenWorkLoginHub() {
         }
     }
 
-    skGMFetchGet('https://susy.mdpi.com/user/info?emails=').then(res => updateSiteStatus('susy', res.responseText?.includes('reviewer-profile')));
+    skIsSusyLoggedIn().then(isOk => updateSiteStatus('susy', isOk));
     skGMFetchGet('https://www.mdpi.com/journal/mathematics/special_issues/Math_Comput_Program_AI').then(res => updateSiteStatus('mdpi', res.responseText?.includes('Manage the SI')));
     skGMFetchGet('https://mailsdb.i.mdpi.com/').then(res => updateSiteStatus('mailsdb', res.responseText?.includes('search will look through all from')));
     skGMFetchGet('https://mrs.mdpi.com/data/').then(res => updateSiteStatus('mrs', res.responseText?.includes('Special Issue')));
@@ -3756,6 +3761,7 @@ function skOpenWorkLoginHub() {
         let timer = setInterval(() => {
             needLoginSites = needLoginSites.filter(id => {
                 let s = GM_getValue('skWorkLoginStatus_' + id, {});
+                if (s.run !== hubRun) return true;
                 if (s.state === 'ok') updateSiteStatus(id, true);
                 else if (s.text) $(`.sk-work-row[data-site="${id}"]`).find('.sk-work-state').text(s.text);
                 return s.state !== 'ok';
@@ -3818,7 +3824,19 @@ function skWorkLoginHelper() {
     let site = SK_WORK_LOGIN_SITES.find(s => location.href.includes(new URL(s.url).hostname) || (s.id === 'mdpi' && (location.hostname === 'www.mdpi.com' || location.hostname === 'login.mdpi.com'))); // 3. 各业务系统页面
     if (!site) return;
 
-    let tries = 0, pageTimer = setInterval(() => {
+    let tries = 0, pageTimer, loginFinished = false;
+    const finishLogin = () => {
+        if (loginFinished) return;
+        loginFinished = true;
+        clearInterval(pageTimer);
+        skSetWorkLoginStatus(site.id, 'ok', '已登录');
+        if (GM_getValue('skWorkLoginAutoClose_' + site.id, 0) === run) {
+            GM_setValue('skWorkLoginAutoClose_' + site.id, 0);
+            setTimeout(() => window.close(), 700);
+        }
+    };
+
+    pageTimer = setInterval(() => {
         let text = document.body?.innerText || '', path = location.pathname;
         let isAuthPage = path.includes('/login') || path.includes('/2fa') || location.hostname === 'login.mdpi.com';
         let loggedIn = (site.id === 'susy' && path.startsWith('/user/sme/status/submitted')) ||
@@ -3830,12 +3848,7 @@ function skWorkLoginHelper() {
             (site.id === 'redmine' && $('a[href*="logout"]').length);
 
         if (loggedIn) {
-            clearInterval(pageTimer);
-            skSetWorkLoginStatus(site.id, 'ok', '已登录');
-            if (GM_getValue('skWorkLoginAutoClose_' + site.id, 0) === run) {
-                GM_setValue('skWorkLoginAutoClose_' + site.id, 0);
-                setTimeout(() => window.close(), 700);
-            }
+            finishLogin();
             return;
         }
 
@@ -3853,6 +3866,8 @@ function skWorkLoginHelper() {
             skSetWorkLoginStatus(site.id, 'manual', '未能自动确认，请打开查看');
         }
     }, 500);
+
+    if (site.id === 'susy') skIsSusyLoggedIn().then(isOk => { if (isOk) finishLogin(); });
 }
 
 function addCssTooltipster() {GM_addStyle(`.tooltipster-fall,.tooltipster-grow.tooltipster-show{-webkit-transition-timing-function:cubic-bezier(.175,.885,.32,1);-moz-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);-ms-transition-timing-function:
