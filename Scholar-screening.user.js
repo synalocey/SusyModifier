@@ -1058,7 +1058,10 @@
     if (!scopusOnly) verdictCell.appendChild(createElement('span', `ges-badge ${result.decision.code}`, result.decision.label));
 
     const candidateCell = createElement('td');
-    if (result.name) candidateCell.appendChild(createElement('strong', '', result.name));
+    if (result.name) {
+      candidateCell.appendChild(createElement('strong', '', result.name));
+      candidateCell.appendChild(createElement('br'));
+    }
     const emailSpan = createElement('span', 'ges-email', result.email);
     const copyTip = createElement('span', 'ges-copy-tip');
     emailSpan.title = '点击复制';
@@ -1075,7 +1078,7 @@
       }
       try {
         Promise.resolve(clipboard.writeText(result.email))
-          .then(() => showCopyTip('✓ 已复制', '#1e8e3e'))
+          .then(() => showCopyTip('✓', '#1e8e3e'))
           .catch(() => showCopyTip('复制失败', '#d93025'));
       } catch (error) {
         showCopyTip('复制失败', '#d93025');
@@ -1249,17 +1252,17 @@
       .ges-summary { display:flex; gap:.55rem; flex-wrap:wrap; margin:1rem 0 .65rem; }
       .ges-chip { border:1px solid #d4dae1; border-radius:999px; padding:.28rem .6rem; font-size:.8rem; background:#fff; }
       .ges-table-wrap { width:100%; overflow:auto; border:1px solid #d5dbe2; border-radius:7px; }
-      .ges-table { width:100%; min-width:87.5rem; table-layout:fixed; border-collapse:collapse; background:#fff; color:#202a34; }
+      .ges-table { width:100%; min-width:78rem; table-layout:fixed; border-collapse:collapse; background:#fff; color:#202a34; }
       .ges-table th { position:sticky; top:0; z-index:1; background:#eef2f5; color:#33404d; text-align:left; font-size:.78rem; }
       .ges-table th, .ges-table td { border-bottom:1px solid #e2e6ea; padding:.65rem .7rem; vertical-align:top; }
       .ges-table td { font-size:.82rem; line-height:1.4; }
-      .ges-table th:nth-child(1) { width:7rem; }
-      .ges-table th:nth-child(2) { width:14rem; }
-      .ges-table th:nth-child(3) { width:10.5rem; }
-      .ges-table th:nth-child(4) { width:17rem; }
-      .ges-table th:nth-child(5) { width:14rem; }
-      .ges-table th:nth-child(6) { width:16rem; }
-      .ges-table th:nth-child(7) { width:9rem; }
+      .ges-table th:nth-child(1) { width:6.5rem; }
+      .ges-table th:nth-child(2) { width:12.5rem; }
+      .ges-table th:nth-child(3) { width:9.5rem; }
+      .ges-table th:nth-child(4) { width:15rem; }
+      .ges-table th:nth-child(5) { width:12.5rem; }
+      .ges-table th:nth-child(6) { width:14.5rem; }
+      .ges-table th:nth-child(7) { width:7.5rem; }
       .ges-row.review, .ges-row.cautious { background:#fffaf0; }
       .ges-row.recommended { background:#f4fbf7; }
       .ges-badge { display:inline-block; border-radius:999px; padding:.25rem .55rem; color:#fff; font-size:.78rem; font-weight:750; white-space:nowrap; }
@@ -1269,7 +1272,7 @@
       .ges-badge.scopus { background:#3568a8; }
       .ges-badge.unsuitable { background:#bd2635; }
       .ges-badge.review { background:#7a5b16; }
-      .ges-email { display:inline-block; overflow-wrap:anywhere; color:#1a73e8; margin-top:.14rem; cursor:pointer; border-bottom:1px dashed #1a73e8; }
+      .ges-email { display:inline-block; overflow-wrap:anywhere; color:#1a73e8; margin-top:.14rem; line-height:1.1; cursor:pointer; border-bottom:1px dashed #1a73e8; }
       .ges-email:hover { color:#1557b0; }
       .ges-copy-tip { color:#888; margin-left:.35rem; font-size:.76rem; font-weight:normal; white-space:nowrap; }
       .ges-subjects { overflow:hidden; }

@@ -42,7 +42,7 @@
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
-// @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/Scholar-screening.user.js?v=6.8.29
+// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/Scholar-screening.user.js?v=6.8.29
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM.getValue
@@ -3698,7 +3698,7 @@ function skOpenWorkLoginHub() {
     .sk-work-microsoft{margin:14px 20px 0;padding:10px 12px;color:#805900;background:#fff6dc;border-radius:7px;font-size:13px}.sk-work-microsoft[hidden]{display:none}.sk-work-actions{padding:18px 20px 20px}
     .sk-work-start{width:100%;padding:12px;color:#fff;background:#2f709b;border:0;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}.sk-work-start:disabled{background:#a0adb5;cursor:default}
     .sk-work-extra-actions{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-    .sk-work-btn{width:100%;padding:10px 12px;color:#2f709b;background:#f0f6fa;border:1px solid #c4d7e5;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s ease;text-align:center}
+    .sk-work-btn{display:block;width:100%;padding:10px 12px;color:#2f709b;background:#f0f6fa;border:1px solid #c4d7e5;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s ease;text-align:center;text-decoration:none}
     .sk-work-btn:hover:not(.sk-work-btn-placeholder){background:#2f709b;color:#fff;border-color:#2f709b}
     .sk-work-btn-placeholder{opacity:0.5;cursor:default;background:#f8fafb;border-style:dashed}
     @media(max-width:620px){body{padding:24px 12px}.sk-work-row{grid-template-columns:14px 1fr 54px;gap:9px;padding:13px 15px}.sk-work-state{grid-column:2/4}}
@@ -3717,7 +3717,7 @@ function skOpenWorkLoginHub() {
         <button type="button" id="sk-work-start" class="sk-work-start" disabled>正在检查登录状态…</button>
         ${isUserNameMatch ? `
         <div class="sk-work-extra-actions">
-            <button type="button" id="sk-scholar-check" class="sk-work-btn">Scholar Check</button>
+            <a id="sk-scholar-check" class="sk-work-btn" href="https://susy.mdpi.com/user/settings#G" target=_blank>Scholar Check</a>
             <button type="button" class="sk-work-btn sk-work-btn-placeholder">            </button>
         </div>` : ''}
     </div>
@@ -3777,14 +3777,7 @@ function skOpenWorkLoginHub() {
         }, 500);
     });
 
-    $('#sk-scholar-check').on('click', function () {
-        let allOk = $('.sk-work-row').length > 0 && $('.sk-work-row[data-state!="ok"]').length === 0;
-        if (allOk) {
-            window.location.href = 'https://susy.mdpi.com/user/settings#G';
-        } else {
-            alert('请先完成所有站点的登录！');
-        }
-    });
+    $('#sk-scholar-check').on('click', function (event) {if ($('.sk-work-row[data-state!="ok"]').length) {event.preventDefault(); alert('请完成登录！'); }});
 }
 
 function skWorkLoginHelper() {
