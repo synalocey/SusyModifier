@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SuSy Scholar Screener
-// @version      6.8.28
+// @version      6.8.29
 // @author       SKDAY
 // @match        https://susy.mdpi.com/user/settings*
 // @match        https://www.scopus.com/authid/detail.uri*
@@ -33,6 +33,7 @@
   const SPECIAL_ISSUE_ID = '1139163';
   const MDPI_REQUEST_CONCURRENCY = 10;
   const SCOPUS_REQUEST_CONCURRENCY = 1;
+  const EMAIL_PATTERN = /[A-Z0-9](?:[A-Z0-9.!#$%&'*+/=?^_`{|}~-]*[A-Z0-9])?@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi;
   const DEFAULTS = Object.freeze({
     queryMode: 'scopus',
     minimumHIndex: 8,
@@ -135,31 +136,15 @@
   }
 
   function parseEmailList(input) {
-    const rawTokens = String(input || '')
-      .split(/[\s,;，；]+/)
-      .map((token) => token.trim().replace(/^[<"']+|[>"']+$/g, ''))
-      .filter(Boolean);
-
     const seen = new Set();
     const valid = [];
-    const invalid = [];
-    const ordered = [];
-    const emailPattern = /^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+$/i;
-
-    for (const token of rawTokens) {
-      const key = token.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      if (emailPattern.test(token)) {
-        valid.push(key);
-        ordered.push({ value: key, valid: true });
-      } else {
-        invalid.push(token);
-        ordered.push({ value: token, valid: false });
-      }
+    for (const match of String(input || '').match(EMAIL_PATTERN) || []) {
+      const email = match.toLowerCase();
+      if (seen.has(email)) continue;
+      seen.add(email);
+      valid.push(email);
     }
-
-    return { valid, invalid, ordered };
+    return { valid, ordered: valid.map((value) => ({ value })) };
   }
 
   function parseDocument(html) {
@@ -1027,9 +1012,9 @@
     container.appendChild(link);
   }
 
-  function makeInvalidResult(token, mode = 'full') {
+  function makeErrorResult(email, mode = 'full', reason = '查询异常') {
     return {
-      email: token,
+      email,
       name: '',
       mode,
       sources: {},
@@ -1037,8 +1022,8 @@
       decision: {
         code: 'review',
         ...VERDICTS.review,
-        label: '邮箱格式错误',
-        reasons: ['邮箱格式错误'],
+        label: '查询异常',
+        reasons: [reason],
         metrics: {
           submissions: 0,
           reviews: 0,
@@ -1074,7 +1059,29 @@
 
     const candidateCell = createElement('td');
     if (result.name) candidateCell.appendChild(createElement('strong', '', result.name));
-    candidateCell.appendChild(createElement('div', 'ges-email', result.email));
+    const emailSpan = createElement('span', 'ges-email', result.email);
+    const copyTip = createElement('span', 'ges-copy-tip');
+    emailSpan.title = '点击复制';
+    emailSpan.addEventListener('click', () => {
+      const clipboard = globalThis.navigator?.clipboard;
+      const showCopyTip = (text, color) => {
+        copyTip.textContent = text;
+        copyTip.style.color = color;
+        setTimeout(() => { copyTip.textContent = ''; }, 1500);
+      };
+      if (!clipboard || typeof clipboard.writeText !== 'function') {
+        showCopyTip('复制失败', '#d93025');
+        return;
+      }
+      try {
+        Promise.resolve(clipboard.writeText(result.email))
+          .then(() => showCopyTip('✓ 已复制', '#1e8e3e'))
+          .catch(() => showCopyTip('复制失败', '#d93025'));
+      } catch (error) {
+        showCopyTip('复制失败', '#d93025');
+      }
+    });
+    candidateCell.append(emailSpan, copyTip);
     const links = createElement('div', 'ges-links');
     appendSourceLink(links, 'Info', result.urls.infoLink);
     if (result.mode !== 'scopus') {
@@ -1262,7 +1269,9 @@
       .ges-badge.scopus { background:#3568a8; }
       .ges-badge.unsuitable { background:#bd2635; }
       .ges-badge.review { background:#7a5b16; }
-      .ges-email { overflow-wrap:anywhere; color:#3f4d5a; margin-top:.14rem; }
+      .ges-email { display:inline-block; overflow-wrap:anywhere; color:#1a73e8; margin-top:.14rem; cursor:pointer; border-bottom:1px dashed #1a73e8; }
+      .ges-email:hover { color:#1557b0; }
+      .ges-copy-tip { color:#888; margin-left:.35rem; font-size:.76rem; font-weight:normal; white-space:nowrap; }
       .ges-subjects { overflow:hidden; }
       .ges-subjects .ges-line { overflow:hidden; white-space:nowrap; text-overflow:clip; }
       .ges-links { display:flex; gap:.42rem; flex-wrap:wrap; margin-top:.38rem; }
@@ -1280,8 +1289,8 @@
     const $panel = $('<fieldset id="ges-panel">').html(`
       <legend>GE Invitation Screening</legend>
       <div class="ges-field">
-        <label for="ges-emails">邮箱（换行、逗号或分号分隔）</label>
-        <textarea id="ges-emails" spellcheck="false" placeholder="scholar1@university.edu&#10;scholar2@institute.org"></textarea>
+        <label for="ges-emails">邮箱</label>
+        <textarea id="ges-emails" spellcheck="false" placeholder="scholar1@university.edu"></textarea>
       </div>
       <details class="ges-params">
         <summary>参数</summary>
@@ -1371,7 +1380,7 @@
         return;
       }
       const parsed = parseEmailList($emails.val());
-      if (!parsed.ordered.length) {
+      if (!parsed.valid.length) {
         $status.text('请至少输入一个邮箱。');
         $emails.trigger('focus');
         return;
@@ -1384,20 +1393,12 @@
       state.resultByEmail.clear();
       state.rowByEmail.clear();
       state.completed = 0;
-      state.total = parsed.ordered.length;
+      state.total = parsed.valid.length;
       $results.empty();
       $summary.empty();
       $start.add($export).prop('disabled', true);
       $stop.prop('disabled', false);
       for (const entry of parsed.ordered) createPendingRow(entry.value);
-
-      for (const token of parsed.invalid) {
-        const result = makeInvalidResult(token, config.queryMode);
-        state.resultByEmail.set(token, result);
-        state.results = Array.from(state.resultByEmail.values());
-        renderResultRow(state.rowByEmail.get(token), result);
-        state.completed += 1;
-      }
       updateSummary();
       updateProgress(`开始查询：${state.completed}/${state.total}`);
 
@@ -1411,9 +1412,7 @@
         try {
           result = await collectCandidate(email, config, requestQueues);
         } catch (error) {
-          result = makeInvalidResult(email, config.queryMode);
-          result.decision.label = '查询异常';
-          result.decision.reasons = [`未完成查询：${conciseError(error)}`];
+          result = makeErrorResult(email, config.queryMode, `未完成查询：${conciseError(error)}`);
         }
         state.resultByEmail.set(email, result);
         state.results = Array.from(state.resultByEmail.values());
