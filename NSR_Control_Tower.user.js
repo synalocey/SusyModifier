@@ -313,9 +313,9 @@ background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shad
 9px;font-size:10px}.bridge-badge{display:inline-flex;align-items:center;gap:7px;border-radius:999px;background:#f1f5f9;color:#475569;padding:6px 10px;font-size:11px;font-weight:600;white-space:nowrap}
 .bridge-badge::before{content:"";width:8px;height:8px;border-radius:50%;background:#94a3b8}.bridge-badge.ok{background:#dcfce7;color:#166534}.bridge-badge.ok::before{background:var(--green)}
 .bridge-badge.warn{background:#fef3c7;color:#92400e}.bridge-badge.warn::before{background:var(--amber)}.bridge-badge.error{background:#fee2e2;color:#991b1b}.bridge-badge.error::before{background:
-var(--red)}.bridge-status{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.bridge-status-item{border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;padding:11px}
+var(--red)}.bridge-status{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.bridge-status-item{border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;padding:11px}
 .bridge-status-item small{display:block;color:var(--muted);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.35px}.bridge-status-item strong{display:block;margin-top:5px;font-size
-:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bridge-field{display:grid;gap:6px;margin-top:11px}.bridge-field label{color:#475569;font-size:10px;font-weight:600;
+:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bobj-status-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.bobj-status-actions{display:flex;align-items:center;gap:5px}.bobj-update{flex:none;padding:4px 8px}.bobj-data-source{font-variant-numeric:tabular-nums}.bobj-refresh-state{display:block;margin-top:4px;white-space:normal}.bobj-refresh-state.running{color:#92400e}.bobj-refresh-state.error{color:#b91c1c}.bridge-field{display:grid;gap:6px;margin-top:11px}.bridge-field label{color:#475569;font-size:10px;font-weight:600;
 text-transform:uppercase;letter-spacing:.35px}.bridge-field input,.bridge-field select,.bridge-field textarea{display:block;width:100%;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color
 :var(--ink);padding:10px 11px;font-size:12px}.bridge-field textarea{min-height:88px;resize:vertical;font:11px/1.55 Consolas,"Courier New",monospace;tab-size:4}.bridge-field textarea.quotation-input{
 white-space:pre;overflow:auto;overflow-wrap:normal;word-break:normal}.bridge-field input:disabled,.bridge-field select:disabled,.bridge-field textarea:disabled{background:#f1f5f9;color:#94a3b8}
@@ -360,6 +360,11 @@ const BRIDGE_HTML=`
     <div class="bridge-status">
       <div class="bridge-status-item"><small>Local service</small><strong id="bridgeService">Checking 127.0.0.1:8765…</strong></div>
       <div class="bridge-status-item"><small>SAP GUI</small><strong id="bridgeSap">Not checked</strong></div>
+      <div class="bridge-status-item">
+        <div class="bobj-status-head"><small>BOBJ Data</small><div class="bobj-status-actions"><button id="bobjUpdate" class="bridge-btn light small bobj-update" type="button" disabled>Update</button><button id="bobjOpen" class="bridge-btn light small bobj-update" type="button" disabled>Open</button></div></div>
+        <strong id="bobjDataSource" class="bobj-data-source">Current Data Source: Checking…</strong>
+        <span id="bobjRefreshState" class="bridge-note bobj-refresh-state">Checking refresh status…</span>
+      </div>
     </div>
     <div class="bridge-field"><label for="sapSession">SAP session</label><select id="sapSession" disabled><option value="">Connecting to the local bridge…</option></select></div>
   </section>
@@ -440,14 +445,14 @@ const BRIDGE_HTML=`
         <div class="bridge-card-head"><div><h2>2. Filename</h2></div><button id="zbomCompareResetTemplate" class="bridge-btn light small" type="button">Reset</button></div>
         <div class="bridge-field">
           <div class="compare-template-control">
-            <input id="zbomCompareTemplate" type="text" maxlength="240" value="{Customer}_{FID}_{SysDes}" autocomplete="off" aria-label="ZBOM Compare filename template">
+            <input id="zbomCompareTemplate" type="text" maxlength="240" value="{Customer}_{FID}_{System Description}" autocomplete="off" aria-label="ZBOM Compare filename template">
             <input id="zbomCompareSeparator" class="compare-template-separator" type="text" maxlength="24" value="vs" autocomplete="off" spellcheck="false" aria-label="Text between compared file names" title="Text between compared file names">
           </div>
         </div>
         <div class="token-list" aria-label="Available ZBOM Compare file-name tokens">
           <button class="token-chip" type="button" data-zbom-compare-token="{Customer}">{Customer}</button>
           <button class="token-chip" type="button" data-zbom-compare-token="{FID}">{FID}</button>
-          <button class="token-chip" type="button" data-zbom-compare-token="{SysDes}">{SysDes}</button>
+          <button class="token-chip" type="button" data-zbom-compare-token="{System Description}">{System Description}</button>
           <button class="token-chip" type="button" data-zbom-compare-token="{Quote}">{Quote}</button>
         </div>
         <div class="bridge-note">{FID} stays as a placeholder when it is missing. The short field joins the two compared file names.</div>
@@ -598,10 +603,9 @@ const BRIDGE_HTML=`
 const launchLoops=new Set();
 const ZBOM_PDF_FOLDER='C:\\PDFFILES';
 const ZBOM_DEFAULT_TEMPLATE='{FID}_{System Description}_{Quote}_{Today}';
-const ZBOM_TOKENS=['{FID}','{System Description}','{Quote}','{Today}'];
 const ZBOM_HISTORY_LIMIT=50;
 const ZBOM_STORAGE_KEYS={input:'nsrSapToolbox.zbomInput.v1',template:'nsrSapToolbox.zbomTemplate.v1',history:'nsrSapToolbox.zbomHistory.v1'};
-const ZBOM_COMPARE_DEFAULT_TEMPLATE='{Customer}_{FID}_{SysDes}';
+const ZBOM_COMPARE_DEFAULT_TEMPLATE='{Customer}_{FID}_{System Description}';
 const ZBOM_COMPARE_DEFAULT_SEPARATOR='vs';
 const ZBOM_COMPARE_DEFAULT_GROUP='G01';
 const ZBOM_COMPARE_DEFAULT_FOLDER='C:\\PDFFILES\\Compare';
@@ -617,8 +621,9 @@ const CREATE_QUOTE_STORAGE_KEYS={quotation:'nsrSapToolbox.createQuoteQuotation.v
 const BRIDGE_DEBUG_STORAGE_KEY='nsrSapToolbox.debugUnlocked.v1';
 let bridgeBusy=false,bridgeSessions=[],bridgeMock=false,zbomRows=[],zbomErrors=[],zbomRunning=false,zbomHasRun=false,zbomLogLines=[],zbomOutputClaims=new Map(),zbomResults=new Map(),zbomHistory=[],zbomHistoryReturnFocus=null;
 let zbomCompareRows=[],zbomCompareStats={duplicates:0,ignored:0},zbomCompareSavedGroups=new Map(),zbomCompareRunning=false,zbomCompareHasRun=false,zbomCompareResults=new Map(),zbomCompareLogLines=[],zbomCompareOutputRowHint=4,zbomCompareHistory=[],zbomCompareHistoryReturnFocus=null,zbomCompareResultTabs=[],zbomCompareActiveResultTab='';
-let createQuoteRows=[],createQuoteStats={duplicates:0,ignored:0},createQuoteCrdOverrides=new Map();
+let createQuoteRows=[],createQuoteStats={duplicates:0,ignored:0},createQuoteCrdOverrides=new Map(),createQuoteManualCrd=new Set();
 let bridgeDebugUnlocked=false;
+let bobjStatus=null,bobjRefreshing=false,bobjOpening=false,bobjPollTimer=0,bobjStatusRun=0,bobjDataRows=new Map(),bobjDataHeaderIndexes=new Map(),bobjDataMissing=new Set(),bobjDataPath='',bobjDataModified=0,bobjDataCount=0,bobjDataReady=false,bobjDataLoadRun=0,bobjConsumersPending=false,bobjSourcePath='',bobjSourceModified=0,bobjDataLoading=false,bobjDataPromise=null,bobjWorker=null,bobjWorkerRequest=0,bobjWorkerPending=new Map();
 
 GM_registerMenuCommand('Open NSR Flow Control Tower',beginLaunch);
 GM_registerMenuCommand('Open SAP Toolbox',beginBridgeLaunch);
@@ -752,11 +757,15 @@ function loadCreateQuotePreferences(){
   if(savedQuotation!==null&&normalized!==savedQuotation)writePersistent(CREATE_QUOTE_STORAGE_KEYS.quotation,normalized);
   const normalizedDays=sanitizeCreateQuoteDays();
   if(savedValidToDays!==null&&normalizedDays!==savedValidToDays)writePersistent(CREATE_QUOTE_STORAGE_KEYS.validToDays,normalizedDays);
-  createQuoteCrdOverrides=new Map();
+  createQuoteCrdOverrides=new Map();createQuoteManualCrd=new Set();let removedBlankOverride=false;
   try{
     const parsed=JSON.parse(readPersistent(CREATE_QUOTE_STORAGE_KEYS.crdOverrides,'{}'));
-    if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))Object.entries(parsed).forEach(([fid,value])=>{if(/^\d{6}$/.test(fid)&&typeof value==='string')createQuoteCrdOverrides.set(fid,value)});
+    if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed))Object.entries(parsed).forEach(([fid,value])=>{
+      if(!/^\d{6}$/.test(fid)||typeof value!=='string')return;
+      if(value.trim())createQuoteCrdOverrides.set(fid,value);else removedBlankOverride=true;
+    });
   }catch(_){createQuoteCrdOverrides=new Map()}
+  if(removedBlankOverride)saveCreateQuoteCrdOverrides();
 }
 
 function saveCreateQuoteQuotation(){
@@ -1066,6 +1075,225 @@ function bridgeError(error){
   return error&&error.message?error.message:String(error||'Unknown bridge error.');
 }
 
+function normalizeBobjHeader(value){
+  return String(value||'').trim().replace(/\s+/g,' ').toLocaleLowerCase();
+}
+
+function bobjFidKey(value){
+  const match=String(value||'').trim().match(/(?:^|\D)(\d{6})(?!\d)/);return match?match[1]:'';
+}
+
+function bobjValue(fid,header){
+  const row=bobjDataRows.get(bobjFidKey(fid)),index=bobjDataHeaderIndexes.get(normalizeBobjHeader(header));return row&&index!==undefined?String(row[index]??'').trim():'';
+}
+
+function bobjTemplateValue(row,header,omit){
+  const key=normalizeBobjHeader(header),options=omit||{};
+  if(key==='quote')return String(row&&row.quote||'');
+  if(key==='today')return todayZbomStamp();
+  if(options.customer&&key==='customer')return '';
+  if(options.systemDescription&&key==='system description')return '';
+  const source=bobjValue(row&&row.fid,header);if(source)return source;
+  if(key==='fid')return String(row&&row.fid||'');
+  if(key==='customer')return String(row&&row.customer||'');
+  if(key==='system description')return String(row&&row.systemDescription||'');
+  return '';
+}
+
+function renderBobjTemplate(template,row,omit){
+  return String(template||'').replace(/\{([^{}]+)\}/g,(_token,header)=>bobjTemplateValue(row,header,omit));
+}
+
+function enrichZbomRowFromBobj(row){
+  if(row&&row.fid&&!row.systemDescription)row.systemDescription=bobjValue(row.fid,'System Description');
+  return row;
+}
+
+function enrichZbomCompareRowFromBobj(row){
+  if(!row||!row.fid)return row;
+  if(!row.customer)row.customer=bobjValue(row.fid,'Customer');
+  if(!row.systemDescription)row.systemDescription=bobjValue(row.fid,'System Description');
+  return row;
+}
+
+function bobjWorkerMain(){
+  'use strict';
+  let rows=new Map();
+  const normalizeHeader=value=>String(value||'').trim().replace(/\s+/g,' ').toLocaleLowerCase();
+  const sourceFid=value=>{const text=String(value||'').trim();return /^\d{6}$/.test(text)?text:''};
+  const base64Bytes=value=>{const binary=atob(String(value||'')),bytes=new Uint8Array(binary.length);for(let index=0;index<binary.length;index++)bytes[index]=binary.charCodeAt(index);return bytes};
+  const findTable=(workbook,firstMatch)=>{
+    let best=null;
+    (workbook&&workbook.SheetNames||[]).forEach((sheetName,sheetIndex)=>{
+      const sheet=workbook.Sheets[sheetName],reference=sheet&&sheet['!ref'];if(!reference)return;
+      const range=XLSX.utils.decode_range(reference),options={header:1,defval:'',raw:false,dateNF:'mm/dd/yyyy',blankrows:true},scanRange={s:{r:range.s.r,c:range.s.c},e:{r:Math.min(range.e.r,range.s.r+49),c:range.e.c}},preview=XLSX.utils.sheet_to_json(sheet,Object.assign({},options,{range:XLSX.utils.encode_range(scanRange)})),headerOffset=preview.findIndex(row=>normalizeHeader(row&&row[0])==='fid');if(headerOffset<0)return;
+      const dataRange={s:{r:range.s.r+headerOffset,c:range.s.c},e:{r:range.e.r,c:range.e.c}},matrix=XLSX.utils.sheet_to_json(sheet,Object.assign({},options,{range:XLSX.utils.encode_range(dataRange)}));
+      if(firstMatch){best={matrix:matrix};return}
+      const fidCount=matrix.reduce((count,row,index)=>count+(index&&sourceFid(row&&row[0])?1:0),0);if(!best||fidCount>best.fidCount)best={matrix:matrix,fidCount:fidCount};
+    });
+    return best;
+  };
+  self.onmessage=event=>{
+    const message=event.data||{},reply=data=>self.postMessage(Object.assign({id:message.id,ok:true},data));
+    try{
+      if(message.type==='load'){
+        if(typeof XLSX==='undefined')importScripts('https://gcore.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+        const options={type:'array',cellDates:true,dense:true,sheets:['BOBJ'],cellFormula:false,cellHTML:false,cellStyles:false},bytes=base64Bytes(message.contentBase64);
+        let workbook=XLSX.read(bytes,options),table=findTable(workbook,true);if(!table){const fallback=Object.assign({},options);delete fallback.sheets;workbook=XLSX.read(bytes,fallback);table=findTable(workbook,false)}
+        if(!table)throw new Error('No worksheet with FID in its first column was found.');
+        const headers=(table.matrix[0]||[]).map(value=>String(value||'').trim()),headerIndexes=new Map();headers.forEach((header,index)=>{const key=normalizeHeader(header);if(key&&!headerIndexes.has(key))headerIndexes.set(key,index)});
+        const nextRows=new Map();let blank=0,invalid=0,duplicates=0;
+        for(let index=1;index<table.matrix.length;index++){
+          const values=table.matrix[index],text=String(values&&values[0]||'').trim(),fid=sourceFid(text);
+          if(!text){blank++;continue}if(!fid){invalid++;continue}if(nextRows.has(fid)){duplicates++;continue}nextRows.set(fid,values);
+        }
+        if(!nextRows.size)throw new Error('The BOBJ worksheet contains no readable FID rows.');
+        rows=nextRows;reply({type:'loaded',count:rows.size,headerIndexes:Array.from(headerIndexes),ignored:blank+invalid,duplicates:duplicates});return;
+      }
+      if(message.type==='lookup'){
+        const found=[];(message.fids||[]).forEach(fid=>{const row=rows.get(fid);if(row)found.push([fid,row])});reply({type:'lookup',rows:found});return;
+      }
+      throw new Error('Unknown BOBJ worker request.');
+    }catch(error){self.postMessage({id:message.id,ok:false,error:error&&error.message?error.message:String(error)})}
+  };
+}
+
+function createBobjWorker(){
+  if(bobjWorker)return bobjWorker;
+  if(typeof Worker==='undefined')throw new Error('This browser does not support background workbook reading.');
+  const url=URL.createObjectURL(new Blob(['('+bobjWorkerMain.toString()+')()'],{type:'text/javascript'})),worker=new Worker(url);URL.revokeObjectURL(url);
+  worker.onmessage=event=>{const data=event.data||{},pending=bobjWorkerPending.get(data.id);if(!pending)return;bobjWorkerPending.delete(data.id);if(data.ok)pending.resolve(data);else pending.reject(new Error(data.error||'BOBJ background worker failed.'))};
+  worker.onerror=event=>{const error=new Error(event&&event.message||'BOBJ background worker failed.');bobjWorkerPending.forEach(pending=>pending.reject(error));bobjWorkerPending.clear();worker.terminate();if(bobjWorker===worker)bobjWorker=null};
+  bobjWorker=worker;return worker;
+}
+
+function callBobjWorker(type,payload){
+  return new Promise((resolve,reject)=>{const id=++bobjWorkerRequest;bobjWorkerPending.set(id,{resolve:resolve,reject:reject});try{createBobjWorker().postMessage(Object.assign({id:id,type:type},payload||{}))}catch(error){bobjWorkerPending.delete(id);reject(error)}});
+}
+
+function currentBobjFids(){
+  const fids=new Set(),pattern=/(?:^|\D)(\d{6})(?!\d)/g;
+  ['zbomInput','zbomCompareInput','createQuoteInput'].forEach(id=>{const input=bridgeId(id),text=String(input&&input.value||'');let match;while((match=pattern.exec(text)))fids.add(match[1]);pattern.lastIndex=0});
+  return Array.from(fids);
+}
+
+function refreshBobjConsumers(){
+  if(zbomRunning||zbomCompareRunning||!bridgeId('zbomInput'))return;
+  if(bridgeBusy){bobjConsumersPending=true;return}
+  bobjConsumersPending=false;
+  previewZbomInput();previewZbomCompareInput();previewCreateQuoteInput();
+}
+
+async function loadBobjDataSource(path,lastModified){
+  const modified=Number(lastModified)||0;
+  if(path===bobjDataPath&&modified===bobjDataModified&&bobjDataReady)return {count:bobjDataCount,changed:false};
+  const run=++bobjDataLoadRun,data=await bridgeFileRequest('read',{path:path},120000);if(!data||!data.contentBase64)throw new Error('The Bridge returned no BOBJ workbook content.');
+  const loading=callBobjWorker('load',{contentBase64:data.contentBase64});data.contentBase64='';const loaded=await loading;
+  if(run!==bobjDataLoadRun)return {count:bobjDataCount,changed:false};
+  bobjDataRows=new Map();bobjDataHeaderIndexes=new Map(loaded.headerIndexes||[]);bobjDataMissing=new Set();bobjDataPath=path;bobjDataModified=modified;bobjDataCount=Number(loaded.count)||0;bobjDataReady=true;return {count:bobjDataCount,changed:true};
+}
+
+async function loadBobjRows(fids){
+  if(!bobjDataIsCurrent())return false;
+  const missing=Array.from(new Set((fids||[]).map(bobjFidKey).filter(fid=>fid&&!bobjDataRows.has(fid)&&!bobjDataMissing.has(fid))));if(!missing.length)return false;
+  const path=bobjDataPath,modified=bobjDataModified,data=await callBobjWorker('lookup',{fids:missing});if(path!==bobjDataPath||modified!==bobjDataModified)return false;
+  const found=new Set();(data.rows||[]).forEach(item=>{if(!Array.isArray(item)||!item[0])return;found.add(item[0]);bobjDataRows.set(item[0],item[1]||[])});missing.forEach(fid=>{if(!found.has(fid))bobjDataMissing.add(fid)});return Boolean(found.size);
+}
+
+function bobjDataIsCurrent(){
+  return Boolean(bobjDataReady&&bobjSourcePath&&bobjDataPath===bobjSourcePath&&bobjDataModified===bobjSourceModified);
+}
+
+async function ensureBobjDataSource(){
+  const path=bobjSourcePath,modified=bobjSourceModified;if(!path)return false;
+  if(!bobjDataIsCurrent()){
+    if(!bobjDataPromise){
+      bobjDataLoading=true;if(!bobjRefreshing)setBobjRefreshState('Indexing BOBJ data in the background…','running');updateBobjUpdate();
+      bobjDataPromise=loadBobjDataSource(path,modified).then(loaded=>{if(!bobjRefreshing&&path===bobjSourcePath&&modified===bobjSourceModified)setBobjRefreshState('Ready · '+loaded.count+' FIDs indexed.','');return true}).catch(error=>{bobjDataReady=false;if(!bobjRefreshing)setBobjRefreshState('Data source read failed: '+bridgeError(error),'error');return false}).finally(()=>{bobjDataLoading=false;bobjDataPromise=null;updateBobjUpdate()});
+    }
+    if(!await bobjDataPromise)return false;
+  }
+  try{await loadBobjRows(currentBobjFids());refreshBobjConsumers();return true}catch(error){if(!bobjRefreshing)setBobjRefreshState('Data source lookup failed: '+bridgeError(error),'error');return false}
+}
+
+function ensureBobjForCurrentInput(){
+  if(currentBobjFids().length)ensureBobjDataSource();
+}
+
+function formatBobjDataSourceTime(value){
+  const date=new Date(Number(value));if(!Number.isFinite(date.getTime()))return '';
+  const part=number=>String(number).padStart(2,'0');
+  return part(date.getMonth()+1)+'/'+part(date.getDate())+'/'+date.getFullYear()+' '+part(date.getHours())+':'+part(date.getMinutes())+':'+part(date.getSeconds());
+}
+
+function setBobjRefreshState(message,kind){
+  const state=bridgeId('bobjRefreshState');if(!state)return;
+  state.textContent=message;state.className='bridge-note bobj-refresh-state'+(kind?' '+kind:'');
+}
+
+function updateBobjUpdate(){
+  const button=bridgeId('bobjUpdate'),openButton=bridgeId('bobjOpen');if(!button||!openButton)return;
+  button.disabled=bridgeBusy||bobjRefreshing||bobjOpening||bobjDataLoading||!bobjStatus||!bobjStatus.launcherFound;
+  button.title=bobjRefreshing?'BOBJ refresh is running.':bobjDataLoading?'BOBJ data is loading.':bobjStatus&&!bobjStatus.launcherFound?'SAP Analysis Launcher was not found.':'Refresh DS_1 in the background.';
+  openButton.disabled=bridgeBusy||bobjRefreshing||bobjOpening||bobjDataLoading||!bobjStatus||!bobjStatus.hasWorkbook||!bobjStatus.outputPath;
+  openButton.title=bobjRefreshing?'Wait for the BOBJ refresh to finish.':bobjDataLoading?'Wait for the BOBJ data to finish loading.':'Open the current BOBJ workbook in Excel.';
+}
+
+async function readBobjDataSource(status){
+  const source=bridgeId('bobjDataSource'),outputPath=String(status&&status.outputPath||'');if(!source)return;
+  source.title=outputPath;
+  if(!status||!status.hasWorkbook||!outputPath){bobjSourcePath='';bobjSourceModified=0;source.textContent='Current Data Source: Not available';return {available:false,count:0,loaded:false}}
+  try{
+    const data=await bridgeFileRequest('stat',{path:outputPath},10000),entry=Array.isArray(data.entries)?data.entries[0]:null,modified=entry&&formatBobjDataSourceTime(entry.lastModified);
+    source.textContent=modified?'Current Data Source: '+modified:'Current Data Source: Not available';
+    if(!entry){bobjSourcePath='';bobjSourceModified=0;return {available:false,count:0,loaded:false}}
+    bobjSourcePath=outputPath;bobjSourceModified=Number(entry.lastModified)||0;setTimeout(ensureBobjForCurrentInput,250);
+    return {available:true,count:bobjDataIsCurrent()?bobjDataCount:0,loaded:bobjDataIsCurrent()};
+  }catch(error){source.textContent='Current Data Source: Unable to read';source.title=outputPath+'\n'+bridgeError(error);return {available:false,count:0,loaded:false,error:bridgeError(error)}}
+}
+
+async function refreshBobjStatus(){
+  const run=++bobjStatusRun,wasRefreshing=bobjRefreshing;clearTimeout(bobjPollTimer);bobjPollTimer=0;
+  try{
+    const status=await bridgeRequest('GET','/excel/status',undefined,10000);if(run!==bobjStatusRun)return null;
+    bobjStatus=status;bobjRefreshing=Boolean(status.running);
+    const state=bridgeId('bobjRefreshState');if(state)state.title=String(status.message||'');
+    if(bobjRefreshing){
+      setBobjRefreshState('Updating · '+String(status.stage||'running'),'running');
+      if(!wasRefreshing)await readBobjDataSource(status);
+      updateBobjUpdate();if(run===bobjStatusRun)bobjPollTimer=setTimeout(refreshBobjStatus,1000);
+    }else{
+      const sourceState=await readBobjDataSource(status),loaded=sourceState&&sourceState.loaded?' · '+sourceState.count+' FIDs indexed':' · Data loads when needed';
+      if(status.stage==='failed')setBobjRefreshState('Update failed: '+String(status.message||'Unknown error'),'error');
+      else if(!status.launcherFound)setBobjRefreshState('SAP Analysis Launcher not found.','error');
+      else if(sourceState&&sourceState.error)setBobjRefreshState('Data source read failed: '+sourceState.error,'error');
+      else if(sourceState&&!sourceState.available)setBobjRefreshState('Ready to update.','');
+      else setBobjRefreshState((status.stage==='completed'?'Update completed':'Ready')+loaded+'.','');
+      updateBobjUpdate();
+    }
+    return status;
+  }catch(error){
+    if(run!==bobjStatusRun)return null;
+    bobjStatus=null;bobjRefreshing=false;bridgeId('bobjDataSource').textContent='Current Data Source: Unavailable';setBobjRefreshState(bridgeError(error),'error');updateBobjUpdate();return null;
+  }
+}
+
+async function startBobjUpdate(){
+  if(bobjRefreshing)return;
+  bobjStatusRun++;clearTimeout(bobjPollTimer);bobjPollTimer=0;bobjRefreshing=true;setBobjRefreshState('Starting background refresh…','running');updateBobjUpdate();
+  try{
+    bobjStatus=await bridgeRequest('POST','/excel/refresh',{visible:false},20000);bobjRefreshing=Boolean(bobjStatus.running);setBobjRefreshState('Updating · '+String(bobjStatus.stage||'queued'),'running');updateBobjUpdate();bobjPollTimer=setTimeout(refreshBobjStatus,500);
+  }catch(error){bobjRefreshing=false;setBobjRefreshState('Update failed: '+bridgeError(error),'error');updateBobjUpdate()}
+}
+
+async function openBobjData(){
+  const path=String(bobjStatus&&bobjStatus.outputPath||'');if(!path||!bobjStatus.hasWorkbook)return;
+  bobjOpening=true;updateBobjUpdate();
+  try{await bridgeFileRequest('openFile',{path:path},30000);setBobjRefreshState('Current data source opened in Excel.','')}
+  catch(error){setBobjRefreshState('Open failed: '+bridgeError(error),'error')}
+  finally{bobjOpening=false;updateBobjUpdate()}
+}
+
 function setBridgeBusy(value){
   bridgeBusy=Boolean(value);
   const locked=bridgeBusy||zbomRunning||zbomCompareRunning;
@@ -1075,7 +1303,7 @@ function setBridgeBusy(value){
   });
   const sessionSelect=bridgeId('sapSession');
   if(sessionSelect)sessionSelect.disabled=locked||!bridgeSessions.length;
-  updateZbomStart();updateZbomCompareStart();updateCreateQuoteStart();
+  updateZbomStart();updateZbomCompareStart();updateCreateQuoteStart();updateBobjUpdate();
 }
 
 function selectedBridgeSession(){
@@ -1113,12 +1341,14 @@ async function refreshBridge(){
     if(bridgeSessions.length)setBridgeBadge(mock?'Mock ready':'Ready',mock?'warn':'ok');
     else setBridgeBadge('SAP unavailable','warn');
     showBridgeResult(health,'Connection refreshed.');
+    await refreshBobjStatus();
   }catch(error){
     bridgeMock=false;
     renderBridgeSessions([]);
     bridgeId('bridgeService').textContent=error.status?'Local bridge responded with an error':'Offline';bridgeId('bridgeSap').textContent='Unavailable';setBridgeBadge(error.status?'Bridge error':'Bridge offline','error');
+    bobjStatusRun++;clearTimeout(bobjPollTimer);bobjPollTimer=0;bobjStatus=null;bobjRefreshing=false;bridgeId('bobjDataSource').textContent='Current Data Source: Unavailable';setBobjRefreshState('Local Bridge unavailable.','error');updateBobjUpdate();
     showBridgeResult(bridgeError(error),'Connection failed.');
-  }finally{setBridgeBusy(false)}
+  }finally{setBridgeBusy(false);if(bobjConsumersPending)refreshBobjConsumers()}
 }
 
 function setToolTab(name){
@@ -1256,7 +1486,7 @@ function renderCreateQuotePreview(){
   else createQuoteRows.forEach((row,index)=>{
     const tr=document.createElement('tr'),item=document.createElement('td'),crd=document.createElement('td'),crdInput=document.createElement('input'),version=document.createElement('td'),validTo=document.createElement('td');
     item.textContent=String(index+1);version.textContent=row.version||createQuotePreviewFid(row.fid);crdInput.type='text';crdInput.className='create-quote-crd-input';crdInput.value=row.crd||'';crdInput.placeholder='CRD';crdInput.setAttribute('aria-label','CRD for FID '+row.fid);
-    crdInput.addEventListener('input',()=>{crdInput.classList.remove('invalid');row.crd=crdInput.value;createQuoteCrdOverrides.set(row.fid,row.crd);saveCreateQuoteCrdOverrides()});
+    crdInput.addEventListener('input',()=>{crdInput.classList.remove('invalid');row.crd=crdInput.value;createQuoteManualCrd.add(row.fid);createQuoteCrdOverrides.set(row.fid,row.crd);saveCreateQuoteCrdOverrides()});
     crd.appendChild(crdInput);validTo.textContent=row.validTo||defaultCreateQuoteValidTo();tr.append(item,crd,version,validTo);body.appendChild(tr);
   });
   const count=createQuoteRows.length,parts=[count+' FID'+(count===1?'':'s')];
@@ -1267,7 +1497,12 @@ function renderCreateQuotePreview(){
 }
 
 function previewCreateQuoteInput(){
-  const parsed=parseCreateQuoteInput(bridgeId('createQuoteInput').value);createQuoteRows=parsed.rows;createQuoteRows.forEach(row=>{if(createQuoteCrdOverrides.has(row.fid))row.crd=createQuoteCrdOverrides.get(row.fid)});createQuoteStats={duplicates:parsed.duplicates,ignored:parsed.ignored};renderCreateQuotePreview();
+  const parsed=parseCreateQuoteInput(bridgeId('createQuoteInput').value);createQuoteRows=parsed.rows;createQuoteRows.forEach(row=>{
+    const override=createQuoteCrdOverrides.get(row.fid);
+    if(createQuoteManualCrd.has(row.fid))row.crd=override||'';
+    else if(String(override||'').trim())row.crd=override;
+    else if(!row.crd){const source=bobjValue(row.fid,'Date: Customer Request');if(source&&source!=='#')row.crd=normalizeCreateQuoteDate(source)||source}
+  });createQuoteStats={duplicates:parsed.duplicates,ignored:parsed.ignored};renderCreateQuotePreview();
 }
 
 function setCreateQuoteStatus(message,kind){
@@ -1299,6 +1534,7 @@ function validateCreateQuotePreview(){
 }
 
 async function startCreateQuote(){
+  await ensureBobjDataSource();previewCreateQuoteInput();
   if(!validateCreateQuotePreview())return;
   setBridgeBusy(true);setCreateQuoteStatus('Opening SAP transaction ZVA21M…');
   try{
@@ -1456,8 +1692,7 @@ function compactZbomCompareName(value){
 
 function renderZbomCompareFileName(row,omit){
   const input=bridgeId('zbomCompareTemplate'),template=String(input.value||'').trim()||ZBOM_COMPARE_DEFAULT_TEMPLATE;
-  const options=omit||{},customer=options.customer?'':row.customer||'',systemDescription=options.systemDescription?'':row.systemDescription||'';
-  return compactZbomCompareName(template.replace(/\{quote\}/gi,row.quote||'').replace(/\{fid\}/gi,row.fid||'{FID}').replace(/\{customer\}/gi,customer).replace(/\{sysdes\}/gi,systemDescription).replace(/\{system description\}/gi,systemDescription));
+  return compactZbomCompareName(renderBobjTemplate(template,Object.assign({},row,{fid:row.fid||'{FID}'}),omit));
 }
 
 function finishZbomCompareFileName(value){
@@ -1471,7 +1706,7 @@ function renderZbomCompareGroupFileName(rows){
   const separator=String(bridgeId('zbomCompareSeparator').value||'').trim()||ZBOM_COMPARE_DEFAULT_SEPARATOR;
   const seenCustomers=new Set(),seenDescriptions=new Set(),parts=[];
   rows.forEach(row=>{
-    const customerKey=zbomCompareDuplicateKey(row.customer),descriptionKey=zbomCompareDuplicateKey(row.systemDescription);
+    const customerKey=zbomCompareDuplicateKey(bobjTemplateValue(row,'Customer')),descriptionKey=zbomCompareDuplicateKey(bobjTemplateValue(row,'System Description'));
     parts.push(renderZbomCompareFileName(row,{customer:Boolean(customerKey&&seenCustomers.has(customerKey)),systemDescription:Boolean(descriptionKey&&seenDescriptions.has(descriptionKey))}));
     if(customerKey)seenCustomers.add(customerKey);
     if(descriptionKey)seenDescriptions.add(descriptionKey);
@@ -1517,7 +1752,7 @@ function renderZbomComparePreview(){
 
 function previewZbomCompareInput(){
   const parsed=parseZbomCompareInput(bridgeId('zbomCompareInput').value);
-  zbomCompareRows=parsed.rows;zbomCompareStats={duplicates:parsed.duplicates,ignored:parsed.ignored};invalidateZbomCompareResults();setZbomCompareProgress(0,'Ready.');saveZbomCompareGroups();renderZbomComparePreview();
+  zbomCompareRows=parsed.rows;zbomCompareRows.forEach(enrichZbomCompareRowFromBobj);zbomCompareStats={duplicates:parsed.duplicates,ignored:parsed.ignored};invalidateZbomCompareResults();setZbomCompareProgress(0,'Ready.');saveZbomCompareGroups();renderZbomComparePreview();
 }
 
 function insertZbomCompareToken(token){
@@ -2171,6 +2406,7 @@ function renderZbomCompareResultSummary(exported,outputs,failed,mock){
 }
 
 async function startZbomCompare(){
+  await ensureBobjDataSource();previewZbomCompareInput();
   const rows=zbomCompareRows.slice(),folderInput=bridgeId('zbomCompareOutputFolder');let folder,tempFolder;
   try{folder=normalizedZbomCompareFolder();tempFolder=zbomCompareTempFolder(folder)}catch(error){setZbomCompareProgress(0,bridgeError(error));if(folderInput)folderInput.focus();return}
   if(!rows.length){setZbomCompareProgress(0,'Paste at least one valid Quotation first.');return}
@@ -2204,7 +2440,7 @@ async function startZbomCompare(){
         const fidWarning=applyZbomCompareFidFallback(model,row);
         if(fidWarning)addZbomCompareLog(row.quote+' — FID READ ERROR: '+fidWarning);
         else if(providedFid&&providedFid!==model.fid)addZbomCompareLog(row.quote+' — FID updated from '+providedFid+' to '+model.fid+'.');
-        formatted.set(row.quote,model);row.fid=model.fid;updateResult(row,{status:fidWarning?ZBOM_COMPARE_FID_ERROR:'Formatted',fid:model.fid,warning:fidWarning});addZbomCompareLog(row.quote+' — formatted as '+model.fid+(model.gas?' with Gas.':' without Gas.'));
+        formatted.set(row.quote,model);row.fid=model.fid;await loadBobjRows([model.fid]);enrichZbomCompareRowFromBobj(row);updateResult(row,{status:fidWarning?ZBOM_COMPARE_FID_ERROR:'Formatted',fid:model.fid,warning:fidWarning});addZbomCompareLog(row.quote+' — formatted as '+model.fid+(model.gas?' with Gas.':' without Gas.'));
       }catch(error){
         const message=bridgeError(error);updateResult(row,{status:'Failed',error:message});addZbomCompareLog(row.quote+' — FORMAT FAILED: '+message);
       }
@@ -2346,22 +2582,15 @@ function todayZbomStamp(){
 function zbomTemplateInfo(){
   const input=bridgeId('zbomTemplate'),template=String(input.value||'').trim()||ZBOM_DEFAULT_TEMPLATE;
   if(template.length>240)return {template:template,error:'The file-name template is longer than 240 characters.'};
-  const allowed=new Set(ZBOM_TOKENS.map(token=>token.toLowerCase())),matches=template.match(/\{[^{}]+\}/g)||[];
-  const unknown=matches.find(token=>!allowed.has(token.toLowerCase()));
-  if(unknown)return {template:template,error:'Unsupported token '+unknown+'.'};
+  const matches=template.match(/\{[^{}]+\}/g)||[],empty=matches.find(token=>!token.slice(1,-1).trim());
+  if(empty)return {template:template,error:'The file-name template contains an empty token.'};
   const remainder=template.replace(/\{[^{}]+\}/g,'');
   if(remainder.indexOf('{')>=0||remainder.indexOf('}')>=0)return {template:template,error:'The file-name template contains an incomplete token.'};
   return {template:template,error:''};
 }
 
 function renderZbomFileName(row,template){
-  const values={
-    '{fid}':row.fid||'',
-    '{system description}':row.systemDescription||'',
-    '{quote}':row.quote||'',
-    '{today}':todayZbomStamp()
-  };
-  let stem=String(template||ZBOM_DEFAULT_TEMPLATE).replace(/\{[^{}]+\}/g,token=>values[token.toLowerCase()]||'');
+  let stem=renderBobjTemplate(template||ZBOM_DEFAULT_TEMPLATE,row);
   stem=stem.replace(/[<>:"/\\|?*\u0000-\u001F]/g,'-').replace(/_{2,}/g,'_').replace(/-{2,}/g,'-').replace(/\s{2,}/g,' ').replace(/^[\s._-]+|[\s._-]+$/g,'');
   if(!stem)stem=row.quote||'ZBOM_PDF';
   if(stem.length>190)stem=stem.slice(0,190).replace(/[\s._-]+$/g,'');
@@ -2413,7 +2642,7 @@ function renderZbomPreview(){
 
 function previewZbomInput(){
   const parsed=parseZbomInput(bridgeId('zbomInput').value);
-  zbomRows=parsed.rows;zbomErrors=parsed.errors;zbomHasRun=false;zbomResults=new Map();
+  zbomRows=parsed.rows;zbomRows.forEach(enrichZbomRowFromBobj);zbomErrors=parsed.errors;zbomHasRun=false;zbomResults=new Map();
   bridgeId('zbomResultSummary').replaceChildren();renderZbomPreview();
 }
 
@@ -2565,7 +2794,7 @@ async function collectZbomFiles(files,version){
       await moveZbomFile(descriptor,name);
       addZbomLog('Could not match '+descriptor.name+' to exactly one input Quote; renamed to '+name+'.');moved++;continue;
     }
-    const actual={fid:metadata.fid||row.fid,systemDescription:row.systemDescription,quote:metadata.quote||row.quote};
+    const actual={fid:metadata.fid||row.fid,systemDescription:row.systemDescription,quote:metadata.quote||row.quote};await loadBobjRows([actual.fid]);
     const template=zbomTemplateInfo().template,baseName=renderZbomFileName(actual,template),outputName=claimZbomOutputName(baseName,actual.quote);
     await moveZbomFile(descriptor,outputName);
     let result=zbomResults.get(row.quote);
@@ -2625,6 +2854,7 @@ function setZbomRunning(value){
 }
 
 async function startZbomExport(){
+  await ensureBobjDataSource();previewZbomInput();
   const validRows=zbomRows.filter(row=>!row._error),templateInfo=zbomTemplateInfo();
   if(!validRows.length||zbomErrors.length||templateInfo.error){setZbomProgress(0,'Fix the detected data or file-name template before export.');return}
   if(!selectedBridgeSession()){setZbomProgress(0,'Select an available SAP GUI session first.');return}
@@ -2673,8 +2903,10 @@ async function runBridgeAction(operation){
 function bindBridgeEvents(){
   const trusted=handler=>event=>{if(!event.isTrusted){showBridgeResult('Synthetic page actions are blocked.','Request blocked.');return}handler(event)};
   bridgeId('bridgeRefresh').addEventListener('click',trusted(refreshBridge));
+  bridgeId('bobjUpdate').addEventListener('click',trusted(startBobjUpdate));
+  bridgeId('bobjOpen').addEventListener('click',trusted(openBobjData));
   bridgeId('sapSession').addEventListener('change',()=>{setBridgeBusy(false);updateZbomStart();updateZbomCompareStart();updateCreateQuoteStart()});
-  document.querySelectorAll('[data-tool-tab]').forEach(button=>button.addEventListener('click',()=>setToolTab(button.dataset.toolTab)));
+  document.querySelectorAll('[data-tool-tab]').forEach(button=>button.addEventListener('click',()=>{setToolTab(button.dataset.toolTab);if(button.dataset.toolTab!=='debug')ensureBobjForCurrentInput()}));
   bridgeId('sapRunTransaction').addEventListener('click',trusted(()=>runBridgeAction('transaction')));
   bridgeId('sapReadText').addEventListener('click',trusted(()=>runBridgeAction('readText')));
   bridgeId('sapSetText').addEventListener('click',trusted(()=>runBridgeAction('setText')));
@@ -2682,15 +2914,15 @@ function bindBridgeEvents(){
   bridgeId('sapPress').addEventListener('click',trusted(()=>runBridgeAction('press')));
   bridgeId('sapSelect').addEventListener('click',trusted(()=>runBridgeAction('select')));
   bridgeId('sapSendVKey').addEventListener('click',trusted(()=>runBridgeAction('sendVKey')));
-  bridgeId('zbomInput').addEventListener('input',()=>{saveZbomInput();previewZbomInput()});
-  bridgeId('zbomTemplate').addEventListener('input',()=>{saveZbomTemplate();zbomHasRun=false;zbomResults=new Map();bridgeId('zbomResultSummary').replaceChildren();renderZbomPreview()});
+  bridgeId('zbomInput').addEventListener('input',()=>{saveZbomInput();previewZbomInput();ensureBobjForCurrentInput()});
+  bridgeId('zbomTemplate').addEventListener('input',()=>{saveZbomTemplate();zbomHasRun=false;zbomResults=new Map();bridgeId('zbomResultSummary').replaceChildren();renderZbomPreview();ensureBobjForCurrentInput()});
   document.querySelectorAll('[data-zbom-token]').forEach(button=>button.addEventListener('click',()=>insertZbomToken(button.dataset.zbomToken)));
   bridgeId('createQuoteQuotation').addEventListener('input',()=>{sanitizeCreateQuoteQuotation();saveCreateQuoteQuotation();updateCreateQuoteStart()});
-  bridgeId('createQuoteInput').addEventListener('input',()=>{saveCreateQuoteInput();previewCreateQuoteInput()});
+  bridgeId('createQuoteInput').addEventListener('input',()=>{saveCreateQuoteInput();previewCreateQuoteInput();ensureBobjForCurrentInput()});
   bridgeId('createQuoteDefaultValidTo').addEventListener('input',()=>{sanitizeCreateQuoteDays();saveCreateQuoteValidToDays();renderCreateQuotePreview()});
   bridgeId('createQuoteFidSuffix').addEventListener('input',()=>{saveCreateQuoteFidSuffix();renderCreateQuotePreview()});
-  bridgeId('zbomCompareInput').addEventListener('input',()=>{saveZbomCompareInput();previewZbomCompareInput()});
-  bridgeId('zbomCompareTemplate').addEventListener('input',()=>{saveZbomCompareTemplate();invalidateZbomCompareResults();renderZbomComparePreview()});
+  bridgeId('zbomCompareInput').addEventListener('input',()=>{saveZbomCompareInput();previewZbomCompareInput();ensureBobjForCurrentInput()});
+  bridgeId('zbomCompareTemplate').addEventListener('input',()=>{saveZbomCompareTemplate();invalidateZbomCompareResults();renderZbomComparePreview();ensureBobjForCurrentInput()});
   bridgeId('zbomCompareSeparator').addEventListener('input',()=>{saveZbomCompareSeparator();invalidateZbomCompareResults();renderZbomComparePreview()});
   bridgeId('zbomCompareOutputFolder').addEventListener('input',()=>{saveZbomCompareFolder();invalidateZbomCompareResults();renderZbomComparePreview();updateZbomCompareStart()});
   bridgeId('zbomCompareKeepTemp').addEventListener('click',trusted(toggleZbomCompareKeepTemp));
