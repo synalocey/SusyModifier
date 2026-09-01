@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         NSR Flow Control Tower
-// @version      26.8.28
+// @version      26.8.31
 // @description  NSR Flow Control Tower
 // @author       Kyra
 // @match        https://fep.lamresearch.com/*
@@ -103,7 +103,7 @@ var(--radius);box-shadow:var(--shadow)}.side{align-self:start;padding:15px}.main
 min-width:0}.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.section-title h2,.side h2{font-size:17px;margin:0;letter-spacing:-.15px}
 .section-title p{margin:3px 0 0;color:var(--muted);font-size:12px}.side-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:15px 0 8px}.upload-box{border:1.5px dashed 
 #9fb6c8;background:linear-gradient(180deg,#fbfdff,#f5fafc);border-radius:14px;padding:12px;margin-top:12px}.upload-box label{display:block;font-size:11px;font-weight:900;color:#334155;text-transform:
-uppercase;letter-spacing:.45px;margin-bottom:7px}.upload-box input{display:block;width:100%;font-size:11px;color:#475569}.upload-box input::file-selector-button{border:0;border-radius:8px;background:
+uppercase;letter-spacing:.45px;margin-bottom:7px}.upload-manual{margin-top:12px;padding-top:12px;border-top:1px solid #dbe5ee}.upload-box input{display:block;width:100%;font-size:11px;color:#475569}.upload-box input::file-selector-button{border:0;border-radius:8px;background:
 #e2e8f0;color:#0f172a;font-weight:800;padding:7px 9px;margin-right:7px;cursor:pointer}.source-status{margin-top:10px;border-left:4px solid var(--blue);background:#eff6ff;color:#1e3a8a;border-radius:
 10px;padding:9px 10px;font-size:11px;line-height:1.5}.source-status.loading{border-color:var(--amber);background:#fffbeb;color:#78350f}.source-status.error{border-color:var(--red);background:#fef2f2;
 color:#991b1b}.source-status.ok{border-color:var(--teal);background:#ecfdf5;color:#14532d}.btn{border:0;border-radius:10px;background:var(--teal);color:#fff;font-weight:850;padding:9px 11px;cursor:
@@ -198,10 +198,12 @@ const APP_HTML=`<div id="loadingLine" class="loading-line"></div>
   <aside class="side">
     <h2>Data Source</h2>
     <div class="upload-box">
-      <label for="rawFile">Upload raw data</label>
-      <input id="rawFile" type="file" accept=".xlsx,.xls,.csv">
-      <button id="sapRangeOpen" class="btn blue wide" type="button">Load SAP date range</button>
+      <button id="sapRangeOpen" class="btn blue wide" type="button">Autoload from NSR</button>
       <div id="sapRangeDefault" class="sap-range-default"></div>
+      <div class="upload-manual">
+        <label for="rawFile">Upload raw data</label>
+        <input id="rawFile" type="file" accept=".xlsx,.xls,.csv">
+      </div>
       <div id="sourceStatus" class="source-status loading">Loading latest SAP data…</div>
     </div>
 
@@ -276,7 +278,7 @@ const APP_HTML=`<div id="loadingLine" class="loading-line"></div>
         </div>
         <div class="toolbar-right">
           <button id="copyCycleBtn" class="btn light" type="button" disabled>Copy</button>
-          <button id="exportCycleBtn" class="btn light" type="button" disabled>Export XLSX</button>
+          <button id="exportCycleBtn" class="btn light" type="button" title="Export the current Cycle Time rows and their workflow details" disabled>Export XLSX</button>
         </div>
       </div>
       <div class="table-wrap cycle-wrap">
@@ -287,17 +289,13 @@ const APP_HTML=`<div id="loadingLine" class="loading-line"></div>
 </section>
 <div id="sapRangeModal" class="wf-modal" hidden>
   <button class="wf-bg" type="button" data-sap-range-close aria-label="Close SAP date range"></button>
-  <section class="wf-box sap-range-box" role="dialog" aria-modal="true" aria-labelledby="sapRangeTitle">
-    <div class="wf-head">
-      <div><h2 id="sapRangeTitle">Load SAP data</h2><p>Choose the Submit Date range to request from the current Fiori session.</p></div>
-      <div class="wf-actions"><button class="btn light" type="button" data-sap-range-close>Close</button></div>
-    </div>
+  <section class="wf-box sap-range-box" role="dialog" aria-modal="true" aria-label="Autoload from NSR date range">
     <form id="sapRangeForm" class="sap-range-form">
       <div class="sap-range-fields">
         <div class="sap-range-field"><label for="sapRangeFrom">From date</label><input id="sapRangeFrom" type="date" required></div>
         <div class="sap-range-field"><label for="sapRangeTo">To date</label><input id="sapRangeTo" type="date" required></div>
       </div>
-      <div class="sap-range-note">The current table is replaced only after SAP returns successfully. Larger ranges may take longer.</div>
+      <div class="sap-range-note">Larger ranges may take 1-2 minutes.</div>
       <div id="sapRangeError" class="sap-range-error" role="alert" aria-live="polite"></div>
       <div class="wf-actions">
         <button class="btn light" type="button" data-sap-range-close>Cancel</button>
@@ -526,12 +524,18 @@ const BRIDGE_HTML=`
       </section>
 
       <section class="bridge-card">
-        <div class="bridge-card-head"><div><h2>2. FID</h2></div></div>
+        <div class="bridge-card-head">
+          <div><h2>2. FID</h2></div>
+          <div class="bridge-card-tools">
+            <button id="createQuoteOpenHistory" class="bridge-btn light small" type="button" data-bridge-action>History (<span id="createQuoteHistoryButtonCount" class="history-button-count">0</span>)</button>
+            <button id="createQuoteResetInput" class="bridge-btn light small" type="button" data-bridge-action>Reset</button>
+          </div>
+        </div>
         <div class="bridge-field"><textarea id="createQuoteInput" class="quotation-input" rows="4" wrap="off" spellcheck="false" aria-label="Create Quote FID and date data" placeholder="FID    CRD    ValidTo&#10;264072    08/01/2026    09/15/2026"></textarea></div>
       </section>
 
       <section class="bridge-card">
-        <div class="bridge-card-head"><div><h2>3. Settings</h2></div></div>
+        <div class="bridge-card-head"><div><h2>3. Settings</h2></div><button id="createQuoteResetSettings" class="bridge-btn light small" type="button" data-bridge-action>Reset</button></div>
         <div class="bridge-field create-quote-setting-row">
           <label for="createQuoteDefaultValidTo">Default ValidTo</label>
           <div class="create-quote-days-control">
@@ -622,6 +626,16 @@ const BRIDGE_HTML=`
     </div>
     <div id="zbomCompareHistoryList" class="history-list"><div class="history-empty">No compare history.</div></div>
   </section>
+</div>
+<div id="createQuoteHistoryDialog" class="toolbox-modal" hidden>
+  <div class="toolbox-modal-backdrop" data-create-quote-history-close></div>
+  <section class="toolbox-modal-card" role="dialog" aria-modal="true" aria-labelledby="createQuoteHistoryTitle">
+    <div class="toolbox-modal-head">
+      <div class="toolbox-modal-title"><h2 id="createQuoteHistoryTitle">Quote Create History</h2><span id="createQuoteHistoryCount" class="history-count">0/50</span></div>
+      <button id="createQuoteCloseHistory" class="bridge-btn light small" type="button">Close</button>
+    </div>
+    <div id="createQuoteHistoryList" class="history-list"><div class="history-empty">No Quote Create history.</div></div>
+  </section>
 </div>`;
 const launchLoops=new Set();
 const ZBOM_PDF_FOLDER='C:\\PDFFILES';
@@ -640,11 +654,12 @@ const ZBOM_COMPARE_FILE_COLORS=['FFFFC7CE','FFC6EFCE','FFFFEB9C','FFBDD7EE','FFE
 const ZBOM_COMPARE_STORAGE_KEYS={input:'nsrSapToolbox.zbomCompareInput.v1',template:'nsrSapToolbox.zbomCompareTemplate.v1',separator:'nsrSapToolbox.zbomCompareSeparator.v1',folder:'nsrSapToolbox.zbomCompareFolder.v1',groups:'nsrSapToolbox.zbomCompareGroups.v1',history:'nsrSapToolbox.zbomCompareHistory.v1'};
 const CREATE_QUOTE_DEFAULT_VALID_TO_DAYS='30';
 const CREATE_QUOTE_DEFAULT_FID_SUFFIX='-01';
-const CREATE_QUOTE_STORAGE_KEYS={quotation:'nsrSapToolbox.createQuoteQuotation.v1',input:'nsrSapToolbox.createQuoteInput.v1',validToDays:'nsrSapToolbox.createQuoteValidToDays.v1',fidSuffix:'nsrSapToolbox.createQuoteFidSuffix.v1',crdOverrides:'nsrSapToolbox.createQuoteCrdOverrides.v1'};
+const CREATE_QUOTE_HISTORY_LIMIT=50;
+const CREATE_QUOTE_STORAGE_KEYS={quotation:'nsrSapToolbox.createQuoteQuotation.v1',input:'nsrSapToolbox.createQuoteInput.v1',validToDays:'nsrSapToolbox.createQuoteValidToDays.v1',fidSuffix:'nsrSapToolbox.createQuoteFidSuffix.v1',crdOverrides:'nsrSapToolbox.createQuoteCrdOverrides.v1',history:'nsrSapToolbox.createQuoteHistory.v1'};
 const BRIDGE_DEBUG_STORAGE_KEY='nsrSapToolbox.debugUnlocked.v1';
 let bridgeBusy=false,bridgeSessions=[],bridgeMock=false,zbomRows=[],zbomErrors=[],zbomRunning=false,zbomHasRun=false,zbomLogLines=[],zbomOutputClaims=new Map(),zbomResults=new Map(),zbomHistory=[],zbomHistoryReturnFocus=null;
 let zbomCompareRows=[],zbomCompareStats={duplicates:0,ignored:0},zbomCompareSavedGroups=new Map(),zbomCompareRunning=false,zbomCompareHasRun=false,zbomCompareResults=new Map(),zbomCompareLogLines=[],zbomCompareOutputRowHint=4,zbomCompareHistory=[],zbomCompareHistoryReturnFocus=null,zbomCompareResultTabs=[],zbomCompareActiveResultTab='';
-let createQuoteRows=[],createQuoteStats={duplicates:0,ignored:0},createQuoteCrdOverrides=new Map(),createQuoteManualCrd=new Set();
+let createQuoteRows=[],createQuoteStats={duplicates:0,ignored:0},createQuoteCrdOverrides=new Map(),createQuoteManualCrd=new Set(),createQuoteHistory=[],createQuoteHistoryReturnFocus=null;
 let bridgeDebugUnlocked=false;
 let bobjStatus=null,bobjRefreshing=false,bobjOpening=false,bobjPollTimer=0,bobjStatusRun=0,bobjDataRows=new Map(),bobjDataHeaderIndexes=new Map(),bobjDataMissing=new Set(),bobjDataPath='',bobjDataModified=0,bobjDataCount=0,bobjDataReady=false,bobjDataLoadRun=0,bobjConsumersPending=false,bobjSourcePath='',bobjSourceModified=0,bobjDataLoading=false,bobjDataPromise=null,bobjWorker=null,bobjWorkerRequest=0,bobjWorkerPending=new Map();
 
@@ -789,6 +804,11 @@ function loadCreateQuotePreferences(){
     });
   }catch(_){createQuoteCrdOverrides=new Map()}
   if(removedBlankOverride)saveCreateQuoteCrdOverrides();
+  try{
+    const parsed=JSON.parse(readPersistent(CREATE_QUOTE_STORAGE_KEYS.history,'[]'));
+    createQuoteHistory=Array.isArray(parsed)?parsed.filter(item=>item&&typeof item.quotation==='string'&&typeof item.input==='string'&&typeof item.runAt==='string').slice(0,CREATE_QUOTE_HISTORY_LIMIT):[];
+  }catch(_){createQuoteHistory=[]}
+  renderCreateQuoteHistory();
 }
 
 function saveCreateQuoteQuotation(){
@@ -809,6 +829,14 @@ function saveCreateQuoteFidSuffix(){
 
 function saveCreateQuoteCrdOverrides(){
   const values={};createQuoteCrdOverrides.forEach((value,fid)=>{values[fid]=value});writePersistent(CREATE_QUOTE_STORAGE_KEYS.crdOverrides,JSON.stringify(values));
+}
+
+function resetCreateQuoteInput(){
+  const input=bridgeId('createQuoteInput');input.value='';createQuoteCrdOverrides=new Map();createQuoteManualCrd=new Set();saveCreateQuoteInput();saveCreateQuoteCrdOverrides();previewCreateQuoteInput();setCreateQuoteStatus('Ready.');input.focus();
+}
+
+function resetCreateQuoteSettings(){
+  const validToDays=bridgeId('createQuoteDefaultValidTo'),fidSuffix=bridgeId('createQuoteFidSuffix');validToDays.value=CREATE_QUOTE_DEFAULT_VALID_TO_DAYS;fidSuffix.value=CREATE_QUOTE_DEFAULT_FID_SUFFIX;saveCreateQuoteValidToDays();saveCreateQuoteFidSuffix();renderCreateQuotePreview();validToDays.focus();
 }
 
 function keepZbomCompareTemp(){return bridgeId('zbomCompareKeepTemp').getAttribute('aria-pressed')==='true'}
@@ -918,7 +946,7 @@ function historyDisplayText(value){
 
 function openZbomHistory(){
   const dialog=bridgeId('zbomHistoryDialog');if(!dialog)return;
-  closeZbomCompareHistory();
+  closeZbomCompareHistory();closeCreateQuoteHistory();
   zbomHistoryReturnFocus=document.activeElement;renderZbomHistory();dialog.hidden=false;document.body.classList.add('history-open');bridgeId('zbomCloseHistory').focus();
 }
 
@@ -954,7 +982,7 @@ function recordZbomHistory(text){
 
 function openZbomCompareHistory(){
   const dialog=bridgeId('zbomCompareHistoryDialog');if(!dialog)return;
-  closeZbomHistory();
+  closeZbomHistory();closeCreateQuoteHistory();
   zbomCompareHistoryReturnFocus=document.activeElement;renderZbomCompareHistory();dialog.hidden=false;document.body.classList.add('history-open');bridgeId('zbomCompareCloseHistory').focus();
 }
 
@@ -986,6 +1014,41 @@ function renderZbomCompareHistory(){
 function recordZbomCompareHistory(text){
   zbomCompareHistory=[{text:String(text||''),runAt:new Date().toISOString()},...zbomCompareHistory].slice(0,ZBOM_HISTORY_LIMIT);
   writePersistent(ZBOM_COMPARE_STORAGE_KEYS.history,JSON.stringify(zbomCompareHistory));renderZbomCompareHistory();
+}
+
+function openCreateQuoteHistory(){
+  const dialog=bridgeId('createQuoteHistoryDialog');if(!dialog)return;
+  closeZbomHistory();closeZbomCompareHistory();createQuoteHistoryReturnFocus=document.activeElement;renderCreateQuoteHistory();dialog.hidden=false;document.body.classList.add('history-open');bridgeId('createQuoteCloseHistory').focus();
+}
+
+function closeCreateQuoteHistory(){
+  const dialog=bridgeId('createQuoteHistoryDialog');if(!dialog||dialog.hidden)return;
+  dialog.hidden=true;document.body.classList.remove('history-open');
+  const returnFocus=createQuoteHistoryReturnFocus;createQuoteHistoryReturnFocus=null;if(returnFocus&&typeof returnFocus.focus==='function')returnFocus.focus();
+}
+
+function createQuoteHistoryText(entry){
+  return 'Reference Quotation: '+(String(entry&&entry.quotation||'').trim()||'(empty)')+'\nFID:\n'+historyDisplayText(entry&&entry.input);
+}
+
+function renderCreateQuoteHistory(){
+  const list=bridgeId('createQuoteHistoryList'),count=bridgeId('createQuoteHistoryCount'),buttonCount=bridgeId('createQuoteHistoryButtonCount');
+  if(buttonCount)buttonCount.textContent=String(createQuoteHistory.length);if(!list||!count)return;
+  count.textContent=createQuoteHistory.length+'/'+CREATE_QUOTE_HISTORY_LIMIT;list.replaceChildren();
+  if(!createQuoteHistory.length){const empty=document.createElement('div');empty.className='history-empty';empty.textContent='No Quote Create history.';list.appendChild(empty);return}
+  createQuoteHistory.forEach((entry,index)=>{
+    const displayTime=historyDisplayTime(entry.runAt),button=document.createElement('button');button.type='button';button.className='history-entry';button.setAttribute('aria-label','Restore Quote Create data from '+displayTime);
+    const time=document.createElement('span');time.className='history-entry-time';time.textContent=displayTime;
+    const text=document.createElement('span');text.className='history-entry-text';text.textContent=createQuoteHistoryText(entry);button.append(time,text);button.addEventListener('click',()=>{
+      const current=createQuoteHistory[index];if(!current)return;
+      const quotation=bridgeId('createQuoteQuotation'),input=bridgeId('createQuoteInput');quotation.value=current.quotation;input.value=current.input;sanitizeCreateQuoteQuotation();saveCreateQuoteQuotation();saveCreateQuoteInput();previewCreateQuoteInput();setCreateQuoteStatus('Ready.');ensureBobjForCurrentInput();closeCreateQuoteHistory();input.focus();
+    });list.appendChild(button);
+  });
+}
+
+function recordCreateQuoteHistory(quotation,input){
+  createQuoteHistory=[{quotation:String(quotation||''),input:String(input||''),runAt:new Date().toISOString()},...createQuoteHistory].slice(0,CREATE_QUOTE_HISTORY_LIMIT);
+  writePersistent(CREATE_QUOTE_STORAGE_KEYS.history,JSON.stringify(createQuoteHistory));renderCreateQuoteHistory();
 }
 
 function beginLaunch(){
@@ -1559,6 +1622,7 @@ function validateCreateQuotePreview(){
 async function startCreateQuote(){
   await ensureBobjDataSource();previewCreateQuoteInput();
   if(!validateCreateQuotePreview())return;
+  recordCreateQuoteHistory(sanitizeCreateQuoteQuotation(),bridgeId('createQuoteInput').value);
   setBridgeBusy(true);setCreateQuoteStatus('Opening SAP transaction ZVA21M…');
   try{
     await sendZbomAction('transaction',{code:'ZVA21M'});
@@ -2954,15 +3018,20 @@ function bindBridgeEvents(){
   bridgeId('zbomCompareOpenHistory').addEventListener('click',trusted(openZbomCompareHistory));
   bridgeId('zbomCompareCloseHistory').addEventListener('click',trusted(closeZbomCompareHistory));
   document.querySelector('[data-zbom-compare-history-close]').addEventListener('click',trusted(closeZbomCompareHistory));
+  bridgeId('createQuoteOpenHistory').addEventListener('click',trusted(openCreateQuoteHistory));
+  bridgeId('createQuoteCloseHistory').addEventListener('click',trusted(closeCreateQuoteHistory));
+  document.querySelector('[data-create-quote-history-close]').addEventListener('click',trusted(closeCreateQuoteHistory));
   bridgeId('zbomOpenHistory').addEventListener('click',trusted(openZbomHistory));
   bridgeId('zbomCloseHistory').addEventListener('click',trusted(closeZbomHistory));
   document.querySelector('[data-zbom-history-close]').addEventListener('click',trusted(closeZbomHistory));
-  document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;if(!bridgeId('zbomHistoryDialog').hidden)closeZbomHistory();if(!bridgeId('zbomCompareHistoryDialog').hidden)closeZbomCompareHistory()});
+  document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;if(!bridgeId('zbomHistoryDialog').hidden)closeZbomHistory();if(!bridgeId('zbomCompareHistoryDialog').hidden)closeZbomCompareHistory();if(!bridgeId('createQuoteHistoryDialog').hidden)closeCreateQuoteHistory()});
   document.addEventListener('keydown',event=>{if(event.ctrlKey&&event.altKey&&event.shiftKey&&event.code==='KeyD'){event.preventDefault();toggleBridgeDebug()}});
   bridgeId('zbomResetInput').addEventListener('click',trusted(resetZbomInput));
   bridgeId('zbomResetTemplate').addEventListener('click',trusted(resetZbomTemplate));
   bridgeId('zbomCompareResetInput').addEventListener('click',trusted(resetZbomCompareInput));
   bridgeId('zbomCompareResetTemplate').addEventListener('click',trusted(resetZbomCompareTemplate));
+  bridgeId('createQuoteResetInput').addEventListener('click',trusted(resetCreateQuoteInput));
+  bridgeId('createQuoteResetSettings').addEventListener('click',trusted(resetCreateQuoteSettings));
   bridgeId('zbomStart').addEventListener('click',trusted(startZbomExport));
   bridgeId('zbomOpenFolder').addEventListener('click',trusted(openZbomFolder));
   bridgeId('zbomCompareStart').addEventListener('click',trusted(startZbomCompare));
@@ -2980,6 +3049,7 @@ const LIVE_FIELDS=['Submit Date','Task Status','ECD','Approver Team','Assigned A
 const CYCLE_DETAIL_FIELDS=DETAIL_FIELDS.filter(field=>field!=='NSR#'&&field!=='Initiator'&&!LIVE_FIELDS.includes(field));
 const CYCLE_FIELDS=['NSR#',...LIVE_FIELDS,...CYCLE_DETAIL_FIELDS.flatMap(field=>field==='NSR Type'?[field,'NSR Category']:field==='Customer'?[field,'Initiator']:[field])];
 const WF_FIELDS=['Task Name','Approver Status','Approver Team','Approver','Pending Days','Approved Date','Comments'];
+const WORKFLOW_EXPORT_FIELDS=['NSR#','Workflow Step',...WF_FIELDS];
 const CYCLE_WIDTHS=CYCLE_FIELDS.map(field=>({
   'NSR#':78,'Submit Date':116,'Approver Team':125,
   'Assigned Approver':130,'Pending Days':82,'Aging':64,'Cycle Time':78,'NSR Title':190,'Task Status':144,'ECD':96,
@@ -3864,10 +3934,15 @@ function exportCycleRows(){
   const rows=cycleRows();if(!rows.length)return;
   if(!window.XLSX){toast('The XLSX library did not load.',true);return}
   const data=rows.map(row=>Object.fromEntries(CYCLE_FIELDS.map(field=>[field,row[field]??'']))),sheet=XLSX.utils.json_to_sheet(data,{header:CYCLE_FIELDS});
-  sheet['!cols']=CYCLE_WIDTHS.map(width=>({wch:Math.max(10,Math.round(width/7))}));
-  const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,sheet,'NSR Cycle Time');
+  const workflowData=rows.flatMap(row=>(Array.isArray(row.__workflow)?row.__workflow:[]).map((stage,index)=>Object.fromEntries(WORKFLOW_EXPORT_FIELDS.map(field=>[
+    field,field==='NSR#'?(row['NSR#']??''):field==='Workflow Step'?index+1:(stage[field]??'')
+  ]))));
+  const workflowSheet=XLSX.utils.json_to_sheet(workflowData,{header:WORKFLOW_EXPORT_FIELDS});
+  sheet['!cols']=CYCLE_WIDTHS.map(width=>({wch:Math.max(10,Math.round(width/7))}));sheet['!autofilter']={ref:sheet['!ref']};
+  workflowSheet['!cols']=[12,14,32,18,22,24,14,14,50].map(wch=>({wch}));workflowSheet['!autofilter']={ref:workflowSheet['!ref']};
+  const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,sheet,'NSR Cycle Time');XLSX.utils.book_append_sheet(book,workflowSheet,'Workflow Detail');
   const now=new Date(),stamp=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-  XLSX.writeFile(book,`NSR_Cycle_Time_${stamp}.xlsx`,{compression:true});toast(`${rows.length.toLocaleString()} rows exported.`);
+  XLSX.writeFile(book,`NSR_Cycle_Time_${stamp}.xlsx`,{compression:true});toast(`${rows.length.toLocaleString()} summary rows and ${workflowData.length.toLocaleString()} workflow records exported.`);
 }
 
 function sendDetailToCycle(){
