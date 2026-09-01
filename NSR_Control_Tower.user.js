@@ -99,7 +99,7 @@ justify-content:space-between;align-items:flex-end;gap:24px}.hero h1{margin:8px 
 :.2px}.hero-source{min-width:270px;background:#ffffff16;border:1px solid #ffffff35;border-radius:14px;padding:12px 14px;text-align:right}.hero-source small{display:block;color:#cffafe;font-size:10px;
 text-transform:uppercase;letter-spacing:.7px;font-weight:800}.hero-source strong{display:block;font-size:14px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:390px}
 .layout{display:grid;grid-template-columns:var(--side) minmax(0,1fr);gap:16px;max-width:1900px;margin:auto;padding:16px}.card,.side{background:var(--panel);border:1px solid var(--line);border-radius:
-var(--radius);box-shadow:var(--shadow)}.side{align-self:start;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding:15px;scrollbar-width:thin}.main{display:grid;gap:16px;
+var(--radius);box-shadow:var(--shadow)}.side{align-self:start;padding:15px}.main{display:grid;gap:16px;
 min-width:0}.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.section-title h2,.side h2{font-size:17px;margin:0;letter-spacing:-.15px}
 .section-title p{margin:3px 0 0;color:var(--muted);font-size:12px}.side-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:15px 0 8px}.upload-box{border:1.5px dashed 
 #9fb6c8;background:linear-gradient(180deg,#fbfdff,#f5fafc);border-radius:14px;padding:12px;margin-top:12px}.upload-box label{display:block;font-size:11px;font-weight:900;color:#334155;text-transform:
@@ -135,7 +135,7 @@ underline;text-underline-offset:3px}.kpi span{font-size:10px;color:#64748b}.card
 ;border:1px solid #bbf7d0;border-radius:999px;padding:5px 10px;font-size:11px;font-weight:850;white-space:nowrap}.context-badge::before{content:"";width:7px;height:7px;border-radius:50%;background:
 #22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.12)}.pivot-grid{display:grid;grid-template-columns:repeat(3,minmax(260px,1fr));gap:12px}.pivot-card{border:1px solid #dfe8f1;border-radius:14px;background:
 #fbfdff;min-width:0;overflow:hidden}.pivot-head{display:flex;justify-content:space-between;align-items:center;gap:9px;padding:11px 12px 9px;border-bottom:1px solid #e8eef5;background:#fff}
-.pivot-head h3{font-size:12px;margin:0;color:#334155}.pivot-head span{font-size:10px;color:var(--muted);white-space:nowrap}.pivot-list{padding:7px 9px 9px;max-height:310px;overflow:auto;
+.pivot-head h3{font-size:12px;margin:0;color:#334155}.pivot-head span{font-size:10px;color:var(--muted);white-space:nowrap}.pivot-list{height:310px;min-height:120px;padding:7px 9px 9px;overflow:auto;resize:vertical;
 scrollbar-width:thin}.pivot-row{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(55px,1fr) 42px;gap:8px;align-items:center;padding:5px 3px;border-radius:7px}.pivot-row:hover{background:
 #f1f5f9}.pivot-label{font-size:11px;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pivot-bar{height:8px;background:#e7eef5;border-radius:999px;overflow:hidden}.pivot-bar i{
 display:block;height:100%;min-width:3px;border-radius:999px;background:var(--bar,#0f766e)}.pivot-count{border:0;background:#e0f2fe;color:#075985;border-radius:7px;padding:4px 6px;font-size:11px;
@@ -153,8 +153,7 @@ line-height:1.5}.toast{position:fixed;right:20px;bottom:20px;z-index:50;max-widt
 font-size:12px;line-height:1.45;opacity:0;transform:translateY(12px);pointer-events:none;transition:.2s ease}.toast.show{opacity:1;transform:translateY(0)}.toast.error{background:#991b1b}.loading-line
 {height:3px;position:fixed;left:0;top:0;z-index:99;background:#2dd4bf;width:0;transition:width .25s ease}.loading-line.on{width:72%;animation:loading 1.3s ease-in-out infinite}.loading-line.done{width
 :100%}@keyframes loading{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}@media(max-width:1450px){.pivot-grid{grid-template-columns:repeat(2,minmax(260px,1fr))}.kpis{grid-template-columns:repeat(3,1fr)
-}}@media(max-width:980px){body{min-width:1030px}.hero-inner{display:block}.hero-source{margin-top:12px;text-align:left}.layout{grid-template-columns:320px minmax(680px,1fr);min-width:1030px}.side{
-position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}.pivot-grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.hero{padding:20px 16px}
+}}@media(max-width:980px){body{min-width:1030px}.hero-inner{display:block}.hero-source{margin-top:12px;text-align:left}.layout{grid-template-columns:320px minmax(680px,1fr);min-width:1030px}.pivot-grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.hero{padding:20px 16px}
 .hero h1{font-size:24px}.layout{padding:10px}.kpis{grid-template-columns:1fr 1fr;gap:8px}.kpi{min-height:90px;padding:11px}.kpi strong,.kpi-num{font-size:23px}.table-search{width:100%;max-width:none}}
 @media print{.footer,.pivot-grid,.side,.table-toolbar{display:none}.layout{display:block}.hero{background:#075985!important;-webkit-print-color-adjust:exact}.table-wrap{max-height:none;overflow:
 visible}table{width:100%;font-size:7px}td,th{position:static!important;white-space:normal}}.tabs{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:12px
@@ -173,9 +172,10 @@ color:#0f766e}.ct-link:focus-visible{outline:2px solid #38bdf8;outline-offset:3p
 .wf-head h2{margin:0;color:#0f172a;font-size:17px}.wf-head p{margin:3px 0 0;color:var(--muted);font-size:11px}.wf-actions{display:flex;align-items:center;gap:8px}.wf-wrap{overflow:auto;max-height:
 calc(100vh - 120px)}#wfTable{width:1120px;min-width:1120px;table-layout:fixed}#wfTable th:first-child{width:190px}#wfTable th:nth-child(2){width:120px}#wfTable th:nth-child(3){width:160px}
 #wfTable th:nth-child(4){width:95px}#wfTable th:nth-child(5){width:120px}#wfTable th:nth-child(6){width:435px}#wfTable td{white-space:normal;overflow-wrap:anywhere;vertical-align:top;line-height:1.45}
-#wfTable td:nth-child(6){white-space:pre-wrap}body.wf-open{overflow:hidden}.toast{z-index:1100}#wfTable th{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25;cursor:default}
+#wfTable td:nth-child(6){white-space:pre-wrap}body.wf-open,body.sap-range-open{overflow:hidden}.toast{z-index:1100}#wfTable th{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25;cursor:default}
 .wf-box{width:min(1320px,calc(100vw - 40px))}#wfTable{width:1280px;min-width:1280px}#wfTable th:nth-child(4){width:160px}#wfTable th:nth-child(5){width:95px}#wfTable th:nth-child(6){width:120px}
-#wfTable th:nth-child(7){width:435px}#wfTable td:nth-child(6){white-space:normal}#wfTable td:nth-child(7){white-space:pre-wrap}.btn:disabled{cursor:not-allowed;filter:none;transform:none;opacity:.48}
+#wfTable th:nth-child(7){width:435px}#wfTable td:nth-child(6){white-space:normal}#wfTable td:nth-child(7){white-space:pre-wrap}.wf-box.sap-range-box{width:min(460px,calc(100vw - 40px))}
+.sap-range-form{display:grid;gap:14px;padding:17px}.sap-range-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.sap-range-field{display:grid;gap:6px}.sap-range-field label{color:#475569;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.4px}.sap-range-field input{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);padding:10px;font-size:12px}.sap-range-field input:focus{outline:3px solid rgba(14,165,233,.2);border-color:#38bdf8}.sap-range-note,.sap-range-default{color:var(--muted);font-size:10px;line-height:1.45}.sap-range-default{margin-top:7px}.sap-range-error{min-height:16px;color:#b91c1c;font-size:11px}.sap-range-form .wf-actions{justify-content:flex-end}.btn:disabled{cursor:not-allowed;filter:none;transform:none;opacity:.48}
 @media(max-width:980px){.tabs{min-width:1030px}.cycle-shell{min-width:1030px}}`;
 const APP_HTML=`<div id="loadingLine" class="loading-line"></div>
 <header class="hero">
@@ -200,6 +200,8 @@ const APP_HTML=`<div id="loadingLine" class="loading-line"></div>
     <div class="upload-box">
       <label for="rawFile">Upload raw data</label>
       <input id="rawFile" type="file" accept=".xlsx,.xls,.csv">
+      <button id="sapRangeOpen" class="btn blue wide" type="button">Load SAP date range</button>
+      <div id="sapRangeDefault" class="sap-range-default"></div>
       <div id="sourceStatus" class="source-status loading">Loading latest SAP data…</div>
     </div>
 
@@ -218,7 +220,7 @@ const APP_HTML=`<div id="loadingLine" class="loading-line"></div>
 
     <section class="card">
       <div class="section-title">
-        <div><h2>Interactive Pivot</h2><p>Six views of the same filtered NSR population; each card total stays aligned.</p></div>
+        <div><h2>Interactive Pivot</h2><p>Six views of the same filtered NSR population. Drag any list’s bottom-right corner to show more rows.</p></div>
         <span id="pivotContext" class="context-badge">0 filtered NSRs</span>
       </div>
       <div id="pivotGrid" class="pivot-grid"></div>
@@ -283,6 +285,27 @@ const APP_HTML=`<div id="loadingLine" class="loading-line"></div>
     </section>
   </div>
 </section>
+<div id="sapRangeModal" class="wf-modal" hidden>
+  <button class="wf-bg" type="button" data-sap-range-close aria-label="Close SAP date range"></button>
+  <section class="wf-box sap-range-box" role="dialog" aria-modal="true" aria-labelledby="sapRangeTitle">
+    <div class="wf-head">
+      <div><h2 id="sapRangeTitle">Load SAP data</h2><p>Choose the Submit Date range to request from the current Fiori session.</p></div>
+      <div class="wf-actions"><button class="btn light" type="button" data-sap-range-close>Close</button></div>
+    </div>
+    <form id="sapRangeForm" class="sap-range-form">
+      <div class="sap-range-fields">
+        <div class="sap-range-field"><label for="sapRangeFrom">From date</label><input id="sapRangeFrom" type="date" required></div>
+        <div class="sap-range-field"><label for="sapRangeTo">To date</label><input id="sapRangeTo" type="date" required></div>
+      </div>
+      <div class="sap-range-note">The current table is replaced only after SAP returns successfully. Larger ranges may take longer.</div>
+      <div id="sapRangeError" class="sap-range-error" role="alert" aria-live="polite"></div>
+      <div class="wf-actions">
+        <button class="btn light" type="button" data-sap-range-close>Cancel</button>
+        <button id="sapRangeLoad" class="btn blue" type="submit">Load from SAP</button>
+      </div>
+    </form>
+  </section>
+</div>
 <div id="wfModal" class="wf-modal" hidden>
   <button class="wf-bg" type="button" data-wf-close aria-label="Close workflow detail"></button>
   <section class="wf-box" role="dialog" aria-modal="true" aria-labelledby="wfTitle">
@@ -3005,6 +3028,7 @@ const TASK_STEPS={
 };
 const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
 const state={rows:[],filtered:[],source:null,stats:null,sort:{field:'Submit Date',dir:'desc'},chosenReady:false,toastTimer:null,sourceRun:0,sourceAbort:null,cycleRows:[],cycleSort:{field:'NSR#',dir:'asc'},cycleAbort:null,cycleRun:0};
+let sapRangeTrigger=null;
 
 const $id=id=>document.getElementById(id);
 const clean=v=>{
@@ -3201,6 +3225,41 @@ function sapRange(){
   return {from:localDate(quarterStart),to:localDate(today)};
 }
 
+function validSapDate(value){
+  const match=clean(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!match)return false;
+  const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]),date=new Date(Date.UTC(year,month-1,day));
+  return date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day;
+}
+
+function sapRangeForDialog(){
+  if(state.source&&state.source.isSap&&validSapDate(state.source.from)&&validSapDate(state.source.to))return {from:state.source.from,to:state.source.to};
+  return sapRange();
+}
+
+function openSapRange(){
+  const range=sapRangeForDialog(),today=localDate(new Date()),from=$id('sapRangeFrom'),to=$id('sapRangeTo');
+  from.value=range.from;to.value=range.to;from.max=today;to.max=today;$id('sapRangeError').textContent='';
+  sapRangeTrigger=document.activeElement;$id('sapRangeModal').hidden=false;document.body.classList.add('sap-range-open');from.focus();
+}
+
+function closeSapRange(){
+  if($id('sapRangeModal').hidden)return;$id('sapRangeModal').hidden=true;document.body.classList.remove('sap-range-open');$id('sapRangeError').textContent='';
+  if(sapRangeTrigger&&sapRangeTrigger.isConnected)sapRangeTrigger.focus();sapRangeTrigger=null;
+}
+
+function selectedSapRange(){
+  const from=clean($id('sapRangeFrom').value),to=clean($id('sapRangeTo').value),today=localDate(new Date());let error='';
+  if(!validSapDate(from)||!validSapDate(to))error='Choose both From date and To date.';
+  else if(from>to)error='From date must be on or before To date.';
+  else if(to>today)error='To date cannot be after today.';
+  $id('sapRangeError').textContent=error;return error?null:{from,to};
+}
+
+function submitSapRange(event){
+  event.preventDefault();const range=selectedSapRange();if(!range)return;
+  closeSapRange();loadSapData(range);
+}
+
 function sapFilter(from,to){
   return `(Nsrnum eq '' and Screen eq 'S' and Customer eq '' and Description eq '' and ImpSubSys eq '' and NsrRequest eq '' and NsrTitle eq '' and RefFcid eq '' and NsrType eq '' and SalesOpsFn eq '' and EnggTitle eq '' and NsrWorkflowStatus eq '' and NsrStatus eq '' and InitiatedByFn eq '' and HostFidUpgrade eq '' and (ResEngGroup eq '') and PrimaryProd eq '' and TechSpec eq '' and (SubmitDate ge datetime'${from}T00:00:00' and SubmitDate le datetime'${to}T23:59:59') and (NsrOrg eq ''))`;
 }
@@ -3252,7 +3311,7 @@ async function fetchSapRows(range,signal){
   while(url){
     if(seen.has(url))throw new Error('SAP returned a repeated pagination URL.');
     if(pages>=250)throw new Error('SAP returned too many result pages.');
-    seen.add(url);setSourceStatus(`Loading latest SAP data…<br>${range.from} to ${range.to}${rows.length?` · ${rows.length.toLocaleString()} rows`:''}`,'loading');
+    seen.add(url);setSourceStatus(`Loading SAP data…<br>${range.from} to ${range.to}${rows.length?` · ${rows.length.toLocaleString()} rows`:''}`,'loading');
     let response;
     try{response=await pageFetch(url,{credentials:'same-origin',cache:'no-store',signal,headers:{Accept:'application/atom+xml,application/xml,text/xml'}})}
     catch(_){throw new Error('SAP data request failed. Check the Fiori session and network connection.')}
@@ -3279,14 +3338,14 @@ function commitRaw(rawRows,meta){
   }
 }
 
-async function loadSapData(){
-  const range=sapRange(),run=++state.sourceRun,controller=new unsafeWindow.AbortController();
+async function loadSapData(range=sapRange()){
+  const run=++state.sourceRun,controller=new unsafeWindow.AbortController();
   if(state.sourceAbort)state.sourceAbort.abort();state.sourceAbort=controller;
-  setLoading(true);setSourceStatus(`Loading latest SAP data…<br>${range.from} to ${range.to}`,'loading');
+  setLoading(true);setSourceStatus(`Loading SAP data…<br>${range.from} to ${range.to}`,'loading');
   try{
     $id('rawFile').value='';const result=await fetchSapRows(range,controller.signal);if(run!==state.sourceRun)return;
     commitRaw(result.rows,{file:'SAP live data',isSap:true,from:range.from,to:range.to,pages:result.pages});
-    toast(`${state.rows.length.toLocaleString()} latest SAP NSR${state.rows.length===1?'':'s'} loaded.`);
+    toast(`${state.rows.length.toLocaleString()} SAP NSR${state.rows.length===1?'':'s'} loaded.`);
   }catch(err){
     if(run!==state.sourceRun)return;
     setSourceStatus(`<b>SAP data load failed</b><br>${esc(err.message)} Upload a raw data file to continue.`,'error');toast(err.message,true);
@@ -3816,7 +3875,11 @@ function sendDetailToCycle(){
   $id('cycleInput').value=nsrs.join('\n');switchTab('cycle');runCycleLookup(nsrs);
 }
 function bindEvents(){
+  const defaultRange=sapRange();$id('sapRangeDefault').textContent=`Default SAP range: ${defaultRange.from} to ${defaultRange.to}`;
   $id('rawFile').addEventListener('change',handleUpload);
+  $id('sapRangeOpen').addEventListener('click',openSapRange);
+  $id('sapRangeForm').addEventListener('submit',submitSapRange);
+  $id('sapRangeModal').addEventListener('click',e=>{if(e.target.closest('[data-sap-range-close]'))closeSapRange()});
   $id('resetBtn').addEventListener('click',resetFilters);
   $id('globalSearch').addEventListener('input',applyFilters);
   $id('tableSearch').addEventListener('input',renderTable);
@@ -3830,7 +3893,7 @@ function bindEvents(){
   $id('cycleTable').addEventListener('click',e=>{const trigger=e.target.closest('[data-wf-nsr]');if(trigger)openWorkflow(trigger.dataset.wfNsr,trigger)});
   $id('wfCopy').addEventListener('click',copyWorkflow);
   $id('wfModal').addEventListener('click',e=>{if(e.target.closest('[data-wf-close]'))closeWorkflow()});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$id('wfModal').hidden)closeWorkflow()});
+  document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$id('sapRangeModal').hidden){closeSapRange();return}if(!$id('wfModal').hidden)closeWorkflow()});
   document.querySelectorAll('[data-tab]').forEach(button=>button.addEventListener('click',()=>switchTab(button.dataset.tab)));
   document.addEventListener('click',e=>{
     const status=e.target.closest('[data-status]');if(status){toggleStatus(status.dataset.status);return}
