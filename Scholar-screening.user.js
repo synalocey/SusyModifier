@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SuSy Scholar Screener
-// @version      6.8.29
+// @version      6.9.3
 // @author       SKDAY
 // @match        https://susy.mdpi.com/user/settings*
 // @match        https://www.scopus.com/authid/detail.uri*
@@ -79,6 +79,54 @@
 
   function normalizeSpace(value) {
     return String(value || '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function extractEmails(value) {
+    return unique((String(value || '').match(EMAIL_PATTERN) || []).map((email) => email.toLowerCase()));
+  }
+
+  function emailsAreSimilar(left, right) {
+    const leftEmail = extractEmails(left)[0] || '';
+    const rightEmail = extractEmails(right)[0] || '';
+    if (!leftEmail || !rightEmail) return false;
+    if (leftEmail === rightEmail) return true;
+    const [leftLocalRaw, leftDomain] = leftEmail.split('@');
+    const [rightLocalRaw, rightDomain] = rightEmail.split('@');
+    const leftLocal = leftLocalRaw.replace(/\+.*/, '').replace(/[^a-z0-9]/g, '');
+    const rightLocal = rightLocalRaw.replace(/\+.*/, '').replace(/[^a-z0-9]/g, '');
+    const relatedDomain = leftDomain === rightDomain
+      || leftDomain.endsWith(`.${rightDomain}`)
+      || rightDomain.endsWith(`.${leftDomain}`);
+    return relatedDomain && leftLocal.length >= 3 && leftLocal === rightLocal;
+  }
+
+  function normalizeNameTokens(value) {
+    const ignored = /^(?:prof|professor|dr|doctor|mr|mrs|ms|miss|sir|jr|sr|phd|md)$/;
+    return normalizeSpace(value).normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
+      .replace(/[’']/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').split(' ')
+      .filter((token) => token && !ignored.test(token));
+  }
+
+  function namesAreSimilar(left, right) {
+    const leftTokens = normalizeNameTokens(left);
+    const rightTokens = normalizeNameTokens(right);
+    if (!leftTokens.length || !rightTokens.length) return false;
+    if (leftTokens.join(' ') === rightTokens.join(' ')) return true;
+    const [shorter, longer] = leftTokens.length <= rightTokens.length
+      ? [leftTokens, rightTokens]
+      : [rightTokens, leftTokens];
+    if (shorter.length < 2) return false;
+    const used = new Set();
+    return shorter.every((token) => {
+      const index = longer.findIndex((candidate, candidateIndex) => !used.has(candidateIndex) && (
+        token === candidate
+        || (token.length === 1 && candidate.startsWith(token))
+        || (candidate.length === 1 && token.startsWith(candidate))
+      ));
+      if (index < 0) return false;
+      used.add(index);
+      return true;
+    });
   }
 
   function normalizeStatus(value) {
@@ -242,7 +290,12 @@
     const topBoundary = text.search(/Voucher Record|reviewer information:/i);
     const topText = topBoundary >= 0 ? text.slice(0, topBoundary) : text.slice(0, 12000);
     const compactTop = normalizeSpace(topText);
-    const nameMatch = compactTop.match(/Overview:\s*\S+\s+(?:CRM\s+)?(.+?)\s*\([^)]*\)\s*(?:registered on SUSY|is:)/i);
+    const structuredName = normalizeSpace(
+      $('[data-section="reviewer-profile"] b', documentObject).first().text()
+      || $('[data-section="editors"] b', documentObject).first().text()
+      || $('[data-section="account-info"] b', documentObject).first().text(),
+    );
+    const nameMatch = compactTop.match(/Overview:\s*\S+\s+(?:CRM\s+)?(.+?)\s*\([^)]*\)\s*(?:registered on (?:SUSY|SciProfiles)|is:|$)/i);
 
     const decisionRecords = extractDecisionRecords(documentObject);
     const editorSection = $('[data-section="editors"]', documentObject)[0];
@@ -251,7 +304,7 @@
       `\\bis:\\s*${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(?:of|for|in)\\s+\\S`, 'i',
     ).test(editorText)) : [];
     return {
-      name: normalizeSpace(nameMatch?.[1] || ''),
+      name: structuredName || normalizeSpace(nameMatch?.[1] || ''),
       submitted: numberOr(text.match(/submitted\s+(\d+)\s+manuscripts?/i)?.[1]),
       reviewed: numberOr(text.match(/reviewed\s+(\d+)\s+manuscripts?/i)?.[1]),
       decisionsPastYear: countRecentUniqueRecords(decisionRecords),
@@ -430,11 +483,17 @@
       ? data.publishedSubjectAreas.map((subject) => ({ code: subject.code || '', name: normalizeSpace(subject.name) })).filter((subject) => subject.name)
       : [];
     const hIndex = numberOr(data.hindex, null);
+    const emails = unique([
+      ...extractEmails(data.emailAddress),
+      ...extractEmails(data.email),
+      ...(Array.isArray(data.emailAddresses) ? data.emailAddresses.flatMap(extractEmails) : []),
+    ]);
     return {
       authorId: String(data.authorId),
       hIndex,
       subjects,
       preferredName: normalizeSpace(data.preferredName?.full || ''),
+      emails,
     };
   }
 
@@ -447,6 +506,27 @@
 
   function sourceOk(source) {
     return Boolean(source && source.ok && source.data);
+  }
+
+  function validateScopusIdentity(email, susyNames, scopusSource) {
+    if (!sourceOk(scopusSource)) return { needsReview: false, warning: '' };
+    const scopus = scopusSource.data;
+    const scopusEmails = unique(Array.isArray(scopus.emails) ? scopus.emails.flatMap(extractEmails) : []);
+    const scopusName = normalizeSpace(scopus.preferredName || '');
+    const candidateNames = unique((Array.isArray(susyNames) ? susyNames : [susyNames]).map(normalizeSpace));
+    const emailMatched = scopusEmails.some((scopusEmail) => emailsAreSimilar(email, scopusEmail));
+    const nameMatched = Boolean(scopusName) && candidateNames.some((susyName) => namesAreSimilar(susyName, scopusName));
+    if (emailMatched || nameMatched) {
+      return { needsReview: false, warning: '', emailMatched, nameMatched, scopusEmails, scopusName };
+    }
+    return {
+      needsReview: true,
+      warning: 'Scopus 可能与该邮箱不对应，请人工核查',
+      emailMatched,
+      nameMatched,
+      scopusEmails,
+      scopusName,
+    };
   }
 
   function metricMaximum(...values) {
@@ -900,6 +980,7 @@
         hindex: parsed.hIndex,
         preferredName: { full: parsed.preferredName },
         publishedSubjectAreas: parsed.subjects,
+        emailAddresses: parsed.emails,
       });
       if (typeof GM_setValue !== 'function') throw new Error('Tampermonkey 共享存储权限不可用');
       GM_setValue(responseKey, {
@@ -949,6 +1030,7 @@
       const scopus = scopusId
         ? await loadSource(runScopusRequest(() => requestScopus(urls.scopus)), (payload) => parseScopusPayload(payload, scopusId))
         : { ok: false, data: null, error: '未找到 Scopus Author ID' };
+      const scopusIdentity = validateScopusIdentity(email, [info.data?.name], scopus);
       return {
         email,
         name: info.data?.name || scopus.data?.preferredName || '',
@@ -956,6 +1038,7 @@
         sources: { info, scopus },
         urls,
         decision: classifyScopusOnly(scopus, config),
+        scopusIdentity,
       };
     }
 
@@ -978,8 +1061,9 @@
     const evidence = { email, sources };
     const decision = classifyCandidate(evidence, config);
     const name = ge.data?.name || info.data?.name || scopus.data?.preferredName || '';
+    const scopusIdentity = validateScopusIdentity(email, [ge.data?.name, info.data?.name], scopus);
 
-    return { email, name, mode: 'full', sources, urls, decision };
+    return { email, name, mode: 'full', sources, urls, decision, scopusIdentity };
   }
 
   function getStored(key, fallback) {
@@ -1051,6 +1135,7 @@
   function renderResultRow(row, result) {
     const scopusOnly = result.mode === 'scopus';
     row.className = scopusOnly ? 'ges-row' : `ges-row ${result.decision.code}`;
+    if (result.scopusIdentity?.needsReview) row.classList.add('ges-identity-review');
     row.replaceChildren();
     const metrics = result.decision.metrics;
 
@@ -1132,6 +1217,9 @@
     ]);
 
     const reasonCell = createElement('td');
+    if (result.scopusIdentity?.warning) {
+      reasonCell.appendChild(createElement('div', 'ges-line ges-identity-warning', result.scopusIdentity.warning));
+    }
     if (!scopusOnly) appendLines(reasonCell, result.decision.reasons);
     row.append(verdictCell, candidateCell, gateCell, subjectAreasCell, activityCell, historyCell, reasonCell);
   }
@@ -1148,14 +1236,15 @@
       'Review Invitations Past Year', 'Editorial Decisions Past Year', 'Recent Mails',
       'Latest Mail', 'GE Invitations', 'GE Accepted', 'GE Interested', 'GE Declined', 'Roles', 'Reason',
     ];
-    const rows = results.map(({ email, name, mode, decision }) => {
+    const rows = results.map(({ email, name, mode, decision, scopusIdentity }) => {
       const m = decision.metrics;
       return [
         email, name, mode === 'scopus' ? 'scopus' : 'full', mode === 'scopus' ? '' : decision.label,
         m.geProceed ?? '', m.hIndex ?? '', m.subjectName, m.subjectRank === Infinity ? '∞' : m.subjectRank ?? '', m.subjects.join(' | '),
         m.submissions, m.reviews, m.reviewInvitations ?? '', m.reviewPastYear,
         m.reviewPastYearInvitations ?? '', m.decisions, m.recentMails, m.latestMail || '', m.attempts,
-        m.accepted, m.interested, m.declined, m.roles.join(' | '), mode === 'scopus' ? '' : decision.reasons.join(' | '),
+        m.accepted, m.interested, m.declined, m.roles.join(' | '),
+        [scopusIdentity?.warning, ...(mode === 'scopus' ? [] : decision.reasons)].filter(Boolean).join(' | '),
       ];
     });
     const csv = `\uFEFF${[headers, ...rows].map((row) => row.map(csvEscape).join(',')).join('\r\n')}`;
@@ -1265,6 +1354,7 @@
       .ges-table th:nth-child(7) { width:7.5rem; }
       .ges-row.review, .ges-row.cautious { background:#fffaf0; }
       .ges-row.recommended { background:#f4fbf7; }
+      .ges-row.ges-identity-review { background:#fffaf0; }
       .ges-badge { display:inline-block; border-radius:999px; padding:.25rem .55rem; color:#fff; font-size:.78rem; font-weight:750; white-space:nowrap; }
       .ges-badge.recommended { background:#087f5b; }
       .ges-badge.suitable { background:#22863a; }
@@ -1282,6 +1372,7 @@
       .ges-line+.ges-line { margin-top:.18rem; }
       .ges-fail { color:#a40e21; background:#ffe4e8; border-left:3px solid #c81e32; border-radius:3px; padding:.12rem .35rem; font-weight:750; }
       .ges-unknown { color:#7a5b16; background:#fff5d6; border-left:3px solid #a77c20; border-radius:3px; padding:.12rem .35rem; font-weight:750; }
+      .ges-identity-warning { color:#8a4b08; background:#fff1cc; border-left:3px solid #b36b00; border-radius:3px; padding:.18rem .35rem; font-weight:750; }
       .ges-loading td { color:#687481; font-style:italic; }
     `).appendTo(document.head);
   }
@@ -1495,6 +1586,9 @@
     summarizeReviewerInvitationRows,
     parseMailSearch,
     parseScopusPayload,
+    emailsAreSimilar,
+    namesAreSimilar,
+    validateScopusIdentity,
     classifyCandidate,
     classifyScopusOnly,
     renderResultRow,

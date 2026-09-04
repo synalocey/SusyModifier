@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.8.29
+// @version       6.9.3
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -42,7 +42,7 @@
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
-// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/Scholar-screening.user.js?v=6.8.29
+// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/Scholar-screening.user.js?v=6.9.3
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM.getValue
@@ -110,7 +110,7 @@ const SK_WORK_LOGIN_SITES = [
             'SIpages': { 'label': '特刊列表免翻页', 'labelPos': 'right', 'type': 'checkbox', 'default': true },
             'Cfp_checker': { 'label': 'Toolkit for CfP Checker', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'GE_TemplateID': {
-                'section': [], 'label': '默认 Scholar Template', 'type': 'select', 'labelPos': 'left', 'options':
+                'section': [], 'label': '默认 GE Invitation Template', 'type': 'select', 'labelPos': 'left', 'options':
                 ['Guest Editor-Invite with Responsibility', 'Guest Editor-Invite with Benefits', 'Guest Editor-One Free Paper for GE team', 'Guest Editor-Why a Special Issue', 'Guest Editor-Optional', 'Guest Editor – Invite with Responsibilities and Benefits',
                  '*Guest Editor - SI Mentor Program'], default: 'Guest Editor-Invite with Responsibility'
             },
@@ -175,6 +175,96 @@ const SK_WORK_LOGIN_SITES = [
                 + ` to the Special Issue. If there are any missing papers, please let me know.\n\n%pp_list%\n\nWe are excited about a productive collaboration and hope for a successful outcome for the Special Issue. If you have any questions, please `
                 + `do not hesitate to contact us.\n--\nBest regards,\n\`;\n}`
             },
+            'CfP_TemplateID': { 'section': [], 'label': '默认 CfP Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['Default', 'Paper Invitation 1', 'Paper Invitation 2'], default: 'Default' },
+            'CfP_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'CfP_TemplateS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'CfP_TemplateB1': {
+                'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
+                "[Regex]^(?=[\\s\\S]*(?:journal |in (?:the )?)\"?Mathematics\"?\\s*\\(ISSN)"
+                + "Dear[^\\n]*,\\n\\n(?:(?:The open access journal [^\\n]+Special Issue entitled \"[^\"]+\"\\."
+                + "[^\\n]+Based on your publication record,)|(?:We hope this email finds you well\\.\\n\\n"
+                + "The (?:open access )?journal [^\\n]+Special Issue entitled \"[^\"]+\", with [^\\n]+ serving as Guest Editor))[\\s\\S]*$"
+            },
+            'CfP_TemplateB2': {
+                'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (body) {\n let greeting=(body.match(/^Dear[^\\n]*,/)||["Dear {{reviewer_dr_name}},"])[0];\n`
+                + ` let siName=(body.match(/Special Issue entitled "([^"]+)"/i)||[])[1]||"";\n let deadline=(body.match(/submission deadline is ([^.]+?) and manuscripts/i)||[])[1]||"";\n`
+                + ` let siLink=(body.match(/https[^\\s]+special_issues[^\\s.]+/i)||[])[0]||"";\n let actionLink=(body.match(/Please click on the following link to either accept or decline our invitation:\\s*\\n([^\\n]+)/i)||[])[1]||"";\n`
+                + ` let guestEditors=(body.match(/Special Issue entitled "[^"]+"\\.\\s+(.+?) (?:is|are) serving as Guest Editors? for this issue/i)||[])[1]\n`
+                + `  ||(body.match(/Special Issue entitled "[^"]+", with (.+?) serving as Guest Editor/i)||[])[1]||"";\n let signature=(body.match(/Kind regards,[\\s\\S]*$/i)||[""])[0];\n`
+                + ` let isMathematics=/(?:journal |in (?:the )?)"?Mathematics"?\\s*\\(ISSN/i.test(body);\n let isFree=/free of charge|exempt from this fee|full waiver/i.test(body);\n let discount=(body.match(/(\\d+)% discount/i)||[])[1]||"";\n`
+                + ` if(!isMathematics||!siName||!deadline||!siLink||!actionLink||!guestEditors){return body;}\n let editorList=guestEditors.split(/\\s*(?:[,;]\\s*(?:and\\s+)?|\\band\\s+)(?=(?:Prof\\.?|Dr\\.?|Professor)\\s)/i);\n`
+                + ` guestEditors=editorList.length>2?editorList.slice(0,-1).join(", ")+", and "+editorList[editorList.length-1]:editorList.join(" and ");\n`
+                + ` let openAccess=isFree||discount?"Mathematics is a fully open-access, peer-reviewed journal.":"Mathematics is a fully open-access, peer-reviewed journal, with articles freely available to readers worldwide.";\n`
+                + ` let benefit=isFree?"\\n•\\tAPC waiver: A 100% APC waiver is available for your future submission to Mathematics if accepted. `
+                + `This waiver is not applicable to manuscripts that have already been submitted to the system.":discount?"\\n•\\tDiscount: A "+discount+"% APC discount is available for your future submission to Mathematics if accepted. `
+                + `This discount applies only to future submissions to Mathematics and excludes other MDPI journals and manuscripts currently under processing.":"";\n`
+                + ` let preparation=isFree?"If you have a suitable manuscript in preparation and would like to make use of this APC waiver, `
+                + `please let us know before the submission deadline of "+deadline+". If possible, please provide the tentative title, author information, `
+                + `abstract, and expected completion date of your manuscript. This will allow us to keep track of your manuscript’s progress and provide timely support throughout the Special Issue.":discount?`
+                + `"If you have a suitable manuscript in preparation and need this discount, please let us know before the submission deadline of "+deadline+". `
+                + `If possible, please also provide the tentative title, author information, abstract, and expected completion date of your manuscript. `
+                + `This will allow us to keep track of your manuscript’s progress and provide timely support throughout the Special Issue.":`
+                + `"If you have a suitable manuscript in preparation, please inform us before the submission deadline of "+deadline+", `
+                + `and it’s better to provide the tentative title, author information, abstract, and expected completion date of your manuscript. `
+                + `This will allow us to keep track of your manuscript’s progress and provide timely support throughout the Special Issue.";\n let response=isFree?"Your response will help us arrange the APC waiver accordingly.":discount?`
+                + `"Your timely response would be greatly appreciated and would greatly assist us with our publishing planning and the allocation of Special Issue discounts.":`
+                + `"Your timely response would be greatly appreciated and would greatly assist us with our publishing planning.";\n let signatureBlock=signature?"\\n\\n"+signature:"";\n return \`\${greeting}\n\n`
+                + `We are pleased to invite you to contribute a manuscript to a Special Issue “\${siName}” of Mathematics, which is being organized by \${guestEditors}. `
+                + `Given your expertise and contributions to this field, we sincerely hope you will consider submitting your work to this Special Issue.\n\nWe would like to highlight the following points regarding this invitation:\n`
+                + `•\\tOpen Access: \${openAccess}\n•\\tHigh Visibility: The journal is ranked Q1 in both SCIE (Web of Science) and Scopus and is indexed in RePEc, DOAJ, and other major academic databases.\n`
+                + `•\\tRapid Publication: The first decision is provided approximately 17.4 days after submission.\n`
+                + `•\\tSpecial Invitation: As an invited author, you may consult the Guest Editor on your manuscript’s suitability before submission. `
+                + `Our editorial team can also assist you with formatting and the submission process.\${benefit}\n\n\${preparation}\n\nYou may also accept or decline this invitation directly by clicking the following link: \${actionLink}\n\n`
+                + `\${response}\n\nFor more information, please visit the following websites:\nSpecial Issue Website: \${siLink}\nJournal Website: https://www.mdpi.com/journal/mathematics\n\n`
+                + `We look forward to hearing from you and hope to have the opportunity to collaborate with you.\${signatureBlock}\`;\n}`
+            },
+            'CfP_ReminderID': {
+                'section': [], 'label': '默认 CfP Reminder Template', 'type': 'select', 'labelPos': 'left',
+                'options': ['Paper Invitation Remind', 'Custom'], default: 'Paper Invitation Remind'
+            },
+            'CfP_ReminderS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^[\\s\\S]*$" },
+            'CfP_ReminderS2': {
+                'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () {\n let body=$("#mailBody").val();\n let siName=(body.match(/Special Issue entitled "([^"]+)"/i)||[])[1]||"";\n`
+                + ` let ifValue=(body.match(/(?:IF|Impact Factor(?: of the Journal)? is)\\s*([\\d.]+)/i)||[])[1]||"2.3";\n let isMathematics=/(?:journal |in (?:the )?)"?Mathematics"?\\s*\\(ISSN/i.test(body);\n`
+                + ` let isFree=/free of charge|all associated costs waived|exempt from this fee|full waiver/i.test(body);\n let discount=(body.match(/(\\d+)% discount/i)||[])[1]||"";\n`
+                + ` if(!isMathematics||!siName){return $("#mailSubject").val();}\n let prefix=isFree?"Call for Paper Reminder (Free of Charge): ":discount?"Call for Paper Reminder ("+discount+"% Discount): ":"Call for Paper Reminder: ";\n`
+                + ` return prefix+'[Mathematics] (IF '+ifValue+') — Special Issue "'+siName+'"';\n}`
+            },
+            'CfP_ReminderB1': {
+                'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
+                "[Regex]^(?=[\\s\\S]*(?:journal |in (?:the )?)\"?Mathematics\"?\\s*\\(ISSN)"
+                + "Dear[^\\r\\n]*,\\r?\\n\\r?\\n(?:(?:We hope this email finds you well\\.\\r?\\n\\r?\\n"
+                + "We contacted you on)|(?:We recently invited you to submit a Feature Paper))[\\s\\S]*$"
+            },
+            'CfP_ReminderB2': {
+                'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (body) {\n let greeting=(body.match(/^Dear[^\\n]*,/)||["Dear {{reviewer_dr_name}},"])[0];\n`
+                + ` let siName=(body.match(/Special Issue entitled "([^"]+)"/i)||[])[1]||"";\n let siLink=(body.match(/https[^\\s]+special_issues[^\\s.]+/i)||[])[0]||"";\n`
+                + ` let actionLink=(body.match(/Please click on the following link to either accept or decline our invitation:\\s*\\n([^\\n]+)/i)||[])[1]||"";\n`
+                + ` let guestEditors=(body.match(/\\b((?:(?:Prof\\.?|Dr\\.?|Professor)\\s)[^\\n]+?) (?:is|are) serving as Guest Editors? for this issue/i)||[])[1]||"";\n let signature=(body.match(/Kind regards,[\\s\\S]*$/i)||[""])[0];\n`
+                + ` let isMathematics=/(?:journal |in (?:the )?)"?Mathematics"?\\s*\\(ISSN/i.test(body);\n let isFree=/free of charge|all associated costs waived|exempt from this fee|full waiver/i.test(body);\n`
+                + ` let discount=(body.match(/(\\d+)% discount/i)||[])[1]||"";\n if(!isMathematics||!siName||!siLink||!actionLink||!guestEditors){return body;}\n`
+                + ` let editorList=guestEditors.split(/\\s*(?:[,;]\\s*(?:and\\s+)?|\\band\\s+)(?=(?:Prof\\.?|Dr\\.?|Professor)\\s)/i);\n`
+                + ` guestEditors=editorList.length>2?editorList.slice(0,-1).join(", ")+", and "+editorList[editorList.length-1]:editorList.join(" and ");\n let scope=isFree||discount?'in this Special Issue "'+siName+'"':"in Mathematics";\n`
+                + ` let openAccess=isFree||discount?"Mathematics is a fully open-access, peer-reviewed journal.":"Mathematics is a fully open-access, peer-reviewed journal, with articles freely available to readers worldwide.";\n`
+                + ` let specialInvitation=isFree||discount?"As an invited author, you may consult the Guest Editor on your manuscript’s suitability before submission. `
+                + `Our editorial team can also assist you with formatting and the submission process.":"As an invited author, you may consult the Guest Editor regarding the suitability of your manuscript before submission. `
+                + `Our editorial team can also assist you with formatting and the submission process.";\n let benefit=isFree?"\\n•\\tAPC waiver: A 100% APC waiver is available for your submission to Mathematics if accepted. `
+                + `This waiver is not applicable to manuscripts that have already been submitted to the system.":discount?"\\n•\\tDiscount: A "+discount+"% APC discount is available for your future submission to Mathematics if accepted. `
+                + `This discount applies only to future submissions to Mathematics and excludes other MDPI journals and manuscripts currently under processing.":"";\n`
+                + ` let ending=discount?"Your timely response would be greatly appreciated and would greatly assist us with our publishing planning and the allocation of Special Issue discounts. `
+                + `Thank you very much for your time and consideration, and we look forward to hearing from you.":isFree?"We would greatly appreciate your timely response, as it will help us with our planning for the Special Issue.":`
+                + `"We would greatly appreciate your timely response, as it will help us with our planning for the Special Issue. Thank you very much for your time and consideration, and we look forward to hearing from you.";\n`
+                + ` let signatureBlock=signature?"\\n\\n"+signature:"";\n return \`\${greeting}\n\nWe hope this email finds you well.\n\n`
+                + `We recently contacted you regarding a potential contribution to the Special Issue “\${siName},” but have not yet received your response. `
+                + `We therefore wanted to follow up with you once again to see whether you might be interested in contributing a manuscript.\n\n`
+                + `This Special Issue is led by \${guestEditors}. Further information about the Special Issue, as well as details about the Guest Editor, can be found on the following website: \${siLink}.\n\n`
+                + `We would also like to highlight several advantages of publishing \${scope}:\n•\\tOpen Access: \${openAccess}\n`
+                + `•\\tHigh Visibility: The journal is ranked Q1 in both SCIE (Web of Science) and Scopus and is indexed in RePEc, DOAJ, and other major academic databases.\n`
+                + `•\\tRapid Publication: The first decision is provided approximately 17.4 days after submission.\n•\\tSpecial Invitation: \${specialInvitation}\${benefit}\n\n`
+                + `To help us plan the next steps effectively, could you kindly confirm your current interest by selecting one of the following options?\n(a) Yes, we plan to contribute a paper by the submission deadline.\n`
+                + `(b) Yes, but we need additional time.\n(c) No, we are unable to contribute, but we would be happy to recommend a colleague (please provide their name).\n(d) No, we are currently unable to contribute.\n\n`
+                + `You may also accept or decline the invitation directly by clicking the following link: \${actionLink}\n\n\${ending}\${signatureBlock}\`;\n}`
+            },
             'PP_Template': { 'section': [], 'label': '修改 PP 提醒模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'PP_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*Special Issue(.*) – Potential Paper" },
             'PP_TemplateS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (JCR Q1)$1 - Reminder" },
@@ -231,6 +321,11 @@ const SK_WORK_LOGIN_SITES = [
             'save': function () { if ($("#SusyModifierConfig").length > 0) { location.reload() }; },
             'open': function () {
                 var f_settings = $("#SusyModifierConfig").contents();
+                f_settings.find("textarea[id^='SusyModifierConfig_field_']").each(function () {
+                    let fieldName = this.id.replace("SusyModifierConfig_field_", "");
+                    f_settings.find("#SusyModifierConfig_" + fieldName + "_field_label").after('<button type="button" class="sk_field_reset" title="Reset this field to default" aria-label="Reset this field to default">↺</button>')
+                        .next(".sk_field_reset").on("click", function (e) { e.preventDefault(); e.stopPropagation(); GM_config.fields[fieldName].reset(); });
+                });
                 GM_config.fields.Hidden_Func.node.addEventListener('change', function () { //Experimental警告
                     if (f_settings.find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {
                         alert('Dangerous! \n\nDon\'t turn it on unless you are familiar with ALL susy functions. \nOtherwise, it will cause serious problems.')
@@ -298,7 +393,9 @@ const SK_WORK_LOGIN_SITES = [
         #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_GE_CancelID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
         #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_7{display:inline-grid;grid-template-columns:repeat(5, auto);
         grid-template-rows:auto auto;} #SusyModifierConfig_Report_TemplateID_var{grid-row:1;grid-column:1;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;}
-        #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var, #SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_field_Journal{width:auto}`
+        #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var, #SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_CfP_TemplateID_field_label,
+        #SusyModifierConfig_field_CfP_TemplateID,#SusyModifierConfig_CfP_ReminderID_field_label,#SusyModifierConfig_field_CfP_ReminderID{display:block;} #SusyModifierConfig_field_Journal{width:auto} .sk_field_reset:focus{outline:1px dotted #666}
+        .sk_field_reset{border:0;border-radius:3px;background:transparent;color:#777;font-size:14px;line-height:16px;margin-left:2px;padding:0 4px;cursor:pointer;vertical-align:middle}.sk_field_reset:hover{background:#BEDBC2;color:#333}`
     });
 })();
 
@@ -1822,6 +1919,49 @@ function onInit() {
     //Susy CfP
     if (window.location.href.indexOf("/paper_invitations/") > -1) {
         try {
+            if (window.location.href.indexOf("/invite/") > -1) {
+                let cfpTemplateID = GM_config.get('CfP_TemplateID'), $cfpTemplate = $();
+                if (cfpTemplateID == 'Paper Invitation 2') {
+                    $cfpTemplate = $("#emailTemplates > option:contains('Paper Invitation2'), #emailTemplates > option:contains('Paper Invitation 2')").first();
+                } else if (cfpTemplateID == 'Paper Invitation 1') {
+                    $cfpTemplate = $("#emailTemplates > option:contains('Paper Invitation1'), #emailTemplates > option:contains('Paper Invitation 1')").first();
+                    if (!$cfpTemplate.length) { $cfpTemplate = $("#emailTemplates > option:contains('Paper Invitation')").not(":contains('Paper Invitation2')").not(":contains('Paper Invitation 2')").not(":contains('GE Approved')").first(); }
+                }
+                function init() {
+                    let t1 = skStringToRegex(GM_config.get('CfP_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, skStringToFunction(GM_config.get('CfP_TemplateS2'))));
+                    let t2 = skStringToRegex(GM_config.get('CfP_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, skStringToFunction(GM_config.get('CfP_TemplateB2'))));
+                }
+                waitForText(document.querySelector('#mailBody'), ' ', function () {
+                    if ($cfpTemplate.length) {
+                        let cfpTemplateValue = $cfpTemplate.val(), cfpState = "", cfpTriedState = "", cfpStable = 0, cfpTicks = 0;
+                        if (!$cfpTemplate.prop('selected')) {
+                            $cfpTemplate.prop('selected', true);
+                            unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
+                        }
+                        let cfpTimer = setInterval(function () {
+                            if ($("#emailTemplates").val() != cfpTemplateValue || ++cfpTicks > 100) { clearInterval(cfpTimer); return; }
+                            let cfpCurrentBody = $("#mailBody").val(), cfpCurrentState = $("#mailSubject").val() + "\u0000" + cfpCurrentBody;
+                            if (cfpCurrentBody.indexOf(' ') < 0) { return; }
+                            if (cfpCurrentState != cfpState) { cfpState = cfpCurrentState; cfpStable = 0; }
+                            else if (++cfpStable >= 4 && cfpCurrentState != cfpTriedState) {
+                                cfpTriedState = cfpCurrentState; init();
+                                let cfpReplacedState = $("#mailSubject").val() + "\u0000" + $("#mailBody").val();
+                                if (cfpReplacedState != cfpCurrentState) { cfpState = cfpTriedState = cfpReplacedState; cfpStable = 0; }
+                            }
+                        }, 300);
+                    } else { init(); }
+                });
+            }
+            if (window.location.href.indexOf("/remind/") > -1) {
+                try {
+                    if (GM_config.get('CfP_ReminderID') == 'Custom') {
+                        waitForText(document.querySelector('#mailBody'), ' ', function () {
+                            let t1 = skStringToRegex(GM_config.get('CfP_ReminderS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, skStringToFunction(GM_config.get('CfP_ReminderS2'))));
+                            let t2 = skStringToRegex(GM_config.get('CfP_ReminderB1')); $("#mailBody").val($("#mailBody").val().replace(t2, skStringToFunction(GM_config.get('CfP_ReminderB2'))));
+                        });
+                    }
+                } catch (error) { }
+            }
             $('#mailBody').parent().after(`&nbsp;<a id="SpecialDiscount">📉</a>`);
             $('#SpecialDiscount').on("click", function () {
                 document.getElementById('mailBody').value = document.getElementById('mailBody').value.replace(/\(\d+%/, '(with special').replace(/\nThis invitation entitles you.* after peer review. /g, "\n").replace(/\d+% discount/g, '*special discount*');
