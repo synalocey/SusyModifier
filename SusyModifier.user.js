@@ -114,17 +114,17 @@ const SK_WORK_LOGIN_SITES = [
                 ['Guest Editor-Invite with Responsibility', 'Guest Editor-Invite with Benefits', 'Guest Editor-One Free Paper for GE team', 'Guest Editor-Why a Special Issue', 'Guest Editor-Optional', 'Guest Editor – Invite with Responsibilities and Benefits',
                  '*Guest Editor - SI Mentor Program'], default: 'Guest Editor-Invite with Responsibility'
             },
-            'GE_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*Mathematics.*Guest Editor" },
+            'GE_TemplateS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*Mathematics.*Guest Editor" },
             'GE_TemplateS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation to Serve as the Guest Editor" },
-            'GE_TemplateB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'GE_TemplateB1': { 'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_TemplateB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_ReminderID': {
                 'section': [], 'label': '默认 GE Reminder Template', 'type': 'select', 'labelPos': 'left', 'options':
                 ['Reminder (GE responsibility)', 'Reminder (video call)', 'Reminder (general)', 'Reminder (with benefits)'], default: 'Reminder (GE responsibility)'
             },
-            'GE_ReminderS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'GE_ReminderS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_ReminderS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
-            'GE_ReminderB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'GE_ReminderB1': { 'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_ReminderB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_ReminderPrefix': { 'type': 'hidden', 'default': 'Follow Up: ' },
             'GE_CancelID': {
@@ -133,22 +133,22 @@ const SK_WORK_LOGIN_SITES = [
                  'Guest Editor Invitation-Cancel Invitation (paper invitation with full APC)-manually'],
                 default: 'Guest Editor Invitation-Cancel Invitation (feature paper invitation)-manually'
             },
-            'GE_CancelS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'GE_CancelS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_CancelS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
-            'GE_CancelB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "once this Special Issue is online, we welcome you to contribute one Feature Paper with the publishing fees waived" },
+            'GE_CancelB1': { 'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "once this Special Issue is online, we welcome you to contribute one Feature Paper with the publishing fees waived" },
             'GE_CancelB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "we welcome you to contribute one Feature Paper with a special discount" },
             'EB_TemplateID': { 'section': [], 'label': '默认 EB Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['Invite Version 1', 'Invite Version 2', 'Invite Version 3', 'Invite Version 4'], default: 'Invite Version 1' },
-            'EB_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation" },
+            'EB_TemplateS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation" },
             'EB_TemplateS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation" },
-            'EB_TemplateB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'EB_TemplateB1': { 'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'EB_TemplateB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'EB_ReminderID': {
                 'section': [], 'label': '默认 EB Reminder Template', 'type': 'select', 'labelPos': 'left', 'options': ['Reminder (Responsibilities and Benefits)', 'Reminder (General)', 'Reminder (Numerous Benefits)'],
                 default: 'Reminder(Responsibilities and Benefits)'
             },
-            'EB_ReminderS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation" },
+            'EB_ReminderS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^Invitation" },
             'EB_ReminderS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] Invitation" },
-            'EB_ReminderB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'EB_ReminderB1': { 'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'EB_ReminderB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'Report_TemplateID': {
                 'section': [], 'label': '默认 GE Contact', 'type': 'select', 'labelPos': 'left', default: 'Monthly Report', 'options':
@@ -159,12 +159,12 @@ const SK_WORK_LOGIN_SITES = [
                  'Extend The Deadline', 'Editorial – SI Closed', 'Book Online', 'Check Abstract', 'Monthly Report', 'IF Increased', 'Journal Awards', 'First Publication']
             },
             'Report_Notes': { 'label': '', 'labelPos': 'left', 'type': 'text', 'default': "月报" },
-            'Report_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=\\] ).*" },
+            'Report_TemplateS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=\\] ).*" },
             'Report_TemplateS2': {
                 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () {\n let $si_name = $('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();\n`
                 + ` return \`Monthly Report (\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – \${$si_name}\`;\n}`
             },
-            'Report_TemplateB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=Dear[\\s\\S]*?,\\n\\n)[\\S\\s]*Kind regards," },
+            'Report_TemplateB1': { 'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=Dear[\\s\\S]*?,\\n\\n)[\\S\\s]*Kind regards," },
             'Report_TemplateB2': {
                 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (){\n let $si_name=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();`
                 + ` let $si_link=$('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().children().attr("href");`
@@ -176,10 +176,10 @@ const SK_WORK_LOGIN_SITES = [
                 + `do not hesitate to contact us.\n--\nBest regards,\n\`;\n}`
             },
             'CfP_TemplateID': { 'section': [], 'label': '默认 CfP Invitation Template', 'type': 'select', 'labelPos': 'left', 'options': ['Default', 'Paper Invitation 1', 'Paper Invitation 2'], default: 'Default' },
-            'CfP_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
+            'CfP_TemplateS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'CfP_TemplateS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'CfP_TemplateB1': {
-                'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
+                'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
                 "[Regex]^(?=[\\s\\S]*(?:journal |in (?:the )?)\"?Mathematics\"?\\s*\\(ISSN)"
                 + "Dear[^\\n]*,\\n\\n(?:(?:The open access journal [^\\n]+Special Issue entitled \"[^\"]+\"\\."
                 + "[^\\n]+Based on your publication record,)|(?:We hope this email finds you well\\.\\n\\n"
@@ -222,7 +222,7 @@ const SK_WORK_LOGIN_SITES = [
                 'section': [], 'label': '默认 CfP Reminder Template', 'type': 'select', 'labelPos': 'left',
                 'options': ['Paper Invitation Remind', 'Custom'], default: 'Paper Invitation Remind'
             },
-            'CfP_ReminderS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^[\\s\\S]*$" },
+            'CfP_ReminderS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^[\\s\\S]*$" },
             'CfP_ReminderS2': {
                 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () {\n let body=$("#mailBody").val();\n let siName=(body.match(/Special Issue entitled "([^"]+)"/i)||[])[1]||"";\n`
                 + ` let ifValue=(body.match(/(?:IF|Impact Factor(?: of the Journal)? is)\\s*([\\d.]+)/i)||[])[1]||"2.3";\n let isMathematics=/(?:journal |in (?:the )?)"?Mathematics"?\\s*\\(ISSN/i.test(body);\n`
@@ -231,7 +231,7 @@ const SK_WORK_LOGIN_SITES = [
                 + ` return prefix+'[Mathematics] (IF '+ifValue+') — Special Issue "'+siName+'"';\n}`
             },
             'CfP_ReminderB1': {
-                'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
+                'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
                 "[Regex]^(?=[\\s\\S]*(?:journal |in (?:the )?)\"?Mathematics\"?\\s*\\(ISSN)"
                 + "Dear[^\\r\\n]*,\\r?\\n\\r?\\n(?:(?:We hope this email finds you well\\.\\r?\\n\\r?\\n"
                 + "We contacted you on)|(?:We recently invited you to submit a Feature Paper))[\\s\\S]*$"
@@ -266,10 +266,10 @@ const SK_WORK_LOGIN_SITES = [
                 + `You may also accept or decline the invitation directly by clicking the following link: \${actionLink}\n\n\${ending}\${signatureBlock}\`;\n}`
             },
             'PP_Template': { 'section': [], 'label': '修改 PP 提醒模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
-            'PP_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*Special Issue(.*) – Potential Paper" },
+            'PP_TemplateS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*Special Issue(.*) – Potential Paper" },
             'PP_TemplateS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "[Mathematics] (JCR Q1)$1 - Reminder" },
             'PP_TemplateB1': {
-                'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
+                'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default':
                 "[Regex]We hope you are well. [\\s\\S]*submitting a paper to the Special Issue (.*?)\\.[\\s\\S]*(https:\\/\\/www.mdpi.com\\/journal\\/mathematics\\/special_issues.*)[\\s\\S]*Kind regards,"
             },
             'PP_TemplateB2': {
@@ -278,12 +278,12 @@ const SK_WORK_LOGIN_SITES = [
                 + ' manuscript by the deadline if possible.\n\nWe look forward to receiving your submission and thank you for your interest in our special issue.\n\nKind regards,'
             },
             'Interface_combine': { 'label': 'Topic Manuscripts整合SI', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
-            'Topic_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*" },
+            'Topic_TemplateS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*" },
             'Topic_TemplateS2': {
                 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () { let $topic_name= $('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().text().trim(); return \`[MDPI Topics] Monthly Report `
                 + `(\${new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' })}) – \${$topic_name}\`; }`
             },
-            'Topic_TemplateB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': '[Regex]Dear Editor,[\\s\\S]*Kind regards,' },
+            'Topic_TemplateB1': { 'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': '[Regex]Dear Editor,[\\s\\S]*Kind regards,' },
             'Topic_TemplateB2': {
                 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function (){\n let \$topic_name=\$('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().text().trim(); let \$topic_link=\$('div.cell.small-12.medium-6.`
                 + `large-2:contains("Topic Name")').next().children().attr("href"); let \$arr=\$('div.cell.small-12.medium-6.large-2:contains("Manuscripts(")').first().next().text().split("/");\n let \$process=\$arr[0].trim(),\$pub=\$arr[1].trim(),`
@@ -295,9 +295,9 @@ const SK_WORK_LOGIN_SITES = [
             },
 
             'Con_Template': { 'section': [, "Conference Pages"], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
-            'Con_TemplateS1': { 'label': 'Replace Email Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)" },
+            'Con_TemplateS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)" },
             'Con_TemplateS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)" },
-            'Con_TemplateB1': { 'label': 'Replace Email Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex] and within the journal newsletter.* website and newsletter." },
+            'Con_TemplateB1': { 'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex] and within the journal newsletter.* website and newsletter." },
             'Con_TemplateB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website." },
 
             'Interface_SME': {
