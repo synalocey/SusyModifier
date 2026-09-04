@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.9.3
+// @version       6.9.4
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -82,6 +82,7 @@ const SK_WORK_LOGIN_SITES = [
     { id: 'attendance', name: 'HRMS', url: 'https://i.mdpi.cn/team/attendance' },
     { id: 'redmine', name: 'Redmine', url: 'https://redmine.mdpi.cn/' }
 ];
+const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site => site.id)].map(id => 'skWorkLoginStatus_' + id);
 
 (function () {
     'use strict';
@@ -195,8 +196,8 @@ const SK_WORK_LOGIN_SITES = [
                 + ` if(!isMathematics||!siName||!deadline||!siLink||!actionLink||!guestEditors){return body;}\n let editorList=guestEditors.split(/\\s*(?:[,;]\\s*(?:and\\s+)?|\\band\\s+)(?=(?:Prof\\.?|Dr\\.?|Professor)\\s)/i);\n`
                 + ` guestEditors=editorList.length>2?editorList.slice(0,-1).join(", ")+", and "+editorList[editorList.length-1]:editorList.join(" and ");\n`
                 + ` let openAccess=isFree||discount?"Mathematics is a fully open-access, peer-reviewed journal.":"Mathematics is a fully open-access, peer-reviewed journal, with articles freely available to readers worldwide.";\n`
-                + ` let benefit=isFree?"\\n•\\tAPC waiver: A 100% APC waiver is available for your future submission to Mathematics if accepted. `
-                + `This waiver is not applicable to manuscripts that have already been submitted to the system.":discount?"\\n•\\tDiscount: A "+discount+"% APC discount is available for your future submission to Mathematics if accepted. `
+                + ` let benefit=isFree?"\\n• APC waiver: A 100% APC waiver is available for your future submission to Mathematics if accepted. `
+                + `This waiver is not applicable to manuscripts that have already been submitted to the system.":discount?"\\n• Discount: A "+discount+"% APC discount is available for your future submission to Mathematics if accepted. `
                 + `This discount applies only to future submissions to Mathematics and excludes other MDPI journals and manuscripts currently under processing.":"";\n`
                 + ` let preparation=isFree?"If you have a suitable manuscript in preparation and would like to make use of this APC waiver, `
                 + `please let us know before the submission deadline of "+deadline+". If possible, please provide the tentative title, author information, `
@@ -211,9 +212,9 @@ const SK_WORK_LOGIN_SITES = [
                 + `"Your timely response would be greatly appreciated and would greatly assist us with our publishing planning.";\n let signatureBlock=signature?"\\n\\n"+signature:"";\n return \`\${greeting}\n\n`
                 + `We are pleased to invite you to contribute a manuscript to a Special Issue “\${siName}” of Mathematics, which is being organized by \${guestEditors}. `
                 + `Given your expertise and contributions to this field, we sincerely hope you will consider submitting your work to this Special Issue.\n\nWe would like to highlight the following points regarding this invitation:\n`
-                + `•\\tOpen Access: \${openAccess}\n•\\tHigh Visibility: The journal is ranked Q1 in both SCIE (Web of Science) and Scopus and is indexed in RePEc, DOAJ, and other major academic databases.\n`
-                + `•\\tRapid Publication: The first decision is provided approximately 17.4 days after submission.\n`
-                + `•\\tSpecial Invitation: As an invited author, you may consult the Guest Editor on your manuscript’s suitability before submission. `
+                + `• Open Access: \${openAccess}\n• High Visibility: The journal is ranked Q1 in both SCIE (Web of Science) and Scopus and is indexed in RePEc, DOAJ, and other major academic databases.\n`
+                + `• Rapid Publication: The first decision is provided approximately 17.4 days after submission.\n`
+                + `• Special Invitation: As an invited author, you may consult the Guest Editor on your manuscript’s suitability before submission. `
                 + `Our editorial team can also assist you with formatting and the submission process.\${benefit}\n\n\${preparation}\n\nYou may also accept or decline this invitation directly by clicking the following link: \${actionLink}\n\n`
                 + `\${response}\n\nFor more information, please visit the following websites:\nSpecial Issue Website: \${siLink}\nJournal Website: https://www.mdpi.com/journal/mathematics\n\n`
                 + `We look forward to hearing from you and hope to have the opportunity to collaborate with you.\${signatureBlock}\`;\n}`
@@ -248,8 +249,8 @@ const SK_WORK_LOGIN_SITES = [
                 + ` let openAccess=isFree||discount?"Mathematics is a fully open-access, peer-reviewed journal.":"Mathematics is a fully open-access, peer-reviewed journal, with articles freely available to readers worldwide.";\n`
                 + ` let specialInvitation=isFree||discount?"As an invited author, you may consult the Guest Editor on your manuscript’s suitability before submission. `
                 + `Our editorial team can also assist you with formatting and the submission process.":"As an invited author, you may consult the Guest Editor regarding the suitability of your manuscript before submission. `
-                + `Our editorial team can also assist you with formatting and the submission process.";\n let benefit=isFree?"\\n•\\tAPC waiver: A 100% APC waiver is available for your submission to Mathematics if accepted. `
-                + `This waiver is not applicable to manuscripts that have already been submitted to the system.":discount?"\\n•\\tDiscount: A "+discount+"% APC discount is available for your future submission to Mathematics if accepted. `
+                + `Our editorial team can also assist you with formatting and the submission process.";\n let benefit=isFree?"\\n• APC waiver: A 100% APC waiver is available for your submission to Mathematics if accepted. `
+                + `This waiver is not applicable to manuscripts that have already been submitted to the system.":discount?"\\n• Discount: A "+discount+"% APC discount is available for your future submission to Mathematics if accepted. `
                 + `This discount applies only to future submissions to Mathematics and excludes other MDPI journals and manuscripts currently under processing.":"";\n`
                 + ` let ending=discount?"Your timely response would be greatly appreciated and would greatly assist us with our publishing planning and the allocation of Special Issue discounts. `
                 + `Thank you very much for your time and consideration, and we look forward to hearing from you.":isFree?"We would greatly appreciate your timely response, as it will help us with our planning for the Special Issue.":`
@@ -258,9 +259,9 @@ const SK_WORK_LOGIN_SITES = [
                 + `We recently contacted you regarding a potential contribution to the Special Issue “\${siName},” but have not yet received your response. `
                 + `We therefore wanted to follow up with you once again to see whether you might be interested in contributing a manuscript.\n\n`
                 + `This Special Issue is led by \${guestEditors}. Further information about the Special Issue, as well as details about the Guest Editor, can be found on the following website: \${siLink}.\n\n`
-                + `We would also like to highlight several advantages of publishing \${scope}:\n•\\tOpen Access: \${openAccess}\n`
-                + `•\\tHigh Visibility: The journal is ranked Q1 in both SCIE (Web of Science) and Scopus and is indexed in RePEc, DOAJ, and other major academic databases.\n`
-                + `•\\tRapid Publication: The first decision is provided approximately 17.4 days after submission.\n•\\tSpecial Invitation: \${specialInvitation}\${benefit}\n\n`
+                + `We would also like to highlight several advantages of publishing \${scope}:\n• Open Access: \${openAccess}\n`
+                + `• High Visibility: The journal is ranked Q1 in both SCIE (Web of Science) and Scopus and is indexed in RePEc, DOAJ, and other major academic databases.\n`
+                + `• Rapid Publication: The first decision is provided approximately 17.4 days after submission.\n• Special Invitation: \${specialInvitation}\${benefit}\n\n`
                 + `To help us plan the next steps effectively, could you kindly confirm your current interest by selecting one of the following options?\n(a) Yes, we plan to contribute a paper by the submission deadline.\n`
                 + `(b) Yes, but we need additional time.\n(c) No, we are unable to contribute, but we would be happy to recommend a colleague (please provide their name).\n(d) No, we are currently unable to contribute.\n\n`
                 + `You may also accept or decline the invitation directly by clicking the following link: \${actionLink}\n\n\${ending}\${signatureBlock}\`;\n}`
@@ -293,12 +294,6 @@ const SK_WORK_LOGIN_SITES = [
                 + `Special Issue. If there are any missing papers, please let me know.\n\n%pp_list%\n\nMay you continue to explore the unknown and lead the forefront of academia. Wishing you continuous breakthroughs and inspiration in your scholarly `
                 + `endeavors!\n--\nBest regards,\n\`;\n}`
             },
-
-            'Con_Template': { 'section': [, "Conference Pages"], 'label': '修改Conference模板', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
-            'Con_TemplateS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)" },
-            'Con_TemplateS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "(ISSN 2227-7390)" },
-            'Con_TemplateB1': { 'label': 'Replace Body From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex] and within the journal newsletter.* website and newsletter." },
-            'Con_TemplateB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': ". We would be glad if, in return, you could advertise the journal via the conference website." },
 
             'Interface_SME': {
                 'section': [GM_config.create('Interface Modification')], 'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
@@ -342,18 +337,10 @@ const SK_WORK_LOGIN_SITES = [
                     if (f_settings.find("#SusyModifierConfig_field_ManuscriptFunc")[0].checked) { f_settings.find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").show(); }
                     else { f_settings.find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").hide() }
                 });
-                //隐藏Conference Template
-                f_settings.find("#SusyModifierConfig_Con_TemplateB2_var").after('<div id="c_br"></div>')
+                //隐藏 PP 和 Topic Template
                 f_settings.find("#SusyModifierConfig_PP_TemplateB2_var").after('<div id="c_br2"></div>')
-                if (!GM_config.get('Con_Template')) { f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").hide() }
                 if (!GM_config.get('PP_Template')) { f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").hide() }
                 if (!GM_config.get('Interface_combine')) { f_settings.find("#SusyModifierConfig_Topic_TemplateS1_var,#SusyModifierConfig_Topic_TemplateS2_var,#SusyModifierConfig_Topic_TemplateB1_var,#SusyModifierConfig_Topic_TemplateB2_var").hide() }
-                GM_config.fields.Con_Template.node.addEventListener('change', function () {
-                    if (f_settings.find("#SusyModifierConfig_field_Con_Template")[0].checked) {
-                        f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").show()
-                    }
-                    else { f_settings.find("#SusyModifierConfig_Con_TemplateS1_var,#SusyModifierConfig_Con_TemplateS2_var,#SusyModifierConfig_Con_TemplateB1_var,#SusyModifierConfig_Con_TemplateB2_var,#c_br").hide() }
-                });
                 GM_config.fields.PP_Template.node.addEventListener('change', function () {
                     if (f_settings.find("#SusyModifierConfig_field_PP_Template")[0].checked) {
                         f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").show()
@@ -389,7 +376,7 @@ const SK_WORK_LOGIN_SITES = [
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
         #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
         #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label,#SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_field_Report_Notes,
-        #SusyModifierConfig_Old_Icon_field_label,#SusyModifierConfig_Hidden_Func_field_label{width:140px;display:inline-block;} #SusyModifierConfig_Con_Template_field_label,#SusyModifierConfig_PP_Template_field_label,
+        #SusyModifierConfig_Old_Icon_field_label,#SusyModifierConfig_Hidden_Func_field_label{width:140px;display:inline-block;} #SusyModifierConfig_PP_Template_field_label,
         #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_GE_CancelID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
         #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_7{display:inline-grid;grid-template-columns:repeat(5, auto);
         grid-template-rows:auto auto;} #SusyModifierConfig_Report_TemplateID_var{grid-row:1;grid-column:1;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;}
@@ -434,6 +421,10 @@ function onInit() {
         })
     }
 
+    if (GM_getValue('skWorkLogin', null) === null) {
+        ['skWorkLoginUntil', 'skWorkLoginRun', 'skWorkLoginStatus__microsoft'].concat(SK_WORK_LOGIN_STATUS_KEYS, SK_WORK_LOGIN_SITES.map(site => 'skWorkLoginAutoClose_' + site.id)).forEach(key => GM_deleteValue(key));
+        GM_setValue('skWorkLogin', {});
+    }
     if (window.location.href.indexOf("www.mdpi.com/?login") > -1) skOpenWorkLoginHub();
     skWorkLoginHelper();
 
@@ -1992,26 +1983,6 @@ function onInit() {
         } catch (error) { }
     }
 
-    //会议相关
-    if (window.location.href.indexOf("mdpi.com/user/conference/") > -1 && window.location.href.indexOf("/view") > -1) { try { $("[name=journal_id]").val(S_J); } catch (error) { } }
-    if (window.location.href.indexOf("mdpi.com/user/conference/add") > -1) {
-        $("#form_conference_organization").val(2).trigger("change"); $("#form_conference_organization_chosen span").text("Societies, Universities or University professors");
-        $("[id^=form_checklist]").parent().parent().show(); $("[id^=form_commercial],[id^=form_conference_commercial]").parent().parent().hide(); $("[id^=form_checklist],[id^=form_commercial_checklist]").prop("checked", true);
-        if (S_J = 154) { $("#form_subject_id").val(4); $("#form_subject_id_chosen span").text("Computer Science & Mathematics") }
-    }
-    if (window.location.href.indexOf("mdpi.com/user/send/conference_journal/contact_mail") > -1 && GM_config.get('Con_Template')) {
-        try {
-            function init() {
-                let t1 = skStringToRegex(GM_config.get('Con_TemplateS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, GM_config.get('Con_TemplateS2')));
-                let t2 = skStringToRegex(GM_config.get('Con_TemplateB1')); $("#mailBody").val($("#mailBody").val().replace(t2, GM_config.get('Con_TemplateB2')));
-            }
-            waitForText(document.querySelector('#mailSubject'), ' ', init);
-            $('#mailSubject').parent().after('<div><a id="First_Line">[First Line]</a><br><br><a id="Del_Proceedings">[Del Proceedings]</a></div>');
-            $('#First_Line').on("click", function () { $('#mailBody').val("Dear Conference Committee,\nTo Whom It May Concern,\n" + $('#mailBody').val()) });
-            $('#Del_Proceedings').on("click", function () { $('#mailBody').val($('#mailBody').val().replace(/\n(.*?)https:\/\/www.mdpi.com\/about\/proceedings(.*?)\n/g, '')) });
-        } catch (error) { }
-    }
-
     //PP提醒模板
     if (window.location.href.indexOf("mdpi.com/special_issue/email/planned_paper") > -1 && GM_config.get('PP_Template')) {
         try {
@@ -2855,8 +2826,8 @@ function onInit() {
                                             const tip = $('<span></span>').css({ fontSize: '12px', color: '#888', marginLeft: '8px' });
                                             const copyIcon = $('<span id="sk-inner-copy-btn">📋</span>').css({ cursor: 'pointer', fontSize: '16px', marginLeft: '6px' }).attr('title', 'Copy').on('click', function () {
                                                 navigator.clipboard.writeText(ta.val()).then(() => { tip.text('✓').css('color', '#1e8e3e'); setTimeout(() => tip.text(''), 1500); }).catch(() => { ta[0].select(); document.execCommand('copy'); });
-                                            }).on('mousedown', function (e) { if (e.which === 2 && GM_getValue('isUserNameMatch', false)) e.preventDefault(); }).on('auxclick', function (e) {
-                                                if (e.originalEvent.button !== 1 || !GM_getValue('isUserNameMatch', false)) return;
+                                            }).on('mousedown', function (e) { if (e.which === 2) e.preventDefault(); }).on('auxclick', function (e) {
+                                                if (e.originalEvent.button !== 1) return;
                                                 const lines = ta.val().split('\n');
                                                 // Replace header row with full header
                                                 lines[0] = lines[0].replace('First Name\tLast Name\tCo-Docs\tScopus Link','Email\tH-Index\tInstitution\tSubject Areas\tFirst Name\tLast Name\tCo-Docs\tScopus Link');
@@ -3884,35 +3855,35 @@ function skOpenWorkLoginHub() {
         if (needLoginSites.length === 0) { $(this).text('全部已登录'); return; }
         $(this).prop('disabled', true).text('正在批量登录…');
 
-        GM_setValue('skWorkLoginUntil', Date.now() + 5 * 60 * 1000);
-        GM_setValue('skWorkLoginRun', hubRun);
-        GM_setValue('skWorkLoginStatus__microsoft', {});
+        SK_WORK_LOGIN_STATUS_KEYS.forEach(key => GM_deleteValue(key));
+        GM_setValue('skWorkLogin', { run: hubRun, until: Date.now() + 5 * 60 * 1000, sites: needLoginSites });
 
         needLoginSites.forEach(function (id) {
             $(`.sk-work-row[data-site="${id}"]`).find('.sk-work-state').text('正在登录…');
             let url = siteUrl(id);
-            if (url) {
-                GM_setValue('skWorkLoginAutoClose_' + id, hubRun);
-                GM_setValue('skWorkLoginStatus_' + id, { state: 'working', text: '正在登录…', run: hubRun });
-                GM_openInTab(url, { active: false, insert: true });
-            }
+            if (url) GM_openInTab(url, { active: false, insert: true });
         });
 
         let timer = setInterval(() => {
             needLoginSites = needLoginSites.filter(id => {
-                let s = GM_getValue('skWorkLoginStatus_' + id, {});
+                let key = 'skWorkLoginStatus_' + id, s = GM_getValue(key, {});
                 if (s.run !== hubRun) return true;
+                GM_deleteValue(key);
                 if (s.state === 'ok') updateSiteStatus(id, true);
                 else if (s.text) $(`.sk-work-row[data-site="${id}"]`).find('.sk-work-state').text(s.text);
                 return s.state !== 'ok';
             });
-            let ms = GM_getValue('skWorkLoginStatus__microsoft', {});
-            $('#sk-work-microsoft').text(ms?.text || '').prop('hidden', !ms?.text);
+            let ms = GM_getValue('skWorkLoginStatus_microsoft', {});
+            if (ms.run === hubRun) {
+                $('#sk-work-microsoft').text(ms?.text || '').prop('hidden', !ms?.text);
+                GM_deleteValue('skWorkLoginStatus_microsoft');
+            }
             if (!needLoginSites.length) {
                 clearInterval(timer);
                 $('#sk-work-start').text('全部登录完成');
                 $('#sk-work-badge').text('全部已登录');
-                GM_setValue('skWorkLoginUntil', 0);
+                GM_setValue('skWorkLogin', {});
+                SK_WORK_LOGIN_STATUS_KEYS.forEach(key => GM_deleteValue(key));
             }
         }, 500);
     });
@@ -3921,13 +3892,22 @@ function skOpenWorkLoginHub() {
 }
 
 function skWorkLoginHelper() {
-    if (Date.now() > Number(GM_getValue('skWorkLoginUntil', 0))) return;
-    let host = location.hostname, run = GM_getValue('skWorkLoginRun', 0);
+    let workLogin = GM_getValue('skWorkLogin', {});
+    if (Date.now() > Number(workLogin.until || 0)) {
+        if (workLogin.run) {
+            GM_setValue('skWorkLogin', {});
+            SK_WORK_LOGIN_STATUS_KEYS.forEach(key => GM_deleteValue(key));
+        }
+        return;
+    }
+    let host = location.hostname, run = workLogin.run, sentStatus = {};
 
     const skSetWorkLoginStatus = (id, state, text) => {
         let key = 'skWorkLoginStatus_' + id;
+        if (sentStatus[id] === state + text) return;
+        sentStatus[id] = state + text;
         if (GM_getValue(key, {}).state === 'ok' && state !== 'ok') return;
-        GM_setValue(key, { state, text, run, time: Date.now() });
+        GM_setValue(key, { state, text, run });
     };
 
     if (host === 'login.microsoftonline.com') { // 1. 微软统一登录页
@@ -3936,26 +3916,27 @@ function skWorkLoginHelper() {
         let tries = 0, timer = setInterval(() => {
             let acc = [...document.querySelectorAll('button,[role="button"]')].find(el => /@mdpi\.com/i.test(el.textContent || ''));
             if (acc) { clearInterval(timer); acc.click(); }
-            else if (++tries > 30) { clearInterval(timer); skSetWorkLoginStatus('_microsoft', 'manual', '请在 Microsoft 页面登陆 @mdpi.com 账户'); }
+            else if (++tries > 30) { clearInterval(timer); skSetWorkLoginStatus('microsoft', 'manual', '请在 Microsoft 页面登陆 @mdpi.com 账户'); }
         }, 500);
         return;
     }
 
     if (host === 'auth.mdpi.com' || host === 'auth.mdpi.cn') { // 2. MDPI Keycloak
-        GM_setValue('skWorkLoginUntil', Date.now() + 5 * 60 * 1000);
+        workLogin.until = Date.now() + 5 * 60 * 1000;
+        GM_setValue('skWorkLogin', workLogin);
         let msBtn = document.querySelector('a[href="/mdpi_keycloak/login"]');
         if (msBtn && !msBtn.dataset.skClicked) {
             msBtn.dataset.skClicked = '1';
-            ['susy', 'mdpi'].forEach(id => skSetWorkLoginStatus(id, 'working', '正在使用 Microsoft 企业认证…'));
+            ['susy', 'mdpi'].filter(id => (workLogin.sites || []).includes(id)).forEach(id => skSetWorkLoginStatus(id, 'working', '正在使用 Microsoft 企业认证…'));
             msBtn.click();
         } else if ($('#username').length || $('#password').length || $('input[type="password"]').length) {
-            ['susy', 'mdpi'].forEach(id => skSetWorkLoginStatus(id, 'manual', '请填写账号密码并点击 Continue'));
+            ['susy', 'mdpi'].filter(id => (workLogin.sites || []).includes(id)).forEach(id => skSetWorkLoginStatus(id, 'manual', '请填写账号密码并点击 Continue'));
         }
         return;
     }
 
     let site = SK_WORK_LOGIN_SITES.find(s => location.href.includes(new URL(s.url).hostname) || (s.id === 'mdpi' && (location.hostname === 'www.mdpi.com' || location.hostname === 'login.mdpi.com'))); // 3. 各业务系统页面
-    if (!site) return;
+    if (!site || !(workLogin.sites || []).includes(site.id)) return;
 
     let tries = 0, pageTimer, loginFinished = false;
     const finishLogin = () => {
@@ -3963,10 +3944,7 @@ function skWorkLoginHelper() {
         loginFinished = true;
         clearInterval(pageTimer);
         skSetWorkLoginStatus(site.id, 'ok', '已登录');
-        if (GM_getValue('skWorkLoginAutoClose_' + site.id, 0) === run) {
-            GM_setValue('skWorkLoginAutoClose_' + site.id, 0);
-            setTimeout(() => window.close(), 700);
-        }
+        if ((workLogin.sites || []).includes(site.id)) setTimeout(() => window.close(), 700);
     };
 
     pageTimer = setInterval(() => {
