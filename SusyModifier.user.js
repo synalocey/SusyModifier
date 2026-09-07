@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.9.6
+// @version       6.9.5
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -374,11 +374,12 @@ const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site 
             'init': onInit,
         },
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
-        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2,#SusyModifierConfig_section_3{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
+        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2,#SusyModifierConfig_section_3{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,
+        #SusyModifierConfig_SIpages_field_label,#SusyModifierConfig_section_8{display:inline-grid;grid-template-columns:repeat(5, auto);
         #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label,#SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_field_Report_Notes,
         #SusyModifierConfig_Old_Icon_field_label,#SusyModifierConfig_Hidden_Func_field_label{width:140px;display:inline-block;} #SusyModifierConfig_PP_Template_field_label,
         #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_GE_CancelID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
-        #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID,#SusyModifierConfig_CRM_VisitingType_field_label{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_8{display:inline-grid;grid-template-columns:repeat(5, auto);
+        #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID,#SusyModifierConfig_CRM_VisitingType_field_label{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;}
         grid-template-rows:auto auto;} #SusyModifierConfig_Report_TemplateID_var{grid-row:1;grid-column:1;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;}
         #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var, #SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_CfP_TemplateID_field_label,
         #SusyModifierConfig_field_CfP_TemplateID,#SusyModifierConfig_CfP_ReminderID_field_label,#SusyModifierConfig_field_CfP_ReminderID{display:block;} #SusyModifierConfig_field_Journal{width:auto} .sk_field_reset:focus{outline:1px dotted #666}
@@ -3727,27 +3728,20 @@ function onInit() {
     }
 
     if (window.location.href.indexOf("crm.mdpi.cn/email/add") > -1 && GM_config.get('CRM_VisitingType')) {
-        let crmFilling = false;
         waitForKeyElements('#form_item_category_id', function (categoryNode) {
-            if (!/^\/email\/add\/?$/.test(location.pathname) || crmFilling) return true;
-            crmFilling = true;
             const categoryInput = categoryNode[0];
+            const crmForm = categoryInput.closest('form') || categoryInput.closest('.ant-form');
             let cancelled = false;
             const stopCrmFill = e => { if (e.isTrusted) cancelled = true; };
-            const onCrmForm = () => !cancelled && categoryInput.isConnected && /^\/email\/add\/?$/.test(location.pathname);
-            document.addEventListener('pointerdown', stopCrmFill, true);
-            document.addEventListener('keydown', stopCrmFill, true);
-
-            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+            const onCrmForm = () => !cancelled && categoryInput.isConnected;
+            crmForm?.addEventListener('pointerdown', stopCrmFill, true);
+            crmForm?.addEventListener('keydown', stopCrmFill, true);
 
             async function waitUntil(fn, timeout = 5000, interval = 40) {
                 const until = Date.now() + timeout;
                 while (onCrmForm() && Date.now() < until) {
-                    try {
-                        const result = fn();
-                        if (result) return result;
-                    } catch (_) {}
-                    await sleep(interval);
+                    try { const result = fn(); if (result) return result; } catch (_) {}
+                    await new Promise(resolve => setTimeout(resolve, interval));
                 }
                 return null;
             }
@@ -3756,19 +3750,7 @@ function onInit() {
                 const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
                 if (setter) setter.call(input, value);
                 else input.value = value;
-                try {
-                    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: value }));
-                } catch (_) {
-                    input.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-            }
-
-            function getSelectedText(select) {
-                return select?.querySelector('.ant-select-selection-item')?.textContent?.trim() || '';
-            }
-
-            function getDropdown(input) {
-                return document.getElementById(input?.getAttribute('aria-controls'))?.closest('.ant-select-dropdown') || null;
+                try { input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: value })); } catch (_) { input.dispatchEvent(new Event('input', { bubbles: true })); }
             }
 
             function isDropdownVisible(dropdown) {
@@ -3778,47 +3760,40 @@ function onInit() {
             }
 
             async function fillCrmSelect(id, label) {
-                let input = null, select = null, searched = false;
+                let input = null, select = null;
                 try {
                     const result = await waitUntil(() => {
                         const el = document.getElementById(id), sel = el?.closest('.ant-select');
                         if (el && sel?.getClientRects().length && !el.disabled && !sel.classList.contains('ant-select-disabled')) return { input: el, select: sel };
                         return null;
                     }, 10000);
-                    if (!result) return false;
 
+                    if (!result) return false;
                     input = result.input;
                     select = result.select;
 
-                    const current = getSelectedText(select);
+                    const current = select.querySelector('.ant-select-selection-item')?.textContent?.trim() || '';
                     if (current) return current === label;
-
                     input.focus({ preventScroll: true });
-                    if (input.getAttribute('aria-expanded') !== 'true') {
-                        input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, which: 40 }));
-                    }
+                    if (input.getAttribute('aria-expanded') !== 'true') {input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, which: 40 }));}
 
-                    await waitUntil(() => input.getAttribute('aria-expanded') === 'true' || isDropdownVisible(getDropdown(input)), 2000);
+                    await waitUntil(() => {
+                        if (input.getAttribute('aria-expanded') === 'true') return true;
+                        const dropdown = document.getElementById(input.getAttribute('aria-controls'))?.closest('.ant-select-dropdown');
+                        return isDropdownVisible(dropdown);
+                    }, 5000);
                     if (!onCrmForm()) return false;
 
-                    if (!input.readOnly) {
-                        setNativeInputValue(input, label);
-                        searched = true;
-                    }
-
+                    if (!input.readOnly) setNativeInputValue(input, label);
                     const option = await waitUntil(() => {
-                        const dropdown = getDropdown(input);
+                        const dropdown = document.getElementById(input.getAttribute('aria-controls'))?.closest('.ant-select-dropdown');
                         if (!isDropdownVisible(dropdown)) return null;
-                        return [...dropdown.querySelectorAll('.ant-select-item-option')].find(el =>
-                            !el.classList.contains('ant-select-item-option-disabled') &&
-                            (el.getAttribute('title') || el.textContent || '').trim() === label
-                        ) || null;
+                        return [...dropdown.querySelectorAll('.ant-select-item-option')].find(el => !el.classList.contains('ant-select-item-option-disabled') && (el.getAttribute('title') || el.textContent || '').trim() === label) || null;
                     }, 5000);
-
                     if (!option) return false;
                     option.click();
 
-                    if (await waitUntil(() => getSelectedText(select) === label, 3000)) return true;
+                    if (await waitUntil(() => select.querySelector('.ant-select-selection-item')?.textContent?.trim() === label, 3000)) return true;
 
                     try {
                         option.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
@@ -3826,19 +3801,14 @@ function onInit() {
                         option.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
                     } catch (_) {}
 
-                    return !!await waitUntil(() => getSelectedText(select) === label, 2000);
+                    return !!await waitUntil(() => select.querySelector('.ant-select-selection-item')?.textContent?.trim() === label, 2000);
                 } catch (error) {
                     console.warn('[SusyModifier] CRM fill Select:', id, label, error);
                     return false;
                 } finally {
-                    if (onCrmForm() && searched && input?.isConnected && select?.isConnected && !getSelectedText(select) && input.value === label) {
-                        try { setNativeInputValue(input, ''); } catch (_) {}
-                    }
-                    if (onCrmForm() && input?.isConnected && input.getAttribute('aria-expanded') === 'true') {
-                        try {
-                            input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Escape', code: 'Escape', keyCode: 27, which: 27 }));
-                        } catch (_) {}
-                    }
+                    const selected = select?.querySelector('.ant-select-selection-item')?.textContent?.trim() || '';
+                    if (onCrmForm() && input?.isConnected && select?.isConnected && !selected && input.value === label) {try { setNativeInputValue(input, ''); } catch (_) {}}
+                    if (onCrmForm() && input?.isConnected && input.getAttribute('aria-expanded') === 'true') {try { input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Escape', code: 'Escape', keyCode: 27, which: 27 }));} catch (_) {}}
                 }
             }
 
@@ -3847,14 +3817,11 @@ function onInit() {
                 if (!await fillCrmSelect('form_item_visit_category', 'Single Journal')) return;
                 const journal = GM_config.get('Journal'), visitingType = GM_config.get('CRM_VisitingType');
                 if (journal && journal !== 'None') await fillCrmSelect('form_item_journal_ids', journal);
-                if (['Online', 'Offline'].includes(visitingType)) await fillCrmSelect('form_item_visit_type', visitingType);
+                await fillCrmSelect('form_item_visit_type', visitingType);
             })().catch(error => console.warn('[SusyModifier] CRM autofill:', error)).finally(() => {
-                document.removeEventListener('pointerdown', stopCrmFill, true);
-                document.removeEventListener('keydown', stopCrmFill, true);
-                crmFilling = false;
+                crmForm?.removeEventListener('pointerdown', stopCrmFill, true);
+                crmForm?.removeEventListener('keydown', stopCrmFill, true);
             });
-
-            return true;
         }, false);
     }
 
