@@ -2701,7 +2701,7 @@ function onInit() {
                         `);
 
                         // ── 邮箱 span ──
-                        const emailSpan = $('<span id="sk-scopus-email-inline">…</span>').css({fontSize: '0.5em', color: '#1a73e8', marginLeft: '16px', verticalAlign: 'middle', cursor: 'pointer', borderBottom: '1px dashed #1a73e8', overflowWrap: 'anywhere'}).attr('title', 'Click to copy');
+                        const emailSpan = $('<span id="sk-scopus-email-inline">…</span>').css({fontSize:'0.5em',color:'#1a73e8',marginLeft:'16px',verticalAlign:'middle',cursor:'pointer',borderBottom:'1px dashed #1a73e8',overflowWrap:'anywhere'}).attr('title', 'Click to copy');
                         const tipSpan = $('<span id="sk-scopus-email-tip"></span>').css({fontSize: '0.5em', color: '#888', marginLeft: '5px', verticalAlign: 'middle', fontWeight: 'normal'});
 
                         // ── 内联加载按钮（与 See All Publications 相同功能）──
@@ -2834,7 +2834,7 @@ function onInit() {
                                     const thisYear = new Date().getFullYear();
                                     if (yearData.length || docs.length) {
                                         const pubBox = $('<div id="sk-publications-section" class="sk-scopus-card"></div>');
-                                        pubBox.append($('<div class="sk-scopus-toolbar sk-scopus-heading"></div>').append($('<strong>Publications</strong>')).append($('<a target="_blank" rel="noopener" class="sk-scopus-icon" aria-label="Scopus analysis">↗</a>').attr('href', hirschPageUrl)));
+                                        pubBox.append($('<div class="sk-scopus-toolbar sk-scopus-heading"></div>').append($('<strong>Publications</strong>')).append($('<a target="_blank" class="sk-scopus-icon" aria-label="Scopus analysis">↗</a>').attr('href', hirschPageUrl)));
                                         const yearCounts = $('<div class="sk-scopus-years"></div>');
                                         yearData.forEach(y => {
                                             const current = Number(y.code || y.displayName) === thisYear;
@@ -2892,11 +2892,13 @@ function onInit() {
                                                 if (institution?.id && authorProfile?.latestAffiliatedInstitution?.id && String(institution.id) === String(authorProfile.latestAffiliatedInstitution.id)) sameInstitution++;
                                             });
                                             const errors = coRows.filter(row => row.state === 'Failed').length;
-                                            const headers = detailsRequested ? ['Email', 'H-Index', 'Institution', 'City', 'Country', 'Documents', 'Citations', 'Citing Documents', 'ORCID', 'Subject Areas', 'First Name', 'Last Name', 'Co-Docs', 'Scopus Link'] : ['First Name', 'Last Name', 'Co-Docs', 'Scopus Link'];
+                                            const headers = detailsRequested ? ['Email','H-Index','Institution','City','Country','Documents','Citations','Citing Documents','ORCID','Subject Areas','First Name','Last Name','Co-Docs','Scopus Link']
+                                            : ['First Name','Last Name','Co-Docs','Scopus Link'];
                                             allTsv = [headers, ...coRows.map(row => {
                                                 const p = row.profile || {}, institution = p.latestAffiliatedInstitution || {};
                                                 const base = [p.preferredName?.first || row.first, p.preferredName?.last || row.last, row.shared ?? '', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id];
-                                                return detailsRequested ? [p.emailAddress, p.hindex, institution.name, institution.address?.city, institution.address?.country, p.documentCount, p.citationsCount, p.citedByCount, p.orcId, (p.publishedSubjectAreas || []).map(s => s.name).join('; '), ...base] : base;
+                                                return detailsRequested ? [p.emailAddress, p.hindex, institution.name, institution.address?.city, institution.address?.country, p.documentCount, p.citationsCount, p.citedByCount, p.orcId,
+                                                                           (p.publishedSubjectAreas || []).map(s => s.name).join('; '), ...base] : base;
                                             })].map(row => row.map(value => {
                                                 const text = value == null || value === 'null' ? '' : String(value).replace(/[\t\r\n]+/g, ' ').trim();
                                                 return /^[=+@]/.test(text) ? "'" + text : text;
@@ -2919,7 +2921,8 @@ function onInit() {
                                                 const bars = $('<div class="sk-scopus-bars"></div>');
                                                 [...counts].sort((a, b) => b[1] - a[1]).slice(0, 5).forEach(([key, n]) => {
                                                     const name = counts === institutions ? institutionNames.get(key) : key;
-                                                    bars.append($('<div></div>').append($('<div class="sk-scopus-bar-label"></div>').append($('<span></span>').attr('title', name).text(name), $('<b></b>').text(n))).append($('<div class="sk-scopus-bar-track"></div>').append($('<div class="sk-scopus-bar-fill"></div>').css({ width: (n / known * 100) + '%', background: counts === institutions ? '#a142f4' : '#1a73e8' }))));
+                                                    bars.append($('<div></div>').append($('<div class="sk-scopus-bar-label"></div>').append($('<span></span>').attr('title', name).text(name), $('<b></b>').text(n)))
+                                                                .append($('<div class="sk-scopus-bar-track"></div>').append($('<div class="sk-scopus-bar-fill"></div>').css({ width: (n / known * 100) + '%', background: counts === institutions ? '#a142f4' : '#1a73e8' }))));
                                                 });
                                                 if (!counts.size) bars.text('—');
                                                 chart.append(bars); countrySummary.append(chart);
@@ -2939,7 +2942,8 @@ function onInit() {
                                                     const text = value == null || value === '' || value === 'null' ? '—' : value;
                                                     const cell = $('<td></td>').toggleClass('sk-scopus-number', !!columns[i + 1][2]).attr('title', text);
                                                     if (detailsRequested && i === 0 && /^[^\s@]+@[^\s@]+$/.test(text)) {
-                                                        cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=' + encodeURIComponent(text).replace(/%40/gi, '@')).text(text));
+                                                        cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content='
+                                                                                                                     + encodeURIComponent(text).replace(/%40/gi, '@')).text(text));
                                                     } else if (detailsRequested && i === 1 && Number.isFinite(Number(text))) {
                                                         cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id).text(text));
                                                     } else { cell.text(text); }
