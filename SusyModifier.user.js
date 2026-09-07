@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.9.5
+// @version       6.9.6
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -294,7 +294,7 @@ const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site 
                 + `Special Issue. If there are any missing papers, please let me know.\n\n%pp_list%\n\nMay you continue to explore the unknown and lead the forefront of academia. Wishing you continuous breakthroughs and inspiration in your scholarly `
                 + `endeavors!\n--\nBest regards,\n\`;\n}`
             },
-
+            'CRM_VisitingType': { 'section': [, 'CRM Pages'], 'label': 'Visiting Invitation Type', 'type': 'select', 'labelPos': 'left', 'options': ['', 'Online', 'Offline'], 'default': '' },
             'Interface_SME': {
                 'section': [GM_config.create('Interface Modification')], 'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
                 ['', 'A: Algebra and Logic', 'B: Geometry and Topology', 'C: Mathematical Analysis', 'C1: Difference and Differential Equations', 'C2: Dynamical Systems', 'C3: Real Analysis', 'C4: Complex Analysis', 'D: Statistics and Operations Research',
@@ -374,11 +374,11 @@ const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site 
             'init': onInit,
         },
         'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
-        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
+        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2,#SusyModifierConfig_section_3{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,#SusyModifierConfig_SIpages_field_label,
         #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label,#SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_field_Report_Notes,
         #SusyModifierConfig_Old_Icon_field_label,#SusyModifierConfig_Hidden_Func_field_label{width:140px;display:inline-block;} #SusyModifierConfig_PP_Template_field_label,
         #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_GE_CancelID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
-        #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_7{display:inline-grid;grid-template-columns:repeat(5, auto);
+        #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID,#SusyModifierConfig_CRM_VisitingType_field_label{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;} #SusyModifierConfig_section_8{display:inline-grid;grid-template-columns:repeat(5, auto);
         grid-template-rows:auto auto;} #SusyModifierConfig_Report_TemplateID_var{grid-row:1;grid-column:1;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;}
         #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var, #SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_CfP_TemplateID_field_label,
         #SusyModifierConfig_field_CfP_TemplateID,#SusyModifierConfig_CfP_ReminderID_field_label,#SusyModifierConfig_field_CfP_ReminderID{display:block;} #SusyModifierConfig_field_Journal{width:auto} .sk_field_reset:focus{outline:1px dotted #666}
@@ -2517,18 +2517,75 @@ function onInit() {
 
             let stopWords = ['and','the','for','with','from','into','its','any','all','new','via','using','of','mathematical','mathematics','methods','method','applications','application'];
             function getSITitleWords() {
-                let siTitle = $("div.cell.small-12.medium-6.large-2:contains('Special Issue Title')").next().text().trim();
-                return siTitle.split(/[\s,;:()\/]+/).filter(w => w.length > 2 && !stopWords.includes(w.toLowerCase())).map(w => w.toLowerCase());
+                let siTitle = $("div.cell.small-12.medium-6.large-2:contains('Special Issue Title')").next().find("a").first().text().trim();
+                siTitle += ';' + $("div.cell.small-12.medium-6.large-2:contains('Keywords')").next().text().replace(/[\r\n]+/g, ';');
+                let terms = new Set(), phraseWords = new Set();
+                // 保留原始词序和分隔边界，不能删掉 and/of 后再拼出不存在的短语。
+                let chunks = siTitle.toLowerCase().replace(/[‐‑–—-]/g, ' ').split(/[^a-z0-9\s]+/)
+                    .flatMap(part => part.split(new RegExp('\\b(?:' + stopWords.join('|') + '|in|on|to|a|an|at|by|as|or|modern|recent|advances|advanced|developments)\\b')))
+                    .map(part => part.trim().split(/\s+/).filter(Boolean));
+                for (let words of chunks) {
+                    for (let size of [3, 2]) {
+                        for (let i = 0; i <= words.length - size; i++) {
+                            let phrase = words.slice(i, i + size);
+                            terms.add(phrase.join(' '));
+                            phrase.forEach(word => phraseWords.add(word));
+                        }
+                    }
+                }
+                let weakWords = ['model','models','network','networks','foundation','foundations','approach','approaches','study','studies','research','theory','analysis','system','systems'];
+                for (let words of chunks) {
+                    if (words.length === 1 && words[0].length > 2 && !phraseWords.has(words[0]) && !weakWords.includes(words[0])) terms.add(words[0]);
+                }
+                return [...terms].map(term => {
+                    let words = term.split(' ');
+                    let pattern = words.map(word => word.length > 3 && !/(ss|us|is)$/.test(word) ? word.replace(/s$/, '') + 's?' : word).join('[\\s‐‑–—-]+');
+                    return { regex: new RegExp('\\b' + pattern + '\\b', 'gi'), weight: words.length };
+                });
             }
-            function highlightRI($row, titleWords) {
-                if (titleWords.length === 0) return true;
-                let $riCell = $row.find("td").eq(3);
-                let riText = $riCell.text();
-                let escapedWords = titleWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-                let regex = new RegExp('\\b(' + escapedWords.join('|') + ')\\b', 'gi');
-                let riHtml = riText.replace(regex, '<span style="background-color:#FFA500;">$1</span>');
-                if (riHtml !== riText) { $riCell.html(riHtml); return true; }
-                else { $row.css("opacity", "0.35"); return false; }
+            function filterEditorRI(titleWords) {
+                let $dialog = $("#select-ebm-for-oversee"), $tbody = $dialog.find("tbody");
+                let ranked = [], weakCount = 0;
+                $tbody.find("tr").each(function () {
+                    let $row = $(this), $cells = $row.find("td");
+                    if ($cells.length < 6) return;
+                    if (parseInt($cells.eq(4).text().trim(), 10) >= 3) { $row.remove(); return; }
+                    let $riCell = $cells.eq(3), riText = $riCell.text(), score = 0, ranges = [];
+                    for (let term of titleWords) {
+                        let matches = [...riText.matchAll(term.regex)];
+                        if (matches.length) score += term.weight;
+                        matches.forEach(match => ranges.push([match.index, match.index + match[0].length]));
+                    }
+                    // 合并重叠短语，用文本节点高亮，保留原始文字且不把 RI 当作 HTML。
+                    ranges.sort((a, b) => a[0] - b[0]);
+                    let merged = [], offset = 0;
+                    for (let range of ranges) {
+                        let last = merged[merged.length - 1];
+                        if (last && range[0] <= last[1]) last[1] = Math.max(last[1], range[1]);
+                        else merged.push(range);
+                    }
+                    $riCell.empty();
+                    for (let [start, end] of merged) {
+                        $riCell.append(document.createTextNode(riText.slice(offset, start)), $('<span style="background-color:#FFA500;"></span>').text(riText.slice(start, end)));
+                        offset = end;
+                    }
+                    $riCell.append(document.createTextNode(riText.slice(offset)));
+                    let weak = titleWords.length > 0 && score === 0;
+                    $row.toggleClass('sk-ri-weak', weak).css('opacity', weak ? '0.35' : '');
+                    if (weak) weakCount++;
+                    ranked.push({ row: this, score });
+                });
+                $tbody.append(ranked.sort((a, b) => b.score - a.score).map(item => item.row));
+                $dialog.removeClass('sk-show-weak').find('#sk-ri-toggle, #sk-ri-style').remove();
+                $dialog.prepend('<style id="sk-ri-style">#select-ebm-for-oversee:not(.sk-show-weak) tr.sk-ri-weak{display:none!important;}</style>');
+                if (weakCount) {
+                    $('<a href="javascript:void(0);" id="sk-ri-toggle" style="color:#3156A2; margin-left:8px;"></a>')
+                        .text('Show weak matches (' + weakCount + ')').prependTo($dialog).on('click', function () {
+                            let show = !$dialog.hasClass('sk-show-weak');
+                            $dialog.toggleClass('sk-show-weak', show);
+                            $(this).text((show ? 'Hide' : 'Show') + ' weak matches (' + weakCount + ')');
+                        });
+                }
             }
 
             if ($("#selectEBMForOversee").length) {
@@ -2546,9 +2603,7 @@ function onInit() {
                             let $rows = $("#select-ebm-for-oversee:visible tbody tr");
                             if ($rows.length === 0) return;
                             clearInterval(pollTimer);
-                            let titleWords = getSITitleWords();
-                            let $tbody = $("#select-ebm-for-oversee:visible tbody");
-                            $rows.each(function () { if (!highlightRI($(this), titleWords)) $tbody.append(this); });
+                            filterEditorRI(getSITitleWords());
                         }, 300);
                     }, 500);
                 });
@@ -2559,6 +2614,9 @@ function onInit() {
                 $("#selectEBMForOversee")[0].click();
                 waitForKeyElements("#filter_1", function () {
                     let $matchRow = $("td:contains('" + email + "')").parent();
+                    $("#select-ebm-for-oversee tbody tr").each(function () {
+                        if (parseInt($(this).find("td").eq(4).text().trim(), 10) >= 3) $(this).remove();
+                    });
                     if ($matchRow.length === 0) return;
 
                     let rowText = $matchRow.text();
@@ -2566,22 +2624,18 @@ function onInit() {
                     let needCandidateFilter = (rowText.indexOf("Editor-in-Chief") > -1 || rowText.indexOf("Associate Editor") > -1 || overseeCount >= 3);
                     if (needCandidateFilter && section && SK_SectionCandidatesMap[section]) {
                         let candidates = SK_SectionCandidatesMap[section];
-                        let titleWords = getSITitleWords();
                         let candidateRowCount = $("#select-ebm-for-oversee tbody tr").filter(function () {
                             return candidates.includes($(this).find("td").eq(1).text().trim());
                         }).length;
                         if (candidateRowCount === 0) {
-                            $matchRow.find("td a:contains('Select')")[0].click();
+                            if (overseeCount < 3) $matchRow.find("td a:contains('Select')")[0].click();
                         } else {
-                            let $dimmed = $();
                             $("#select-ebm-for-oversee tbody tr").each(function () {
                                 if (!candidates.includes($(this).find("td").eq(1).text().trim())) {
                                     $(this).remove();
-                                } else if (!highlightRI($(this), titleWords)) {
-                                    $dimmed = $dimmed.add(this);
                                 }
                             });
-                            $("#select-ebm-for-oversee tbody").append($dimmed);
+                            filterEditorRI(getSITitleWords());
                         }
                     } else if (needCandidateFilter) {
                         // EiC/AE/Oversee>=3 但无 Section 匹配，不自动选中
@@ -2694,8 +2748,9 @@ function onInit() {
                             #sk-coa-popup .sk-scopus-table{table-layout:fixed;font-size:14px}#sk-coa-popup.sk-coa-detailed .sk-scopus-table{min-width:1050px}
                             #sk-coa-popup .sk-scopus-table th,#sk-coa-popup .sk-scopus-table td{padding:4px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
                             #sk-coa-popup .sk-scopus-number{text-align:center}#sk-coa-popup td.sk-scopus-number{color:#1558d6;font-weight:600}
-                            #sk-coa-popup.sk-coa-detailed td:nth-child(4),#sk-coa-popup.sk-coa-detailed td:nth-child(5){color:#000;font-weight:400}
-                            #sk-coa-popup.sk-coa-detailed td:nth-child(6){font-weight:700}
+                            #sk-coa-popup td.sk-coa-output{color:#000;font-weight:400}#sk-coa-popup td.sk-coa-country{font-weight:700}
+                            #sk-coa-publications{position:fixed;inset:0;z-index:10001;background:#19263480;display:flex;align-items:center;justify-content:center;padding:20px}
+                            #sk-coa-publications>section{box-sizing:border-box;width:min(1100px,90vw);max-height:85vh;overflow:auto;background:#fff;border-radius:12px;padding:18px;color:#202124;font-size:15px}
                             #sk-coa-compact{display:flex;flex-wrap:wrap;gap:6px}#sk-coa-compact a{display:inline-block;padding:3px 10px;border-radius:16px;background:#e8f0fe;color:#1558d6;text-decoration:none;font-size:14px;line-height:1.6}
                             #sk-coa-compact a:hover{background:#d2e3fc}@media(max-width:900px){#sk-coa-popup.sk-coa-detailed #sk-coa-body{grid-template-columns:minmax(0,1fr) 210px;gap:8px}}
                         `);
@@ -2874,7 +2929,7 @@ function onInit() {
                                         const coExportIcon = $('<button type="button" class="sk-scopus-icon" aria-label="Co-author details">📋</button>');
                                         const coCompact = $('<div id="sk-coa-compact"></div>');
                                         coRows.forEach(row => coCompact.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id).text(row.name + ' (' + (row.shared ?? '—') + ')')));
-                                        let detailRunning = false, detailPaused = false, detailsRequested = false, detailController = null, detailTask = null, detailMessage = '', allTsv = '';
+                                        let detailRunning = false, detailPaused = false, detailsRequested = false, detailController = null, detailTask = null, detailMessage = '', allTsv = '', publicationsRequested = false;
                                         let overlay, coTable, tableBody, countrySummary, tip;
 
                                         function renderCoauthors() {
@@ -2894,11 +2949,16 @@ function onInit() {
                                             const errors = coRows.filter(row => row.state === 'Failed').length;
                                             const headers = detailsRequested ? ['Email','H-Index','Institution','City','Country','Documents','Citations','Citing Documents','ORCID','Subject Areas','First Name','Last Name','Co-Docs','Scopus Link']
                                             : ['First Name','Last Name','Co-Docs','Scopus Link'];
+                                            const exportYears = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+                                            if (publicationsRequested) headers.splice(2, 0, 'Latest Pub');
+                                            headers.push(...exportYears.map(year => year + 'Pub'));
                                             allTsv = [headers, ...coRows.map(row => {
                                                 const p = row.profile || {}, institution = p.latestAffiliatedInstitution || {};
                                                 const base = [p.preferredName?.first || row.first, p.preferredName?.last || row.last, row.shared ?? '', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id];
-                                                return detailsRequested ? [p.emailAddress, p.hindex, institution.name, institution.address?.city, institution.address?.country, p.documentCount, p.citationsCount, p.citedByCount, p.orcId,
+                                                const values = detailsRequested ? [p.emailAddress, p.hindex, institution.name, institution.address?.city, institution.address?.country, p.documentCount, p.citationsCount, p.citedByCount, p.orcId,
                                                                            (p.publishedSubjectAreas || []).map(s => s.name).join('; '), ...base] : base;
+                                                if (publicationsRequested) values.splice(2, 0, row.pubData?.latest ?? '');
+                                                return values.concat(exportYears.map(year => row.pubData ? row.pubData.years.find(y => Number(y.code || y.displayName) === year)?.noOfDocuments ?? 0 : ''));
                                             })].map(row => row.map(value => {
                                                 const text = value == null || value === 'null' ? '' : String(value).replace(/[\t\r\n]+/g, ' ').trim();
                                                 return /^[=+@]/.test(text) ? "'" + text : text;
@@ -2909,6 +2969,7 @@ function onInit() {
                                                 ['Name', '12%'], ['Email', '17%'], ['h-index', '62px', true], ['Docs', '48px', true], ['Citations', '70px', true],
                                                 ['Country', '110px'], ['City', '105px'], ['Institution', ''], ['Subject areas', ''], ['Co-docs', '68px', true]
                                             ] : [['Name', ''], ['Co-docs', '68px', true]];
+                                            if (publicationsRequested) columns.splice(3, 0, ['Latest Pub', '84px', true]);
                                             const heading = $('<tr></tr>'), colGroup = coTable.find('colgroup').empty();
                                             columns.forEach(([label, width, numeric]) => {
                                                 colGroup.append($('<col>').css('width', width));
@@ -2929,6 +2990,7 @@ function onInit() {
                                             }
                                             if (authorProfile?.latestAffiliatedInstitution?.id && loadedRows.length) countrySummary.children().last().append($('<div class="sk-scopus-note"></div>').text('Same institution: ' + sameInstitution));
                                             tip.text(detailsRequested ? (detailRunning ? 'Loading… ' : '') + loadedRows.length + '/' + coRows.length + (errors ? ' · ' + errors + ' failed' : '') + (detailMessage ? ' · ' + detailMessage : '') : '');
+                                            if (publicationsRequested) tip.text('Publications ' + coRows.filter(row => row.pubData).length + '/' + coRows.length + (detailRunning ? ' · Loading…' : '') + (detailMessage ? ' · ' + detailMessage : ''));
                                             tableBody.empty();
                                             coRows.forEach(row => {
                                                 const p = row.profile, institution = p?.latestAffiliatedInstitution;
@@ -2938,14 +3000,20 @@ function onInit() {
                                                 const tr = $('<tr></tr>').append(nameCell);
                                                 const subjects = (p?.publishedSubjectAreas || []).map(s => s.name).join('; ') || '—';
                                                 const values = detailsRequested ? [p?.emailAddress, p?.hindex, p?.documentCount, p?.citationsCount, institution?.address?.country, institution?.address?.city, institution?.name, subjects, row.shared] : [row.shared];
+                                                if (publicationsRequested) values.splice(2, 0, row.pubData?.latest ?? '');
                                                 values.forEach((value, i) => {
                                                     const text = value == null || value === '' || value === 'null' ? '—' : value;
                                                     const cell = $('<td></td>').toggleClass('sk-scopus-number', !!columns[i + 1][2]).attr('title', text);
+                                                    cell.toggleClass('sk-coa-output', ['Docs', 'Citations'].includes(columns[i + 1][0])).toggleClass('sk-coa-country', columns[i + 1][0] === 'Country');
                                                     if (detailsRequested && i === 0 && /^[^\s@]+@[^\s@]+$/.test(text)) {
                                                         cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content='
                                                                                                                      + encodeURIComponent(text).replace(/%40/gi, '@')).text(text));
                                                     } else if (detailsRequested && i === 1 && Number.isFinite(Number(text))) {
                                                         cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id).text(text));
+                                                    } else if (columns[i + 1][0] === 'Latest Pub') {
+                                                        cell.attr('title', row.pubError || row.pubState || 'Not loaded');
+                                                        if (row.pubData?.latest) cell.append($('<a href="#"></a>').text(text).on('click', e => { e.preventDefault(); showCoauthorPublications(row); }));
+                                                        else cell.text(row.pubState === 'Failed' ? '⚠' : text);
                                                     } else { cell.text(text); }
                                                     tr.append(cell);
                                                 });
@@ -2953,32 +3021,90 @@ function onInit() {
                                             });
                                         }
 
-                                        async function loadCoauthorDetails() {
+                                        function showCoauthorPublications(row) {
+                                            if (!row.pubData) return;
+                                            $('#sk-coa-publications').remove();
+                                            const returnFocus = document.activeElement;
+                                            const page = $('<div id="sk-coa-publications" role="dialog" aria-modal="true" aria-labelledby="sk-coa-pub-title"></div>');
+                                            const panel = $('<section></section>');
+                                            const close = $('<button type="button" class="sk-scopus-btn" aria-label="Close publications">✕</button>').on('click', () => { page.remove(); if (returnFocus?.isConnected) returnFocus.focus(); });
+                                            panel.append($('<div class="sk-scopus-toolbar"></div>').append($('<strong id="sk-coa-pub-title"></strong>').text((row.profile?.preferredName?.full || row.name) + ' · Publications'), close));
+                                            const counts = new Map(row.pubData.years.map(y => [Number(y.code), y.noOfDocuments]));
+                                            const years = [...counts.keys()];
+                                            const tiles = $('<div class="sk-scopus-years"></div>');
+                                            if (years.length) for (let year = Math.max(...years); year >= Math.min(...years); year--) {
+                                                tiles.append($('<div class="sk-scopus-year"></div>').toggleClass('sk-scopus-year-current', year === new Date().getFullYear())
+                                                    .append($('<span></span>').text(year), $('<b></b>').text(counts.get(year) ?? 0)));
+                                            }
+                                            panel.append(tiles);
+                                            if (row.pubData.documents.length) {
+                                                const body = $('<tbody></tbody>');
+                                                row.pubData.documents.forEach((d, i) => {
+                                                    const title = $('<span></span>').text(d.documentTitle || '?');
+                                                    let link = title;
+                                                    try {
+                                                        const url = new URL(d.detailsUrl, 'https://www.scopus.com');
+                                                        if (d.detailsUrl && url.protocol === 'https:' && url.hostname === 'www.scopus.com') link = $('<a target="_blank" rel="noopener"></a>').attr('href', url.href).append(title);
+                                                    } catch (e) { }
+                                                    if (geometry_regex.test(d.documentTitle || '')) title.css('background', 'Aquamarine');
+                                                    else if (maths_regex.test(d.documentTitle || '')) title.css('background', 'Wheat');
+                                                    body.append($('<tr></tr>').append($('<td></td>').text(i + 1), $('<td></td>').append(link), $('<td></td>').text(d.count ?? '—')));
+                                                });
+                                                panel.append($('<table class="sk-scopus-table"><thead><tr><th>#</th><th>Title</th><th>Cited</th></tr></thead></table>').append(body));
+                                            }
+                                            page.append(panel).on('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); close.trigger('click'); } });
+                                            $('body').append(page); close.trigger('focus');
+                                        }
+
+                                        async function loadCoauthorDetails(publications = false) {
                                             if (detailRunning) return;
+                                            if (publications) publicationsRequested = true;
                                             detailsRequested = true; detailRunning = true; detailPaused = false; detailMessage = '';
+                                            const stateKey = publications ? 'pubState' : 'state', errorKey = publications ? 'pubError' : 'error';
                                             renderCoauthors();
                                             try {
                                                 for (const row of coRows) {
                                                     if (detailPaused || !overlay?.[0]?.isConnected) break;
-                                                    if (row.profile) continue;
+                                                    if (publications ? row.pubAttempted : row.profile) continue;
+                                                    // 第二轮每个 ID 只请求一次，包括失败/中止的请求；打开子页面直接用缓存。
+                                                    if (publications) row.pubAttempted = true;
                                                     const started = Date.now();
                                                     detailController = new AbortController();
                                                     const timeout = setTimeout(() => detailController?.abort(), 15000);
-                                                    row.state = 'Loading'; row.error = ''; renderCoauthors();
+                                                    row[stateKey] = 'Loading'; row[errorKey] = ''; renderCoauthors();
                                                     try {
-                                                        const response = await fetch('https://www.scopus.com/api/authors/' + row.id, { credentials: 'include', signal: detailController.signal });
+                                                        const url = publications ? 'https://www.scopus.com/hirsch/author.uri?accessor=authorProfile&auidList=' + row.id + '&origin=AuthorProfile' : 'https://www.scopus.com/api/authors/' + row.id;
+                                                        const response = await fetch(url, { credentials: 'include', signal: detailController.signal });
                                                         if ([401, 403, 429].includes(response.status)) {
-                                                            row.state = 'Failed'; row.error = 'HTTP ' + response.status;
+                                                            row[stateKey] = 'Failed'; row[errorKey] = 'HTTP ' + response.status;
                                                             detailMessage = response.status === 429 ? 'Rate limited; wait before retrying.' : 'Scopus access needs checking before retrying.';
                                                             break;
                                                         }
                                                         if (!response.ok) throw new Error('HTTP ' + response.status);
-                                                        const p = await response.json();
-                                                        if (!p || String(p.authorId) !== row.id) throw new Error('Unexpected author profile');
-                                                        row.profile = p; row.state = 'Loaded';
+                                                        if (publications) {
+                                                            const html = new DOMParser().parseFromString(await response.text(), 'text/html');
+                                                            const embedded = html.getElementById('getAuthEvalJsonData');
+                                                            if (!embedded) throw new Error('Publication data unavailable');
+                                                            const data = JSON.parse(embedded.textContent);
+                                                            const rawYears = data.documentYearDataViewBeans;
+                                                            if ((!Array.isArray(rawYears) || !rawYears.length) && data.docCount !== 0 && data.docCount !== '0') throw new Error('Publication years unavailable');
+                                                            const counts = new Map();
+                                                            for (const y of rawYears || []) {
+                                                                const year = String(y.code || y.displayName), count = Number(y.noOfDocuments);
+                                                                if (!/^\d{4}$/.test(year) || y.noOfDocuments == null || y.noOfDocuments === '' || !Number.isInteger(count) || count < 0) throw new Error('Invalid publication year data');
+                                                                counts.set(Number(year), (counts.get(Number(year)) || 0) + count);
+                                                            }
+                                                            const years = [...counts].sort((a, b) => b[0] - a[0]).map(([year, count]) => ({ code: String(year), noOfDocuments: count }));
+                                                            row.pubData = { years, latest: years.find(y => y.noOfDocuments > 0)?.code ?? null, documents: Array.isArray(data.hirschGraphData) ? data.hirschGraphData : [] };
+                                                        } else {
+                                                            const p = await response.json();
+                                                            if (!p || String(p.authorId) !== row.id) throw new Error('Unexpected author profile');
+                                                            row.profile = p;
+                                                        }
+                                                        row[stateKey] = 'Loaded';
                                                     } catch (error) {
-                                                        row.state = detailPaused ? 'Not loaded' : 'Failed';
-                                                        row.error = detailPaused ? '' : error.name === 'AbortError' ? 'Timed out' : error.message;
+                                                        row[stateKey] = detailPaused && !publications ? 'Not loaded' : 'Failed';
+                                                        row[errorKey] = detailPaused ? (publications ? 'Interrupted' : '') : error.name === 'AbortError' ? 'Timed out' : error.message;
                                                     } finally { clearTimeout(timeout); detailController = null; renderCoauthors(); }
                                                     if (!detailPaused) await new Promise(resolve => setTimeout(resolve, Math.max(0, 1000 - (Date.now() - started))));
                                                 }
@@ -3017,10 +3143,12 @@ function onInit() {
                                                 e.preventDefault();
                                                 if (copyPending) return;
                                                 copyPending = true;
+                                                // 按点击时的阶段选择查询；第一轮结束后不会自动紧接着发第二轮。
+                                                const publicationRound = !detailRunning && coRows.every(row => row.profile);
                                                 try {
                                                     if (detailPaused && detailRunning) await detailTask;
                                                     if (!popup[0].isConnected) return;
-                                                    if (!detailRunning && coRows.some(row => !row.profile)) detailTask = loadCoauthorDetails();
+                                                    if (!detailRunning && (publicationRound ? coRows.some(row => !row.pubAttempted) : coRows.some(row => !row.profile))) detailTask = loadCoauthorDetails(publicationRound);
                                                     await detailTask;
                                                     if (popup[0].isConnected && !detailPaused) $(this).trigger('click');
                                                 } catch (e) {
@@ -3028,7 +3156,7 @@ function onInit() {
                                                 } finally { copyPending = false; }
                                             });
                                             const closeBtn = $('<button type="button" class="sk-scopus-btn" aria-label="Close co-author details">✕</button>').on('click', () => {
-                                                detailPaused = true; detailController?.abort(); overlay.remove(); coExportIcon.trigger('focus');
+                                                detailPaused = true; detailController?.abort(); $('#sk-coa-publications').remove(); overlay.remove(); coExportIcon.trigger('focus');
                                             });
                                             const popup = $('<div id="sk-coa-popup" role="dialog" aria-modal="true" aria-labelledby="sk-coa-title"></div>');
                                             popup.append($('<div class="sk-scopus-toolbar"></div>').append($('<strong id="sk-coa-title"></strong>').text('Co-authors (' + coRows.length + ')')).append(tip, copyIcon, closeBtn));
@@ -3596,6 +3724,138 @@ function onInit() {
                 //$('.submit-reasons').click();
             }, true)
         } catch (error) { }
+    }
+
+    if (window.location.href.indexOf("crm.mdpi.cn/email/add") > -1 && GM_config.get('CRM_VisitingType')) {
+        let crmFilling = false;
+        waitForKeyElements('#form_item_category_id', function (categoryNode) {
+            if (!/^\/email\/add\/?$/.test(location.pathname) || crmFilling) return true;
+            crmFilling = true;
+            const categoryInput = categoryNode[0];
+            let cancelled = false;
+            const stopCrmFill = e => { if (e.isTrusted) cancelled = true; };
+            const onCrmForm = () => !cancelled && categoryInput.isConnected && /^\/email\/add\/?$/.test(location.pathname);
+            document.addEventListener('pointerdown', stopCrmFill, true);
+            document.addEventListener('keydown', stopCrmFill, true);
+
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+            async function waitUntil(fn, timeout = 5000, interval = 40) {
+                const until = Date.now() + timeout;
+                while (onCrmForm() && Date.now() < until) {
+                    try {
+                        const result = fn();
+                        if (result) return result;
+                    } catch (_) {}
+                    await sleep(interval);
+                }
+                return null;
+            }
+
+            function setNativeInputValue(input, value) {
+                const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+                if (setter) setter.call(input, value);
+                else input.value = value;
+                try {
+                    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: value }));
+                } catch (_) {
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+
+            function getSelectedText(select) {
+                return select?.querySelector('.ant-select-selection-item')?.textContent?.trim() || '';
+            }
+
+            function getDropdown(input) {
+                return document.getElementById(input?.getAttribute('aria-controls'))?.closest('.ant-select-dropdown') || null;
+            }
+
+            function isDropdownVisible(dropdown) {
+                if (!dropdown?.getClientRects().length) return false;
+                const style = getComputedStyle(dropdown);
+                return style.display !== 'none' && style.visibility !== 'hidden';
+            }
+
+            async function fillCrmSelect(id, label) {
+                let input = null, select = null, searched = false;
+                try {
+                    const result = await waitUntil(() => {
+                        const el = document.getElementById(id), sel = el?.closest('.ant-select');
+                        if (el && sel?.getClientRects().length && !el.disabled && !sel.classList.contains('ant-select-disabled')) return { input: el, select: sel };
+                        return null;
+                    }, 10000);
+                    if (!result) return false;
+
+                    input = result.input;
+                    select = result.select;
+
+                    const current = getSelectedText(select);
+                    if (current) return current === label;
+
+                    input.focus({ preventScroll: true });
+                    if (input.getAttribute('aria-expanded') !== 'true') {
+                        input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, which: 40 }));
+                    }
+
+                    await waitUntil(() => input.getAttribute('aria-expanded') === 'true' || isDropdownVisible(getDropdown(input)), 2000);
+                    if (!onCrmForm()) return false;
+
+                    if (!input.readOnly) {
+                        setNativeInputValue(input, label);
+                        searched = true;
+                    }
+
+                    const option = await waitUntil(() => {
+                        const dropdown = getDropdown(input);
+                        if (!isDropdownVisible(dropdown)) return null;
+                        return [...dropdown.querySelectorAll('.ant-select-item-option')].find(el =>
+                            !el.classList.contains('ant-select-item-option-disabled') &&
+                            (el.getAttribute('title') || el.textContent || '').trim() === label
+                        ) || null;
+                    }, 5000);
+
+                    if (!option) return false;
+                    option.click();
+
+                    if (await waitUntil(() => getSelectedText(select) === label, 3000)) return true;
+
+                    try {
+                        option.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                        option.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+                        option.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                    } catch (_) {}
+
+                    return !!await waitUntil(() => getSelectedText(select) === label, 2000);
+                } catch (error) {
+                    console.warn('[SusyModifier] CRM fill Select:', id, label, error);
+                    return false;
+                } finally {
+                    if (onCrmForm() && searched && input?.isConnected && select?.isConnected && !getSelectedText(select) && input.value === label) {
+                        try { setNativeInputValue(input, ''); } catch (_) {}
+                    }
+                    if (onCrmForm() && input?.isConnected && input.getAttribute('aria-expanded') === 'true') {
+                        try {
+                            input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Escape', code: 'Escape', keyCode: 27, which: 27 }));
+                        } catch (_) {}
+                    }
+                }
+            }
+
+            (async () => {
+                if (!await fillCrmSelect('form_item_category_id', 'Scholar Visiting')) return;
+                if (!await fillCrmSelect('form_item_visit_category', 'Single Journal')) return;
+                const journal = GM_config.get('Journal'), visitingType = GM_config.get('CRM_VisitingType');
+                if (journal && journal !== 'None') await fillCrmSelect('form_item_journal_ids', journal);
+                if (['Online', 'Offline'].includes(visitingType)) await fillCrmSelect('form_item_visit_type', visitingType);
+            })().catch(error => console.warn('[SusyModifier] CRM autofill:', error)).finally(() => {
+                document.removeEventListener('pointerdown', stopCrmFill, true);
+                document.removeEventListener('keydown', stopCrmFill, true);
+                crmFilling = false;
+            });
+
+            return true;
+        }, false);
     }
 
     if (window.location.href.indexOf("crm.mdpi.cn/conference/") + window.location.href.indexOf("crm.mdpi.cn/scholar_visits/") + window.location.href.indexOf("crm.mdpi.cn/sponsorship/") + window.location.href.indexOf("crm.mdpi.cn/email/") > -4 && GM_config.get('Hidden_Func')) {
