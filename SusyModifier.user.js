@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.9.5
+// @version       6.9.6
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -3057,57 +3057,58 @@ function onInit() {
                                             $('body').append(page); close.trigger('focus');
                                         }
 
-                                        async function loadCoauthorDetails(publications = false) {
+                                        async function loadCoauthorDetails() {
                                             if (detailRunning) return;
-                                            if (publications) publicationsRequested = true;
+                                            publicationsRequested = true;
                                             detailsRequested = true; detailRunning = true; detailPaused = false; detailMessage = '';
-                                            const stateKey = publications ? 'pubState' : 'state', errorKey = publications ? 'pubError' : 'error';
                                             renderCoauthors();
                                             try {
-                                                for (const row of coRows) {
-                                                    if (detailPaused || !overlay?.[0]?.isConnected) break;
-                                                    if (publications ? row.pubAttempted : row.profile) continue;
-                                                    // 第二轮每个 ID 只请求一次，包括失败/中止的请求；打开子页面直接用缓存。
-                                                    if (publications) row.pubAttempted = true;
-                                                    const started = Date.now();
-                                                    detailController = new AbortController();
-                                                    const timeout = setTimeout(() => detailController?.abort(), 15000);
-                                                    row[stateKey] = 'Loading'; row[errorKey] = ''; renderCoauthors();
-                                                    try {
-                                                        const url = publications ? 'https://www.scopus.com/hirsch/author.uri?accessor=authorProfile&auidList=' + row.id + '&origin=AuthorProfile' : 'https://www.scopus.com/api/authors/' + row.id;
-                                                        const response = await fetch(url, { credentials: 'include', signal: detailController.signal });
-                                                        if ([401, 403, 429].includes(response.status)) {
-                                                            row[stateKey] = 'Failed'; row[errorKey] = 'HTTP ' + response.status;
-                                                            detailMessage = response.status === 429 ? 'Rate limited; wait before retrying.' : 'Scopus access needs checking before retrying.';
-                                                            break;
-                                                        }
-                                                        if (!response.ok) throw new Error('HTTP ' + response.status);
-                                                        if (publications) {
-                                                            const html = new DOMParser().parseFromString(await response.text(), 'text/html');
-                                                            const embedded = html.getElementById('getAuthEvalJsonData');
-                                                            if (!embedded) throw new Error('Publication data unavailable');
-                                                            const data = JSON.parse(embedded.textContent);
-                                                            const rawYears = data.documentYearDataViewBeans;
-                                                            if ((!Array.isArray(rawYears) || !rawYears.length) && data.docCount !== 0 && data.docCount !== '0') throw new Error('Publication years unavailable');
-                                                            const counts = new Map();
-                                                            for (const y of rawYears || []) {
-                                                                const year = String(y.code || y.displayName), count = Number(y.noOfDocuments);
-                                                                if (!/^\d{4}$/.test(year) || y.noOfDocuments == null || y.noOfDocuments === '' || !Number.isInteger(count) || count < 0) throw new Error('Invalid publication year data');
-                                                                counts.set(Number(year), (counts.get(Number(year)) || 0) + count);
+                                                authors: for (const row of coRows) {
+                                                    for (const publications of [false, true]) {
+                                                        const stateKey = publications ? 'pubState' : 'state', errorKey = publications ? 'pubError' : 'error';
+                                                        if (detailPaused || !overlay?.[0]?.isConnected) break authors;
+                                                        if (publications ? row.pubAttempted : row.profile) continue;
+                                                        if (publications) row.pubAttempted = true;
+                                                        const started = Date.now();
+                                                        detailController = new AbortController();
+                                                        const timeout = setTimeout(() => detailController?.abort(), 15000);
+                                                        row[stateKey] = 'Loading'; row[errorKey] = ''; renderCoauthors();
+                                                        try {
+                                                            const url = publications ? 'https://www.scopus.com/hirsch/author.uri?accessor=authorProfile&auidList=' + row.id + '&origin=AuthorProfile' : 'https://www.scopus.com/api/authors/' + row.id;
+                                                            const response = await fetch(url, { credentials: 'include', signal: detailController.signal });
+                                                            if ([401, 403, 429].includes(response.status)) {
+                                                                row[stateKey] = 'Failed'; row[errorKey] = 'HTTP ' + response.status;
+                                                                detailMessage = response.status === 429 ? 'Rate limited; wait before retrying.' : 'Scopus access needs checking before retrying.';
+                                                                break authors;
                                                             }
-                                                            const years = [...counts].sort((a, b) => b[0] - a[0]).map(([year, count]) => ({ code: String(year), noOfDocuments: count }));
-                                                            row.pubData = { years, latest: years.find(y => y.noOfDocuments > 0)?.code ?? null, documents: Array.isArray(data.hirschGraphData) ? data.hirschGraphData : [] };
-                                                        } else {
-                                                            const p = await response.json();
-                                                            if (!p || String(p.authorId) !== row.id) throw new Error('Unexpected author profile');
-                                                            row.profile = p;
-                                                        }
-                                                        row[stateKey] = 'Loaded';
-                                                    } catch (error) {
-                                                        row[stateKey] = detailPaused && !publications ? 'Not loaded' : 'Failed';
-                                                        row[errorKey] = detailPaused ? (publications ? 'Interrupted' : '') : error.name === 'AbortError' ? 'Timed out' : error.message;
-                                                    } finally { clearTimeout(timeout); detailController = null; renderCoauthors(); }
-                                                    if (!detailPaused) await new Promise(resolve => setTimeout(resolve, Math.max(0, 1000 - (Date.now() - started))));
+                                                            if (!response.ok) throw new Error('HTTP ' + response.status);
+                                                            if (publications) {
+                                                                const html = new DOMParser().parseFromString(await response.text(), 'text/html');
+                                                                const embedded = html.getElementById('getAuthEvalJsonData');
+                                                                if (!embedded) throw new Error('Publication data unavailable');
+                                                                const data = JSON.parse(embedded.textContent);
+                                                                const rawYears = data.documentYearDataViewBeans;
+                                                                if ((!Array.isArray(rawYears) || !rawYears.length) && data.docCount !== 0 && data.docCount !== '0') throw new Error('Publication years unavailable');
+                                                                const counts = new Map();
+                                                                for (const y of rawYears || []) {
+                                                                    const year = String(y.code || y.displayName), count = Number(y.noOfDocuments);
+                                                                    if (!/^\d{4}$/.test(year) || y.noOfDocuments == null || y.noOfDocuments === '' || !Number.isInteger(count) || count < 0) throw new Error('Invalid publication year data');
+                                                                    counts.set(Number(year), (counts.get(Number(year)) || 0) + count);
+                                                                }
+                                                                const years = [...counts].sort((a, b) => b[0] - a[0]).map(([year, count]) => ({ code: String(year), noOfDocuments: count }));
+                                                                row.pubData = { years, latest: years.find(y => y.noOfDocuments > 0)?.code ?? null, documents: Array.isArray(data.hirschGraphData) ? data.hirschGraphData : [] };
+                                                            } else {
+                                                                const p = await response.json();
+                                                                if (!p || String(p.authorId) !== row.id) throw new Error('Unexpected author profile');
+                                                                row.profile = p;
+                                                            }
+                                                            row[stateKey] = 'Loaded';
+                                                        } catch (error) {
+                                                            row[stateKey] = detailPaused && !publications ? 'Not loaded' : 'Failed';
+                                                            row[errorKey] = detailPaused ? (publications ? 'Interrupted' : '') : error.name === 'AbortError' ? 'Timed out' : error.message;
+                                                        } finally { clearTimeout(timeout); detailController = null; renderCoauthors(); }
+                                                        if (!detailPaused) await new Promise(resolve => setTimeout(resolve, Math.max(0, 1000 - (Date.now() - started))));
+                                                    }
                                                 }
                                             } finally {
                                                 detailRunning = false;
@@ -3144,12 +3145,10 @@ function onInit() {
                                                 e.preventDefault();
                                                 if (copyPending) return;
                                                 copyPending = true;
-                                                // 按点击时的阶段选择查询；第一轮结束后不会自动紧接着发第二轮。
-                                                const publicationRound = !detailRunning && coRows.every(row => row.profile);
                                                 try {
                                                     if (detailPaused && detailRunning) await detailTask;
                                                     if (!popup[0].isConnected) return;
-                                                    if (!detailRunning && (publicationRound ? coRows.some(row => !row.pubAttempted) : coRows.some(row => !row.profile))) detailTask = loadCoauthorDetails(publicationRound);
+                                                    if (!detailRunning && coRows.some(row => !row.profile || !row.pubAttempted)) detailTask = loadCoauthorDetails();
                                                     await detailTask;
                                                     if (popup[0].isConnected && !detailPaused) $(this).trigger('click');
                                                 } catch (e) {
