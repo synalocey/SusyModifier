@@ -67,7 +67,6 @@ dns:
     - ntp.ubuntu.com
     - "*.aliyun.com"
     - "*.time.edu.cn"
-    - "time*.google.com"
     - music.163.com
     - "*.music.163.com"
     - "*.126.net"

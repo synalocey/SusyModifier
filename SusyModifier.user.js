@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.9.6
+// @version       6.9.7
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -132,7 +132,7 @@ const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site 
                 'section': [], 'label': '默认 GE Cancel Template', 'type': 'select', 'labelPos': 'left', 'options':
                 ['Guest Editor Invitation – Cancel Invitation', 'Guest Editor Invitation – Cancel Invitation (Declined the Invitation via Email)', 'Guest Editor Invitation-Cancel Invitation (paper invitation – free of charge)-manually',
                  'Guest Editor Invitation-Cancel Invitation (paper invitation with full APC)-manually'],
-                default: 'Guest Editor Invitation-Cancel Invitation (feature paper invitation)-manually'
+                default: 'Guest Editor Invitation-Cancel Invitation (paper invitation – free of charge)-manually'
             },
             'GE_CancelS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_CancelS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
@@ -680,7 +680,9 @@ function onInit() {
     if (window.location.href.indexOf("/uninvite/guest_editor") > -1) {
         try {
             skMyAccountOnly();
-            $("#emailTemplates > option:contains('" + GM_config.get('GE_CancelID') + "')").prop('selected', true);
+            let geCancel = GM_config.get('GE_CancelID');
+            let $cancelOpt = $("#emailTemplates > option").filter((_, el) => $(el).text().trim() === geCancel.trim());
+            ($cancelOpt.length ? $cancelOpt : $("#emailTemplates > option:contains('" + geCancel + "')").first()).prop('selected', true);
             unsafeWindow.$(document.getElementById('emailTemplates')).trigger("chosen:updated").trigger("change");
             function init() {
                 let t1 = skStringToRegex(GM_config.get('GE_CancelS1')); $("#mailSubject").val($("#mailSubject").val().replace(t1, skStringToFunction(GM_config.get('GE_CancelS2'))));
