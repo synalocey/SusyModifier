@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SuSy Scholar Screener
-// @version      6.9.3
+// @version      6.9.15
 // @author       SKDAY
 // @match        https://susy.mdpi.com/user/settings*
 // @match        https://www.scopus.com/authid/detail.uri*
@@ -30,7 +30,7 @@
   const SCOPUS_BRIDGE_PREFIX = 'susy_ge_scopus_bridge_';
   const SCOPUS_BRIDGE_PARAM = 'ge_screen_request';
   const REVIEWER_CHECK_ROUTE_KEY = 'a5ce29b8b4917729fc1dc44abf2fc686';
-  const SPECIAL_ISSUE_ID = '1139163';
+  const SPECIAL_ISSUE_ID = (typeof GM_getValue === 'function' ? GM_getValue('SI_ID', '1907620') : null) || '1907620';
   const MDPI_REQUEST_CONCURRENCY = 10;
   const SCOPUS_REQUEST_CONCURRENCY = 1;
   const EMAIL_PATTERN = /[A-Z0-9](?:[A-Z0-9.!#$%&'*+/=?^_`{|}~-]*[A-Z0-9])?@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi;

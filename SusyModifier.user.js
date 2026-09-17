@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.9.7
+// @version       6.9.15
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -42,7 +42,7 @@
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
-// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/Scholar-screening.user.js?v=6.9.3
+// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/Scholar-screening.user.js?v=6.9.15
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM.getValue
@@ -311,6 +311,7 @@ const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site 
             'Hidden_Func': { 'section': [], 'label': 'Experimental (!Caution)', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'Remind_Dinner': { 'label': '提醒点餐', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'My_Account_Only': { 'label': 'Use My Account Only:', 'labelPos': 'left', 'type': 'text', 'default': "" },
+            'SI_ID': { 'label': 'SI ID:', 'labelPos': 'left', 'type': 'text', 'default': "1907620" },
         },
         'events': {
             'save': function () { if ($("#SusyModifierConfig").length > 0) { location.reload() }; },
@@ -321,9 +322,14 @@ const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site 
                     f_settings.find("#SusyModifierConfig_" + fieldName + "_field_label").after('<button type="button" class="sk_field_reset" title="Reset this field to default" aria-label="Reset this field to default">↺</button>')
                         .next(".sk_field_reset").on("click", function (e) { e.preventDefault(); e.stopPropagation(); GM_config.fields[fieldName].reset(); });
                 });
+                // 初始化 SI_ID 显示状态
+                if (!GM_config.get('Hidden_Func')) { f_settings.find("#SusyModifierConfig_SI_ID_var").hide(); }
                 GM_config.fields.Hidden_Func.node.addEventListener('change', function () { //Experimental警告
                     if (f_settings.find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {
                         alert('Dangerous! \n\nDon\'t turn it on unless you are familiar with ALL susy functions. \nOtherwise, it will cause serious problems.')
+                        f_settings.find("#SusyModifierConfig_SI_ID_var").show();
+                    } else {
+                        f_settings.find("#SusyModifierConfig_SI_ID_var").hide();
                     }
                 });
                 GM_config.fields.Old_Icon.node.addEventListener('change', function () { //Old Icon提示
@@ -2210,7 +2216,8 @@ function onInit() {
                     }
                 });
 
-                susycheck = "https://susy.mdpi.com/user/guest_editor/check?email=" + mailsdb_email + "&special_issue_id=1139163";
+                var si_id = GM_config.get('SI_ID') || "1907620";
+                susycheck = "https://susy.mdpi.com/user/guest_editor/check?email=" + mailsdb_email + "&special_issue_id=" + si_id;
                 GM_xmlhttpRequest({
                     method: 'GET',
                     url: susycheck,
