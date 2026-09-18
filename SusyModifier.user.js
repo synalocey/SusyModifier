@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.9.15
+// @version       6.9.16
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -53,6 +53,8 @@
 // @grant         GM_removeValueChangeListener
 // @grant         GM_xmlhttpRequest
 // @grant         GM_openInTab
+// @grant         GM_getTab
+// @grant         GM_saveTab
 // @grant         GM_addStyle
 // @grant         GM_registerMenuCommand
 // @grant         window.close
@@ -77,8 +79,7 @@ const SK_WORK_LOGIN_SITES = [
     { id: 'susy', name: 'SUSY', url: 'https://susy.mdpi.com/user/sme/status/submitted' },
     { id: 'mdpi', name: 'MDPI', url: 'https://www.mdpi.com/user/login' },
     { id: 'mailsdb', name: 'MailsDB', url: 'https://mailsdb.i.mdpi.com/' },
-    { id: 'mrs', name: 'MRS Statistics', url: 'https://mrs.mdpi.com/statistics' },
-    { id: 'mrs2', name: 'MRS 2.0', url: 'https://mrs.mdpi.cn/' },
+    { id: 'mrs', name: 'MRS 1.0', url: 'https://mrs.mdpi.com/statistics' },
     { id: 'attendance', name: 'HRMS', url: 'https://i.mdpi.cn/team/attendance' },
     { id: 'redmine', name: 'Redmine', url: 'https://redmine.mdpi.cn/' }
 ];
@@ -86,7 +87,7 @@ const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site 
 
 (function () {
     'use strict';
-    if (window.top === window) GM_registerMenuCommand('🔐 快捷登录', function(){GM_openInTab('https://www.mdpi.com/?login', { active: true });});
+    if (window.top === window) GM_registerMenuCommand('🔐 快捷登录', function(){GM_openInTab('https://www.mdpi.com/?susymodifier-login', { active: true });});
     GM_config.init({
         'id': 'SusyModifierConfig',
         'title': 'Settings of SusyModifier v' + GM_info.script.version,
@@ -432,7 +433,7 @@ function onInit() {
         ['skWorkLoginUntil', 'skWorkLoginRun', 'skWorkLoginStatus__microsoft'].concat(SK_WORK_LOGIN_STATUS_KEYS, SK_WORK_LOGIN_SITES.map(site => 'skWorkLoginAutoClose_' + site.id)).forEach(key => GM_deleteValue(key));
         GM_setValue('skWorkLogin', {});
     }
-    if (window.location.href.indexOf("www.mdpi.com/?login") > -1) skOpenWorkLoginHub();
+    if (location.hostname === 'www.mdpi.com' && location.pathname === '/' && location.search === '?susymodifier-login') { skOpenWorkLoginHub(); return; }
     skWorkLoginHelper();
 
     var S_J, S_S;
@@ -4172,14 +4173,19 @@ function skMyAccountOnly() {
     }
 }
 
-function skCheckWorkLoginStatus(url, isLoggedIn) {
-    return new Promise(resolve => {
-        const guard = setTimeout(() => resolve(null), 6000);
-        skGMFetchGet(url, 5000).then(res => {
-            clearTimeout(guard);
-            resolve(res?.status >= 200 && res.status < 400 ? isLoggedIn(res.responseText || '') : null);
-        }, () => { clearTimeout(guard); resolve(null); });
-    });
+async function skCheckWorkLoginStatus(url, isLoggedIn) {
+    for (const timeout of [5000, 8000]) {
+        let guard;
+        const res = await Promise.race([skGMFetchGet(url, timeout).catch(() => null), new Promise(resolve => { guard = setTimeout(() => resolve(null), timeout + 1000); })]);
+        clearTimeout(guard);
+        const text = res?.responseText || '';
+        if (res?.status === 401) return false;
+        if (res?.status >= 200 && res.status < 400) {
+            if (isLoggedIn(text)) return true;
+            if (/<input\b[^>]*type\s*=\s*["']password["']/i.test(text) || /^https:\/\/(?:auth\.mdpi\.(?:com|cn)|login\.microsoftonline\.com)\//i.test(res.finalUrl || '')) return false;
+        }
+    }
+    return null;
 }
 
 function skIsSusyLoggedIn() { return skCheckWorkLoginStatus('https://susy.mdpi.com/user/info?emails=', text => text.includes('reviewer-profile')); }
@@ -4215,8 +4221,7 @@ function skOpenWorkLoginHub() {
     <div class="sk-work-row" data-site="susy" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">SUSY</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('susy')}" target="_blank">查看</a></div>
     <div class="sk-work-row" data-site="mdpi" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MDPI</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('mdpi')}" target="_blank">查看</a></div>
     <div class="sk-work-row" data-site="mailsdb" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MailsDB</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('mailsdb')}" target="_blank">查看</a></div>
-    <div class="sk-work-row" data-site="mrs" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MRS Statistics</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('mrs')}" target="_blank">查看</a></div>
-    <div class="sk-work-row" data-site="mrs2" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MRS 2.0</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('mrs2')}" target="_blank">查看</a></div>
+    <div class="sk-work-row" data-site="mrs" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MRS 1.0</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('mrs')}" target="_blank">查看</a></div>
     <div class="sk-work-row" data-site="attendance" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">HRMS</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('attendance')}" target="_blank">查看</a></div>
     <div class="sk-work-row" data-site="redmine" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">Redmine CN</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('redmine')}" target="_blank">查看</a></div>
     <div class="sk-work-actions">
@@ -4230,7 +4235,7 @@ function skOpenWorkLoginHub() {
     </section></main></body></html>`;
 
     function updateSiteStatus(siteId, isOk) {
-        $(`.sk-work-row[data-site="${siteId}"]`).attr('data-state', isOk === null ? 'unknown' : isOk ? 'ok' : 'login').find('.sk-work-state').text(isOk === null ? '后台暂未确认，可直接登录' : isOk ? '已登录' : '未登录');
+        $(`.sk-work-row[data-site="${siteId}"]`).attr('data-state', isOk === null ? 'unknown' : isOk ? 'ok' : 'login').find('.sk-work-state').text(isOk === null ? '暂未确认，可直接登录' : isOk ? '已登录' : '未登录');
         if (loginStarted) return;
         let remaining = $('.sk-work-row[data-state!="ok"]').length;
         $('#sk-work-start').prop('disabled', !remaining).text(remaining ? '开始批量登录' : '全部已登录');
@@ -4242,19 +4247,18 @@ function skOpenWorkLoginHub() {
         if ($(`.sk-work-row[data-site="${id}"]`).attr('data-state') === 'checking') updateSiteStatus(id, isOk);
     });
     checkSite('susy', skIsSusyLoggedIn());
-    checkSite('mdpi', skCheckWorkLoginStatus('https://www.mdpi.com/journal/mathematics/special_issues/Math_Comput_Program_AI', text => text.includes('Manage the SI')));
-    checkSite('mailsdb', skCheckWorkLoginStatus('https://mailsdb.i.mdpi.com/', text => text.includes('search will look through all from')));
-    checkSite('mrs', skCheckWorkLoginStatus('https://mrs.mdpi.com/data/', text => text.includes('Special Issue')));
-    checkSite('mrs2', skCheckWorkLoginStatus('https://mrs.mdpi.cn/prod-api/api/download_center', text => /success|Expired token/.test(text)));
+    checkSite('mdpi', skCheckWorkLoginStatus('https://www.mdpi.com/user/login', text => /href=["'][^"']*logout/i.test(text)));
+    checkSite('mailsdb', skCheckWorkLoginStatus('https://mailsdb.i.mdpi.com/', text => /search will look through all from|href=["'][^"']*logout_by_keycloak/i.test(text)));
+    checkSite('mrs', skCheckWorkLoginStatus('https://mrs.mdpi.com/data/', text => /Special Issue|href=["'][^"']*logout/i.test(text)));
     checkSite('attendance', skCheckWorkLoginStatus('https://i.mdpi.cn/team/attendance', text => text.includes('Team List')));
-    checkSite('redmine', skCheckWorkLoginStatus('https://redmine.mdpi.cn/', text => text.includes('our internal platform')));
+    checkSite('redmine', skCheckWorkLoginStatus('https://redmine.mdpi.cn/', text => /href=["'][^"']*logout/i.test(text)));
 
     $('#sk-work-start').on('click', function () {
         if (loginStarted) return;
         let needLoginSites = $('.sk-work-row[data-state!="ok"]').map((_, el) => $(el).data('site')).get();
         if (needLoginSites.length === 0) { $(this).text('全部已登录'); return; }
         loginStarted = true;
-        hubRun = Date.now();
+        hubRun = crypto.randomUUID();
         $(this).prop('disabled', true).text('正在批量登录…');
         $('#sk-work-badge').text('正在登录');
         $('#sk-work-microsoft').text('').prop('hidden', true);
@@ -4264,8 +4268,7 @@ function skOpenWorkLoginHub() {
 
         needLoginSites.forEach(function (id) {
             $(`.sk-work-row[data-site="${id}"]`).attr('data-state', 'working').find('.sk-work-state').text('正在登录…');
-            let url = siteUrl(id);
-            if (url) GM_openInTab(url, { active: false, insert: true });
+            GM_openInTab('https://www.mdpi.com/?sk-work-login#sk-work-login=' + hubRun + ':' + id, { active: false, insert: true });
         });
 
         let timer = setInterval(() => {
@@ -4303,11 +4306,11 @@ function skOpenWorkLoginHub() {
         }, 500);
     });
 
-    $('#sk-scholar-check').on('click', function (event) {if ($('.sk-work-row[data-state!="ok"]').length) {event.preventDefault(); alert('请完成登录！'); }});
+    $('#sk-scholar-check').on('click', function (event) {if (['susy', 'mailsdb'].some(id => $(`.sk-work-row[data-site="${id}"]`).attr('data-state') !== 'ok')) {event.preventDefault(); alert('请登录SUSY和Mailsdb！'); }});
 }
 
-function skWorkLoginHelper() {
-    if (document.getElementById('sk-work-login-page')) return;
+async function skWorkLoginHelper() {
+    if (window.top !== window || document.getElementById('sk-work-login-page')) return;
     let workLogin = GM_getValue('skWorkLogin', {});
     if (Date.now() > Number(workLogin.until || 0)) {
         if (workLogin.run) {
@@ -4316,10 +4319,26 @@ function skWorkLoginHelper() {
         }
         return;
     }
+    if (!workLogin.run || typeof GM_getTab !== 'function' || typeof GM_saveTab !== 'function') return;
+    const tab = await new Promise(resolve => GM_getTab(resolve));
+    const launch = location.hostname === 'www.mdpi.com' && location.pathname === '/' && location.search === '?sk-work-login' && /^#sk-work-login=([^:]+):([a-z0-9]+)$/.exec(location.hash);
+    if (launch) {
+        const target = SK_WORK_LOGIN_SITES.find(site => site.id === launch[2]);
+        const current = GM_getValue('skWorkLogin', {});
+        if (!target || launch[1] !== current.run || Date.now() > Number(current.until || 0) || !(current.sites || []).includes(target.id)) return;
+        tab.skWorkLogin = { run: current.run, site: target.id };
+        GM_saveTab(tab, () => {
+            const latest = GM_getValue('skWorkLogin', {});
+            if (latest.run === current.run && Date.now() <= Number(latest.until || 0)) location.replace(target.url);
+        });
+        return;
+    }
+    if (tab.skWorkLogin?.run !== workLogin.run || !(workLogin.sites || []).includes(tab.skWorkLogin.site)) return;
     let host = location.hostname, run = workLogin.run, sentStatus = {};
+    const tabSite = tab.skWorkLogin.site;
     const isCurrentRun = () => {
         let current = GM_getValue('skWorkLogin', {});
-        return current.run === run && Date.now() <= Number(current.until || 0);
+        return current.run === run && Date.now() <= Number(current.until || 0) && (current.sites || []).includes(tabSite);
     };
 
     const skSetWorkLoginStatus = (id, state, text) => {
@@ -4344,23 +4363,22 @@ function skWorkLoginHelper() {
     }
 
     if (host === 'auth.mdpi.com' || host === 'auth.mdpi.cn') { // 2. MDPI Keycloak
-        workLogin.until = Date.now() + 5 * 60 * 1000;
-        GM_setValue('skWorkLogin', workLogin);
+        if (!isCurrentRun()) return;
         let msBtn = document.querySelector('a[href="/mdpi_keycloak/login"]');
         if (msBtn) {
             if (!msBtn.dataset.skClicked) {
                 msBtn.dataset.skClicked = '1';
-                ['susy', 'mdpi'].filter(id => (workLogin.sites || []).includes(id)).forEach(id => skSetWorkLoginStatus(id, 'working', '正在使用 Microsoft 企业认证…'));
+                skSetWorkLoginStatus(tabSite, 'working', '正在使用 Microsoft 企业认证…');
                 msBtn.click();
             }
         } else if ($('#username').length || $('#password').length || $('input[type="password"]').length) {
-            ['susy', 'mdpi'].filter(id => (workLogin.sites || []).includes(id)).forEach(id => skSetWorkLoginStatus(id, 'manual', '请填写账号密码并点击 Continue'));
+            if (['susy', 'mdpi'].includes(tabSite)) skSetWorkLoginStatus(tabSite, 'manual', '请填写账号密码并点击 Continue');
         }
         return;
     }
 
     let site = SK_WORK_LOGIN_SITES.find(s => host === new URL(s.url).hostname || (s.id === 'mdpi' && host === 'login.mdpi.com')); // 3. 各业务系统页面
-    if (!site || !(workLogin.sites || []).includes(site.id)) return;
+    if (!site || site.id !== tabSite || !isCurrentRun()) return;
 
     let tries = 0, pageTimer, loginFinished = false;
     const finishLogin = () => {
@@ -4368,9 +4386,16 @@ function skWorkLoginHelper() {
         loginFinished = true;
         clearInterval(pageTimer);
         skSetWorkLoginStatus(site.id, 'ok', '已登录');
-        if ((workLogin.sites || []).includes(site.id)) setTimeout(() => {
+        const finishedUrl = location.href;
+        setTimeout(() => {
             let current = GM_getValue('skWorkLogin', {});
-            if (!current.run || current.run === run) window.close();
+            if ((!current.run || current.run === run) && Date.now() <= Number(workLogin.until || 0) && location.href === finishedUrl) GM_getTab(saved => {
+                const latest = GM_getValue('skWorkLogin', {});
+                if (saved.skWorkLogin?.run !== run || saved.skWorkLogin.site !== site.id || (latest.run && latest.run !== run) || location.href !== finishedUrl) return;
+                delete saved.skWorkLogin;
+                GM_saveTab(saved);
+                window.close();
+            });
         }, 700);
     };
 
@@ -4379,11 +4404,10 @@ function skWorkLoginHelper() {
         let text = document.body?.innerText || '', path = location.pathname;
         let isAuthPage = path.includes('/login') || path.includes('/2fa') || location.hostname === 'login.mdpi.com';
         let loggedIn = (site.id === 'susy' && path.startsWith('/user/sme/status/submitted')) ||
-            (site.id === 'mdpi' && !isAuthPage && ($('a[href*="logout"]').length || text.includes('Manage the SI') || (location.hostname === 'www.mdpi.com' && !$('a[href*="/user/login"]').length && text.length > 200))) ||
+            (site.id === 'mdpi' && !isAuthPage && ($('a[href*="logout"]').length || text.includes('Manage the SI'))) ||
             (site.id === 'mailsdb' && ($('a[href*="logout_by_keycloak"]').length || (path.startsWith('/reversion/') && !path.includes('/login')))) ||
             (site.id === 'mrs' && path.startsWith('/statistics') && $('a[href*="logout"]').length) ||
             (site.id === 'attendance' && path === '/team/attendance' && /@mdpi\.com/i.test(text)) ||
-            (site.id === 'mrs2' && location.hash && !location.hash.includes('/login') && document.title !== 'MRS') ||
             (site.id === 'redmine' && $('a[href*="logout"]').length);
 
         if (loggedIn) {
