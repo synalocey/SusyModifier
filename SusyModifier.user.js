@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.9.20
+// @version       6.9.21
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -57,6 +57,7 @@
 // @grant         GM_saveTab
 // @grant         GM_addStyle
 // @grant         GM_registerMenuCommand
+// @grant         GM.cookie
 // @grant         window.close
 // @connect       mdpi.com
 // @connect       mdpi.cn
@@ -87,7 +88,29 @@ const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site 
 
 (function () {
     'use strict';
-    if (window.top === window) GM_registerMenuCommand('🔐 快捷登录', function(){GM_openInTab('https://www.mdpi.com/?susymodifier-login', { active: true });});
+    if (window.top === window) {
+        GM_registerMenuCommand('🔐 Login Hub', function(){GM_openInTab('https://www.mdpi.com/?susymodifier-login', { active: true });});
+        GM_registerMenuCommand('🗑️ Reset Scopus', async function () {
+            try {
+                const listScopusCookies = async () => (await GM.cookie.list({ domain: 'scopus.com', partitionKey: {} })).filter(cookie => /(^|\.)scopus\.com$/i.test(cookie.domain));
+                const cookies = await listScopusCookies();
+                cookies.sort((a, b) => a.domain.replace(/^\./, '').split('.').length - b.domain.replace(/^\./, '').split('.').length || b.path.length - a.path.length);
+                let failed = 0;
+                for (const cookie of cookies) {
+                    const details = { url: (cookie.secure ? 'https://' : 'http://') + cookie.domain.replace(/^\./, '') + cookie.path, name: cookie.name };
+                    if (cookie.firstPartyDomain !== undefined) details.firstPartyDomain = cookie.firstPartyDomain;
+                    if (cookie.partitionKey) details.partitionKey = cookie.partitionKey;
+                    try { await GM.cookie.delete(details); } catch (_) { failed++; }
+                }
+                const remaining = await listScopusCookies();
+                alert(remaining.length || failed
+                    ? `Scopus cookie cleanup incomplete: ${remaining.length} remaining, ${failed} failed to delete. Please check Tampermonkey's cookie permissions, close Scopus tabs, and try again.`
+                    : `Cleared ${cookies.length} accessible Scopus cookie(s), no leftovers detected.`);
+            } catch (_) {
+                alert('⚠️ Clear Scopus Cookie Failed!');
+            }
+        });
+    }
     GM_config.init({
         'id': 'SusyModifierConfig',
         'title': 'Settings of SusyModifier v' + GM_info.script.version,
@@ -929,6 +952,22 @@ function onInit() {
     //文章处理页面[Voucher]按钮和发送推广信按钮等
     if (window.location.href.indexOf("/process_form/") + window.location.href.indexOf("/production_form/") > -2) {
         try {
+            // 标题关键词高亮
+            (function highlightTitleKeywords() {
+                const titleEl = $("span.article-title, a[title='View the published paper']");
+                if (!titleEl.length) return;
+                const keywords = skTitleKeywords;
+                const escaped = keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                const regex = new RegExp('(' + escaped.join('|') + ')', 'gi');
+                titleEl.each(function () {
+                    const html = $(this).html();
+                    if (regex.test(html)) {
+                        regex.lastIndex = 0;
+                        $(this).html(html.replace(regex, '<span style="background-color: yellow; color: red;">$1</span>'));
+                    }
+                });
+            })();
+
             if (GM_config.get('ManuscriptFunc')) {
                 let email = [], name = [];
                 let m_id = $("#manuscript_id").parent().text().trim();
@@ -1089,22 +1128,6 @@ function onInit() {
                         markup.attr("title", ranking.detail).tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                     }
                 });
-
-                // 标题关键词高亮
-                (function highlightTitleKeywords() {
-                    const titleEl = $("span.article-title, a[title='View the published paper']");
-                    if (!titleEl.length) return;
-                    const keywords = skTitleKeywords;
-                    const escaped = keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-                    const regex = new RegExp('(' + escaped.join('|') + ')', 'gi');
-                    titleEl.each(function () {
-                        const html = $(this).html();
-                        if (regex.test(html)) {
-                            regex.lastIndex = 0;
-                            $(this).html(html.replace(regex, '<span style="background-color: yellow; color: red;">$1</span>'));
-                        }
-                    });
-                })();
 
                 // 重置拒稿按钮
                 $("[title|='Reject / Recommend to other journals']").on('click', function(e){
@@ -2936,6 +2959,8 @@ function onInit() {
                                         const coCompact = $('<div id="sk-coa-compact"></div>');
                                         coRows.forEach(row => coCompact.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id).text(row.name + ' (' + (row.shared ?? '—') + ')')));
                                         let detailRunning = false, detailPaused = false, detailsRequested = false, detailController = null, detailTask = null, detailMessage = '', allTsv = '', publicationsRequested = false;
+                                        const activeControllers = new Set();
+                                        const abortAll = () => { for (const c of activeControllers) { try { c.abort(); } catch (_) { } } activeControllers.clear(); detailController?.abort(); };
                                         let overlay, coTable, tableBody, countrySummary, tip;
 
                                         function renderCoauthors() {
@@ -3067,54 +3092,88 @@ function onInit() {
                                             publicationsRequested = true;
                                             detailsRequested = true; detailRunning = true; detailPaused = false; detailMessage = '';
                                             renderCoauthors();
-                                            try {
-                                                authors: for (const row of coRows) {
-                                                    for (const publications of [false, true]) {
-                                                        const stateKey = publications ? 'pubState' : 'state', errorKey = publications ? 'pubError' : 'error';
-                                                        if (detailPaused || !overlay?.[0]?.isConnected) break authors;
-                                                        if (publications ? row.pubAttempted : row.profile) continue;
-                                                        if (publications) row.pubAttempted = true;
-                                                        const started = Date.now();
-                                                        detailController = new AbortController();
-                                                        const timeout = setTimeout(() => detailController?.abort(), 15000);
-                                                        row[stateKey] = 'Loading'; row[errorKey] = ''; renderCoauthors();
-                                                        try {
-                                                            const url = publications ? 'https://www.scopus.com/hirsch/author.uri?accessor=authorProfile&auidList=' + row.id + '&origin=AuthorProfile' : 'https://www.scopus.com/api/authors/' + row.id;
-                                                            const response = await fetch(url, { credentials: 'include', signal: detailController.signal });
-                                                            if ([401, 403, 429].includes(response.status)) {
-                                                                row[stateKey] = 'Failed'; row[errorKey] = 'HTTP ' + response.status;
-                                                                detailMessage = response.status === 429 ? 'Rate limited; wait before retrying.' : 'Scopus access needs checking before retrying.';
-                                                                break authors;
-                                                            }
-                                                            if (!response.ok) throw new Error('HTTP ' + response.status);
-                                                            if (publications) {
-                                                                const html = new DOMParser().parseFromString(await response.text(), 'text/html');
-                                                                const embedded = html.getElementById('getAuthEvalJsonData');
-                                                                if (!embedded) throw new Error('Publication data unavailable');
-                                                                const data = JSON.parse(embedded.textContent);
-                                                                const rawYears = data.documentYearDataViewBeans;
-                                                                if ((!Array.isArray(rawYears) || !rawYears.length) && data.docCount !== 0 && data.docCount !== '0') throw new Error('Publication years unavailable');
-                                                                const counts = new Map();
-                                                                for (const y of rawYears || []) {
-                                                                    const year = String(y.code || y.displayName), count = Number(y.noOfDocuments);
-                                                                    if (!/^\d{4}$/.test(year) || y.noOfDocuments == null || y.noOfDocuments === '' || !Number.isInteger(count) || count < 0) throw new Error('Invalid publication year data');
-                                                                    counts.set(Number(year), (counts.get(Number(year)) || 0) + count);
-                                                                }
-                                                                const years = [...counts].sort((a, b) => b[0] - a[0]).map(([year, count]) => ({ code: String(year), noOfDocuments: count }));
-                                                                row.pubData = { years, latest: years.find(y => y.noOfDocuments > 0)?.code ?? null, documents: Array.isArray(data.hirschGraphData) ? data.hirschGraphData : [] };
-                                                            } else {
-                                                                const p = await response.json();
-                                                                if (!p || String(p.authorId) !== row.id) throw new Error('Unexpected author profile');
-                                                                row.profile = p;
-                                                            }
-                                                            row[stateKey] = 'Loaded';
-                                                        } catch (error) {
-                                                            row[stateKey] = detailPaused && !publications ? 'Not loaded' : 'Failed';
-                                                            row[errorKey] = detailPaused ? (publications ? 'Interrupted' : '') : error.name === 'AbortError' ? 'Timed out' : error.message;
-                                                        } finally { clearTimeout(timeout); detailController = null; renderCoauthors(); }
-                                                        if (!detailPaused) await new Promise(resolve => setTimeout(resolve, Math.max(0, 1000 - (Date.now() - started))));
+
+                                            const tasks = [];
+                                            for (const row of coRows) {
+                                                if (!row.profile) tasks.push({ row, publications: false });
+                                                if (!row.pubData) tasks.push({ row, publications: true });
+                                            }
+
+                                            const CONCURRENCY = 5; // 5通道并发保持高吞吐
+                                            const LAUNCH_INTERVAL = 115; // 两次请求发射最小间隔>=115ms，约8.7次/秒（贴近9次/秒限制）
+                                            let lastLaunchTime = 0, taskIndex = 0, rateLimited = false;
+
+                                            async function executeTask(row, publications) {
+                                                const stateKey = publications ? 'pubState' : 'state', errorKey = publications ? 'pubError' : 'error';
+                                                if (publications ? row.pubData : row.profile) return;
+                                                if (publications) row.pubAttempted = true;
+                                                row[stateKey] = 'Loading'; row[errorKey] = ''; renderCoauthors();
+
+                                                const controller = new AbortController();
+                                                activeControllers.add(controller);
+                                                detailController = controller;
+                                                const timeout = setTimeout(() => controller.abort(), 15000);
+
+                                                try {
+                                                    const url = publications ? 'https://www.scopus.com/hirsch/author.uri?accessor=authorProfile&auidList=' + row.id + '&origin=AuthorProfile' : 'https://www.scopus.com/api/authors/' + row.id;
+                                                    const response = await fetch(url, { credentials: 'include', signal: controller.signal });
+                                                    if ([401, 403, 429].includes(response.status)) {
+                                                        row[stateKey] = 'Failed'; row[errorKey] = 'HTTP ' + response.status;
+                                                        detailMessage = response.status === 429 ? 'Rate limited; wait before retrying.' : 'Scopus access needs checking before retrying.';
+                                                        rateLimited = true;
+                                                        abortAll();
+                                                        return;
                                                     }
+                                                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                                                    if (publications) {
+                                                        const html = new DOMParser().parseFromString(await response.text(), 'text/html');
+                                                        const embedded = html.getElementById('getAuthEvalJsonData');
+                                                        if (!embedded) throw new Error('Publication data unavailable');
+                                                        const data = JSON.parse(embedded.textContent);
+                                                        const rawYears = data.documentYearDataViewBeans;
+                                                        if ((!Array.isArray(rawYears) || !rawYears.length) && data.docCount !== 0 && data.docCount !== '0') throw new Error('Publication years unavailable');
+                                                        const counts = new Map();
+                                                        for (const y of rawYears || []) {
+                                                            const year = String(y.code || y.displayName), count = Number(y.noOfDocuments);
+                                                            if (!/^\d{4}$/.test(year) || y.noOfDocuments == null || y.noOfDocuments === '' || !Number.isInteger(count) || count < 0) throw new Error('Invalid publication year data');
+                                                            counts.set(Number(year), (counts.get(Number(year)) || 0) + count);
+                                                        }
+                                                        const years = [...counts].sort((a, b) => b[0] - a[0]).map(([year, count]) => ({ code: String(year), noOfDocuments: count }));
+                                                        row.pubData = { years, latest: years.find(y => y.noOfDocuments > 0)?.code ?? null, documents: Array.isArray(data.hirschGraphData) ? data.hirschGraphData : [] };
+                                                    } else {
+                                                        const p = await response.json();
+                                                        if (!p || String(p.authorId) !== row.id) throw new Error('Unexpected author profile');
+                                                        row.profile = p;
+                                                    }
+                                                    row[stateKey] = 'Loaded';
+                                                } catch (error) {
+                                                    row[stateKey] = (detailPaused || rateLimited) && !publications ? 'Not loaded' : 'Failed';
+                                                    row[errorKey] = (detailPaused || rateLimited) ? (publications ? 'Interrupted' : '') : error.name === 'AbortError' ? 'Timed out' : error.message;
+                                                } finally {
+                                                    clearTimeout(timeout);
+                                                    activeControllers.delete(controller);
+                                                    renderCoauthors();
                                                 }
+                                            }
+
+                                            async function worker() {
+                                                while (taskIndex < tasks.length) {
+                                                    if (detailPaused || rateLimited || !overlay?.[0]?.isConnected) return;
+                                                    const task = tasks[taskIndex++];
+                                                    if (!task) return;
+
+                                                    const now = Date.now();
+                                                    const wait = Math.max(0, lastLaunchTime + LAUNCH_INTERVAL - now);
+                                                    lastLaunchTime = Math.max(now, lastLaunchTime + LAUNCH_INTERVAL);
+                                                    if (wait > 0) await new Promise(r => setTimeout(r, wait));
+
+                                                    if (detailPaused || rateLimited || !overlay?.[0]?.isConnected) return;
+                                                    await executeTask(task.row, task.publications);
+                                                }
+                                            }
+
+                                            try {
+                                                await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
                                             } finally {
                                                 detailRunning = false;
                                                 if (detailPaused) detailMessage = 'Paused';
@@ -3153,7 +3212,7 @@ function onInit() {
                                                 try {
                                                     if (detailPaused && detailRunning) await detailTask;
                                                     if (!popup[0].isConnected) return;
-                                                    if (!detailRunning && coRows.some(row => !row.profile || !row.pubAttempted)) detailTask = loadCoauthorDetails();
+                                                    if (!detailRunning && coRows.some(row => !row.profile || !row.pubData)) detailTask = loadCoauthorDetails();
                                                     await detailTask;
                                                     if (popup[0].isConnected && !detailPaused) $(this).trigger('click');
                                                 } catch (e) {
@@ -3161,7 +3220,7 @@ function onInit() {
                                                 } finally { copyPending = false; }
                                             });
                                             const closeBtn = $('<button type="button" class="sk-scopus-btn" aria-label="Close co-author details">✕</button>').on('click', () => {
-                                                detailPaused = true; detailController?.abort(); $('#sk-coa-publications').remove(); overlay.remove(); coExportIcon.trigger('focus');
+                                                detailPaused = true; abortAll(); $('#sk-coa-publications').remove(); overlay.remove(); coExportIcon.trigger('focus');
                                             });
                                             const popup = $('<div id="sk-coa-popup" role="dialog" aria-modal="true" aria-labelledby="sk-coa-title"></div>');
                                             popup.append($('<div class="sk-scopus-toolbar"></div>').append($('<strong id="sk-coa-title"></strong>').text('Co-authors (' + coRows.length + ')')).append(tip, copyIcon, closeBtn));
@@ -4190,8 +4249,8 @@ function skOpenWorkLoginHub() {
     const siteUrl = id => SK_WORK_LOGIN_SITES.find(site => site.id === id).url;
     let isUserNameMatch = GM_getValue('isUserNameMatch', false);
 
-    document.documentElement.innerHTML = `<!doctype html><html lang="zh-CN"><head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>快捷登录聚合页面</title>
+    document.documentElement.innerHTML = `<!doctype html><html lang="en"><head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Work Login Hub</title>
     <style id="sk-work-style">
     *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#f3f6f8;color:#26343d;font-family:Arial,"Microsoft YaHei",sans-serif}body{padding:42px 18px}
     .sk-work-page{max-width:820px;margin:auto}.sk-work-head{margin-bottom:22px}.sk-work-head h1{margin:0;color:#244a63;font-size:28px}.sk-work-head p{margin:7px 0 0;color:#6b7881;font-size:14px}
@@ -4211,16 +4270,16 @@ function skOpenWorkLoginHub() {
     @media(max-width:620px){body{padding:24px 12px}.sk-work-row{grid-template-columns:14px 1fr 54px;gap:9px;padding:13px 15px}.sk-work-state{grid-column:2/4}}
     </style></head><body><main id="sk-work-login-page" class="sk-work-page">
     <section class="sk-work-card">
-    <div class="sk-work-summary"><span id="sk-work-badge" class="sk-work-badge">正在检查</span></div>
+    <div class="sk-work-summary"><span id="sk-work-badge" class="sk-work-badge">Checking</span></div>
     <div id="sk-work-microsoft" class="sk-work-microsoft" hidden></div>
-    <div class="sk-work-row" data-site="susy" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">SUSY</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('susy')}" target="_blank">查看</a></div>
-    <div class="sk-work-row" data-site="mdpi" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MDPI</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('mdpi')}" target="_blank">查看</a></div>
-    <div class="sk-work-row" data-site="mailsdb" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MailsDB</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('mailsdb')}" target="_blank">查看</a></div>
-    <div class="sk-work-row" data-site="mrs" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MRS 1.0</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('mrs')}" target="_blank">查看</a></div>
-    <div class="sk-work-row" data-site="attendance" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">HRMS</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('attendance')}" target="_blank">查看</a></div>
-    <div class="sk-work-row" data-site="redmine" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">Redmine CN</span><span class="sk-work-state">正在检查…</span><a class="sk-work-open" href="${siteUrl('redmine')}" target="_blank">查看</a></div>
+    <div class="sk-work-row" data-site="susy" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">SUSY</span><span class="sk-work-state">Checking…</span><a class="sk-work-open" href="${siteUrl('susy')}" target="_blank">Open</a></div>
+    <div class="sk-work-row" data-site="mdpi" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MDPI</span><span class="sk-work-state">Checking…</span><a class="sk-work-open" href="${siteUrl('mdpi')}" target="_blank">Open</a></div>
+    <div class="sk-work-row" data-site="mailsdb" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MailsDB</span><span class="sk-work-state">Checking…</span><a class="sk-work-open" href="${siteUrl('mailsdb')}" target="_blank">Open</a></div>
+    <div class="sk-work-row" data-site="mrs" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MRS 1.0</span><span class="sk-work-state">Checking…</span><a class="sk-work-open" href="${siteUrl('mrs')}" target="_blank">Open</a></div>
+    <div class="sk-work-row" data-site="attendance" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">HRMS</span><span class="sk-work-state">Checking…</span><a class="sk-work-open" href="${siteUrl('attendance')}" target="_blank">Open</a></div>
+    <div class="sk-work-row" data-site="redmine" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">Redmine CN</span><span class="sk-work-state">Checking…</span><a class="sk-work-open" href="${siteUrl('redmine')}" target="_blank">Open</a></div>
     <div class="sk-work-actions">
-        <button type="button" id="sk-work-start" class="sk-work-start">开始批量登录</button>
+        <button type="button" id="sk-work-start" class="sk-work-start">Start Batch Login</button>
         ${isUserNameMatch ? `
         <div class="sk-work-extra-actions">
             <a id="sk-scholar-check" class="sk-work-btn" href="https://susy.mdpi.com/user/settings#G" target=_blank>Scholar Check</a>
@@ -4230,11 +4289,11 @@ function skOpenWorkLoginHub() {
     </section></main></body></html>`;
 
     function updateSiteStatus(siteId, isOk) {
-        $(`.sk-work-row[data-site="${siteId}"]`).attr('data-state', isOk === null ? 'unknown' : isOk ? 'ok' : 'login').find('.sk-work-state').text(isOk === null ? '暂未确认，可直接登录' : isOk ? '已登录' : '未登录');
+        $(`.sk-work-row[data-site="${siteId}"]`).attr('data-state', isOk === null ? 'unknown' : isOk ? 'ok' : 'login').find('.sk-work-state').text(isOk === null ? 'Unconfirmed, ready to log in' : isOk ? 'Logged in' : 'Not logged in');
         if (loginStarted) return;
         let remaining = $('.sk-work-row[data-state!="ok"]').length;
-        $('#sk-work-start').prop('disabled', !remaining).text(remaining ? '开始批量登录' : '全部已登录');
-        $('#sk-work-badge').text(!remaining ? '全部已登录' : $('.sk-work-row[data-state="checking"]').length ? '正在检查' : '检查完成');
+        $('#sk-work-start').prop('disabled', !remaining).text(remaining ? 'Start Batch Login' : 'All Logged In');
+        $('#sk-work-badge').text(!remaining ? 'All Logged In' : $('.sk-work-row[data-state="checking"]').length ? 'Checking' : 'Check Completed');
     }
 
     const checkSite = (id, check) => check.then(isOk => {
@@ -4251,18 +4310,18 @@ function skOpenWorkLoginHub() {
     $('#sk-work-start').on('click', function () {
         if (loginStarted) return;
         let needLoginSites = $('.sk-work-row[data-state!="ok"]').map((_, el) => $(el).data('site')).get();
-        if (needLoginSites.length === 0) { $(this).text('全部已登录'); return; }
+        if (needLoginSites.length === 0) { $(this).text('All Logged In'); return; }
         loginStarted = true;
         hubRun = crypto.randomUUID();
-        $(this).prop('disabled', true).text('正在批量登录…');
-        $('#sk-work-badge').text('正在登录');
+        $(this).prop('disabled', true).text('Batch logging in…');
+        $('#sk-work-badge').text('Logging In');
         $('#sk-work-microsoft').text('').prop('hidden', true);
 
         SK_WORK_LOGIN_STATUS_KEYS.forEach(key => GM_deleteValue(key));
         GM_setValue('skWorkLogin', { run: hubRun, until: Date.now() + 5 * 60 * 1000, sites: needLoginSites });
 
         needLoginSites.forEach(function (id) {
-            $(`.sk-work-row[data-site="${id}"]`).attr('data-state', 'working').find('.sk-work-state').text('正在登录…');
+            $(`.sk-work-row[data-site="${id}"]`).attr('data-state', 'working').find('.sk-work-state').text('Logging in…');
             GM_openInTab('https://www.mdpi.com/?sk-work-login#sk-work-login=' + hubRun + ':' + id, { active: false, insert: true });
         });
 
@@ -4272,8 +4331,8 @@ function skOpenWorkLoginHub() {
                 clearInterval(timer);
                 loginStarted = false;
                 needLoginSites.forEach(id => updateSiteStatus(id, null));
-                $('#sk-work-start').prop('disabled', false).text('重试未完成的登录');
-                $('#sk-work-badge').text('登录未完成');
+                $('#sk-work-start').prop('disabled', false).text('Retry Incomplete Logins');
+                $('#sk-work-badge').text('Login Incomplete');
                 if (current.run === hubRun) GM_setValue('skWorkLogin', {});
                 return;
             }
@@ -4292,8 +4351,8 @@ function skOpenWorkLoginHub() {
             }
             if (!needLoginSites.length) {
                 clearInterval(timer);
-                $('#sk-work-start').text('全部登录完成');
-                $('#sk-work-badge').text('全部已登录');
+                $('#sk-work-start').text('All Logins Completed');
+                $('#sk-work-badge').text('All Logged In');
                 $('#sk-work-microsoft').text('').prop('hidden', true);
                 GM_setValue('skWorkLogin', {});
                 SK_WORK_LOGIN_STATUS_KEYS.forEach(key => GM_deleteValue(key));
@@ -4301,7 +4360,7 @@ function skOpenWorkLoginHub() {
         }, 500);
     });
 
-    $('#sk-scholar-check').on('click', function (event) {if (['susy', 'mailsdb'].some(id => $(`.sk-work-row[data-site="${id}"]`).attr('data-state') !== 'ok')) {event.preventDefault(); alert('请登录SUSY和Mailsdb！'); }});
+    $('#sk-scholar-check').on('click', function (event) {if (['susy', 'mailsdb'].some(id => $(`.sk-work-row[data-site="${id}"]`).attr('data-state') !== 'ok')) {event.preventDefault(); alert('Please log in to SUSY and MailsDB first!'); }});
 }
 
 async function skWorkLoginHelper() {
@@ -4352,7 +4411,7 @@ async function skWorkLoginHelper() {
             if (!isCurrentRun()) { clearInterval(timer); return; }
             let acc = [...document.querySelectorAll('button,[role="button"]')].find(el => /@mdpi\.com/i.test(el.textContent || ''));
             if (acc) { clearInterval(timer); acc.click(); }
-            else if (++tries > 30) { clearInterval(timer); skSetWorkLoginStatus('microsoft', 'manual', '请在 Microsoft 页面登陆 @mdpi.com 账户'); }
+            else if (++tries > 30) { clearInterval(timer); skSetWorkLoginStatus('microsoft', 'manual', 'Please sign in with your @mdpi.com account on Microsoft'); }
         }, 500);
         return;
     }
@@ -4363,11 +4422,11 @@ async function skWorkLoginHelper() {
         if (msBtn) {
             if (!msBtn.dataset.skClicked) {
                 msBtn.dataset.skClicked = '1';
-                skSetWorkLoginStatus(tabSite, 'working', '正在使用 Microsoft 企业认证…');
+                skSetWorkLoginStatus(tabSite, 'working', 'Authenticating via Microsoft…');
                 msBtn.click();
             }
         } else if ($('#username').length || $('#password').length || $('input[type="password"]').length) {
-            if (['susy', 'mdpi'].includes(tabSite)) skSetWorkLoginStatus(tabSite, 'manual', '请填写账号密码并点击 Continue');
+            if (['susy', 'mdpi'].includes(tabSite)) skSetWorkLoginStatus(tabSite, 'manual', 'Please enter your credentials and click Continue');
         }
         return;
     }
@@ -4380,7 +4439,7 @@ async function skWorkLoginHelper() {
         if (loginFinished || !isCurrentRun()) return;
         loginFinished = true;
         clearInterval(pageTimer);
-        skSetWorkLoginStatus(site.id, 'ok', '已登录');
+        skSetWorkLoginStatus(site.id, 'ok', 'Logged in');
         const finishedUrl = location.href;
         setTimeout(() => {
             let current = GM_getValue('skWorkLogin', {});
@@ -4415,17 +4474,17 @@ async function skWorkLoginHelper() {
         if (btn) {
             if (!btn.dataset.skClicked) {
                 btn.dataset.skClicked = '1';
-                skSetWorkLoginStatus(site.id, 'working', '正在使用 Microsoft 企业认证…');
+                skSetWorkLoginStatus(site.id, 'working', 'Authenticating via Microsoft…');
                 if (btn.href) window.location.href = btn.href;
                 else btn.click();
             }
         } else if (['susy', 'mdpi'].includes(site.id) && ($('#username').length || $('#password').length || $('input[type="password"]').length)) {
-            skSetWorkLoginStatus(site.id, 'manual', '请填写账号密码并点击 Continue');
+            skSetWorkLoginStatus(site.id, 'manual', 'Please enter your credentials and click Continue');
             return;
         }
         if (++tries > 60) {
             clearInterval(pageTimer);
-            skSetWorkLoginStatus(site.id, 'unknown', '未能自动确认，请打开查看');
+            skSetWorkLoginStatus(site.id, 'unknown', 'Could not confirm automatically. Please open and check.');
         }
     }, 500);
 
