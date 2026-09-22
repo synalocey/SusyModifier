@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.9.21
+// @version       6.9.22
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -42,7 +42,7 @@
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
-// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/Scholar-screening.user.js?v=6.9.16
+// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/Scholar-screening.user.js?v=6.9.22
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM.getValue
@@ -335,7 +335,7 @@ const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site 
             'Hidden_Func': { 'section': [], 'label': 'Experimental (!Caution)', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'Remind_Dinner': { 'label': '提醒点餐', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'My_Account_Only': { 'label': 'Use My Account Only:', 'labelPos': 'left', 'type': 'text', 'default': "" },
-            'SI_ID': { 'label': 'SI ID:', 'labelPos': 'left', 'type': 'text', 'default': "1907620" },
+            'GE_Check_SI_ID': { 'label': 'SI ID:', 'labelPos': 'left', 'type': 'text', 'default': "342143" },
         },
         'events': {
             'save': function () { if ($("#SusyModifierConfig").length > 0) { location.reload() }; },
@@ -2235,8 +2235,8 @@ function onInit() {
                     }
                 });
 
-                var si_id = GM_config.get('SI_ID') || "1907620";
-                susycheck = "https://susy.mdpi.com/user/guest_editor/check?email=" + mailsdb_email + "&special_issue_id=" + si_id;
+                var si_id = String(GM_config.get('GE_Check_SI_ID') || "342143").trim();
+                susycheck = "https://susy.mdpi.com/user/guest_editor/check?email=" + mailsdb_email + "&special_issue_id=" + encodeURIComponent(si_id);
                 GM_xmlhttpRequest({
                     method: 'GET',
                     url: susycheck,

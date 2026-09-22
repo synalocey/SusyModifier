@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         SuSy Scholar Screener
-// @version      6.9.15
+// @version      6.9.22
 // @author       SKDAY
 // @match        https://susy.mdpi.com/user/settings*
 // @match        https://www.scopus.com/authid/detail.uri*
@@ -15,7 +15,7 @@
 // @grant        GM_openInTab
 // @connect      mailsdb.i.mdpi.com
 // @connect      www.scopus.com
-// @run-at       document-idle
+// @run-at       document-start
 // @noframes
 // ==/UserScript==
 
@@ -29,10 +29,15 @@
   const STORAGE_PREFIX = 'susy_ge_screener_';
   const SCOPUS_BRIDGE_PREFIX = 'susy_ge_scopus_bridge_';
   const SCOPUS_BRIDGE_PARAM = 'ge_screen_request';
+  const SCOPUS_BRIDGE_CHANNEL_PARAM = 'ge_screen_channel';
   const REVIEWER_CHECK_ROUTE_KEY = 'a5ce29b8b4917729fc1dc44abf2fc686';
-  const SPECIAL_ISSUE_ID = (typeof GM_getValue === 'function' ? GM_getValue('SI_ID', '1907620') : null) || '1907620';
-  const MDPI_REQUEST_CONCURRENCY = 10;
-  const SCOPUS_REQUEST_CONCURRENCY = 1;
+  const SPECIAL_ISSUE_CONFIG_KEY = 'GE_Check_SI_ID';
+  const DEFAULT_SPECIAL_ISSUE_ID = '342143';
+  const MDPI_REQUEST_CONCURRENCY = Number.POSITIVE_INFINITY;
+  const SCOPUS_REQUEST_CONCURRENCY = 5;
+  const SCOPUS_REQUESTS_PER_SECOND = 5;
+  const SCOPUS_WORKER_READY_TIMEOUT = 30000;
+  const PROCEED_SYMBOLS = { yes: '✓', no: '✕', 'not-applicable': '∅', pending: '…' };
   const EMAIL_PATTERN = /[A-Z0-9](?:[A-Z0-9.!#$%&'*+/=?^_`{|}~-]*[A-Z0-9])?@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi;
   const DEFAULTS = Object.freeze({
     queryMode: 'scopus',
@@ -62,6 +67,17 @@
     unsuitable: { label: '不适合', suitable: false },
     review: { label: '需人工复核', suitable: null },
   });
+
+  const scopusBridgeState = {
+    channelId: '',
+    requestKey: '',
+    readyKey: '',
+    workerHandle: null,
+    readyPromise: null,
+    requests: new Map(),
+    pending: new Map(),
+    cleanupRegistered: false,
+  };
 
   function numberOr(value, fallback = 0) {
     const parsed = Number(value);
@@ -174,15 +190,6 @@
     return date >= cutoff && date <= end;
   }
 
-  function countRecentUniqueRecords(records, now = new Date()) {
-    const identifiers = new Set();
-    records.forEach((record, index) => {
-      if (!isWithinPastYear(record.date, now)) return;
-      identifiers.add(normalizeSpace(record.id) || `row-${index}`);
-    });
-    return identifiers.size;
-  }
-
   function parseEmailList(input) {
     const seen = new Set();
     const valid = [];
@@ -196,9 +203,6 @@
   }
 
   function parseDocument(html) {
-    if (typeof DOMParser === 'undefined') {
-      throw new Error('DOMParser is unavailable in this environment.');
-    }
     const documentObject = new DOMParser().parseFromString(String(html || ''), 'text/html');
     const title = normalizeSpace(documentObject.title);
     const text = documentObject.body?.innerText || documentObject.body?.textContent || '';
@@ -255,37 +259,16 @@
     return String(autoLoad?.getAttribute('data-auto-load-url') || '').match(/invitations-history\/(\d+)/i)?.[1] || null;
   }
 
-  function extractDecisionRecords(documentObject) {
-    const section = $('[data-section="editors"]', documentObject)[0];
-    if (!section) return [];
-    const records = [];
-    for (const row of $('table tr', section)) {
-      const dateCell = $('.submission-date', row)[0];
-      if (!dateCell) continue;
-      records.push({
-        id: elementText($('.msid', row)[0]),
-        date: dateCell.getAttribute('title') || elementText(dateCell),
-      });
-    }
-    return records;
-  }
-
   function extractAssignmentRoles(text) {
     return unique(String(text || '').split(/\r?\n/).flatMap((line) => ROLE_TERMS.filter((term) =>
       new RegExp(`^\\s*(?:[-•]\\s*)?${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(?:of|for|in)\\s+\\S`, 'i').test(line),
     )));
   }
 
-  function confirmedRoleStatus(status) {
-    return /^(?:online|active|completed|closed|expired|offline|resigned)\b/.test(normalizeStatus(status));
-  }
-
   function parseUserInfo(html) {
     const documentObject = parseDocument(html);
     const text = documentText(documentObject);
-    if (!/Overview:/i.test(text)) {
-      throw new Error('SuSy Info 页面结构无法识别。');
-    }
+    if (!/Overview:/i.test(text)) throw new Error('Info 页面异常');
 
     const topBoundary = text.search(/Voucher Record|reviewer information:/i);
     const topText = topBoundary >= 0 ? text.slice(0, topBoundary) : text.slice(0, 12000);
@@ -297,8 +280,12 @@
     );
     const nameMatch = compactTop.match(/Overview:\s*\S+\s+(?:CRM\s+)?(.+?)\s*\([^)]*\)\s*(?:registered on (?:SUSY|SciProfiles)|is:|$)/i);
 
-    const decisionRecords = extractDecisionRecords(documentObject);
     const editorSection = $('[data-section="editors"]', documentObject)[0];
+    const decisionRecords = [];
+    for (const row of editorSection ? $('table tr', editorSection) : []) {
+      const dateCell = $('.submission-date', row)[0];
+      if (dateCell) decisionRecords.push({ id: elementText($('.msid', row)[0]), date: dateCell.getAttribute('title') || elementText(dateCell) });
+    }
     const editorText = editorSection ? documentText({ body: editorSection }) : '';
     const roles = editorSection ? ROLE_TERMS.filter((term) => new RegExp(
       `\\bis:\\s*${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+(?:of|for|in)\\s+\\S`, 'i',
@@ -307,7 +294,7 @@
       name: structuredName || normalizeSpace(nameMatch?.[1] || ''),
       submitted: numberOr(text.match(/submitted\s+(\d+)\s+manuscripts?/i)?.[1]),
       reviewed: numberOr(text.match(/reviewed\s+(\d+)\s+manuscripts?/i)?.[1]),
-      decisionsPastYear: countRecentUniqueRecords(decisionRecords),
+      decisionsPastYear: new Set(decisionRecords.map((record, index) => isWithinPastYear(record.date) ? normalizeSpace(record.id) || `row-${index}` : null).filter(Boolean)).size,
       scopusId: extractScopusIdFromDocument(documentObject),
       reviewerId: extractReviewerIdFromDocument(documentObject),
       roles,
@@ -329,6 +316,7 @@
       .map((element) => normalizeSpace(element.innerText || element.textContent || element.value || ''))
       .filter(Boolean);
     const hasProceed = controls.some((label) => /^Proceed$/i.test(label));
+    const proceedStatus = /publishers\s+and\s+MEs\s+can\s+add\s+GEs/i.test(text) ? 'not-applicable' : hasProceed ? 'yes' : 'no';
     const tables = extractTables(documentObject);
     const invitationTable = findTable(tables, ['Special Issue', 'Status']);
     const invitationStatusIndex = invitationTable.headers.findIndex((header) => /^Status$/i.test(header));
@@ -353,7 +341,7 @@
     const interestedCount = statuses.filter((status) => /^interested\b/.test(status)).length;
     const declinedCount = statuses.filter((status) => /^declined\b/.test(status)).length;
     const attemptCount = statuses.filter((status) => status && status !== 'proposed').length;
-    const confirmedRoleRows = roleRows.filter((row) => confirmedRoleStatus(row.status)
+    const confirmedRoleRows = roleRows.filter((row) => /^(?:online|active|completed|closed|expired|offline|resigned)\b/.test(normalizeStatus(row.status))
       && row.journal
       && ROLE_TERMS.some((term) => normalizeStatus(term) === normalizeStatus(row.role)));
     const assignmentRoles = unique($('p,li,td,div', documentObject).get()
@@ -363,12 +351,11 @@
       ...confirmedRoleRows.map((row) => row.role),
     ]);
 
-    if (!hasProceed && !/E-?Mail:|Name:|not allowed to invite|Special Issue/i.test(text)) {
-      throw new Error('Guest Editor Check 页面结构无法识别。');
-    }
+    if (!hasProceed && !/E-?Mail:|Name:|not allowed to invite|Special Issue|publishers\s+and\s+MEs\s+can\s+add\s+GEs/i.test(text)) throw new Error('GE 页面异常');
 
     return {
       hasProceed,
+      proceedStatus,
       name,
       hIndex: numberOr(compactText.match(/H-index:\s*(\d+)/i)?.[1], null),
       scopusId: extractScopusIdFromDocument(documentObject),
@@ -385,9 +372,7 @@
   function parseReviewerCheck(html) {
     const documentObject = parseDocument(html);
     const text = documentText(documentObject);
-    if (!/Primary email:|Email:|reviewer/i.test(text)) {
-      throw new Error('Reviewer Check 页面结构无法识别。');
-    }
+    if (!/Primary email:|Email:|reviewer/i.test(text)) throw new Error('Reviewer 页面异常');
     return {
       reviewPastYear: numberOr(text.match(/Number of review received in the past year:\s*(\d+)/i)?.[1]),
       scopusId: extractScopusIdFromDocument(documentObject),
@@ -395,45 +380,31 @@
     };
   }
 
-  function summarizeReviewerInvitationRows(rows, now = new Date()) {
-    const invitedRows = rows.filter((row) => {
-      const status = normalizeSpace(row.status);
-      return status && !/^Uninvited\b/i.test(status);
-    });
+  function parseReviewerInvitationHistory(html, now = new Date()) {
+    const documentObject = parseDocument(html);
+    const table = findTable(extractTables(documentObject), ['Manuscript ID', 'Status', 'Added on']);
+    if (!table.headers.length) throw new Error('Reviewer 历史页面异常');
+    const statusIndex = table.headers.findIndex((header) => /^Status$/i.test(header));
+    const addedIndex = table.headers.findIndex((header) => /^Added on$/i.test(header));
+    const rows = table.rows.map((row) => ({
+      status: row[statusIndex] || '',
+      addedOn: row[addedIndex] || '',
+    }));
+    const invitedRows = rows.filter((row) => normalizeSpace(row.status) && !/^Uninvited\b/i.test(normalizeSpace(row.status)));
     const acceptedRows = invitedRows.filter((row) => /^(?:Accepted|Review received|Report received)\b/i.test(normalizeSpace(row.status)));
     return {
       invitationCount: invitedRows.length,
       acceptedCount: acceptedRows.length,
       declinedCount: invitedRows.filter((row) => /^Declined\b/i.test(normalizeSpace(row.status))).length,
       invitationPastYearCount: invitedRows.filter((row) => isWithinPastYear(row.addedOn, now)).length,
-      acceptedPastYearCount: acceptedRows.filter((row) => {
-        const reportDate = parseSusyDate(row.status);
-        return isWithinPastYear(reportDate || row.addedOn, now);
-      }).length,
+      acceptedPastYearCount: acceptedRows.filter((row) => isWithinPastYear(parseSusyDate(row.status) || row.addedOn, now)).length,
     };
-  }
-
-  function parseReviewerInvitationHistory(html, now = new Date()) {
-    const documentObject = parseDocument(html);
-    const table = findTable(extractTables(documentObject), ['Manuscript ID', 'Status', 'Added on']);
-    if (!table.headers.length) throw new Error('Reviewer 邀请历史页面结构无法识别。');
-    const statusIndex = table.headers.findIndex((header) => /^Status$/i.test(header));
-    const addedIndex = table.headers.findIndex((header) => /^Added on$/i.test(header));
-    const idIndex = table.headers.findIndex((header) => /^Manuscript ID$/i.test(header));
-    const rows = table.rows.map((row) => ({
-      id: row[idIndex] || '',
-      status: row[statusIndex] || '',
-      addedOn: row[addedIndex] || '',
-    }));
-    return summarizeReviewerInvitationRows(rows, now);
   }
 
   function parseMailSearch(html) {
     const documentObject = parseDocument(html);
     const text = documentText(documentObject);
-    if (!/Summary of current results batch:|Search:/i.test(text)) {
-      throw new Error('MailsDB 页面结构无法识别。');
-    }
+    if (!/Summary of current results batch:|Search:/i.test(text)) throw new Error('MailsDB 页面异常');
     const article = $('article', documentObject)[0];
     const articleText = documentText(article ? { body: article } : documentObject);
     const batchMatch = text.match(/Summary of current results batch:\s*(\d+)/i);
@@ -497,13 +468,6 @@
     };
   }
 
-  function findSubjectRank(subjects, subjectName) {
-    if (!Array.isArray(subjects) || subjects.length === 0) return null;
-    const target = normalizeSpace(subjectName).toLowerCase();
-    const index = subjects.findIndex((subject) => normalizeSpace(subject?.name).toLowerCase() === target);
-    return index < 0 ? Infinity : index + 1;
-  }
-
   function sourceOk(source) {
     return Boolean(source && source.ok && source.data);
   }
@@ -521,7 +485,7 @@
     }
     return {
       needsReview: true,
-      warning: 'Scopus 可能与该邮箱不对应，请人工核查',
+      warning: 'Scopus 身份待核',
       emailMatched,
       nameMatched,
       scopusEmails,
@@ -529,11 +493,9 @@
     };
   }
 
-  function metricMaximum(...values) {
-    return Math.max(0, ...values.map((value) => numberOr(value)));
-  }
+  function metricMaximum(...values) { return Math.max(0, ...values.map((value) => numberOr(value))); }
 
-  function classifyCandidate(evidence, rawConfig = {}) {
+  function collectMetrics(sources = {}, rawConfig = {}, mode = 'full') {
     const config = {
       minimumHIndex: clamp(rawConfig.minimumHIndex, 0, 500, DEFAULTS.minimumHIndex),
       subjectName: normalizeSpace(rawConfig.subjectName) || DEFAULTS.subjectName,
@@ -541,212 +503,90 @@
       inactiveInviteLimit: clamp(rawConfig.inactiveInviteLimit, 0, 1000, DEFAULTS.inactiveInviteLimit),
       mailLookbackDays: clamp(rawConfig.mailLookbackDays, 1, 3650, DEFAULTS.mailLookbackDays),
     };
-    const sources = evidence.sources || {};
-    const geSource = sources.ge;
-    const infoSource = sources.info;
-    const reviewerSource = sources.reviewer;
-    const reviewerHistorySource = sources.reviewerHistory;
-    const mailSource = sources.mail;
-    const scopusSource = sources.scopus;
-    const hardReasons = [];
-    const hardGateFailures = { proceed: false, hIndex: false, subject: false };
-    const reviewReasons = [];
-    const subjectRank = sourceOk(scopusSource) ? findSubjectRank(scopusSource.data.subjects, config.subjectName) : null;
-
-    if (!sourceOk(geSource)) {
-      reviewReasons.push(`GE 查询失败：${geSource?.error || '无数据'}`);
-    } else if (!geSource.data.hasProceed) {
-      hardGateFailures.proceed = true;
-      hardReasons.push('无 Proceed');
+    const info = sourceOk(sources.info) ? sources.info.data : {};
+    const ge = sourceOk(sources.ge) ? sources.ge.data : {};
+    const reviewer = sourceOk(sources.reviewer) ? sources.reviewer.data : {};
+    const reviewerHistory = sourceOk(sources.reviewerHistory) ? sources.reviewerHistory.data : {};
+    const mail = sourceOk(sources.mail) ? sources.mail.data : {};
+    const scopus = sourceOk(sources.scopus) ? sources.scopus.data : {};
+    let proceedStatus = 'unknown';
+    if (mode !== 'scopus') {
+      if (sources.ge?.pending) proceedStatus = 'pending';
+      else if (sourceOk(sources.ge)) proceedStatus = ['yes', 'no', 'not-applicable'].includes(ge.proceedStatus) ? ge.proceedStatus : ge.hasProceed ? 'yes' : 'no';
     }
-
-    if (!sourceOk(scopusSource)) {
-      reviewReasons.push(`Scopus 查询失败：${scopusSource?.error || '无 Author ID'}`);
-    } else {
-      const scopus = scopusSource.data;
-      if (!Number.isFinite(scopus.hIndex)) {
-        reviewReasons.push('缺少 h-index');
-      } else if (scopus.hIndex < config.minimumHIndex) {
-        hardGateFailures.hIndex = true;
-        hardReasons.push(`h-index ${scopus.hIndex}（low h-index）`);
-      }
-      if (!Array.isArray(scopus.subjects) || scopus.subjects.length === 0) {
-        reviewReasons.push('缺少 Scopus 学科');
-      } else if (subjectRank > config.maximumSubjectRank) {
-        hardGateFailures.subject = true;
-        hardReasons.push(`${config.subjectName} #${subjectRank === Infinity ? '∞' : subjectRank}（out of scope）`);
-      }
-    }
-
-    const info = sourceOk(infoSource) ? infoSource.data : {};
-    const reviewer = sourceOk(reviewerSource) ? reviewerSource.data : {};
-    const reviewerHistory = sourceOk(reviewerHistorySource) ? reviewerHistorySource.data : {};
-    const mail = sourceOk(mailSource) ? mailSource.data : {};
-    const ge = sourceOk(geSource) ? geSource.data : {};
     const submissions = metricMaximum(info.submitted, mail.authorSubmissions);
     const reviews = metricMaximum(info.reviewed, mail.reviewReports, reviewerHistory.acceptedCount);
-    const reviewInvitations = sourceOk(reviewerHistorySource) || sourceOk(mailSource)
-      ? metricMaximum(reviewerHistory.invitationCount, mail.reviewInvitations, reviews)
-      : null;
     const reviewPastYear = metricMaximum(reviewer.reviewPastYear, reviewerHistory.acceptedPastYearCount);
-    const reviewPastYearInvitations = sourceOk(reviewerHistorySource)
-      ? metricMaximum(reviewerHistory.invitationPastYearCount, reviewPastYear)
-      : null;
-    const decisions = numberOr(info.decisionsPastYear);
-    const recentMails = numberOr(mail.recentMailCount);
-    const attempts = numberOr(ge.attemptCount);
-    const accepted = numberOr(ge.acceptedCount);
-    const interested = numberOr(ge.interestedCount);
-    const hasActivity = submissions > 0 || reviews > 0 || reviewPastYear > 0 || decisions > 0 || recentMails > 0;
-    const hasRoleHistory = Boolean(info.roleHistory || ge.roleHistory || mail.roleHistory);
-    const activityEvidenceComplete = sourceOk(infoSource) && sourceOk(mailSource);
-    const roles = unique([
-      ...(info.roles || []),
-      ...(ge.roles || []),
-      ...(mail.roles || []),
-    ]);
-
+    let subjectRank = null;
+    if (sourceOk(sources.scopus) && Array.isArray(scopus.subjects) && scopus.subjects.length) {
+      const index = scopus.subjects.findIndex((subject) => normalizeSpace(subject?.name).toLowerCase() === config.subjectName.toLowerCase());
+      subjectRank = index < 0 ? Infinity : index + 1;
+    }
     const metrics = {
-      submissions,
-      reviews,
-      reviewInvitations,
+      submissions, reviews,
+      reviewInvitations: sourceOk(sources.reviewerHistory) || sourceOk(sources.mail) ? metricMaximum(reviewerHistory.invitationCount, mail.reviewInvitations, reviews) : null,
       reviewPastYear,
-      reviewPastYearInvitations,
-      decisions,
-      recentMails,
-      latestMail: mail.latestMail || null,
-      attempts,
-      accepted,
-      interested,
-      declined: numberOr(ge.declinedCount),
-      roles,
-      hIndex: sourceOk(scopusSource) && Number.isFinite(scopusSource.data.hIndex) ? scopusSource.data.hIndex : null,
-      subjectName: config.subjectName,
-      subjectRank,
-      subjects: sourceOk(scopusSource) ? scopusSource.data.subjects.map((subject) => subject.name) : [],
-      geProceed: sourceOk(geSource) ? Boolean(geSource.data.hasProceed) : null,
-      hardGateFailures,
+      reviewPastYearInvitations: sourceOk(sources.reviewerHistory) ? metricMaximum(reviewerHistory.invitationPastYearCount, reviewPastYear) : null,
+      decisions: numberOr(info.decisionsPastYear), recentMails: numberOr(mail.recentMailCount), latestMail: mail.latestMail || null,
+      attempts: numberOr(ge.attemptCount), accepted: numberOr(ge.acceptedCount), interested: numberOr(ge.interestedCount), declined: numberOr(ge.declinedCount),
+      roles: unique([...(info.roles || []), ...(ge.roles || []), ...(mail.roles || [])]),
+      hIndex: Number.isFinite(scopus.hIndex) ? scopus.hIndex : null,
+      subjectName: config.subjectName, subjectRank,
+      subjects: Array.isArray(scopus.subjects) ? scopus.subjects.map((subject) => subject.name) : [],
+      geProceed: proceedStatus === 'yes' ? true : proceedStatus === 'no' ? false : null,
+      geProceedStatus: proceedStatus,
+      hardGateFailures: {
+        proceed: proceedStatus === 'no',
+        hIndex: Number.isFinite(scopus.hIndex) && scopus.hIndex < config.minimumHIndex,
+        subject: subjectRank !== null && subjectRank > config.maximumSubjectRank,
+      },
     };
-
-    if (hardReasons.length > 0) {
-      return { code: 'unsuitable', ...VERDICTS.unsuitable, hardGateFailed: true, reasons: hardReasons, metrics };
-    }
-    if (reviewReasons.length > 0) {
-      return { code: 'review', ...VERDICTS.review, reasons: reviewReasons, metrics };
-    }
-    if (hasRoleHistory) {
-      return {
-        code: 'recommended',
-        ...VERDICTS.recommended,
-        reasons: ['有明确 MDPI 任职记录'],
-        metrics,
-      };
-    }
-    if (hasActivity) {
-      if (attempts > config.inactiveInviteLimit && accepted === 0) {
-        return {
-          code: 'cautious',
-          ...VERDICTS.cautious,
-          reasons: [`有活动；GE ${attempts} 次未 accepted`],
-          metrics,
-        };
-      }
-      return {
-        code: 'suitable',
-        ...VERDICTS.suitable,
-        reasons: ['有 MDPI 活动或近期来信'],
-        metrics,
-      };
-    }
-    if (accepted > 0) {
-      return {
-        code: 'suitable',
-        ...VERDICTS.suitable,
-        reasons: ['GE 历史有 accepted（未确认任职）'],
-        metrics,
-      };
-    }
-    if (interested > 0) {
-      return {
-        code: 'cautious',
-        ...VERDICTS.cautious,
-        reasons: ['GE 历史有 interested'],
-        metrics,
-      };
-    }
-    if (attempts > config.inactiveInviteLimit && accepted === 0) {
-      if (!activityEvidenceComplete) {
-        return {
-          code: 'review',
-          ...VERDICTS.review,
-          reasons: ['活动数据不完整'],
-          metrics,
-        };
-      }
-      const responseDetail = numberOr(ge.declinedCount) > 0 ? '多次未接受' : '无回复';
-      return {
-        code: 'unsuitable',
-        ...VERDICTS.unsuitable,
-        reasons: [`不活跃学者，${responseDetail}`],
-        metrics,
-      };
-    }
-    return {
-      code: 'suitable',
-      ...VERDICTS.suitable,
-      reasons: ['首次或低频邀请'],
-      metrics,
-    };
+    return { config, metrics, info, ge, mail };
   }
 
-  function classifyScopusOnly(scopusSource, config = DEFAULTS) {
-    const scopus = sourceOk(scopusSource) ? scopusSource.data : {};
-    const subjectName = normalizeSpace(config.subjectName) || DEFAULTS.subjectName;
-    const maximumSubjectRank = clamp(config.maximumSubjectRank, 1, 50, DEFAULTS.maximumSubjectRank);
-    const subjectRank = findSubjectRank(scopus.subjects, subjectName);
-    const hardGateFailures = { proceed: false, hIndex: false, subject: false };
-    const metrics = {
-      submissions: 0,
-      reviews: 0,
-      reviewInvitations: null,
-      reviewPastYear: 0,
-      reviewPastYearInvitations: null,
-      decisions: 0,
-      recentMails: 0,
-      latestMail: null,
-      attempts: 0,
-      accepted: 0,
-      interested: 0,
-      declined: 0,
-      roles: [],
-      hIndex: Number.isFinite(scopus.hIndex) ? scopus.hIndex : null,
-      subjectName,
-      subjectRank,
-      subjects: Array.isArray(scopus.subjects) ? scopus.subjects.map((subject) => subject.name) : [],
-      geProceed: null,
-      hardGateFailures,
-    };
-    if (!sourceOk(scopusSource)) {
-      return { code: 'review', ...VERDICTS.review, reasons: [`Scopus 查询失败：${scopusSource?.error || '无 Author ID'}`], metrics };
+  function classifyCandidate(evidence, rawConfig = {}) {
+    const sources = evidence.sources || {};
+    const { config, metrics, info, ge, mail } = collectMetrics(sources, rawConfig);
+    const hardReasons = [], reviewReasons = [];
+    if (!sourceOk(sources.ge)) reviewReasons.push('GE 查询失败');
+    else if (metrics.hardGateFailures.proceed) hardReasons.push('无 Proceed');
+    if (!sourceOk(sources.scopus)) reviewReasons.push('Scopus 查询失败');
+    else {
+      if (metrics.hIndex === null) reviewReasons.push('缺 h-index');
+      else if (metrics.hardGateFailures.hIndex) hardReasons.push('h-index 低');
+      if (!metrics.subjects.length) reviewReasons.push('缺 Scopus 学科');
+      else if (metrics.hardGateFailures.subject) hardReasons.push('学科不符');
     }
+    if (hardReasons.length) return { code: 'unsuitable', ...VERDICTS.unsuitable, hardGateFailed: true, reasons: hardReasons, metrics };
+    if (reviewReasons.length) return { code: 'review', ...VERDICTS.review, reasons: reviewReasons, metrics };
+
+    const hasActivity = metrics.submissions > 0 || metrics.reviews > 0 || metrics.reviewPastYear > 0 || metrics.decisions > 0 || metrics.recentMails > 0;
+    const hasRoleHistory = Boolean(info.roleHistory || ge.roleHistory || mail.roleHistory);
+    if (hasRoleHistory) return { code: 'recommended', ...VERDICTS.recommended, reasons: ['有 MDPI 任职'], metrics };
+    if (hasActivity) {
+      if (metrics.attempts > config.inactiveInviteLimit && !metrics.accepted) return { code: 'cautious', ...VERDICTS.cautious, reasons: ['GE 多次未接受'], metrics };
+      return { code: 'suitable', ...VERDICTS.suitable, reasons: ['有 MDPI 活动'], metrics };
+    }
+    if (metrics.accepted) return { code: 'suitable', ...VERDICTS.suitable, reasons: ['有 accepted'], metrics };
+    if (metrics.interested) return { code: 'cautious', ...VERDICTS.cautious, reasons: ['有 interested'], metrics };
+    if (metrics.attempts > config.inactiveInviteLimit) {
+      if (!sourceOk(sources.info) || !sourceOk(sources.mail)) return { code: 'review', ...VERDICTS.review, reasons: ['活动数据不全'], metrics };
+      return { code: 'unsuitable', ...VERDICTS.unsuitable, reasons: ['无活动'], metrics };
+    }
+    return { code: 'suitable', ...VERDICTS.suitable, reasons: ['首次/低频邀请'], metrics };
+  }
+
+  function classifyScopusOnly(scopusSource, rawConfig = DEFAULTS) {
+    const { metrics } = collectMetrics({ scopus: scopusSource }, rawConfig, 'scopus');
+    if (!sourceOk(scopusSource)) return { code: 'review', ...VERDICTS.review, reasons: ['Scopus 查询失败'], metrics };
     const reasons = [];
-    if (!Number.isFinite(scopus.hIndex)) reasons.push('缺少 h-index');
-    else if (scopus.hIndex < config.minimumHIndex) {
-      hardGateFailures.hIndex = true;
-      reasons.push(`h-index ${scopus.hIndex}（low h-index）`);
-    }
-    if (!metrics.subjects.length) reasons.push('缺少 Scopus 学科');
-    else if (metrics.subjectRank > maximumSubjectRank) {
-      hardGateFailures.subject = true;
-      reasons.push(`${subjectName} #${metrics.subjectRank === Infinity ? '∞' : metrics.subjectRank}（out of scope）`);
-    }
-    const missing = reasons.some((reason) => reason.startsWith('缺少'));
-    const subjectLine = `学科：${metrics.subjects.slice(0, 5).join(' / ')}`;
-    if (hardGateFailures.hIndex || hardGateFailures.subject) {
-      return { code: 'unsuitable', ...VERDICTS.unsuitable, hardGateFailed: true, reasons: [...reasons, subjectLine], metrics };
-    }
-    if (missing) return { code: 'review', ...VERDICTS.review, reasons, metrics };
-    return { code: 'scopus', ...VERDICTS.scopus, reasons: [subjectLine], metrics };
+    if (metrics.hIndex === null) reasons.push('缺 h-index');
+    else if (metrics.hardGateFailures.hIndex) reasons.push('h-index 低');
+    if (!metrics.subjects.length) reasons.push('缺 Scopus 学科');
+    else if (metrics.hardGateFailures.subject) reasons.push('学科不符');
+    if (metrics.hardGateFailures.hIndex || metrics.hardGateFailures.subject) return { code: 'unsuitable', ...VERDICTS.unsuitable, hardGateFailed: true, reasons, metrics };
+    if (reasons.length) return { code: 'review', ...VERDICTS.review, reasons, metrics };
+    return { code: 'scopus', ...VERDICTS.scopus, reasons: [], metrics };
   }
 
   function formatDate(date) {
@@ -763,9 +603,16 @@
     const start = new Date(end.getTime());
     start.setDate(start.getDate() - config.mailLookbackDays);
     const reviewerRouteKey = encodeURIComponent(REVIEWER_CHECK_ROUTE_KEY);
+    let specialIssueId = DEFAULT_SPECIAL_ISSUE_ID;
+    try {
+      const value = typeof GM_config !== 'undefined' && typeof GM_config.get === 'function'
+        ? GM_config.get(SPECIAL_ISSUE_CONFIG_KEY)
+        : typeof GM_getValue === 'function' ? GM_getValue(SPECIAL_ISSUE_CONFIG_KEY, DEFAULT_SPECIAL_ISSUE_ID) : '';
+      specialIssueId = String(value || DEFAULT_SPECIAL_ISSUE_ID).trim() || DEFAULT_SPECIAL_ISSUE_ID;
+    } catch (_) {}
     return {
       info: `https://susy.mdpi.com/user/info?emails=${encodedEmail}`,
-      ge: `https://susy.mdpi.com/user/guest_editor/check?email=${encodedEmail}&special_issue_id=${SPECIAL_ISSUE_ID}`,
+      ge: `https://susy.mdpi.com/user/guest_editor/check?email=${encodedEmail}&special_issue_id=${encodeURIComponent(specialIssueId)}`,
       reviewer: `https://susy.mdpi.com/user/reviewer/checking/${reviewerRouteKey}?email=${encodedEmail}`,
       reviewerHistory: reviewerId ? `https://susy.mdpi.com/list/reviewer/invitations-history/${encodeURIComponent(reviewerId)}` : null,
       mail: `https://mailsdb.i.mdpi.com/reversion/search/emails?since_time=${config.mailLookbackDays}&start=${formatDate(start)}&end=${formatDate(end)}&fm=true&cc=false&to=false&m_type=&sort=desc&page=1&link=false&bcc=false&search_content=${encodedEmail}`,
@@ -845,54 +692,147 @@
     });
   }
 
-  function buildScopusBridgeUrl(authorId, requestId) {
-    const url = new URL('https://www.scopus.com/authid/detail.uri');
-    url.searchParams.set('authorId', String(authorId));
-    url.searchParams.set(SCOPUS_BRIDGE_PARAM, String(requestId));
-    return url.toString();
+  function createScopusBridgeId() {
+    return globalThis.crypto?.randomUUID?.()
+      || `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
   }
 
-  function deleteBridgeValue(key) {
-    try {
-      if (typeof GM_deleteValue === 'function') GM_deleteValue(key);
-    } catch (error) {
-      // Expired bridge values are harmless and use unique request IDs.
+  function initializeScopusBridgeChannel() {
+    if (scopusBridgeState.channelId) return;
+    scopusBridgeState.channelId = createScopusBridgeId();
+    scopusBridgeState.requestKey = `${SCOPUS_BRIDGE_PREFIX}${scopusBridgeState.channelId}_requests`;
+    scopusBridgeState.readyKey = `${SCOPUS_BRIDGE_PREFIX}${scopusBridgeState.channelId}_ready`;
+    try { if (typeof GM_deleteValue === 'function') GM_deleteValue(scopusBridgeState.requestKey); } catch (_) {}
+    try { if (typeof GM_deleteValue === 'function') GM_deleteValue(scopusBridgeState.readyKey); } catch (_) {}
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function' && !scopusBridgeState.cleanupRegistered) {
+      scopusBridgeState.cleanupRegistered = true;
+      window.addEventListener('pagehide', () => {
+        const error = new Error('Scholar screening 页面已关闭');
+        failPendingScopusBridgeRequests(error);
+        try { if (typeof GM_deleteValue === 'function') GM_deleteValue(scopusBridgeState.requestKey); } catch (_) {}
+        try { if (typeof GM_deleteValue === 'function') GM_deleteValue(scopusBridgeState.readyKey); } catch (_) {}
+        const workerHandle = scopusBridgeState.workerHandle;
+        scopusBridgeState.workerHandle = null;
+        scopusBridgeState.readyPromise = null;
+        try { if (workerHandle && !workerHandle.closed && typeof workerHandle.close === 'function') workerHandle.close(); } catch (_) {}
+      }, { once: true });
     }
   }
 
+  function publishScopusBridgeRequests() {
+    if (typeof GM_setValue !== 'function') throw new Error('Tampermonkey 共享存储权限不可用');
+    GM_setValue(scopusBridgeState.requestKey, Array.from(scopusBridgeState.requests.values()));
+  }
+
+  function failPendingScopusBridgeRequests(error) {
+    for (const rejectPending of Array.from(scopusBridgeState.pending.values())) rejectPending(error);
+  }
+
+  function ensureScopusBridgeWorker(authorId) {
+    if (scopusBridgeState.readyPromise) return scopusBridgeState.readyPromise;
+    if (
+      typeof GM_openInTab !== 'function'
+      || typeof GM_addValueChangeListener !== 'function'
+      || typeof GM_removeValueChangeListener !== 'function'
+      || typeof GM_setValue !== 'function'
+    ) return Promise.reject(new Error('Tampermonkey 后台标签页桥接权限不可用'));
+
+    initializeScopusBridgeChannel();
+    let tabHandle = null;
+    const readyPromise = new Promise((resolve, reject) => {
+      let listenerId = null;
+      let timeout = null;
+      let settled = false;
+
+      function finish(handler, value) {
+        if (settled) return;
+        settled = true;
+        if (timeout) clearTimeout(timeout);
+        if (listenerId !== null) { try { GM_removeValueChangeListener(listenerId); } catch (_) {} }
+        handler(value);
+      }
+
+      function fail(error) {
+        if (tabHandle && scopusBridgeState.workerHandle === tabHandle) {
+          scopusBridgeState.workerHandle = null;
+          try { if (!tabHandle.closed && typeof tabHandle.close === 'function') tabHandle.close(); } catch (_) {}
+        }
+        finish(reject, error);
+      }
+
+      try {
+        listenerId = GM_addValueChangeListener(scopusBridgeState.readyKey, (_key, _oldValue, rawMessage) => {
+          let message = rawMessage;
+          if (typeof rawMessage === 'string') {
+            try { message = JSON.parse(rawMessage); } catch (_) { return; }
+          }
+          if (!message || message.channelId !== scopusBridgeState.channelId) return;
+          if (message.ok === false) {
+            fail(new Error(message.error || 'Scopus Worker 启动失败'));
+            return;
+          }
+          finish(resolve, message);
+        });
+
+        const workerUrl = new URL('https://www.scopus.com/authid/detail.uri');
+        workerUrl.searchParams.set('authorId', String(authorId));
+        workerUrl.searchParams.set(SCOPUS_BRIDGE_PARAM, 'worker');
+        workerUrl.searchParams.set(SCOPUS_BRIDGE_CHANNEL_PARAM, scopusBridgeState.channelId);
+        tabHandle = GM_openInTab(workerUrl.toString(), { active: false, setParent: true });
+        scopusBridgeState.workerHandle = tabHandle;
+        if (tabHandle && typeof tabHandle === 'object') {
+          tabHandle.onclose = () => {
+            if (scopusBridgeState.workerHandle !== tabHandle) return;
+            scopusBridgeState.workerHandle = null;
+            scopusBridgeState.readyPromise = null;
+            try { if (typeof GM_deleteValue === 'function') GM_deleteValue(scopusBridgeState.readyKey); } catch (_) {}
+            const error = new Error('Scopus Worker 已关闭');
+            finish(reject, error);
+            failPendingScopusBridgeRequests(error);
+          };
+        }
+        timeout = setTimeout(() => fail(new Error('Scopus Worker 启动超时')), SCOPUS_WORKER_READY_TIMEOUT);
+      } catch (error) {
+        fail(error);
+      }
+    });
+
+    scopusBridgeState.readyPromise = readyPromise;
+    readyPromise.catch(() => {
+      if (scopusBridgeState.readyPromise === readyPromise) scopusBridgeState.readyPromise = null;
+    });
+    return readyPromise;
+  }
+
   function requestScopusViaBridge(authorId, timeoutMs = 45000) {
+    const normalizedAuthorId = String(authorId || '');
+    if (!/^\d+$/.test(normalizedAuthorId)) return Promise.reject(new Error('Scopus Author ID 无法识别'));
+    initializeScopusBridgeChannel();
+
     return new Promise((resolve, reject) => {
       if (
-        typeof GM_openInTab !== 'function'
-        || typeof GM_addValueChangeListener !== 'function'
+        typeof GM_addValueChangeListener !== 'function'
         || typeof GM_removeValueChangeListener !== 'function'
+        || typeof GM_setValue !== 'function'
       ) {
         reject(new Error('Tampermonkey 后台标签页桥接权限不可用'));
         return;
       }
 
-      const requestId = globalThis.crypto?.randomUUID?.()
-        || `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
-      const responseKey = `${SCOPUS_BRIDGE_PREFIX}${requestId}`;
+      const requestId = createScopusBridgeId();
+      const responseKey = `${SCOPUS_BRIDGE_PREFIX}${scopusBridgeState.channelId}_response_${requestId}`;
       let listenerId = null;
-      let tabHandle = null;
       let timeout = null;
       let settled = false;
+      let published = false;
 
       function cleanup() {
         if (timeout) clearTimeout(timeout);
-        if (listenerId !== null) {
-          try {
-            GM_removeValueChangeListener(listenerId);
-          } catch (error) {
-            // Continue cleanup even if the listener was already removed.
-          }
-        }
-        deleteBridgeValue(responseKey);
-        try {
-          if (tabHandle && !tabHandle.closed && typeof tabHandle.close === 'function') tabHandle.close();
-        } catch (error) {
-          // The tab may already have been closed by the user.
+        if (listenerId !== null) { try { GM_removeValueChangeListener(listenerId); } catch (_) {} }
+        try { if (typeof GM_deleteValue === 'function') GM_deleteValue(responseKey); } catch (_) {}
+        scopusBridgeState.pending.delete(requestId);
+        if (published && scopusBridgeState.requests.delete(requestId)) {
+          try { publishScopusBridgeRequests(); } catch (_) {}
         }
       }
 
@@ -903,40 +843,43 @@
         handler(value);
       }
 
-      deleteBridgeValue(responseKey);
       try {
+        try { if (typeof GM_deleteValue === 'function') GM_deleteValue(responseKey); } catch (_) {}
         listenerId = GM_addValueChangeListener(responseKey, (_key, _oldValue, rawMessage) => {
           let message = rawMessage;
           if (typeof rawMessage === 'string') {
-            try {
-              message = JSON.parse(rawMessage);
-            } catch (error) {
-              return;
-            }
+            try { message = JSON.parse(rawMessage); } catch (_) { return; }
           }
-          if (!message || message.requestId !== requestId || String(message.authorId) !== String(authorId)) return;
+          if (!message || message.requestId !== requestId || String(message.authorId) !== normalizedAuthorId) return;
           if (message.ok && typeof message.payload === 'string') {
             settle(resolve, {
               text: message.payload,
               status: 200,
-              finalUrl: `https://www.scopus.com/api/authors/${encodeURIComponent(authorId)}`,
-              method: 'same-origin-tab-bridge',
+              finalUrl: `https://www.scopus.com/api/authors/${encodeURIComponent(normalizedAuthorId)}`,
+              method: 'same-origin-persistent-worker',
             });
           } else {
-            settle(reject, new Error(message.error || 'Scopus 后台页未返回数据'));
+            settle(reject, new Error(message.error || 'Scopus Worker 未返回数据'));
           }
         });
 
-        const workerUrl = buildScopusBridgeUrl(authorId, requestId);
-        tabHandle = GM_openInTab(workerUrl, { active: false, setParent: true });
-        if (tabHandle && typeof tabHandle === 'object') {
-          tabHandle.onclose = () => {
-            if (!settled) settle(reject, new Error('Scopus 后台查询页被提前关闭'));
-          };
-        }
-        timeout = setTimeout(() => {
-          settle(reject, new Error('Scopus 后台同源查询超时'));
-        }, timeoutMs);
+        scopusBridgeState.pending.set(requestId, (error) => settle(reject, error));
+        timeout = setTimeout(() => settle(reject, new Error('Scopus Worker 查询超时')), timeoutMs);
+        ensureScopusBridgeWorker(normalizedAuthorId).then(() => {
+          if (settled) return;
+          scopusBridgeState.requests.set(requestId, {
+            requestId,
+            authorId: normalizedAuthorId,
+            responseKey,
+            expiresAt: Date.now() + timeoutMs,
+          });
+          published = true;
+          try {
+            publishScopusBridgeRequests();
+          } catch (error) {
+            settle(reject, error);
+          }
+        }).catch((error) => settle(reject, error));
       } catch (error) {
         settle(reject, error);
       }
@@ -946,59 +889,101 @@
   async function requestScopus(url) {
     const authorId = String(url || '').match(/\/api\/authors\/(\d+)/i)?.[1];
     if (!authorId) throw new Error('Scopus Author ID 无法识别');
-    try {
-      return await requestCrossOrigin(url, 'application/json,text/plain,*/*');
-    } catch (gmError) {
-      try {
-        return await requestScopusViaBridge(authorId);
-      } catch (bridgeError) {
-        throw new Error(`GM 请求：${conciseError(gmError)}；同源后台页 fallback：${conciseError(bridgeError)}`);
-      }
-    }
+    return requestScopusViaBridge(authorId);
   }
 
-  async function runScopusBridgeWorker() {
+  function runScopusBridgeWorker() {
     const params = new URLSearchParams(location.search);
-    const requestId = params.get(SCOPUS_BRIDGE_PARAM);
-    const authorId = params.get('authorId');
-    if (!requestId || !/^\d+$/.test(authorId || '')) return;
-    const responseKey = `${SCOPUS_BRIDGE_PREFIX}${requestId}`;
+    const channelId = params.get(SCOPUS_BRIDGE_CHANNEL_PARAM);
+    if (params.get(SCOPUS_BRIDGE_PARAM) !== 'worker' || !channelId) return;
+    const requestKey = `${SCOPUS_BRIDGE_PREFIX}${channelId}_requests`;
+    const readyKey = `${SCOPUS_BRIDGE_PREFIX}${channelId}_ready`;
+    const responsePrefix = `${SCOPUS_BRIDGE_PREFIX}${channelId}_response_`;
+    const handledRequestIds = new Set();
 
-    try {
-      const response = await fetch(`https://www.scopus.com/api/authors/${encodeURIComponent(authorId)}`, {
-        method: 'GET',
-        credentials: 'include',
-        cache: 'no-store',
-        headers: { Accept: 'application/json,text/plain,*/*' },
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      if (/\/login|\/signin/i.test(response.url)) throw new Error('Scopus 登录状态已失效');
-      const rawPayload = await response.text();
-      const parsed = parseScopusPayload(rawPayload, authorId);
-      const safePayload = JSON.stringify({
-        authorId: parsed.authorId,
-        hindex: parsed.hIndex,
-        preferredName: { full: parsed.preferredName },
-        publishedSubjectAreas: parsed.subjects,
-        emailAddresses: parsed.emails,
-      });
-      if (typeof GM_setValue !== 'function') throw new Error('Tampermonkey 共享存储权限不可用');
-      GM_setValue(responseKey, {
-        requestId,
-        authorId: String(authorId),
-        ok: true,
-        payload: safePayload,
-        completedAt: new Date().toISOString(),
-      });
-    } catch (error) {
-      if (typeof GM_setValue === 'function') {
-        GM_setValue(responseKey, {
+    function writeResponse(responseKey, message) {
+      if (typeof GM_setValue !== 'function') return;
+      GM_setValue(responseKey, message);
+      setTimeout(() => {
+        try { if (typeof GM_deleteValue === 'function') GM_deleteValue(responseKey); } catch (_) {}
+      }, 60000);
+    }
+
+    async function processRequest(request) {
+      const { requestId, authorId, responseKey } = request;
+      try {
+        const response = await fetch(`https://www.scopus.com/api/authors/${encodeURIComponent(authorId)}`, {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { Accept: 'application/json,text/plain,*/*' },
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (/\/login|\/signin/i.test(response.url)) throw new Error('Scopus 登录状态已失效');
+        const parsed = parseScopusPayload(await response.text(), authorId);
+        writeResponse(responseKey, {
+          requestId,
+          authorId: String(authorId),
+          ok: true,
+          payload: JSON.stringify({
+            authorId: parsed.authorId,
+            hindex: parsed.hIndex,
+            preferredName: { full: parsed.preferredName },
+            publishedSubjectAreas: parsed.subjects,
+            emailAddresses: parsed.emails,
+          }),
+          completedAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        writeResponse(responseKey, {
           requestId,
           authorId: String(authorId),
           ok: false,
           error: conciseError(error),
           completedAt: new Date().toISOString(),
         });
+      }
+    }
+
+    function acceptRequests(rawRequests) {
+      let requests = rawRequests;
+      if (typeof rawRequests === 'string') {
+        try { requests = JSON.parse(rawRequests); } catch (_) { return; }
+      }
+      if (!Array.isArray(requests)) return;
+      for (const request of requests) {
+        const requestId = String(request?.requestId || '');
+        const authorId = String(request?.authorId || '');
+        const responseKey = String(request?.responseKey || '');
+        if (
+          !requestId
+          || handledRequestIds.has(requestId)
+          || !/^\d+$/.test(authorId)
+          || responseKey !== `${responsePrefix}${requestId}`
+          || (Number(request.expiresAt) && Number(request.expiresAt) <= Date.now())
+        ) continue;
+        handledRequestIds.add(requestId);
+        processRequest({ requestId, authorId, responseKey });
+      }
+    }
+
+    try {
+      if (
+        typeof GM_getValue !== 'function'
+        || typeof GM_setValue !== 'function'
+        || typeof GM_addValueChangeListener !== 'function'
+      ) throw new Error('Tampermonkey 共享存储权限不可用');
+      GM_addValueChangeListener(requestKey, (_key, _oldValue, requests) => acceptRequests(requests));
+      acceptRequests(GM_getValue(requestKey, []));
+      GM_setValue(readyKey, {
+        channelId,
+        ok: true,
+        workerId: createScopusBridgeId(),
+        readyAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      if (typeof GM_setValue === 'function') {
+        GM_setValue(readyKey, { channelId, ok: false, error: conciseError(error) });
       }
     }
   }
@@ -1017,19 +1002,55 @@
     }
   }
 
-  async function collectCandidate(email, config, requestQueues = {}) {
+  async function collectCandidate(email, config, requestQueues = {}, onProgress = null) {
     const runMdpiRequest = requestQueues.mdpi || ((task) => Promise.resolve().then(task));
     const runScopusRequest = requestQueues.scopus || ((task) => Promise.resolve().then(task));
-    const initialUrls = buildUrls(email, config);
-    const infoPromise = loadSource(runMdpiRequest(() => requestSameOrigin(initialUrls.info)), parseUserInfo);
+    const mode = config.queryMode === 'scopus' ? 'scopus' : 'full';
+    const sourceKeys = mode === 'scopus' ? ['info', 'scopus'] : ['info', 'ge', 'reviewer', 'mail', 'reviewerHistory', 'scopus'];
+    const sources = Object.fromEntries(sourceKeys.map((key) => [key, { ok: false, data: null, pending: true }]));
+    let urls = buildUrls(email, config);
+
+    function refreshUrls() {
+      const scopusId = sources.ge?.data?.scopusId || sources.info?.data?.scopusId || sources.reviewer?.data?.scopusId || null;
+      const reviewerId = sources.info?.data?.reviewerId || sources.reviewer?.data?.reviewerId || null;
+      urls = buildUrls(email, config, scopusId, reviewerId);
+    }
+
+    function completeSource(name, source) {
+      sources[name] = source;
+      refreshUrls();
+      if (typeof onProgress === 'function') {
+        const pendingKeys = sourceKeys.filter((key) => sources[key]?.pending);
+        const completed = sourceKeys.length - pendingKeys.length;
+        const { metrics, info, ge } = collectMetrics(sources, config, mode);
+        const scopus = sourceOk(sources.scopus) ? sources.scopus.data : {};
+        try { onProgress({
+          email, mode, sources, urls, pending: true,
+          name: ge.name || info.name || scopus.preferredName || '',
+          progress: {
+            completed, total: sourceKeys.length, pendingKeys,
+            scopus: Boolean(sources.scopus?.pending),
+            activity: ['info', 'reviewer', 'reviewerHistory', 'mail'].some((key) => sources[key]?.pending),
+            history: ['info', 'ge', 'mail'].some((key) => sources[key]?.pending),
+          },
+          decision: { code: 'pending', label: `查询中 ${completed}/${sourceKeys.length}`, reasons: [], metrics },
+          scopusIdentity: validateScopusIdentity(email, [ge.name, info.name], sources.scopus),
+        }); } catch (_) {}
+      }
+      return source;
+    }
+
+    const trackSource = (name, requestPromise) => Promise.resolve(requestPromise)
+      .then((source) => completeSource(name, source));
+    const infoPromise = trackSource('info', loadSource(runMdpiRequest(() => requestSameOrigin(urls.info)), parseUserInfo));
 
     if (config.queryMode === 'scopus') {
       const info = await infoPromise;
       const scopusId = info.data?.scopusId || null;
-      const urls = buildUrls(email, config, scopusId);
+      refreshUrls();
       const scopus = scopusId
-        ? await loadSource(runScopusRequest(() => requestScopus(urls.scopus)), (payload) => parseScopusPayload(payload, scopusId))
-        : { ok: false, data: null, error: '未找到 Scopus Author ID' };
+        ? await trackSource('scopus', loadSource(runScopusRequest(() => requestScopus(urls.scopus)), (payload) => parseScopusPayload(payload, scopusId)))
+        : completeSource('scopus', { ok: false, data: null, error: '未找到 Scopus Author ID' });
       const scopusIdentity = validateScopusIdentity(email, [info.data?.name], scopus);
       return {
         email,
@@ -1042,22 +1063,29 @@
       };
     }
 
-    const gePromise = loadSource(runMdpiRequest(() => requestSameOrigin(initialUrls.ge)), parseGuestEditorCheck);
-    const reviewerPromise = loadSource(runMdpiRequest(() => requestSameOrigin(initialUrls.reviewer)), parseReviewerCheck);
-    const mailPromise = loadSource(runMdpiRequest(() => requestCrossOrigin(initialUrls.mail)), parseMailSearch);
-    const [info, ge, reviewer, mail] = await Promise.all([infoPromise, gePromise, reviewerPromise, mailPromise]);
-
-    const scopusId = ge.data?.scopusId || info.data?.scopusId || reviewer.data?.scopusId || null;
-    const reviewerId = info.data?.reviewerId || reviewer.data?.reviewerId || null;
-    const urls = buildUrls(email, config, scopusId, reviewerId);
-    const scopusPromise = scopusId
-      ? loadSource(runScopusRequest(() => requestScopus(urls.scopus)), (payload) => parseScopusPayload(payload, scopusId))
-      : Promise.resolve({ ok: false, data: null, error: '未找到 Scopus Author ID' });
-    const reviewerHistoryPromise = reviewerId
-      ? loadSource(runMdpiRequest(() => requestSameOrigin(urls.reviewerHistory)), parseReviewerInvitationHistory)
-      : Promise.resolve({ ok: false, data: null, error: '未找到 Reviewer ID' });
-    const [scopus, reviewerHistory] = await Promise.all([scopusPromise, reviewerHistoryPromise]);
-    const sources = { info, ge, reviewer, reviewerHistory, mail, scopus };
+    const gePromise = trackSource('ge', loadSource(runMdpiRequest(() => requestSameOrigin(urls.ge)), parseGuestEditorCheck));
+    const reviewerPromise = trackSource('reviewer', loadSource(runMdpiRequest(() => requestSameOrigin(urls.reviewer)), parseReviewerCheck));
+    const mailPromise = trackSource('mail', loadSource(runMdpiRequest(() => requestCrossOrigin(urls.mail)), parseMailSearch));
+    const scopusPromise = (async () => {
+      const ge = await gePromise;
+      let scopusId = ge.data?.scopusId || null;
+      if (!scopusId) scopusId = (await infoPromise).data?.scopusId || null;
+      if (!scopusId) scopusId = (await reviewerPromise).data?.scopusId || null;
+      if (!scopusId) return completeSource('scopus', { ok: false, data: null, error: '未找到 Scopus Author ID' });
+      const scopusUrl = buildUrls(email, config, scopusId).scopus;
+      return trackSource('scopus', loadSource(runScopusRequest(() => requestScopus(scopusUrl)), (payload) => parseScopusPayload(payload, scopusId)));
+    })();
+    const reviewerHistoryPromise = (async () => {
+      const info = await infoPromise;
+      let reviewerId = info.data?.reviewerId || null;
+      if (!reviewerId) reviewerId = (await reviewerPromise).data?.reviewerId || null;
+      if (!reviewerId) return completeSource('reviewerHistory', { ok: false, data: null, error: '未找到 Reviewer ID' });
+      const reviewerHistoryUrl = buildUrls(email, config, null, reviewerId).reviewerHistory;
+      return trackSource('reviewerHistory', loadSource(runMdpiRequest(() => requestSameOrigin(reviewerHistoryUrl)), parseReviewerInvitationHistory));
+    })();
+    const [info, ge, reviewer, mail, scopus, reviewerHistory] = await Promise.all([
+      infoPromise, gePromise, reviewerPromise, mailPromise, scopusPromise, reviewerHistoryPromise,
+    ]);
     const evidence = { email, sources };
     const decision = classifyCandidate(evidence, config);
     const name = ge.data?.name || info.data?.name || scopus.data?.preferredName || '';
@@ -1096,51 +1124,16 @@
     container.appendChild(link);
   }
 
-  function makeErrorResult(email, mode = 'full', reason = '查询异常') {
-    return {
-      email,
-      name: '',
-      mode,
-      sources: {},
-      urls: {},
-      decision: {
-        code: 'review',
-        ...VERDICTS.review,
-        label: '查询异常',
-        reasons: [reason],
-        metrics: {
-          submissions: 0,
-          reviews: 0,
-          reviewInvitations: 0,
-          reviewPastYear: 0,
-          reviewPastYearInvitations: 0,
-          decisions: 0,
-          recentMails: 0,
-          latestMail: null,
-          attempts: 0,
-          accepted: 0,
-          interested: 0,
-          declined: 0,
-          roles: [],
-          subjects: [],
-          hIndex: null,
-          subjectName: DEFAULTS.subjectName,
-          subjectRank: null,
-          geProceed: null,
-        },
-      },
-    };
-  }
-
   function renderResultRow(row, result) {
     const scopusOnly = result.mode === 'scopus';
-    row.className = scopusOnly ? 'ges-row' : `ges-row ${result.decision.code}`;
+    const progress = result.progress || {};
+    row.className = result.pending ? 'ges-row pending' : scopusOnly ? 'ges-row' : `ges-row ${result.decision.code}`;
     if (result.scopusIdentity?.needsReview) row.classList.add('ges-identity-review');
     row.replaceChildren();
     const metrics = result.decision.metrics;
 
     const verdictCell = createElement('td');
-    if (!scopusOnly) verdictCell.appendChild(createElement('span', `ges-badge ${result.decision.code}`, result.decision.label));
+    if (result.pending || !scopusOnly) verdictCell.appendChild(createElement('span', `ges-badge ${result.decision.code}`, result.decision.label));
 
     const candidateCell = createElement('td');
     if (result.name) {
@@ -1180,53 +1173,56 @@
     candidateCell.appendChild(links);
 
     const gateCell = createElement('td');
-    const proceedText = metrics.geProceed === null ? 'Proceed: ?' : metrics.geProceed ? 'Proceed: ✓' : 'Proceed: ✕';
-    const hText = metrics.hIndex === null ? 'h-index: ?' : `h-index: ${metrics.hIndex}`;
-    const subjectText = `${metrics.subjectName}: #${metrics.subjectRank === Infinity ? '∞' : metrics.subjectRank ?? '?'}`;
+    const proceedStatus = metrics.geProceedStatus || (metrics.geProceed === null ? 'unknown' : metrics.geProceed ? 'yes' : 'no');
+    const proceedText = `Proceed: ${PROCEED_SYMBOLS[proceedStatus] || '?'}`;
+    const hText = `h-index: ${metrics.hIndex === null ? progress.scopus ? '…' : '?' : `${metrics.hIndex}${progress.scopus ? '…' : ''}`}`;
+    const subjectRank = metrics.subjectRank === Infinity ? '∞' : metrics.subjectRank;
+    const subjectText = `${metrics.subjectName}: #${subjectRank === null ? progress.scopus ? '…' : '?' : `${subjectRank}${progress.scopus ? '…' : ''}`}`;
     const gateLines = [
       [hText, metrics.hardGateFailures?.hIndex, metrics.hIndex === null],
       [subjectText, metrics.hardGateFailures?.subject, metrics.subjectRank === null],
     ];
-    if (!scopusOnly) gateLines.unshift([proceedText, metrics.hardGateFailures?.proceed, false]);
+    if (!scopusOnly) gateLines.unshift([proceedText, metrics.hardGateFailures?.proceed, proceedStatus === 'unknown']);
     for (const [text, failed, unknown] of gateLines) {
       gateCell.appendChild(createElement('div', `ges-line${failed ? ' ges-fail' : unknown ? ' ges-unknown' : ''}`, text));
     }
 
     const subjectAreasCell = createElement('td', 'ges-subjects');
     if (metrics.subjects.length) appendLines(subjectAreasCell, metrics.subjects.slice(0, 5).map((subject, index) => `#${index + 1} ${subject}`));
-    else subjectAreasCell.textContent = '—';
+    else subjectAreasCell.textContent = progress.scopus ? '…' : '—';
 
     const activityCell = createElement('td');
     if (result.mode === 'scopus') activityCell.textContent = '—';
     else {
-      const reviewInvitations = metrics.reviewInvitations === null ? '?' : metrics.reviewInvitations;
-      const reviewPastYearInvitations = metrics.reviewPastYearInvitations === null ? '?' : metrics.reviewPastYearInvitations;
+      const activityUpdating = Boolean(progress.activity);
+      const suffix = activityUpdating ? '…' : '';
+      const reviewInvitations = metrics.reviewInvitations === null ? activityUpdating ? '…' : '?' : `${metrics.reviewInvitations}${suffix}`;
+      const reviewPastYearInvitations = metrics.reviewPastYearInvitations === null ? activityUpdating ? '…' : '?' : `${metrics.reviewPastYearInvitations}${suffix}`;
       appendLines(activityCell, [
-        `投稿 ${metrics.submissions} · 审稿 ${metrics.reviews}/${reviewInvitations}`,
-        `近一年审稿 ${metrics.reviewPastYear}/${reviewPastYearInvitations} · 编辑决定 ${metrics.decisions}`,
-        `来信 ${metrics.recentMails}${metrics.latestMail ? ` · ${metrics.latestMail}` : ''}`,
+        `投稿 ${metrics.submissions}${suffix} · 审稿 ${metrics.reviews}${suffix}/${reviewInvitations}`,
+        `近一年审稿 ${metrics.reviewPastYear}${suffix}/${reviewPastYearInvitations} · 编辑决定 ${metrics.decisions}${suffix}`,
+        `来信 ${metrics.recentMails}${suffix}${metrics.latestMail ? ` · ${metrics.latestMail}` : ''}`,
       ]);
     }
 
     const historyCell = createElement('td');
     if (result.mode === 'scopus') historyCell.textContent = '—';
-    else appendLines(historyCell, [
-      `GE Invited ${metrics.attempts} 次`,
-      `accepted ${metrics.accepted} · interested ${metrics.interested} · declined ${metrics.declined}`,
-      metrics.roles.length ? `任职：${metrics.roles.join(' / ')}` : '任职：无',
-    ]);
+    else {
+      const historyUpdating = Boolean(progress.history);
+      const suffix = historyUpdating ? '…' : '';
+      appendLines(historyCell, [
+        `GE Invited ${metrics.attempts}${suffix} 次`,
+        `accepted ${metrics.accepted}${suffix} · interested ${metrics.interested}${suffix} · declined ${metrics.declined}${suffix}`,
+        metrics.roles.length ? `任职：${metrics.roles.join(' / ')}${suffix}` : historyUpdating ? '任职：…' : '任职：无',
+      ]);
+    }
 
     const reasonCell = createElement('td');
     if (result.scopusIdentity?.warning) {
       reasonCell.appendChild(createElement('div', 'ges-line ges-identity-warning', result.scopusIdentity.warning));
     }
-    if (!scopusOnly) appendLines(reasonCell, result.decision.reasons);
+    if (result.pending || !scopusOnly) appendLines(reasonCell, result.decision.reasons);
     row.append(verdictCell, candidateCell, gateCell, subjectAreasCell, activityCell, historyCell, reasonCell);
-  }
-
-  function csvEscape(value) {
-    const text = String(value ?? '');
-    return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
   }
 
   function exportCsv(results) {
@@ -1240,14 +1236,17 @@
       const m = decision.metrics;
       return [
         email, name, mode === 'scopus' ? 'scopus' : 'full', mode === 'scopus' ? '' : decision.label,
-        m.geProceed ?? '', m.hIndex ?? '', m.subjectName, m.subjectRank === Infinity ? '∞' : m.subjectRank ?? '', m.subjects.join(' | '),
+        mode === 'scopus' ? '' : PROCEED_SYMBOLS[m.geProceedStatus || (m.geProceed === null ? 'unknown' : m.geProceed ? 'yes' : 'no')] || '?', m.hIndex ?? '', m.subjectName, m.subjectRank === Infinity ? '∞' : m.subjectRank ?? '', m.subjects.join(' | '),
         m.submissions, m.reviews, m.reviewInvitations ?? '', m.reviewPastYear,
         m.reviewPastYearInvitations ?? '', m.decisions, m.recentMails, m.latestMail || '', m.attempts,
         m.accepted, m.interested, m.declined, m.roles.join(' | '),
         [scopusIdentity?.warning, ...(mode === 'scopus' ? [] : decision.reasons)].filter(Boolean).join(' | '),
       ];
     });
-    const csv = `\uFEFF${[headers, ...rows].map((row) => row.map(csvEscape).join(',')).join('\r\n')}`;
+    const csv = `\uFEFF${[headers, ...rows].map((row) => row.map((value) => {
+      const text = String(value ?? '');
+      return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    }).join(',')).join('\r\n')}`;
     const link = document.createElement('a');
     link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     link.download = `ge-screening-${formatDate(new Date())}.csv`;
@@ -1255,65 +1254,34 @@
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   }
 
-  function readConfig($panel) {
-    return {
-      queryMode: $panel.find('#ges-mode').val() || '',
-      minimumHIndex: clamp($panel.find('#ges-min-h').val(), 0, 500, DEFAULTS.minimumHIndex),
-      subjectName: normalizeSpace($panel.find('#ges-subject').val()) || DEFAULTS.subjectName,
-      maximumSubjectRank: clamp($panel.find('#ges-subject-rank').val(), 1, 50, DEFAULTS.maximumSubjectRank),
-      inactiveInviteLimit: clamp($panel.find('#ges-invite-limit').val(), 0, 1000, DEFAULTS.inactiveInviteLimit),
-      mailLookbackDays: clamp($panel.find('#ges-mail-days').val(), 1, 3650, DEFAULTS.mailLookbackDays),
-    };
-  }
-
-  function saveConfig(config) {
-    for (const key of ['minimumHIndex', 'subjectName', 'maximumSubjectRank', 'inactiveInviteLimit', 'mailLookbackDays']) {
-      try {
-        if (typeof GM_setValue === 'function') GM_setValue(`${STORAGE_PREFIX}${key}`, config[key]);
-      } catch (error) {
-        // Storage is optional.
-      }
-    }
-  }
-
-  function createConcurrencyLimiter(maxConcurrent) {
-    const limit = Math.max(1, Math.floor(numberOr(maxConcurrent, 1)));
+  function createRequestLimiter(maxConcurrent = Infinity, maxStarts = Infinity, intervalMs = 1000) {
+    if (maxConcurrent === Infinity && maxStarts === Infinity) return (task) => Promise.resolve().then(task);
+    const concurrentLimit = Math.max(1, Math.floor(numberOr(maxConcurrent, 1)));
+    const startLimit = maxStarts === Infinity ? Infinity : Math.max(1, Math.floor(numberOr(maxStarts, 1)));
+    const interval = Math.max(1, Math.floor(numberOr(intervalMs, 1000)));
     const queue = [];
-    let active = 0;
+    const startTimes = [];
+    let active = 0, timer = null;
 
     function drain() {
-      while (active < limit && queue.length > 0) {
+      if (timer !== null) { clearTimeout(timer); timer = null; }
+      const now = Date.now();
+      while (startTimes.length && startTimes[0] <= now - interval) startTimes.shift();
+      while (queue.length && active < concurrentLimit && startTimes.length < startLimit) {
         const entry = queue.shift();
+        startTimes.push(Date.now());
         active += 1;
-        Promise.resolve()
-          .then(entry.task)
-          .then(entry.resolve, entry.reject)
-          .finally(() => {
-            active -= 1;
-            drain();
-          });
+        Promise.resolve().then(entry.task).then(entry.resolve, entry.reject).finally(() => { active -= 1; drain(); });
       }
+      if (queue.length && active < concurrentLimit && startTimes.length >= startLimit) timer = setTimeout(drain, Math.max(1, startTimes[0] + interval - Date.now()));
     }
 
-    return function limitRequest(task) {
-      if (typeof task !== 'function') return Promise.reject(new TypeError('Queued request must be a function.'));
+    return (task) => {
       return new Promise((resolve, reject) => {
         queue.push({ task, resolve, reject });
         drain();
       });
     };
-  }
-
-  async function runPool(items, concurrency, worker) {
-    let nextIndex = 0;
-    async function runWorker() {
-      while (nextIndex < items.length) {
-        const index = nextIndex;
-        nextIndex += 1;
-        await worker(items[index], index);
-      }
-    }
-    await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, runWorker));
   }
 
   function installStyles() {
@@ -1362,6 +1330,8 @@
       .ges-badge.scopus { background:#3568a8; }
       .ges-badge.unsuitable { background:#bd2635; }
       .ges-badge.review { background:#7a5b16; }
+      .ges-badge.pending { background:#64748b; }
+      .ges-row.pending { background:#f7f9fb; }
       .ges-email { display:inline-block; overflow-wrap:anywhere; color:#1a73e8; margin-top:.14rem; line-height:1.1; cursor:pointer; border-bottom:1px dashed #1a73e8; }
       .ges-email:hover { color:#1557b0; }
       .ges-copy-tip { color:#888; margin-left:.35rem; font-size:.76rem; font-weight:normal; white-space:nowrap; }
@@ -1456,18 +1426,16 @@
       }
     }
 
-    function createPendingRow(email) {
-      const row = createElement('tr', 'ges-loading');
-      const cell = createElement('td', '', `正在查询 ${email} …`);
-      cell.colSpan = 7;
-      row.appendChild(cell);
-      $results.append(row);
-      state.rowByEmail.set(email, row);
-    }
-
     async function startScreening() {
       if (state.running) return;
-      const config = readConfig($panel);
+      const config = {
+        queryMode: $panel.find('#ges-mode').val() || '',
+        minimumHIndex: clamp($panel.find('#ges-min-h').val(), 0, 500, DEFAULTS.minimumHIndex),
+        subjectName: normalizeSpace($panel.find('#ges-subject').val()) || DEFAULTS.subjectName,
+        maximumSubjectRank: clamp($panel.find('#ges-subject-rank').val(), 1, 50, DEFAULTS.maximumSubjectRank),
+        inactiveInviteLimit: clamp($panel.find('#ges-invite-limit').val(), 0, 1000, DEFAULTS.inactiveInviteLimit),
+        mailLookbackDays: clamp($panel.find('#ges-mail-days').val(), 1, 3650, DEFAULTS.mailLookbackDays),
+      };
       if (!config.queryMode) {
         $status.text('请选择 Only H-index 或 Full record。');
         $panel.find('#ges-mode').trigger('focus');
@@ -1480,7 +1448,9 @@
         return;
       }
 
-      saveConfig(config);
+      for (const key of ['minimumHIndex', 'subjectName', 'maximumSubjectRank', 'inactiveInviteLimit', 'mailLookbackDays']) {
+        try { if (typeof GM_setValue === 'function') GM_setValue(`${STORAGE_PREFIX}${key}`, config[key]); } catch (_) {}
+      }
       state.running = true;
       state.cancelRequested = false;
       state.results = [];
@@ -1492,21 +1462,30 @@
       $summary.empty();
       $start.add($export).prop('disabled', true);
       $stop.prop('disabled', false);
-      for (const entry of parsed.ordered) createPendingRow(entry.value);
+      for (const entry of parsed.ordered) {
+        const row = createElement('tr', 'ges-loading'), cell = createElement('td', '', `正在查询 ${entry.value} …`);
+        cell.colSpan = 7;
+        row.appendChild(cell); $results.append(row); state.rowByEmail.set(entry.value, row);
+      }
       updateSummary();
       updateProgress(`开始查询：${state.completed}/${state.total}`);
 
       const requestQueues = {
-        mdpi: createConcurrencyLimiter(MDPI_REQUEST_CONCURRENCY),
-        scopus: createConcurrencyLimiter(SCOPUS_REQUEST_CONCURRENCY),
+        mdpi: createRequestLimiter(MDPI_REQUEST_CONCURRENCY),
+        scopus: createRequestLimiter(SCOPUS_REQUEST_CONCURRENCY, SCOPUS_REQUESTS_PER_SECOND),
       };
-      await runPool(parsed.valid, MDPI_REQUEST_CONCURRENCY, async (email) => {
+      await Promise.all(parsed.valid.map(async (email) => {
         if (state.cancelRequested) return;
         let result;
         try {
-          result = await collectCandidate(email, config, requestQueues);
+          result = await collectCandidate(email, config, requestQueues, (partialResult) => {
+            renderResultRow(state.rowByEmail.get(email), partialResult);
+          });
         } catch (error) {
-          result = makeErrorResult(email, config.queryMode, `未完成查询：${conciseError(error)}`);
+          result = {
+            email, name: '', mode: config.queryMode, sources: {}, urls: {},
+            decision: { code: 'review', ...VERDICTS.review, label: '查询失败', reasons: ['查询失败'], metrics: collectMetrics({}, config, config.queryMode).metrics },
+          };
         }
         state.resultByEmail.set(email, result);
         state.results = Array.from(state.resultByEmail.values());
@@ -1514,7 +1493,7 @@
         state.completed += 1;
         updateSummary();
         updateProgress();
-      });
+      }));
 
       state.results = parsed.ordered.map((entry) => state.resultByEmail.get(entry.value)).filter(Boolean);
       updateSummary();
@@ -1569,34 +1548,12 @@
   }
 
   const testApi = {
-    DEFAULTS,
-    REVIEWER_CHECK_ROUTE_KEY,
-    SPECIAL_ISSUE_ID,
-    MDPI_REQUEST_CONCURRENCY,
-    SCOPUS_REQUEST_CONCURRENCY,
-    VERDICTS,
-    parseEmailList,
-    extractAssignmentRoles,
-    confirmedRoleStatus,
-    countRecentUniqueRecords,
-    parseUserInfo,
-    parseGuestEditorCheck,
-    parseReviewerCheck,
-    parseReviewerInvitationHistory,
-    summarizeReviewerInvitationRows,
-    parseMailSearch,
-    parseScopusPayload,
-    emailsAreSimilar,
-    namesAreSimilar,
-    validateScopusIdentity,
-    classifyCandidate,
-    classifyScopusOnly,
-    renderResultRow,
-    createConcurrencyLimiter,
-    buildUrls,
-    buildScopusBridgeUrl,
-    requestScopus,
-    requestScopusViaBridge,
+    DEFAULTS, VERDICTS, PROCEED_SYMBOLS, REVIEWER_CHECK_ROUTE_KEY, SPECIAL_ISSUE_CONFIG_KEY, DEFAULT_SPECIAL_ISSUE_ID,
+    MDPI_REQUEST_CONCURRENCY, SCOPUS_REQUEST_CONCURRENCY, SCOPUS_REQUESTS_PER_SECOND,
+    parseEmailList, extractAssignmentRoles,
+    parseUserInfo, parseGuestEditorCheck, parseReviewerCheck, parseReviewerInvitationHistory, parseMailSearch, parseScopusPayload,
+    emailsAreSimilar, namesAreSimilar, validateScopusIdentity, collectMetrics, classifyCandidate, classifyScopusOnly,
+    collectCandidate, renderResultRow, createRequestLimiter, buildUrls, requestScopus, requestScopusViaBridge,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = testApi;
@@ -1604,7 +1561,8 @@
   const isScopusBridgeWorker = (
     typeof window !== 'undefined'
     && location.hostname === 'www.scopus.com'
-    && new URLSearchParams(location.search).has(SCOPUS_BRIDGE_PARAM)
+    && new URLSearchParams(location.search).get(SCOPUS_BRIDGE_PARAM) === 'worker'
+    && new URLSearchParams(location.search).has(SCOPUS_BRIDGE_CHANNEL_PARAM)
   );
   try {
     if (isScopusBridgeWorker) {
@@ -1614,8 +1572,15 @@
       && typeof document !== 'undefined'
       && (location.hostname === 'susy.mdpi.com' || globalThis.__GE_SCREEN_TEST__)
     ) {
-      if (location.hostname === 'susy.mdpi.com') $(window).on('hashchange', init);
-      init();
+      const initWhenReady = () => {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', init, { once: true });
+        } else {
+          init();
+        }
+      };
+      if (location.hostname === 'susy.mdpi.com') $(window).on('hashchange', initWhenReady);
+      initWhenReady();
     }
   } catch (error) {
     console.error('[SuSy GE Invitation Screener] Initialization failed.', error);
