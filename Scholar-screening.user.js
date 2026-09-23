@@ -4,6 +4,7 @@
 // @author       SKDAY
 // @match        https://susy.mdpi.com/user/settings*
 // @match        https://www.scopus.com/authid/detail.uri*
+// @match        https://www.scopus.com/search/form.uri*
 // @require      https://gcore.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js
 // @grant        GM_xmlhttpRequest
 // @grant        GM.xmlHttpRequest
@@ -37,6 +38,7 @@
   const SCOPUS_REQUEST_CONCURRENCY = 5;
   const SCOPUS_REQUESTS_PER_SECOND = 5;
   const SCOPUS_WORKER_READY_TIMEOUT = 30000;
+  const SCOPUS_WORKER_TITLE = '[工作中] Scopus Scholar Screening — 请勿关闭';
   const PROCEED_SYMBOLS = { yes: '✓', no: '✕', 'not-applicable': '∅', pending: '…' };
   const EMAIL_PATTERN = /[A-Z0-9](?:[A-Z0-9.!#$%&'*+/=?^_`{|}~-]*[A-Z0-9])?@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi;
   const DEFAULTS = Object.freeze({
@@ -709,12 +711,7 @@
       window.addEventListener('pagehide', () => {
         const error = new Error('Scholar screening 页面已关闭');
         failPendingScopusBridgeRequests(error);
-        try { if (typeof GM_deleteValue === 'function') GM_deleteValue(scopusBridgeState.requestKey); } catch (_) {}
-        try { if (typeof GM_deleteValue === 'function') GM_deleteValue(scopusBridgeState.readyKey); } catch (_) {}
-        const workerHandle = scopusBridgeState.workerHandle;
-        scopusBridgeState.workerHandle = null;
-        scopusBridgeState.readyPromise = null;
-        try { if (workerHandle && !workerHandle.closed && typeof workerHandle.close === 'function') workerHandle.close(); } catch (_) {}
+        closeScopusBridgeWorker();
       }, { once: true });
     }
   }
@@ -728,7 +725,26 @@
     for (const rejectPending of Array.from(scopusBridgeState.pending.values())) rejectPending(error);
   }
 
-  function ensureScopusBridgeWorker(authorId) {
+  function closeScopusBridgeWorker() {
+    if (scopusBridgeState.pending.size) return false;
+    const workerHandle = scopusBridgeState.workerHandle;
+    const requestKey = scopusBridgeState.requestKey;
+    const readyKey = scopusBridgeState.readyKey;
+    scopusBridgeState.workerHandle = null;
+    scopusBridgeState.readyPromise = null;
+    scopusBridgeState.requests.clear();
+    scopusBridgeState.channelId = '';
+    scopusBridgeState.requestKey = '';
+    scopusBridgeState.readyKey = '';
+    try { if (requestKey && typeof GM_deleteValue === 'function') GM_deleteValue(requestKey); } catch (_) {}
+    try { if (readyKey && typeof GM_deleteValue === 'function') GM_deleteValue(readyKey); } catch (_) {}
+    try {
+      if (workerHandle && !workerHandle.closed && typeof workerHandle.close === 'function') workerHandle.close();
+    } catch (_) {}
+    return true;
+  }
+
+  function ensureScopusBridgeWorker(authorId = null) {
     if (scopusBridgeState.readyPromise) return scopusBridgeState.readyPromise;
     if (
       typeof GM_openInTab !== 'function'
@@ -774,8 +790,12 @@
           finish(resolve, message);
         });
 
-        const workerUrl = new URL('https://www.scopus.com/authid/detail.uri');
-        workerUrl.searchParams.set('authorId', String(authorId));
+        const normalizedAuthorId = String(authorId || '');
+        const workerUrl = new URL(normalizedAuthorId
+          ? 'https://www.scopus.com/authid/detail.uri'
+          : 'https://www.scopus.com/search/form.uri');
+        if (normalizedAuthorId) workerUrl.searchParams.set('authorId', normalizedAuthorId);
+        else workerUrl.searchParams.set('display', 'basic');
         workerUrl.searchParams.set(SCOPUS_BRIDGE_PARAM, 'worker');
         workerUrl.searchParams.set(SCOPUS_BRIDGE_CHANNEL_PARAM, scopusBridgeState.channelId);
         tabHandle = GM_openInTab(workerUrl.toString(), { active: false, setParent: true });
@@ -892,14 +912,72 @@
     return requestScopusViaBridge(authorId);
   }
 
+  function installScopusWorkerNotice() {
+    let statusText = '正在连接 Scholar Screening…';
+    let statusElement = null;
+    let titleObserver = null;
+
+    function keepTitle() {
+      if (document.title !== SCOPUS_WORKER_TITLE) document.title = SCOPUS_WORKER_TITLE;
+    }
+
+    function mount() {
+      keepTitle();
+      const parent = document.body || document.documentElement;
+      if (!parent) return;
+      let notice = document.getElementById('susy-ge-scopus-worker-notice');
+      if (!notice) {
+        notice = document.createElement('div');
+        notice.id = 'susy-ge-scopus-worker-notice';
+        notice.setAttribute('role', 'status');
+        notice.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:24px;background:#f4f7fa;color:#1f2933;font-family:Segoe UI,Microsoft YaHei,sans-serif;';
+        const panel = document.createElement('div');
+        panel.style.cssText = 'width:min(560px,100%);padding:30px 32px;border:1px solid #cbd5df;border-radius:12px;background:#fff;box-shadow:0 12px 36px rgba(15,23,42,.16);text-align:center;';
+        const heading = document.createElement('div');
+        heading.textContent = 'Scopus 数据查询正在运行';
+        heading.style.cssText = 'font-size:22px;font-weight:700;margin-bottom:12px;';
+        statusElement = document.createElement('div');
+        statusElement.id = 'susy-ge-scopus-worker-status';
+        statusElement.style.cssText = 'font-size:16px;font-weight:600;color:#0b6b53;margin-bottom:14px;';
+        const explanation = document.createElement('div');
+        explanation.textContent = '这是 Scholar Screening 自动创建的专用工作页。请勿关闭；任务完成后会自动关闭。您手动打开的其他 Scopus 页面不会受影响。';
+        explanation.style.cssText = 'font-size:14px;line-height:1.65;color:#52606d;';
+        panel.append(heading, statusElement, explanation);
+        notice.appendChild(panel);
+        parent.appendChild(notice);
+      } else {
+        statusElement = notice.querySelector('#susy-ge-scopus-worker-status');
+      }
+      if (statusElement) statusElement.textContent = statusText;
+      if (!titleObserver && document.head && typeof MutationObserver === 'function') {
+        titleObserver = new MutationObserver(keepTitle);
+        titleObserver.observe(document.head, { childList: true, subtree: true, characterData: true });
+      }
+    }
+
+    mount();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true });
+    window.addEventListener('pagehide', () => titleObserver?.disconnect(), { once: true });
+    return (message) => {
+      statusText = message;
+      mount();
+    };
+  }
+
   function runScopusBridgeWorker() {
     const params = new URLSearchParams(location.search);
     const channelId = params.get(SCOPUS_BRIDGE_CHANNEL_PARAM);
-    if (params.get(SCOPUS_BRIDGE_PARAM) !== 'worker' || !channelId) return;
+    if (
+      params.get(SCOPUS_BRIDGE_PARAM) !== 'worker'
+      || !channelId
+      || !/^[a-z0-9-]{20,100}$/i.test(channelId)
+    ) return;
     const requestKey = `${SCOPUS_BRIDGE_PREFIX}${channelId}_requests`;
     const readyKey = `${SCOPUS_BRIDGE_PREFIX}${channelId}_ready`;
     const responsePrefix = `${SCOPUS_BRIDGE_PREFIX}${channelId}_response_`;
     const handledRequestIds = new Set();
+    const updateWorkerNotice = installScopusWorkerNotice();
+    let activeRequests = 0;
 
     function writeResponse(responseKey, message) {
       if (typeof GM_setValue !== 'function') return;
@@ -911,6 +989,8 @@
 
     async function processRequest(request) {
       const { requestId, authorId, responseKey } = request;
+      activeRequests += 1;
+      updateWorkerNotice(`正在查询 Scopus 数据（${activeRequests} 项）…`);
       try {
         const response = await fetch(`https://www.scopus.com/api/authors/${encodeURIComponent(authorId)}`, {
           method: 'GET',
@@ -942,6 +1022,11 @@
           error: conciseError(error),
           completedAt: new Date().toISOString(),
         });
+      } finally {
+        activeRequests -= 1;
+        updateWorkerNotice(activeRequests > 0
+          ? `正在查询 Scopus 数据（${activeRequests} 项）…`
+          : '查询已响应，正在等待原页面完成…');
       }
     }
 
@@ -981,7 +1066,9 @@
         workerId: createScopusBridgeId(),
         readyAt: new Date().toISOString(),
       });
+      updateWorkerNotice('已连接，正在等待查询任务…');
     } catch (error) {
+      updateWorkerNotice('工作页启动失败，请返回 Scholar Screening 页面查看提示。');
       if (typeof GM_setValue === 'function') {
         GM_setValue(readyKey, { channelId, ok: false, error: conciseError(error) });
       }
@@ -1452,6 +1539,7 @@
         try { if (typeof GM_setValue === 'function') GM_setValue(`${STORAGE_PREFIX}${key}`, config[key]); } catch (_) {}
       }
       state.running = true;
+      ensureScopusBridgeWorker().catch(() => {});
       state.cancelRequested = false;
       state.results = [];
       state.resultByEmail.clear();
@@ -1499,6 +1587,7 @@
       updateSummary();
 
       state.running = false;
+      closeScopusBridgeWorker();
       $start.prop('disabled', false);
       $stop.prop('disabled', true);
       $export.prop('disabled', state.results.length === 0);
@@ -1553,7 +1642,8 @@
     parseEmailList, extractAssignmentRoles,
     parseUserInfo, parseGuestEditorCheck, parseReviewerCheck, parseReviewerInvitationHistory, parseMailSearch, parseScopusPayload,
     emailsAreSimilar, namesAreSimilar, validateScopusIdentity, collectMetrics, classifyCandidate, classifyScopusOnly,
-    collectCandidate, renderResultRow, createRequestLimiter, buildUrls, requestScopus, requestScopusViaBridge,
+    collectCandidate, renderResultRow, createRequestLimiter, buildUrls,
+    ensureScopusBridgeWorker, requestScopus, requestScopusViaBridge,
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = testApi;
