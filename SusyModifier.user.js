@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.9.22
+// @version       6.9.25
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -42,7 +42,7 @@
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
-// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/Scholar-screening.user.js?v=6.9.22
+// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/Scholar-screening.user.js?v=6.9.23
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM.getValue
@@ -145,7 +145,7 @@ const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site 
             'GE_TemplateB2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_ReminderID': {
                 'section': [], 'label': '默认 GE Reminder Template', 'type': 'select', 'labelPos': 'left', 'options':
-                ['Reminder (GE responsibility)', 'Reminder (video call)', 'Reminder (general)', 'Reminder (with benefits)'], default: 'Reminder (GE responsibility)'
+                ['Reminder (GE Responsibility)', 'Reminder (Video Call)', 'Reminder (General)', 'Reminder (With Benefits)'], default: 'Reminder (GE Responsibility)'
             },
             'GE_ReminderS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
             'GE_ReminderS2': { 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': "" },
