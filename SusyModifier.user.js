@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.9.25
+// @version       6.10.7
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -92,20 +92,15 @@ const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site 
         GM_registerMenuCommand('🔐 Login Hub', function(){GM_openInTab('https://www.mdpi.com/?susymodifier-login', { active: true });});
         GM_registerMenuCommand('🗑️ Reset Scopus', async function () {
             try {
-                const listScopusCookies = async () => (await GM.cookie.list({ domain: 'scopus.com', partitionKey: {} })).filter(cookie => /(^|\.)scopus\.com$/i.test(cookie.domain));
-                const cookies = await listScopusCookies();
-                cookies.sort((a, b) => a.domain.replace(/^\./, '').split('.').length - b.domain.replace(/^\./, '').split('.').length || b.path.length - a.path.length);
-                let failed = 0;
-                for (const cookie of cookies) {
-                    const details = { url: (cookie.secure ? 'https://' : 'http://') + cookie.domain.replace(/^\./, '') + cookie.path, name: cookie.name };
-                    if (cookie.firstPartyDomain !== undefined) details.firstPartyDomain = cookie.firstPartyDomain;
+                let cookies = await GM.cookie.list({ domain: 'scopus.com', partitionKey: {} });
+                alert(`Cleared ${cookies.length} accessible cookies. \n\nFirst-time users: Open the Tampermonkey Dashboard > Settings (Advanced mode) > Security, set "Allow scripts to access cookies" to "All", save the changes, and reload this page.\n\n`
+                      + `首次使用：请打开 Tampermonkey 管理面板 > 设置（高级模式）> 安全，将“允许脚本访问 Cookie”设置为“All”，保存后重新加载此页面。`);
+                await Promise.allSettled(cookies.map(cookie => {
+                    const details = { url: `${cookie.secure ? 'https' : 'http'}://${cookie.domain.replace(/^\./, '')}${cookie.path}`, name: cookie.name };
                     if (cookie.partitionKey) details.partitionKey = cookie.partitionKey;
-                    try { await GM.cookie.delete(details); } catch (_) { failed++; }
-                }
-                const remaining = await listScopusCookies();
-                alert(remaining.length || failed
-                    ? `Scopus cookie cleanup incomplete: ${remaining.length} remaining, ${failed} failed to delete. Please check Tampermonkey's cookie permissions, close Scopus tabs, and try again.`
-                    : `Cleared ${cookies.length} accessible Scopus cookie(s), no leftovers detected.`);
+                    if (cookie.firstPartyDomain !== undefined) details.firstPartyDomain = cookie.firstPartyDomain;
+                    return GM.cookie.delete(details);
+                }));
             } catch (_) {
                 alert('⚠️ Clear Scopus Cookie Failed!');
             }
@@ -2533,7 +2528,7 @@ function onInit() {
             let str = $("#topmenu span:contains('@mdpi.com')").text().replace("@mdpi.com", "").replace(".", " ");
             let sk_signature = str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
             $("#form_signature").val(sk_signature);
-            $("#form_decision_0").prop("checked", true);
+            $("#form_decision_0").prop("checked", true)[0]?.dispatchEvent(new Event("change", { bubbles: true }));
 
             // 从页面检测当前 SI 所属 Section（在弹窗打开前调用）
             function detectSection() {
