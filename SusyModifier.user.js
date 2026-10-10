@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.10.7
+// @version       6.10.9
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -1079,30 +1079,6 @@ function onInit() {
             }
 
             if (GM_config.get('Assign_Assistant')) { //派稿助手
-                try {
-                    let params = new window.URLSearchParams(window.location.search); let reviewer = params.get('r');
-                    if (reviewer.indexOf("@") > -1) {
-                        $("#form_email").val(reviewer); $("#nextBtn").trigger("click");
-
-                        waitForKeyElements('#specialBackBtn', function () {
-                            $('html, body').scrollTop($('#form_email').offset().top);
-                            $("#keepRviewer").hide().before(` <input type="button" id="keepReviewer2" value="Proceed2" class="submit"> `);
-                            $("#keepReviewer2").on("click", function () {
-                                document.querySelector("#specialBackBtn").click();
-                                document.querySelector("#nextBtn").click();
-                                waitForKeyElements('#specialBackBtn', function () {
-                                    $("#keepRviewer").before(` <input type="button" id="keepReviewer3" value="Proceed2" class="submit"> `);
-                                    $("#keepReviewer3").on("click", function () {
-                                        document.querySelector("#specialBackBtn").click();
-                                        document.querySelector("#nextBtn").click();
-                                        waitForKeyElements('#specialBackBtn', function () { document.querySelector("#keepRviewer").click(); }, true);
-                                    })
-                                    document.querySelector("#keepRviewer").click();
-                                }, true);
-                            });
-                        }, true);
-                    }
-                } catch (error) { }
                 if ($("div:contains('The CSRF token is invalid. Please try to resubmit the form')").length > 0) {
                     $("header").append('<div data-animation="drop" class="notify notify-dismissible notify-danger center top"><div class="message">The CSRF token is invalid.</div><button type="button" class="close" data-close="notify" data-animation="drop">×</button></div>')
                 }
@@ -3094,8 +3070,8 @@ function onInit() {
                                                 if (!row.pubData) tasks.push({ row, publications: true });
                                             }
 
-                                            const CONCURRENCY = 5; // 5通道并发保持高吞吐
-                                            const LAUNCH_INTERVAL = 115; // 两次请求发射最小间隔>=115ms，约8.7次/秒（贴近9次/秒限制）
+                                            const CONCURRENCY = 3;
+                                            const LAUNCH_INTERVAL = 500;
                                             let lastLaunchTime = 0, taskIndex = 0, rateLimited = false;
 
                                             async function executeTask(row, publications) {
@@ -4169,11 +4145,6 @@ function skOpenUrls() {
             var digits = textContent.match(digitRegex) || [];
             digits.forEach(function (digit) { window.open('https://susy.mdpi.com/build/img/design/susy-logo.png?term=' + digit, '_blank') });
 
-            // let myArray, add_id, rdline = $("#add_r_t").val().split("\n");
-            // for (var i=0; i < rdline.length; i++){
-            //     if ((myArray = /\w+-\d+/.exec(rdline[i])) !== null) {add_id=myArray[0]}
-            //     if ((myArray = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.exec(rdline[i])) !== null) {GM_openInTab(window.location.origin+"/ajax/submission_get_manuscripts?term="+add_id+"&r="+myArray[0], false)}
-            // }
         })
     }
 }
@@ -4199,12 +4170,10 @@ function skAddReviewers() {
                 }
                 const emailPattern = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/g;
                 while ((emailArray = emailPattern.exec(line)) !== null) {
-                    if (add_id.startsWith("https://")) {
-                        // 如果 add_id 是网址，则以这种方式构建 URL 并打开
-                        GM_openInTab(add_id + "?r=" + emailArray[0], true);
-                    } else {
-                        // 如果 add_id 是字母数字-数字模式，则以原有方式构建 URL 并打开
-                        GM_openInTab(window.location.origin + "/build/img/design/susy-logo.png?term=" + add_id + "&r=" + emailArray[0], true);
+                    if (add_id.startsWith("https://")) { // 如果 add_id 是网址，则以这种方式构建 URL 并打开
+                        GM_openInTab(add_id + "?finder2_reviewer_email=" + emailArray[0], true);
+                    } else { // 如果 add_id 是字母数字-数字模式，则以原有方式构建 URL 并打开
+                        GM_openInTab(window.location.origin + "/build/img/design/susy-logo.png?term=" + add_id + "&finder2_reviewer_email=" + emailArray[0], true);
                     }
                 }
             });
