@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.10.9
+// @version       6.10.18
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -40,7 +40,7 @@
 // @match         https://login.microsoftonline.com/*
 // @require       https://gcore.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
-// @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/chosen.jquery.js
+// @require       https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/js/chosen.jquery.min.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
 // @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/Scholar-screening.user.js?v=6.9.23
 // @grant         GM_getValue
@@ -76,15 +76,10 @@
 // ==/UserScript==
 /* globals jQuery, $, GM_config */
 
-const SK_WORK_LOGIN_SITES = [
-    { id: 'susy', name: 'SUSY', url: 'https://susy.mdpi.com/user/sme/status/submitted' },
-    { id: 'mdpi', name: 'MDPI', url: 'https://www.mdpi.com/user/login' },
-    { id: 'mailsdb', name: 'MailsDB', url: 'https://mailsdb.i.mdpi.com/' },
-    { id: 'mrs', name: 'MRS 1.0', url: 'https://mrs.mdpi.com/statistics' },
-    { id: 'attendance', name: 'HRMS', url: 'https://i.mdpi.cn/team/attendance' },
-    { id: 'redmine', name: 'Redmine', url: 'https://redmine.mdpi.cn/' }
-];
+const SK_WORK_LOGIN_SITES = [['susy','SUSY','https://susy.mdpi.com/user/sme/status/submitted'],['mdpi','MDPI','https://www.mdpi.com/user/login'],['mailsdb','MailsDB','https://mailsdb.i.mdpi.com/'],['mrs','MRS 1.0','https://mrs.mdpi.com/statistics'],
+                             ['attendance','HRMS','https://i.mdpi.cn/team/attendance'],['redmine','Redmine','https://redmine.mdpi.cn/']].map(([id,name,url])=>({id,name,url}));
 const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site => site.id)].map(id => 'skWorkLoginStatus_' + id);
+const SK_MRS_FAVORITES = ['Analytics', 'Games', 'Geometry', 'Mathematics', 'MCB', 'Risks', 'IJT', 'Telecom'].map(label => ({ id: String(skGetJid(label)), label }));
 
 (function () {
     'use strict';
@@ -552,7 +547,7 @@ function onInit() {
                 $(".menu [href='/special_issue_pending/list']").after("<a href='/special_issue_pending/list/online?form[journal_id]=" + S_J + "&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[J]</a>");
             }
             if ($("#topmenu span:contains('@mdpi.com')").text() === 'syna.mu@mdpi.com') {
-                $(".menu [href='/voucher/application/list']").after("<div style='float:right;'><a href='//skday.com/task/susylog.php' target=_black>[Log]</a> </div> ");
+                $(".menu [href='/voucher/application/list']").after("<div style='float:right;'><a href='//skday.com/task/susylog.php' target=_blank>[Log]</a> </div> ");
             }
             if (S_J > 0) {
                 $(".menu [href='/user/assigned/status/ongoing']").after("<a href='/user/managing/status/published?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.publish_date&sort=DESC'>[Pub]</a> ");
@@ -572,6 +567,7 @@ function onInit() {
                 $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a> <a href='/user/public_forum/list?form[journal_id]=" + S_J + "'>[P]</a>");
                 $(".menu [href='/publisher/manuscripts']").after(" <a href='/publisher/manuscripts?form[journal_id]=" + S_J + "'>[J1]</a> <a href='/publisher/manuscripts/unchecked?form[journal_id]=" + S_J + "'>[J2]</a>");
             }
+            $(".menu [href='/user/myprofile']").after("<div style='float:right;'><a href='//mrs.mdpi.com/login_check_ajax#statistics' target=_blank>[MRS]</a></div> ");
             $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC&page_limit=100'>Special Issues</a> <a href='/user/sme/status/submitted'>[MS]</a> ");
             $(".menu [href='/special_issue_pending/list']").text("Manage").attr("href", "/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC&page_limit=100")
             $(".menu [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[MS]</a>");
@@ -2321,58 +2317,327 @@ function onInit() {
         } catch (error) { }
     }
 
+    //Always: MRS Quick Statistics
+    if (location.href.indexOf('mrs.mdpi.com/login_check_ajax#statistics') > -1) {
+        if (document.body.textContent.trim() === 'false') { location.replace('/login'); return; }
+        const cacheKey = 'mrs.c', searchesKey = 'mrs.s', lastQueryKey = 'mrs.q';
+        const containers = { journals: 'allJurnals', employees: 'allEmplyees', offices: 'allOffices', sections: 'allSections' };
+        const readStored = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (_) { return fallback; } };
+        const store = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) { /* Storage is optional. */ } };
+        function readCatalog(source) {
+            const lists = {};
+            for (const [kind, id] of Object.entries(containers)) {
+                lists[kind] = Array.from(new Map(Array.from(source.querySelectorAll('#' + id + ' input[type="checkbox"]')).map(input => [input.value, {
+                    id: input.value, label: (input.nextElementSibling?.textContent?.trim() || input.dataset.name || input.labels?.[0]?.textContent || input.value).trim(),
+                }])).values());
+            }
+            lists.metrics = Array.from(source.querySelectorAll('#statisticSelecter option')).map(option => ({
+                value: option.value, label: option.textContent.trim(), group: option.parentElement.label || '',
+            }));
+            return lists;
+        }
+        let savedSearches = GM_getValue(searchesKey, []).map(search => typeof search === 'string' ? JSON.parse(search) : search);
+        const startupSearches = savedSearches.filter(search => search.autoStart);
+        const cached = readStored(cacheKey, {}), settings = startupSearches[0]?.state || readStored(lastQueryKey, {});
+        const saveSearches = () => GM_setValue(searchesKey, savedSearches.map(search => JSON.stringify(search)));
+        for (const path of ['css/screen.css', 'css/main.css', 'lib/datepicker/css/datepicker.css', 'lib/datepicker/css/layout.css']) {
+            $('<link>', { rel: 'stylesheet', href: '/bundles/mdpimrs/' + path }).appendTo('head');
+        }
+        const catalog = {
+            journals: cached.journals?.length ? cached.journals : Object.entries(skGetJid()).map(([label, id]) => ({ id: String(id), label })),
+            employees: [], offices: [], sections: [],
+            metrics: cached.metrics?.length ? cached.metrics : [{ value: 'Papers Published', label: 'Papers Published', group: '' }],
+        };
+        const selected = Object.fromEntries(Object.keys(containers).map(kind => [kind, new Set(settings.selected?.[kind] || (kind === 'journals' ? [String(S_J > 0 ? S_J : 154)] : []))]));
+        const pageWindow = unsafeWindow;
+        let chartReady, queryController, chartIndex = 0;
+        const root = document.createElement('div');
+        root.id = 'ms';
+        root.innerHTML = `
+            <style> #ms-kinds label,#ms-fav label{margin-right:10px}#ms .chosen-results{max-height:65vh} #ms .chosen-choices input{border:0;outline:0;background:none;box-shadow:none} #options>label{display:inline-block;width:34px}
+            #ms-cal{position:absolute;z-index:1100} #ms-status{display:inline-block;margin:16px 10px 10px}#saved_search_list,#ms-results{overflow:auto} #ms table{color:inherit;font:inherit} #ms-form .actionButtons{margin-right:8px}</style>
+            <div id="container"><div id="topmenu"><div id="projectsMenu"><a href="/statistics">Statistics</a> | <a href="/data/">Data</a> | <b>Quick Statistics</b> | <a href="https://mrs.mdpi.cn/">MRS 2.0</a></div></div>
+            <div id="main"><div class="colcontainer"><div id="contentcontainer"><div id="content"><div class="contentwrap"><div class="itemwrap">
+                <div id="formMenu" style="height:auto"><div id="saved_search_list" style="width:96.5%"></div><form id="ms-form">
+                    <section id="statistic" class="box" style="overflow:visible"><span class="big">Statistic</span><br><br><select id="ms-stat" aria-label="Statistic"></select></section>
+                    <section id="ms-filter" class="box" style="width:56%;overflow:visible"><span class="big">Filter</span><br><br>
+                        <div id="ms-kinds"><label><span>Journals</span><input type="radio" name="ms-kind" value="journals" checked></label><label><span>Employees</span><input type="radio" name="ms-kind" value="employees"></label>
+                            <label><span>Offices</span><input type="radio" name="ms-kind" value="offices"></label><label><span>Sections</span><input type="radio" name="ms-kind" value="sections"></label></div>
+                        <div id="ms-fav" style="margin:12px 0"></div><select id="ms-items" multiple data-placeholder="Select..." aria-label="Filter items"></select>
+                    </section>
+                    <section id="options" class="box"><span class="big">Options</span><select id="date-format" aria-label="Date format"><option value="Y-m-d">Daily</option>
+                        <option value="weekly">Weekly</option><option value="Y-m" selected>Monthly</option><option value="Quarterly">Quarterly</option><option value="Y">Yearly</option></select>
+                        <br><label for="from-date">From:</label><input type="text" id="from-date" placeholder="YYYY-MM-DD" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" maxlength="10" required>
+                        <br><label for="to-date">To:</label><input type="text" id="to-date" placeholder="YYYY-MM-DD" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" maxlength="10" required><br><br>
+                        <div class="search-type">Search Type: <label><input type="radio" name="ms-type" value="0" checked>Basic</label>
+                            <label><input type="radio" name="ms-type" value="1">MoM</label><label><input type="radio" name="ms-type" value="2">YoY</label></div>
+                        <div class="optionButton"><label for="ms-one">One graph</label><input type="checkbox" id="ms-one" name="oneGraph"></div>
+                        <div class="optionButton"><label for="ms-bar">Bar view</label><input type="checkbox" id="ms-bar" name="barView" checked></div>
+                        <div class="optionButton"><label for="ms-sect">Article Sections</label><input type="checkbox" id="ms-sect" name="articleSections"></div>
+                        <div class="optionButton"><label for="ms-si">Article SIs</label><input type="checkbox" id="ms-si" name="articleSIs"></div>
+                        <div class="optionButton"><label for="ms-all">All Article</label><input type="checkbox" id="ms-all" name="allArticle"></div>
+                    </section>
+                    <div class="clear"></div><div id="reload" class="actionButtons">Reload</div>
+                        <div id="ms-prepend" class="actionButtons" style="width:auto;white-space:nowrap">Search &amp; Keep</div>
+                        <div id="save_search" class="actionButtons">Save Search</div>
+                        <span id="ms-status" role="status">Ready.</span><div class="clear"></div>
+                </form></div>
+                <div id="ms-results"></div>
+            </div></div></div></div></div></div></div>`;
+        document.body.replaceChildren(root); document.title = 'MRS | Quick Statistics';
+        const find = selector => root.querySelector(selector);
+        const form = find('#ms-form'), metric = find('#ms-stat'), items = find('#ms-items');
+        const queryStatus = find('#ms-status');
+        const currentKind = () => find('input[name="ms-kind"]:checked').value;
+        function getState() {
+            const fields = form.querySelectorAll('#from-date,#to-date,#ms-stat,#date-format,input[type=checkbox][id^="ms-"]');
+            return {
+                kind: currentKind(), items: Array.from(items.selectedOptions).map(option => ({ id: option.value, label: option.textContent })),
+                selected: Object.fromEntries(Object.entries(selected).map(([kind, ids]) => [kind, [...ids]])),
+                fields: Object.fromEntries(Array.from(fields).map(input => [input.id, input.type === 'checkbox' ? input.checked : input.value])),
+                searchType: find('input[name="ms-type"]:checked').value,
+            };
+        }
+        function refreshMetrics() {
+            const value = metric.value || settings.fields?.['ms-stat'] || 'Papers Published';
+            for (const item of catalog.metrics) {
+                if (Array.from(metric.options).some(option => option.value === item.value)) continue;
+                let parent = Array.from(metric.children).find(group => group.tagName === 'OPTGROUP' && group.label === item.group);
+                if (item.group && !parent) { parent = document.createElement('optgroup'); parent.label = item.group; metric.append(parent); }
+                (parent || metric).append(new Option(item.label, item.value));
+            }
+            metric.value = Array.from(metric.options).some(option => option.value === value) ? value : 'Papers Published';
+            if ($(metric).data('chosen')) $(metric).trigger('chosen:updated');
+        }
+        function refreshSelection() {
+            for (const input of root.querySelectorAll('input[data-kind]')) input.checked = selected[input.dataset.kind].has(input.value);
+        }
+        function refreshChoices() {
+            const kind = currentKind(), fragment = document.createDocumentFragment();
+            for (const item of catalog[kind]) fragment.append(new Option(item.label, item.id, false, selected[kind].has(item.id)));
+            items.replaceChildren(fragment); $(items).trigger('chosen:updated'); refreshSelection();
+        }
+        function applySettings(state) {
+            for (const kind of Object.keys(containers)) if (state.selected?.[kind]) selected[kind] = new Set(state.selected[kind]);
+            const kind = Object.hasOwn(containers, state.kind) ? state.kind : 'journals';
+            find(`input[name="ms-kind"][value="${kind}"]`).checked = true;
+            catalog[kind] = Array.from(new Map([...(state.items || []), ...catalog[kind]].map(item => [item.id, item])).values());
+            for (const [id, value] of Object.entries(state.fields || {})) {
+                const input = find('#' + id);
+                if (!input) continue;
+                if (input.type === 'checkbox') input.checked = Boolean(value);
+                else if (input.tagName !== 'SELECT' || Array.from(input.options).some(option => option.value === value)) input.value = value;
+            }
+            find(`input[name="ms-type"][value="${['0', '1', '2'].includes(state.searchType) ? state.searchType : '0'}"]`).checked = true;
+            refreshChoices(); $(metric).trigger('chosen:updated');
+        }
+        function renderSavedSearches() {
+            const table = document.createElement('table'), heading = table.createTHead().insertRow(), body = table.createTBody(); table.style.width = '100%';
+            for (const title of ['Name', 'Statistic', 'Filter', 'FromDate', 'ToDate', 'Auto start', 'Action']) {
+                const cell = document.createElement('th'); cell.textContent = title; heading.append(cell);
+            }
+            for (const [index, search] of savedSearches.entries()) {
+                const { state } = search, fields = state.fields, row = body.insertRow(), link = document.createElement('a'), remove = document.createElement('a');
+                link.href = '#'; link.textContent = search.name;
+                link.addEventListener('click', event => { event.preventDefault(); applySettings(search.state); form.requestSubmit(); });
+                row.insertCell().append(link);
+                const labels = state.items?.map(item => item.label).join(', ') || state.selected[state.kind]?.join(', ') || '';
+                const filter = `${state.kind}: ${labels}`, summary = filter.length > 48 ? filter.slice(0, 48) + '…' : filter;
+                for (const value of [fields['ms-stat'], summary, fields['from-date'], fields['to-date']]) row.insertCell().textContent = value;
+                row.cells[2].title = filter;
+                const autoStart = document.createElement('input'); autoStart.type = 'checkbox'; autoStart.checked = Boolean(search.autoStart);
+                autoStart.setAttribute('aria-label', 'Auto start ' + search.name);
+                autoStart.addEventListener('change', () => { search.autoStart = autoStart.checked; saveSearches(); }); row.insertCell().append(autoStart);
+                remove.href = '#'; remove.className = 'remove_search'; remove.textContent = 'Remove'; remove.setAttribute('aria-label', 'Remove ' + search.name);
+                remove.addEventListener('click', event => {
+                    event.preventDefault();
+                    if (!pageWindow.confirm(`Remove saved search "${search.name}"?`)) return;
+                    savedSearches = savedSearches.filter(item => item !== search); saveSearches(); renderSavedSearches();
+                });
+                const action = row.insertCell(); action.style.whiteSpace = 'nowrap'; action.append(remove, '\u2003');
+                for (const step of [-1, 1]) {
+                    const target = index + step;
+                    const move = document.createElement('a'); move.href = '#'; move.textContent = step < 0 ? '⬆️' : '⬇️'; move.title = step < 0 ? 'Move up' : 'Move down';
+                    move.style.cssText = 'display:inline-block;width:1.8em';
+                    if (target < 0 || target >= savedSearches.length) move.style.visibility = 'hidden';
+                    else move.addEventListener('click', event => {
+                        event.preventDefault();
+                        [savedSearches[index], savedSearches[target]] = [savedSearches[target], savedSearches[index]];
+                        saveSearches(); renderSavedSearches();
+                    });
+                    action.append(move);
+                }
+            }
+            find('#saved_search_list').replaceChildren(...(savedSearches.length ? [table] : []));
+        }
+        for (const item of SK_MRS_FAVORITES) {
+            const label = document.createElement('label'), input = document.createElement('input');
+            input.type = 'checkbox'; input.value = item.id; input.dataset.kind = 'journals';
+            label.append(input, document.createTextNode(item.label)); find('#ms-fav').append(label);
+        }
+        refreshMetrics();
+        const year = new Date().getFullYear(); find('#from-date').value = `${year}-01-01`; find('#to-date').value = `${year}-12-31`;
+        applySettings(settings); renderSavedSearches();
+        $(form).on('change', event => {
+            const input = event.target;
+            if (input === items) { selected[currentKind()] = new Set($(items).val()); refreshSelection(); }
+            if (input.dataset.kind) {
+                const ids = selected[input.dataset.kind]; input.checked ? ids.add(input.value) : ids.delete(input.value);
+                find('input[name="ms-kind"][value="journals"]').checked = true; refreshChoices();
+            }
+        });
+        find('#ms-kinds').addEventListener('click', event => {
+            if (event.target.type !== 'radio') return;
+            refreshChoices(); $(items).trigger('chosen:open');
+        });
+        find('#reload').addEventListener('click', () => form.requestSubmit());
+        find('#ms-prepend').addEventListener('click', () => submitQuery(true));
+        find('#save_search').addEventListener('click', () => {
+            if (!validateQuery()) return;
+            const name = pageWindow.prompt('Search name:')?.trim(); if (!name) return;
+            const autoStart = Boolean(savedSearches.find(search => search.name === name)?.autoStart);
+            savedSearches = savedSearches.filter(search => search.name !== name);
+            savedSearches.push({ name, state: getState(), autoStart }); saveSearches(); renderSavedSearches();
+        });
+        // Keep lists on GM and chart queries on fetch so the large download does not block queries.
+        skGMFetchGet('https://mrs.mdpi.com/statistics', 120000).then(response => {
+            const source = new DOMParser().parseFromString(response.responseText, 'text/html');
+            const lists = readCatalog(source);
+            if (!lists.journals.length || !lists.metrics.length) return;
+            Object.assign(catalog, lists);
+            store(cacheKey, { journals: catalog.journals, metrics: catalog.metrics });
+            refreshMetrics(); refreshChoices();
+            for (const input of find('#ms-kinds').querySelectorAll('input')) {
+                input.previousElementSibling.textContent = `${input.value[0].toUpperCase() + input.value.slice(1)} (${catalog[input.value].length})`;
+            }
+        }).catch(() => {});
+        function validateQuery() {
+            if (!form.reportValidity()) return false;
+            if (selected[currentKind()].size && find('#from-date').value <= find('#to-date').value) return true;
+            queryStatus.textContent = 'Check filters.'; return false;
+        }
+        async function runQuery(controller, { append = false, prepend = false, name = '', showTable = true } = {}) {
+            const kind = currentKind(), from = find('#from-date').value, to = find('#to-date').value;
+            store(lastQueryKey, getState()); $(items).trigger('chosen:close');
+            const results = find('#ms-results'), block = document.createElement('div'), chart = document.createElement('div');
+            if (!append && !prepend) {
+                for (const previous of results.querySelectorAll('.ms-chart')) pageWindow.zingchart.exec(previous.id, 'destroy');
+                results.replaceChildren();
+            }
+            if (name) { const title = document.createElement('h3'); title.textContent = name; block.append(title); }
+            chart.id = 'ms-chart-' + ++chartIndex; chart.hidden = true; block.append(chart);
+            if (prepend) results.prepend(block); else results.append(block);
+            queryStatus.textContent = name ? `Loading: ${name}…` : 'Loading…'; const started = performance.now();
+            const data = new URLSearchParams({
+                from, to, employees: kind + ':' + [...selected[kind]].join(','), statistic: metric.value,
+                dateFilter: find('#date-format').value, type: find('input[name="ms-type"]:checked').value,
+                download: 'false', articletypes: 'articletype:', articleTopics: 'false', editorJournalId: '0', marketingJournalId: '0',
+                'min-y': '', 'max-y': '', y_step: '', invoiceDate: 'false', invoiceVat: 'false', budgetPaid: 'false',
+                billingConfirmed: 'false', isShowNums: 'false', confirmationDate: 'false', transferType: 'false',
+            });
+            for (const input of form.querySelectorAll('input[type=checkbox][name]')) data.set(input.name, String(input.checked));
+            try {
+                const response = await fetch('/statistic', { method: 'POST', credentials: 'same-origin', body: data, signal: controller.signal });
+                const result = await response.json();
+                if (controller.signal.aborted) return;
+                const graph = result.graph || result, graphs = graph.graphset || [graph];
+                if (!graphs.some(item => Array.isArray(item.series))) throw new Error();
+                const comparisonMode = data.get('type') === '1' ? 'MoM' : data.get('type') === '2' ? 'YoY' : '';
+                if (comparisonMode) for (const item of graphs) {
+                    if (!Array.isArray(item.series)) continue;
+                    const suffix = ` ${comparisonMode} Comparison Data`, current = item.series.filter(series => !series.text?.endsWith(suffix));
+                    item.series = current.map(series => {
+                        const baseline = item.series.find(other => other.text === series.text + suffix);
+                        if (!baseline) throw new Error();
+                        const values = series.values.map((value, index) => {
+                            const previous = baseline.values[index], present = Number(value), past = Number(previous);
+                            if (value == null || value === '' || previous == null || previous === '' || !Number.isFinite(present) || !Number.isFinite(past) || present === 0 || past === 0) return null;
+                            return Number(((present - past) / past * 100).toFixed(2));
+                        });
+                        return { ...series, text: `${series.text} ${comparisonMode} (%)`, values };
+                    });
+                    item.title = { ...item.title, text: `${item.title?.text || data.get('statistic')} — ${comparisonMode} change (%)` };
+                    item['scale-y'] = { ...item['scale-y'], format: '%v%', label: { text: `${comparisonMode} change (%)` } };
+                    item.plot = { ...item.plot, 'tooltip-text': '%t<br>%v%', 'value-box': { ...item.plot?.['value-box'], text: '%v%', visible: false } };
+                }
+                const tables = document.createDocumentFragment();
+                if (showTable) for (const item of graphs) {
+                    if (!Array.isArray(item.series)) continue;
+                    const table = document.createElement('table'), caption = table.createCaption(); table.className = 'border'; table.style.width = '100%';
+                    caption.textContent = item.title?.text || `${data.get('statistic')} ${from} – ${to}`;
+                    const labels = item['scale-x']?.values || item.scaleX?.values || [], heading = table.createTHead().insertRow();
+                    const th = document.createElement('th'); th.className = 'col-caption'; th.textContent = 'Date'; heading.append(th);
+                    for (const series of item.series) { const cell = document.createElement('th'); cell.className = 'col-caption'; cell.textContent = series.text || 'Value'; heading.append(cell); }
+                    const body = table.createTBody(), length = Math.max(labels.length, ...item.series.map(series => series.values?.length || 0));
+                    for (let index = 0; index < length; index++) {
+                        const row = body.insertRow(); row.insertCell().textContent = labels[index] ?? String(index + 1);
+                        for (const series of item.series) {
+                            const value = series.values?.[index];
+                            row.insertCell().textContent = value == null ? (comparisonMode ? '—' : '') : comparisonMode ? value.toFixed(2) + '%' : String(value);
+                        }
+                    }
+                    tables.append(table);
+                }
+                block.append(tables);
+                if (!pageWindow.zingchart) await (chartReady ||= $.ajax({ url: '/bundles/mdpimrs/js/html5_scripts/zingchart-html5-min.js', dataType: 'script', cache: true }));
+                if (controller.signal.aborted) return;
+                chart.hidden = false;
+                pageWindow.zingchart.render({ id: chart.id, output: 'svg', width: '100%', height: Math.max(400, graphs.length * 400), data: graph }); chart.className = 'ms-chart';
+                queryStatus.textContent = `Done (${((performance.now() - started) / 1000).toFixed(2)} s).`;
+            } catch (error) {
+                if (!controller.signal.aborted) {
+                    const message = document.createElement('p'); message.textContent = 'Failed.'; block.append(message); queryStatus.textContent = 'Failed.';
+                }
+            }
+        }
+        function submitQuery(prepend = false) {
+            if (!validateQuery()) return;
+            queryController?.abort(); runQuery(queryController = new AbortController(), { prepend });
+        }
+        form.addEventListener('submit', event => { event.preventDefault(); submitQuery(); });
+        $('<link>', { rel: 'stylesheet', href: 'https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/css/chosen.min.css' }).appendTo('head');
+        $(metric).chosen({ width: '240px' }).next('.chosen-container').find('.chosen-drop').css({ width: '360px', 'white-space': 'nowrap' });
+        $(items).chosen({ width: '100%', search_contains: true, hide_results_on_select: false });
+        const calendar = document.createElement('div'); calendar.id = 'ms-cal'; calendar.hidden = true; find('.itemwrap').append(calendar);
+        let dateInput;
+        $.ajax({ url: '/bundles/mdpimrs/lib/datepicker/js/datepicker.js', dataType: 'text' }).then(source => {
+            // Expand the original widget's self-closing divs for jQuery 4; use its inline mode, as MRS does.
+            new Function('jQuery', source.replace(/(<div\b[^>]*?)\s*\/>/g, '$1></div>'))($);
+            $(calendar).DatePicker({
+                flat: true, format: 'Y-m-d', date: find('#from-date').value, current: find('#from-date').value, calendars: 2, starts: 1,
+                onChange(value) { dateInput.value = value; $(dateInput).trigger('change'); calendar.hidden = true; },
+            });
+            $(find('#from-date')).add(find('#to-date')).on('focus click', function () {
+                dateInput = this; calendar.hidden = false; $(calendar).DatePickerSetDate(this.value, true).DatePickerLayout();
+                const bounds = this.getBoundingClientRect(), bottom = find('#to-date').getBoundingClientRect().bottom;
+                calendar.style.left = Math.max(0, Math.min(bounds.left, document.body.clientWidth - calendar.offsetWidth)) + scrollX + 'px'; calendar.style.top = Math.max(bounds.bottom, bottom) + scrollY + 'px';
+            });
+            document.addEventListener('mousedown', event => { if (event.target !== dateInput && !calendar.contains(event.target)) calendar.hidden = true; });
+            document.addEventListener('keydown', event => { if (event.key === 'Escape') calendar.hidden = true; });
+        }).catch(() => {});
+        if (startupSearches.length) {
+            const controller = queryController = new AbortController();
+            (async () => {
+                for (const [index, search] of startupSearches.entries()) {
+                    if (controller.signal.aborted) break;
+                    applySettings(search.state);
+                    if (validateQuery()) await runQuery(controller, { append: index > 0, name: search.name, showTable: false });
+                }
+            })();
+        } else if (settings.fields) form.requestSubmit();
+    }
+
     //Always: MRS Chosen
     if (window.location.href.indexOf("//mrs.mdpi.com/statistics") > -1) {
         try {
-            let styleElement = document.createElement("style");
-            styleElement.innerHTML = `.chosen-container{position:relative;display:inline-block;vertical-align:middle;font-size:13px;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.chosen-container *{-webkit-box-sizing:border-box;
-        box-sizing:border-box}.chosen-container .chosen-drop{position:absolute;top:100%;z-index:1010;width:100%;border:1px solid #aaa;border-top:0;background:#fff;-webkit-box-shadow:0 4px 5px rgba(0,0,0,.15);box-shadow:0 4px 5px rgba(0,0,0,.15);clip:rect(0,0,0,0);
-        -webkit-clip-path:inset(100% 100%);clip-path:inset(100% 100%)}.chosen-container.chosen-with-drop .chosen-drop{clip:auto;-webkit-clip-path:none;clip-path:none}.chosen-container a{cursor:pointer}.chosen-container .chosen-single .group-name,.chosen-container
-        .search-choice .group-name{margin-right:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:400;color:#999}.chosen-container .chosen-single .group-name:after,.chosen-container .search-choice .group-name:after{content:":";padding-left:
-        2px;vertical-align:top}.chosen-container-single .chosen-single{position:relative;display:block;overflow:hidden;padding:0 0 0 8px;height:25px;border:1px solid #aaa;border-radius:5px;background-color:#fff;background:-webkit-gradient(linear,left top,left bottom,
-        color-stop(20%,#fff),color-stop(50%,#f6f6f6),color-stop(52%,#eee),to(#f4f4f4));background:linear-gradient(#fff 20%,#f6f6f6 50%,#eee 52%,#f4f4f4 100%);background-clip:padding-box;-webkit-box-shadow:0 0 3px #fff inset,0 1px 1px rgba(0,0,0,.1);box-shadow:
-        0 0 3px #fff inset,0 1px 1px rgba(0,0,0,.1);color:#444;text-decoration:none;white-space:nowrap;line-height:24px}.chosen-container-single .chosen-default{color:#999}.chosen-container-single .chosen-single span{display:block;overflow:hidden;margin-right:26px;
-        text-overflow:ellipsis;white-space:nowrap}.chosen-container-single .chosen-single-with-deselect span{margin-right:38px}.chosen-container-single .chosen-single abbr{position:absolute;top:6px;right:26px;display:block;width:12px;height:12px;background:url(
-        chosen-sprite.png) -42px 1px no-repeat;font-size:1px}.chosen-container-single .chosen-single abbr:hover{background-position:-42px -10px}.chosen-container-single.chosen-disabled .chosen-single abbr:hover{background-position:-42px -10px}.chosen-container-single
-        .chosen-single div{position:absolute;top:0;right:0;display:block;width:18px;height:100%}.chosen-container-single .chosen-single div b{display:block;width:100%;height:100%;background:url(chosen-sprite.png) no-repeat 0 2px}.chosen-container-single
-        .chosen-search{position:relative;z-index:1010;margin:0;padding:3px 4px;white-space:nowrap}.chosen-container-single .chosen-search input[type=text]{margin:1px 0;padding:4px 20px 4px 5px;width:100%;height:auto;outline:0;border:1px solid #aaa;
-        background:url(chosen-sprite.png) no-repeat 100% -20px;font-size:1em;font-family:sans-serif;line-height:normal;border-radius:0}.chosen-container-single .chosen-drop{margin-top:-1px;border-radius:0 0 4px 4px;background-clip:padding-box}
-        .chosen-container-single.chosen-container-single-nosearch .chosen-search{position:absolute;clip:rect(0,0,0,0);-webkit-clip-path:inset(100% 100%);clip-path:inset(100% 100%)}.chosen-container .chosen-results{color:#444;position:relative;overflow-x:hidden;
-        overflow-y:auto;margin:0 4px 4px 0;padding:0 0 0 4px;max-height:65vh;-webkit-overflow-scrolling:touch}.chosen-container .chosen-results li{display:none;margin:0;padding:5px 6px;list-style:none;line-height:15px;word-wrap:break-word;-webkit-touch-callout:none}
-        .chosen-container .chosen-results li.active-result{display:list-item;cursor:pointer}.chosen-container .chosen-results li.disabled-result{display:list-item;color:#ccc;cursor:default}.chosen-container .chosen-results li.highlighted{background-color:#3875d7;
-        background-image:-webkit-gradient(linear,left top,left bottom,color-stop(20%,#3875d7),color-stop(90%,#2a62bc));background-image:linear-gradient(#3875d7 20%,#2a62bc 90%);color:#fff}.chosen-container .chosen-results li.no-results{color:#777;display:list-item;
-        background:#f4f4f4}.chosen-container .chosen-results li.group-result{display:list-item;font-weight:700;cursor:default}.chosen-container .chosen-results li.group-option{padding-left:15px}.chosen-container .chosen-results li em{font-style:normal;
-        text-decoration:underline}.chosen-container-multi .chosen-choices{position:relative;overflow:hidden;margin:0;padding:0 5px;width:100%;height:auto;border:1px solid #aaa;background-color:#fff;background-image:-webkit-gradient(linear,left top,left bottom,
-        color-stop(1%,#eee),color-stop(15%,#fff));background-image:linear-gradient(#eee 1%,#fff 15%);cursor:text}.chosen-container-multi .chosen-choices li{float:left;list-style:none}.chosen-container-multi .chosen-choices li.search-field{margin:0;padding:0;
-        white-space:nowrap}.chosen-container-multi .chosen-choices li.search-field input[type=text]{margin:1px 0;padding:0;height:25px;outline:0;border:0!important;background:0 0!important;-webkit-box-shadow:none;box-shadow:none;color:#999;font-size:100%;
-        font-family:sans-serif;line-height:normal;border-radius:0;width:25px}.chosen-container-multi .chosen-choices li.search-choice{position:relative;margin:3px 5px 3px 0;padding:3px 20px 3px 5px;border:1px solid #aaa;max-width:100%;border-radius:3px;
-        background-color:#eee;background-image:-webkit-gradient(linear,left top,left bottom,color-stop(20%,#f4f4f4),color-stop(50%,#f0f0f0),color-stop(52%,#e8e8e8),to(#eee));background-image:linear-gradient(#f4f4f4 20%,#f0f0f0 50%,#e8e8e8 52%,#eee 100%);
-        background-size:100% 19px;background-repeat:repeat-x;background-clip:padding-box;-webkit-box-shadow:0 0 2px #fff inset,0 1px 0 rgba(0,0,0,.05);box-shadow:0 0 2px #fff inset,0 1px 0 rgba(0,0,0,.05);color:#333;line-height:13px;cursor:default}
-        .chosen-container-multi .chosen-choices li.search-choice span{word-wrap:break-word}.chosen-container-multi .chosen-choices li.search-choice .search-choice-close{position:absolute;top:4px;right:3px;display:block;width:12px;height:12px;
-        background:url(chosen-sprite.png) -42px 1px no-repeat;font-size:1px}.chosen-container-multi .chosen-choices li.search-choice .search-choice-close:hover{background-position:-42px -10px}.chosen-container-multi .chosen-choices li.search-choice-disabled
-        {padding-right:5px;border:1px solid #ccc;background-color:#e4e4e4;background-image:-webkit-gradient(linear,left top,left bottom,color-stop(20%,#f4f4f4),color-stop(50%,#f0f0f0),color-stop(52%,#e8e8e8),to(#eee));background-image:linear-gradient
-        (#f4f4f4 20%,#f0f0f0 50%,#e8e8e8 52%,#eee 100%);color:#666}.chosen-container-multi .chosen-choices li.search-choice-focus{background:#d4d4d4}.chosen-container-multi .chosen-choices li.search-choice-focus .search-choice-close{background-position:-42px -10px}
-        .chosen-container-multi .chosen-results{margin:0;padding:0}.chosen-container-multi .chosen-drop .result-selected{display:list-item;color:#ccc;cursor:default}.chosen-container-active .chosen-single{border:1px solid #5897fb;-webkit-box-shadow:0 0 5px
-        rgba(0,0,0,.3);box-shadow:0 0 5px rgba(0,0,0,.3)}.chosen-container-active.chosen-with-drop .chosen-single{border:1px solid #aaa;border-bottom-right-radius:0;border-bottom-left-radius:0;background-image:-webkit-gradient(linear,left top,left bottom,
-        color-stop(20%,#eee),color-stop(80%,#fff));background-image:linear-gradient(#eee 20%,#fff 80%);-webkit-box-shadow:0 1px 0 #fff inset;box-shadow:0 1px 0 #fff inset}.chosen-container-active.chosen-with-drop .chosen-single div{border-left:none;background:0 0}
-        .chosen-container-active.chosen-with-drop .chosen-single div b{background-position:-18px 2px}.chosen-container-active .chosen-choices{border:1px solid #5897fb;-webkit-box-shadow:0 0 5px rgba(0,0,0,.3);box-shadow:0 0 5px rgba(0,0,0,.3)}.chosen-container-active
-        .chosen-choices li.search-field input[type=text]{color:#222!important}.chosen-disabled{opacity:.5!important;cursor:default}.chosen-disabled .chosen-single{cursor:default}.chosen-disabled .chosen-choices .search-choice .search-choice-close{cursor:default}
-        .chosen-rtl{text-align:right}.chosen-rtl .chosen-single{overflow:visible;padding:0 8px 0 0}.chosen-rtl .chosen-single span{margin-right:0;margin-left:26px;direction:rtl}.chosen-rtl .chosen-single-with-deselect span{margin-left:38px}.chosen-rtl
-        .chosen-single div{right:auto;left:3px}.chosen-rtl .chosen-single abbr{right:auto;left:26px}.chosen-rtl .chosen-choices li{float:right}.chosen-rtl .chosen-choices li.search-field input[type=text]{direction:rtl}.chosen-rtl .chosen-choices
-        li.search-choice{margin:3px 5px 3px 0;padding:3px 5px 3px 19px}.chosen-rtl .chosen-choices li.search-choice .search-choice-close{right:auto;left:4px}.chosen-rtl.chosen-container-single .chosen-results{margin:0 0 4px 4px;padding:0 4px 0 0}.chosen-rtl
-        .chosen-results li.group-option{padding-right:15px;padding-left:0}.chosen-rtl.chosen-container-active.chosen-with-drop .chosen-single div{border-right:none}.chosen-rtl .chosen-search input[type=text]{padding:4px 5px 4px 20px;background:url(chosen-sprite.png)
-        no-repeat -30px -20px;direction:rtl}.chosen-rtl.chosen-container-single .chosen-single div b{background-position:6px 2px}.chosen-rtl.chosen-container-single.chosen-with-drop .chosen-single div b{background-position:-12px 2px}@media only screen and
-        (-webkit-min-device-pixel-ratio:1.5),only screen and (min-resolution:144dpi),only screen and (min-resolution:1.5dppx){.chosen-container .chosen-results-scroll-down span,.chosen-container .chosen-results-scroll-up span,.chosen-container-multi .chosen-choices
-        .search-choice .search-choice-close,.chosen-container-single .chosen-search input[type=text],.chosen-container-single .chosen-single abbr,.chosen-container-single .chosen-single div b,.chosen-rtl .chosen-search input[type=text]{background-image:
-        url(chosen-sprite@2x.png)!important;background-size:52px 37px!important;background-repeat:no-repeat!important}}`;
-            document.head.appendChild(styleElement);
-
+            $('<link>', { rel: 'stylesheet', href: 'https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/css/chosen.min.css' }).appendTo('head');
+            $('<style>').text('.chosen-container .chosen-results{max-height:65vh}').appendTo('head');
             function toggleChosen() {
                 if ($("#statisticSelecter").css("display") === "none") {
                     unsafeWindow.$(document.getElementById('statisticSelecter')).chosen("destroy"); $("#statistic").css('overflow', 'auto');
                 } else {
                     let xhr = new XMLHttpRequest;
-                    xhr.open('get', 'https://raw.githubusercontent.com/synalocey/SusyModifier/master/chosen.jquery.js', true);
+                    xhr.open('get', 'https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/js/chosen.jquery.min.js', true);
                     xhr.onreadystatechange = function () {
                         if (xhr.readyState == 4) {
                             if (xhr.status >= 200 && xhr.status < 300 || xhr.status == 304) {
@@ -2395,16 +2660,7 @@ function onInit() {
                         checkbox2.prop('checked', $(this).prop('checked'));
                     });
                 }
-                const checkboxes = [
-                    { id: '555', label: 'Analytics' },
-                    { id: '25', label: 'Games' },
-                    { id: '599', label: 'Geometry' },
-                    { id: '154', label: 'Mathematics' },
-                    { id: '743', label: 'MCB' },
-                    { id: '162', label: 'Risks' },
-                    { id: '598', label: 'IJT' },
-                    { id: '276', label: 'Telecom' },
-                ];
+                const checkboxes = SK_MRS_FAVORITES;
                 $('#filter').append(`<div style="display: block;" id="SynaAdd">&emsp;&emsp;&emsp;</div>`);
 
                 checkboxes.forEach(function (checkbox) {
@@ -3943,39 +4199,42 @@ function skLineBreakForQC() {
     }
 }
 
-function skGetJid(s){return{
-    acoustics:250,actuators:77,accdings:627,admsci:88,adolescents:437,addictionprevention:709,adhesives:597,advpetrolsci:705,acn:703,arm:573,aerobiology:579,aerospace:145,agriculture:95,agriengineering:336,agrochemicals:554,agronomy:34,ai:362,aipa:670,
-    aichem:652,aieng:667,aisociety:702,aiedu:658,aimed:653,aimat:654,aisensors:631,air:557,algorithms:13,allergies:210,alloys:524,analog:674,analytica:285,analytics:555,anatomia:552,anesthres:577,anesthesia:570,animals:74,antibiotics:116,antibodies:40,
-    antioxidants:75,applbiosci:534,applmech:341,applmicrobiol:456,applnano:390,applsci:90,asi:302,appliedchem:480,appliedmath:517,appliedphys:616,aquacj:335,archstud:691,architecture:491,arthropoda:578,arts:78,astronautics:661,astronomy:523,
-    atmosphere:35,atoms:118,audiolres:471,automation:323,axioms:47,bacteria:496,batteries:201,behavsci:82,beverages:174,BDCC:245,biochem:459,bioengineering:175,biologics:420,biology:120,blsf:510,biomass:494,biomechanics:458,biomed:477,biomedicines:158,
-    biomedinformatics:410,biomimetics:208,biomolecules:111,biophysica:346,bioresprod:648,biosensors:108,biosphere:645,biotech:462,birds:415,blockchains:516,brainsci:91,bcrc:722,buildings:67,businesses:427,carbon:195,cancers:23,cardiogenetics:473,
-    cardiovascmed:679,catalysts:27,cells:32,ceramics:240,challenges:103,ChemEngineering:155,chemistry:350,chemproc:406,chemosensors:161,children:159,chips:515,civileng:299,cleantechnol:305,climate:143,ctn:495,clinbioenerg:625,clinpract:482,
-    clockssleep:288,coasts:487,coatings:107,colloids:253,colorants:501,commodities:531,complexities:647,complications:582,compounds:441,computation:123,csmf:543,computers:26,condensedmatter:214,conservation:440,constrmater:467,cmd:330,cosmetics:125,
-    covid:493,crafts:660,cmtr:629,crops:451,cryo:591,cryptography:213,crystals:28,culture:672,cimb:497,curroncol:476,dairy:289,data:176,dentistry:144,dermato:396,dermatopathology:400,designs:227,devices:572,diabetology:389,diagnostics:41,dietetics:520,
-    digital:416,dhi:684,disabilities:426,diseases:126,diversity:17,dna:450,drones:259,drugreactions:713,ddc:575,drylands:704,dynamics:428,earth:385,ecologies:356,econometrics:142,economies:151,education:84,electricity:404,electrochem:306,
-    electronicmat:397,electronics:127,embodiedintelligence:717,emergcareandmed:585,encyclopedia:449,endocrines:386,energies:7,esa:613,eng:391,engtechmanag:720,engproc:402,edm:662,entomology:533,entropy:5,eesp:632,environremediat:676,environsciproc:412,
-    environments:83,epidemiologia:388,epigenomes:198,ebj:468,ejihpe:361,familysci:601,fermentation:196,fibers:128,fintech:509,fire:319,fishes:212,fluids:192,foodeng:729,foods:169,forecasting:301,forensicsci:443,forests:42,fossilstud:608,foundations:492,
-    fractalfract:275,freshwater:714,fuels:395,future:571,fclam:719,futureinternet:19,futurepharmacol:448,futuretransp:460,galaxies:53,games:25,gases:413,gastroent:434,gastrointestdisord:255,gastronomy:583,gels:191,genealogy:209,genes:31,geochem:725,
-    geographies:409,geohazards:347,geomatics:453,geometry:599,geosciences:79,geotechnics:474,geriatrics:179,germs:681,glacies:586,gucdd:580,grainscience:712,grasses:556,green:685,greenhealth:628,gynecolcancer:715,hardware:588,hep:673,healthcare:157,
-    healthcaremat:701,hearts:379,hemato:464,hematolrep:559,heritage:320,histories:205,horticulturae:197,hospitals:574,humanities:63,humans:481,hydrobiology:514,hydrogen:382,hydrology:177,hydrometeorology:686,hydropower:663,hygiene:439,immuno:381,
-    industries:682,idr:469,inflammationj:723,informatics:163,information:50,infrastructures:225,inorganics:167,insects:54,instruments:215,iiac:620,ijcs:650,ijem:656,ijerph:6,ijfs:148,ijmd:602,ijms:2,IJNS:211,ijom:643,ijphenomics:733,ijpb:558,ijtst:734,
-    ijtopology:598,ijtm:423,ijtpp:237,ime:564,inventions:221,investment:716,IoT:355,iron:695,ijgi:113,J:318,jaestheticmed:649,jal:488,jcrm:655,jcdd:180,jcto:529,jcm:93,jcs:244,jcp:311,jdad:594,jdb:134,jeta:542,jemr:644,jfth:742,jfb:104,jfmk:222,jof:186,
-    jgbg:680,jgg:689,jimaging:203,jinnovation:677,jintelligence:106,jdream:675,jlpea:110,jmmp:279,jmse:99,jmahp:596,jmms:641,jmp:418,jnt:351,jne:394,joptmat:671,JOItmC:339,ohbm:235,jparks:630,jpm:65,jpbi:609,jphytomed:669,jor:401,jrfm:185,jsan:138,
-    jsam:692,jsuperintelligence:697,japma:696,joma:605,jtaer:454,jvd:566,jox:433,jzbg:399,journalmedia:405,kidneydial:461,kinasesphosphatases:561,knowledge:499,labmed:606,laboratories:584,land:37,languages:146,lasers:724,laws:60,legumes:740,life:51,
-    lights:615,limnolrev:590,lipidology:313,liquids:435,literature:217,livers:393,logics:538,logistics:170,lowaltitudeeconomy:693,lubricants:52,lymphatics:539,make:290,machines:49,macromol:425,magnetism:432,magnetochemistry:199,marinedrugs:4,
-    maritime:706,materials:14,materproc:407,mca:231,mathematics:154,medsci:81,msf:512,medicina:340,medicines:172,membranes:92,merits:484,metabolites:112,metals:59,meteorology:522,methane:525,mps:207,metrics:617,metrology:465,micro:438,microbiolres:483,
-    microelectronics:624,micromachines:22,microorganisms:73,microplastics:498,microwave:623,minerals:45,mining:447,modelling:314,modernmathphys:619,molbank:11,molecules:1,mollusca:735,multimedia:621,mti:229,muscles:537,nanoenergyadv:479,
-    nanomanufacturing:442,nanomaterials:105,ndt:581,network:457,neuroglia:292,neuroimaging:657,neurolint:472,neurosci:365,nitrogen:239,ncrna:193,nursrep:429,nutraceuticals:478,nutrients:20,obesities:384,occupationalhealth:678,oceans:359,onco:475,
-    optics:360,oral:422,organics:392,organoids:527,osteology:398,oxygen:445,pandemics:664,parasitologia:431,particles:272,pathogens:64,pathophysiology:463,peacestudies:642,pediatrrep:470,pets:589,pharmaceuticals:18,pharmaceutics:9,
-    pharmacoepidemiology:536,pharmacy:147,philosophies:219,photochem:444,photonics:165,photovoltaics:721,phycology:500,physchem:419,psf:511,physics:358,physiologia:436,plants:137,plasma:271,platforms:576,pollutants:383,polymers:29,polysaccharides:304,
-    populations:612,poultry:503,powders:508,precision:732,precisiononcol:646,phc:707,proceedings:247,processes:164,projectmanaghoriz:718,prosthesis:364,proteomes:153,psych:343,psychiatryint:380,psychoactives:532,psychologyint:610,publications:168,
-    purification:600,qubs:224,quantumrep:353,quaternary:277,radiation:411,rdt:690,rareearths:688,reactions:342,realestate:595,receptors:545,recycling:202,rsee:618,religions:102,remotesensing:16,reports:252,reprodmed:268,resources:114,rheumato:506,
-    risks:162,robotics:130,rjpm:659,ruminants:505,safety:206,sci:246,scipharm:238,sclerosis:568,seeds:332,semicondhetinteg:668,sensors:3,separations:233,sexes:218,signals:265,sinusitis:200,smartcities:337,smartfisheries:698,socsci:71,siuj:603,
-    societies:58,software:528,soilsystems:344,solar:518,solids:414,spectroscj:562,sports:56,standards:173,stats:296,stemcelladv:736,stratigraphysedimentol:665,stresses:466,strokerep:699,surfaces:294,surgeries:295,std:560,sustainability:15,suschem:376,
-    susfoods:711,suspackaging:739,sanpp:708,symmetry:44,synbio:521,systems:131,targets:569,taxonomy:417,technologies:150,telecom:276,textiles:446,thalassrep:544,theorapplergonom:622,therapeutics:611,thermo:408,timespace:592,tomography:489,
-    tourismhosp:378,toxics:171,toxins:21,transplantology:352,traumacare:502,higheredu:567,trendspubhealth:593,trendsciedu:710,tropicalmed:230,universe:133,urbansci:228,uro:403,vaccines:76,vehicles:291,venereology:490,vetsci:178,vibration:269,
-    virtualworlds:553,viruses:8,vision:223,waste:530,water:36,welding:683,wild:614,wind:504,women:349,world:377,wevj:354,youth:519,zoonoticdis:541,amh:604
-}[s]||0}
+function skGetJid(s){const journals={
+    aam:807,accountaudit:627,acn:703,acoustics:250,actuators:77,addictprev:709,adhesives:597,admsci:88,adolescents:437,aee:769,aerobiology:579,aeronautics:744,aerospace:145,afsd:745,agriculture:95,agriengineering:336,agrochemicals:554,
+    agronomy:34,ai:362,aiaerosp:765,aiagents:753,aibiol:798,aichem:652,aieduc:658,aieng:667,aimater:654,aimed:653,aipa:670,air:557,aisens:631,aisoc:702,algorithms:13,allergies:210,alloys:524,amh:604,analog:674,analytica:285,analytics:555,
+    anatomia:552,anesthesia:570,anesthres:577,animals:74,antibiotics:116,antibodies:40,antioxidants:75,applbiosci:534,appliedchem:480,appliedmath:517,appliedphys:616,applmech:341,applmicrobiol:456,applnano:390,applsci:90,aps:705,aquacj:335,
+    archaeolstud:691,architecture:491,arm:573,arthropoda:578,arts:78,asi:302,astronautics:661,astronomy:523,atmosphere:35,atoms:118,audiolres:471,automation:323,axioms:47,bacteria:496,batteries:201,bcrc:722,bdcc:245,behavsci:82,
+    beverages:174,bioactives:758,biochem:459,bioengineering:175,biologics:420,biology:120,biomass:494,biomechanics:458,biomed:477,biomedicines:158,biomedinformatics:410,biomimetics:208,biomolecules:111,biophysica:346,bioresourbioprod:648,
+    biosensors:108,biosphere:645,biotech:462,birds:415,blockchains:516,blsf:510,brainsci:91,buildings:67,businesses:427,cancers:23,cancersurviv:760,carbon:195,cardiogenetics:473,cardiovascmed:679,catalysts:27,cells:32,ceramics:240,
+    challenges:103,chemeco:751,chemengineering:155,chemistry:350,chemosensors:161,chemproc:406,children:159,chips:515,cimb:497,civileng:299,cleantechnol:305,climate:143,clinbioenerg:625,clinpract:482,clockssleep:288,cmd:330,cmtr:629,
+    coasts:487,coatings:107,colloids:253,colorants:501,commodities:531,complexities:647,complications:582,compounds:441,computation:123,computers:26,condensedmatter:214,conservation:440,constrmater:467,cosmetics:125,covid:493,crafts:660,
+    crops:451,cryo:591,cryptography:213,crystals:28,csmf:543,ctn:495,culture:672,curroncol:476,dairy:289,data:176,ddc:575,dentistry:144,dermato:396,dermatopathology:400,designs:227,devices:572,dgg:762,dhi:684,diabetology:389,diagnostics:41,
+    dietetics:520,digital:416,disabilities:426,diseases:126,diversity:17,dna:450,drones:259,drugreact:713,drylandsci:704,dynamics:428,earth:385,ebj:468,ece:776,ecm:585,"eco-environsci":777,ecologies:356,econometrics:142,economies:151,
+    edm:662,education:84,eesp:632,ejihpe:361,electricity:404,electrochem:306,electronicmat:397,electronics:127,embodiedintell:717,encyclopedia:449,endocrines:386,energies:7,eng:391,engproc:402,entomology:533,entropy:5,environments:83,
+    environremediat:676,environsciproc:412,enzymology:772,epidemiologia:388,epigenomes:198,epilepsy:750,esa:613,etm:720,famsci:601,fclam:719,fea:729,fermentation:196,fibers:128,fintech:509,fire:319,fishes:212,fluids:192,foods:169,
+    forecasting:301,forensicsci:443,forests:42,fossstud:608,foundations:492,fractalfract:275,freshwater:714,fuels:395,future:571,futureinternet:19,futurepharmacol:448,futuretransp:460,galaxies:53,games:25,gases:413,gastroent:434,
+    gastrointestdisord:255,gastronomy:583,gels:191,genealogy:209,genes:31,geochem:725,geographies:409,geohazards:347,geomatics:453,geometry:599,geosciences:79,geotechnics:474,geriatrics:179,germs:681,glacies:586,govpol:774,grainsci:712,
+    grasses:556,green:685,greenhealth:628,gucdd:580,gynecolcancer:715,hardware:588,healthcare:157,healthcmater:701,hearts:379,hemato:464,hematolrep:559,hep:673,heritage:320,higheredu:567,histories:205,horticulturae:197,hospitals:574,
+    humanities:63,humanoids:757,humans:481,hydrobiology:514,hydrogen:382,hydrology:177,hydrometeorology:686,hydropower:663,hygiene:439,idr:469,iic:620,ijcs:650,ijem:656,ijerph:6,ijfs:148,ijgi:113,ijmd:602,ijms:2,ijns:211,ijom:643,ijp:733,
+    ijpb:558,ijt:598,ijtm:423,ijtpp:237,ijtst:734,ime:564,immuno:381,industries:682,inflammj:723,informatics:163,information:50,infrastructures:225,inorganics:167,insects:54,instruments:215,inventions:221,investment:716,iot:355,iron:695,
+    j:318,jaestheticmed:649,jal:488,japma:696,jcdd:180,jcm:93,jcp:311,jcrm:655,jcs:244,jcto:529,jdad:594,jdb:134,jdcp:767,jdream:675,jemr:644,jeta:542,jfb:104,jfbi:804,jfmk:222,jfth:742,jgbg:680,jgg:689,jimaging:203,jintelligence:106,
+    jlpea:110,jmahp:596,jmmp:279,jmms:641,jmp:418,jmse:99,jne:394,jnt:351,jof:186,joi:677,joitmc:339,joma:605,jop:630,joptm:671,jor:401,journalmedia:405,jox:433,jpbi:609,jphytomed:669,jpm:65,jrfm:185,jsam:692,jsan:138,jtaer:454,jvd:566,
+    jzbg:399,kidneydial:461,kinasesphosphatases:561,knowledge:499,labmed:606,laboratories:584,lae:693,land:37,langtechnol:731,languages:146,lasers:724,laws:60,legumes:740,life:51,lights:615,limnolrev:590,lipidology:313,liquids:435,
+    literature:217,livers:393,logics:538,logistics:170,lubricants:52,lymphatics:539,machines:49,macromol:425,magnetism:432,magnetochemistry:199,make:290,marinedrugs:4,maritime:706,materials:14,materproc:407,mathematics:154,mca:231,mcb:743,
+    meb:747,medicina:340,medicines:172,medsci:81,membranes:92,merits:484,metabolites:112,metals:59,metamaterialsadv:756,meteorology:522,methane:525,metrics:617,metrology:465,micro:438,microbiolres:483,microchem:805,microelectronics:624,
+    micromachines:22,microorganisms:73,microplastics:498,microwave:623,minerals:45,mining:447,mmphys:619,modelling:314,molbank:11,molecules:1,mollusca:735,mps:207,msf:512,mti:229,multimedia:621,muscles:537,musculoskeletsci:800,mutation:748,
+    nanoenergyadv:479,nanomanufacturing:442,nanomaterials:105,ncrna:193,ndt:581,network:457,neuroglia:292,neuroimaging:657,neurolint:472,neurosci:365,nitrogen:239,numbertheory:741,nursrep:429,nutraceuticals:478,nutrients:20,obesities:384,
+    occuphealth:678,oceans:359,ohbm:235,onco:475,opermanag:737,optics:360,optoelectronics:746,oral:422,organics:392,organoids:527,osteology:398,oxygen:445,pandemics:664,parasitologia:431,particles:272,pathogens:64,pathophysiology:463,
+    peacestud:642,pediatrrep:470,pets:589,pharmaceuticals:18,pharmaceutics:9,pharmacoepidemiology:536,pharmacy:147,phc:707,philosophies:219,photochem:444,photonics:165,photovoltaics:721,phycology:500,physchem:419,physics:358,
+    physiologia:436,plants:137,plasma:271,platforms:576,pmh:718,pnr:763,pollutants:383,polymers:29,polysaccharides:304,populations:612,poultry:503,powders:508,ppi:770,precision:732,precisoncol:646,prevhealthc:766,proceedings:247,
+    processes:164,prosthesis:364,proteomes:153,psf:511,psych:343,psychiatryint:380,psychoactives:532,psycholint:610,publications:168,purification:600,quantumrep:353,quaternary:277,qubs:224,radiation:411,rareearths:688,rdt:690,reactions:342,
+    realestate:595,receptors:545,recycling:202,religions:102,remotesensing:16,reports:252,reprodmed:268,resources:114,rheumato:506,risks:162,rjpm:659,robotics:130,robots:797,rsee:618,ruminants:505,safety:206,sanpp:708,sbf:768,sca:736,
+    sci:246,sciedu:710,scipharm:238,sclerosis:568,seeds:332,sensors:3,senssyst:761,separations:233,sexes:218,shi:668,signals:265,sinusitis:200,siuj:603,smartcities:337,smartfish:698,smartgrids:759,societies:58,socsci:71,software:528,
+    soilsystems:344,solar:518,solids:414,spectroscj:562,sports:56,standards:173,stats:296,std:560,sti:752,stomatology:778,stratsediment:665,stresses:466,strokerep:699,superintelligence:697,surfaces:294,surgeries:295,suschem:376,
+    susenvmgmt:773,sustainability:15,sustainagric:755,sustainfoods:711,sustainpackag:739,symmetry:44,synbio:521,systems:131,tae:622,targets:569,taxonomy:417,technologies:150,telecom:276,textiles:446,thalassrep:544,therapeutics:611,
+    thermo:408,timespace:592,tomography:489,totalenviron:771,tourismhosp:378,toxics:171,toxins:21,tph:593,transplantology:352,traumacare:502,tropicalmed:230,universe:133,urbansci:228,uro:403,vaccines:76,vehicles:291,venereology:490,
+    vetsci:178,vibration:269,virtualworlds:553,viruses:8,vision:223,waste:530,water:36,welding:683,wetlres:799,wevj:354,wild:614,wind:504,women:349,world:377,xmanagement:754,xscience:749,youth:519,zoonoticdis:541,zoos:775
+};return s === undefined ? journals : journals[String(s).trim().toLowerCase()]||0}
 
 var skTitleKeywords = [
     "Pythagorean","Neutrosophic","Picture fuzzy","Grey fuzzy","q-rung Orthopair","Spherical Fuzzy","Conformable","Jumarie","Atangana-Baleanu","Atangana–Baleanu","Caputo-Fabrizio","Caputo–Fabrizio","Katugampola"
