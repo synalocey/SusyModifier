@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.10.18
+// @version       6.10.20
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -43,6 +43,18 @@
 // @require       https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/js/chosen.jquery.min.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
 // @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/Scholar-screening.user.js?v=6.9.23
+// @require       https://mrs.mdpi.com/bundles/mdpimrs/js/html5_scripts/zingchart-html5-min.js?v=6.10.20
+// @require       https://gcore.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js?v=6.10.20
+// @resource      chosenCSS             https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/css/chosen.min.css?v=6.10.20
+// @resource      customCSS             https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.css?v=6.10.20
+// @resource      tooltipsterCSS        https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/css/tooltipster.bundle.min.css?v=6.10.20
+// @resource      tooltipsterNoirCSS    https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-noir.min.css?v=6.10.20
+// @resource      icons                 https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/icons.json?v=6.10.20
+// @resource      mailsdbBaseCSS        https://mailsdb.i.mdpi.com/assets/application-98a08eef03d8f08cf84f0f5a890ccbf92dd20964127ea9c280f768a08e729027.css?v=6.10.20
+// @resource      mrsScreenCSS          https://mrs.mdpi.com/bundles/mdpimrs/css/screen.css?v=6.10.20
+// @resource      mrsMainCSS            https://mrs.mdpi.com/bundles/mdpimrs/css/main.css?v=6.10.20
+// @resource      mrsLayoutCSS          https://mrs.mdpi.com/bundles/mdpimrs/lib/datepicker/css/layout.css?v=6.10.20
+// @resource      flatpickrCSS          https://gcore.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css?v=6.10.20
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM.getValue
@@ -56,6 +68,7 @@
 // @grant         GM_getTab
 // @grant         GM_saveTab
 // @grant         GM_addStyle
+// @grant         GM_getResourceText
 // @grant         GM_registerMenuCommand
 // @grant         GM.cookie
 // @grant         window.close
@@ -74,7 +87,7 @@
 // @connect       script.googleusercontent.com
 // @run-at        document-idle
 // ==/UserScript==
-/* globals jQuery, $, GM_config */
+/* globals jQuery, $, GM_config, zingchart, flatpickr */
 
 const SK_WORK_LOGIN_SITES = [['susy','SUSY','https://susy.mdpi.com/user/sme/status/submitted'],['mdpi','MDPI','https://www.mdpi.com/user/login'],['mailsdb','MailsDB','https://mailsdb.i.mdpi.com/'],['mrs','MRS 1.0','https://mrs.mdpi.com/statistics'],
                              ['attendance','HRMS','https://i.mdpi.cn/team/attendance'],['redmine','Redmine','https://redmine.mdpi.cn/']].map(([id,name,url])=>({id,name,url}));
@@ -596,7 +609,7 @@ function onInit() {
                         $("a:contains('Edit Reviewer')").parent().find('td').each(function () {
                             let ranking = skGetUniv($(this).text().trim());
                             if (ranking.color) {
-                                if (!$('#tooltipster-style').length) { addCssTooltipster() }
+                                skAddResourceStyle('tooltipsterCSS', 'tooltipsterNoirCSS', 'tooltipster-style');
                                 $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                     .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                             }
@@ -1086,7 +1099,7 @@ function onInit() {
                 }
 
                 // 颜色标记Affiliation
-                addCssTooltipster();
+                skAddResourceStyle('tooltipsterCSS', 'tooltipsterNoirCSS', 'tooltipster-style');
                 $("table [title|='Google Scholar']").each(function () {
                     let ranking = skGetUniv($(this).parent().nextAll(":last-child").text().trim());
                     if (ranking.color) {
@@ -1431,7 +1444,7 @@ function onInit() {
                         $('span:contains("Guest Editor Information"):visible').parent().parent().find("div.cell.small-12").each(function () {
                             let ranking = skGetUniv($(this).text().trim());
                             if (ranking.color) {
-                                if (!$('#tooltipster-style').length) { addCssTooltipster() }
+                                skAddResourceStyle('tooltipsterCSS', 'tooltipsterNoirCSS', 'tooltipster-style');
                                 $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                     .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                             }
@@ -1440,19 +1453,18 @@ function onInit() {
                 });
                 $("#guestNextBtn").on("click", function () {
                     waitForKeyElements('#specialBackBtn', function () {
+                        skAddResourceStyle('tooltipsterCSS', 'tooltipsterNoirCSS', 'tooltipster-style');
                         $('#checkMailsdb').parent().find("br").each(function () {
                             var nextNode = this.nextSibling;
                             if (nextNode && nextNode.nodeType === 3 && nextNode.nodeValue.includes('Affiliation:')) {
                                 let ranking = skGetUniv($(nextNode).text().trim());
                                 if (ranking.color) {
-                                    if (!$('#tooltipster-style').length) { addCssTooltipster() }
                                     $(nextNode).replaceWith($('<span>').text(nextNode.nodeValue).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                                             .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' }));
                                 }
                             }
                             let ranking = skGetUniv($(this).text().trim());
                             if (ranking.color) {
-                                if (!$('#tooltipster-style').length) { addCssTooltipster() }
                                 $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                     .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                             }
@@ -2141,18 +2153,14 @@ function onInit() {
     //Always: Mailsdb样式⚙️🔝
     if (window.location.href.indexOf("mailsdb.i.mdpi.com/reversion/search/emails") > -1) {
         try {
-            $("head").append('<link rel="stylesheet" type="text/css" href="/assets/application-98a08eef03d8f08cf84f0f5a890ccbf92dd20964127ea9c280f768a08e729027.css">');
-            $("head").append(`<style>table{width:80%}.colorgray{color:gray!important}.bgcoloref{background:#efefef!important}#user-info .user-info-section{margin-bottom:10px}#user-info span.email{font-weight:400;color:#103247}#user-info span.number{font-weight:400;color:#123}
-                    #user-info a{color:#00f}#user-info a:visited{color:#cd7e53}#user-info a:hover{color:#47566d}#user-info table{margin-left:2%;width:98%;background:#99a4b5;margin-bottom:10px;border-right:1px solid #ccc;border-bottom:1px solid #ccc;font-size:14px}
-                    #user-info table tr th{text-align:left;background:#4f5671;color:#fefefe;font-weight:400;border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem}#user-info table tr td{border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem;
-                    background:#fefefe} #user-info table tr td span.msid{color:#4e6c88;font-weight:400}#user-info table tr td.title{width:50%}#user-info table tr td.journal{width:10%;text-align:center}#user-info table tr td.status{width:10%;text-align:center}
-                    #user-info table tr td.submission-date{width:10%;text-align:center}#user-info table tr td.invoice-info{width:10%;text-align:center}#user-info table tr td.invoice-payment-info{width:10%;text-align:center}</style>`);
+            document.documentElement.classList.add('sk-mailsdb');
+            skAddResourceStyle('mailsdbBaseCSS', 'customCSS');
             document.body.innerHTML = document.body.innerHTML.replace(/ data-url=/g, ' href=').replace(/ data-load-url=/g, ' href=');
             var mailsdb_email = window.location.href.match(/search_content=(\S*)/)[1], susycheck;
 
             if (/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(mailsdb_email)) {
                 $("body").prepend(`<div style='margin:10px;'><div id='d1'>Loading Invitation Record...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div id='d2'>Loading Overview...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a>
-            <div id='d3'>Loading Review History...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div>`);
+                <div id='d3'>Loading Review History...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div>`);
                 $('.scroll-icon').on("click", function () {
                     let currentIndex = $('.scroll-icon').index(this);
                     let nextIcon = $('.scroll-icon').eq(currentIndex + 1);
@@ -2182,7 +2190,7 @@ function onInit() {
                             $jQueryObject.find("a:contains('Edit Reviewer')").parent().find('td').each(function () {
                                 let ranking = skGetUniv($(this).text().trim());
                                 if (ranking.color) {
-                                    if (!$('#tooltipster-style').length) { addCssTooltipster() }
+                                    skAddResourceStyle('tooltipsterCSS', 'tooltipsterNoirCSS', 'tooltipster-style');
                                     $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                         .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                                 }
@@ -2340,9 +2348,7 @@ function onInit() {
         const startupSearches = savedSearches.filter(search => search.autoStart);
         const cached = readStored(cacheKey, {}), settings = startupSearches[0]?.state || readStored(lastQueryKey, {});
         const saveSearches = () => GM_setValue(searchesKey, savedSearches.map(search => JSON.stringify(search)));
-        for (const path of ['css/screen.css', 'css/main.css', 'lib/datepicker/css/datepicker.css', 'lib/datepicker/css/layout.css']) {
-            $('<link>', { rel: 'stylesheet', href: '/bundles/mdpimrs/' + path }).appendTo('head');
-        }
+        skAddResourceStyle(['mrsScreenCSS', 'mrsMainCSS', 'mrsLayoutCSS', 'flatpickrCSS', 'customCSS']);
         const catalog = {
             journals: cached.journals?.length ? cached.journals : Object.entries(skGetJid()).map(([label, id]) => ({ id: String(id), label })),
             employees: [], offices: [], sections: [],
@@ -2350,12 +2356,10 @@ function onInit() {
         };
         const selected = Object.fromEntries(Object.keys(containers).map(kind => [kind, new Set(settings.selected?.[kind] || (kind === 'journals' ? [String(S_J > 0 ? S_J : 154)] : []))]));
         const pageWindow = unsafeWindow;
-        let chartReady, queryController, chartIndex = 0;
+        let queryController, chartIndex = 0;
         const root = document.createElement('div');
         root.id = 'ms';
         root.innerHTML = `
-            <style> #ms-kinds label,#ms-fav label{margin-right:10px}#ms .chosen-results{max-height:65vh} #ms .chosen-choices input{border:0;outline:0;background:none;box-shadow:none} #options>label{display:inline-block;width:34px}
-            #ms-cal{position:absolute;z-index:1100} #ms-status{display:inline-block;margin:16px 10px 10px}#saved_search_list,#ms-results{overflow:auto} #ms table{color:inherit;font:inherit} #ms-form .actionButtons{margin-right:8px}</style>
             <div id="container"><div id="topmenu"><div id="projectsMenu"><a href="/statistics">Statistics</a> | <a href="/data/">Data</a> | <b>Quick Statistics</b> | <a href="https://mrs.mdpi.cn/">MRS 2.0</a></div></div>
             <div id="main"><div class="colcontainer"><div id="contentcontainer"><div id="content"><div class="contentwrap"><div class="itemwrap">
                 <div id="formMenu" style="height:auto"><div id="saved_search_list" style="width:96.5%"></div><form id="ms-form">
@@ -2521,7 +2525,7 @@ function onInit() {
             store(lastQueryKey, getState()); $(items).trigger('chosen:close');
             const results = find('#ms-results'), block = document.createElement('div'), chart = document.createElement('div');
             if (!append && !prepend) {
-                for (const previous of results.querySelectorAll('.ms-chart')) pageWindow.zingchart.exec(previous.id, 'destroy');
+                for (const previous of results.querySelectorAll('.ms-chart')) zingchart.exec(previous.id, 'destroy');
                 results.replaceChildren();
             }
             if (name) { const title = document.createElement('h3'); title.textContent = name; block.append(title); }
@@ -2579,10 +2583,9 @@ function onInit() {
                     tables.append(table);
                 }
                 block.append(tables);
-                if (!pageWindow.zingchart) await (chartReady ||= $.ajax({ url: '/bundles/mdpimrs/js/html5_scripts/zingchart-html5-min.js', dataType: 'script', cache: true }));
                 if (controller.signal.aborted) return;
                 chart.hidden = false;
-                pageWindow.zingchart.render({ id: chart.id, output: 'svg', width: '100%', height: Math.max(400, graphs.length * 400), data: graph }); chart.className = 'ms-chart';
+                zingchart.render({ id: chart.id, output: 'svg', width: '100%', height: Math.max(400, graphs.length * 400), data: graph }); chart.className = 'ms-chart';
                 queryStatus.textContent = `Done (${((performance.now() - started) / 1000).toFixed(2)} s).`;
             } catch (error) {
                 if (!controller.signal.aborted) {
@@ -2595,26 +2598,14 @@ function onInit() {
             queryController?.abort(); runQuery(queryController = new AbortController(), { prepend });
         }
         form.addEventListener('submit', event => { event.preventDefault(); submitQuery(); });
-        $('<link>', { rel: 'stylesheet', href: 'https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/css/chosen.min.css' }).appendTo('head');
+        skAddResourceStyle('chosenCSS');
         $(metric).chosen({ width: '240px' }).next('.chosen-container').find('.chosen-drop').css({ width: '360px', 'white-space': 'nowrap' });
         $(items).chosen({ width: '100%', search_contains: true, hide_results_on_select: false });
-        const calendar = document.createElement('div'); calendar.id = 'ms-cal'; calendar.hidden = true; find('.itemwrap').append(calendar);
-        let dateInput;
-        $.ajax({ url: '/bundles/mdpimrs/lib/datepicker/js/datepicker.js', dataType: 'text' }).then(source => {
-            // Expand the original widget's self-closing divs for jQuery 4; use its inline mode, as MRS does.
-            new Function('jQuery', source.replace(/(<div\b[^>]*?)\s*\/>/g, '$1></div>'))($);
-            $(calendar).DatePicker({
-                flat: true, format: 'Y-m-d', date: find('#from-date').value, current: find('#from-date').value, calendars: 2, starts: 1,
-                onChange(value) { dateInput.value = value; $(dateInput).trigger('change'); calendar.hidden = true; },
-            });
-            $(find('#from-date')).add(find('#to-date')).on('focus click', function () {
-                dateInput = this; calendar.hidden = false; $(calendar).DatePickerSetDate(this.value, true).DatePickerLayout();
-                const bounds = this.getBoundingClientRect(), bottom = find('#to-date').getBoundingClientRect().bottom;
-                calendar.style.left = Math.max(0, Math.min(bounds.left, document.body.clientWidth - calendar.offsetWidth)) + scrollX + 'px'; calendar.style.top = Math.max(bounds.bottom, bottom) + scrollY + 'px';
-            });
-            document.addEventListener('mousedown', event => { if (event.target !== dateInput && !calendar.contains(event.target)) calendar.hidden = true; });
-            document.addEventListener('keydown', event => { if (event.key === 'Escape') calendar.hidden = true; });
-        }).catch(() => {});
+        flatpickr([find('#from-date'), find('#to-date')], {
+            dateFormat: 'Y-m-d', allowInput: true, showMonths: 2, disableMobile: true, locale: { firstDayOfWeek: 1 },
+            positionElement: find('#to-date'),
+            onOpen(_, __, picker) { picker.setDate(picker.input.value, false); },
+        });
         if (startupSearches.length) {
             const controller = queryController = new AbortController();
             (async () => {
@@ -2630,25 +2621,18 @@ function onInit() {
     //Always: MRS Chosen
     if (window.location.href.indexOf("//mrs.mdpi.com/statistics") > -1) {
         try {
-            $('<link>', { rel: 'stylesheet', href: 'https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/css/chosen.min.css' }).appendTo('head');
+            skAddResourceStyle('chosenCSS');
             $('<style>').text('.chosen-container .chosen-results{max-height:65vh}').appendTo('head');
+            $('#statisticSelecter').on('change', function (event) {
+                if (!event.originalEvent) this.dispatchEvent(new Event('change', { bubbles: true }));
+            });
             function toggleChosen() {
-                if ($("#statisticSelecter").css("display") === "none") {
-                    unsafeWindow.$(document.getElementById('statisticSelecter')).chosen("destroy"); $("#statistic").css('overflow', 'auto');
+                const select = $('#statisticSelecter');
+                if (select.data('chosen')) {
+                    select.chosen('destroy'); $('#statistic').css('overflow', 'auto');
                 } else {
-                    let xhr = new XMLHttpRequest;
-                    xhr.open('get', 'https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/js/chosen.jquery.min.js', true);
-                    xhr.onreadystatechange = function () {
-                        if (xhr.readyState == 4) {
-                            if (xhr.status >= 200 && xhr.status < 300 || xhr.status == 304) {
-                                var script = document.createElement('script');
-                                script.type = 'text/javascript'; script.text = xhr.responseText; document.body.appendChild(script);
-                                unsafeWindow.$(document.getElementById('statisticSelecter')).chosen();
-                                $("#statistic").css('overflow', 'visible'); $(".chosen-container").css("width", "240px"); $('.chosen-drop').css({'width': '360px', 'white-space': 'nowrap'});
-                            }
-                        }
-                    };
-                    xhr.send(null);
+                    select.chosen({ width: '240px' }); $('#statistic').css('overflow', 'visible');
+                    select.next('.chosen-container').find('.chosen-drop').css({ width: '360px', 'white-space': 'nowrap' });
                 }
             }
             toggleChosen();
@@ -2916,7 +2900,7 @@ function onInit() {
     //Experimental: CN Rank标记
     if (window.location.href.indexOf("projects/journal-mathematics/wiki/SI_Manage") > -1 && GM_config.get('Hidden_Func')) {
         try {
-            addCssTooltipster();
+            skAddResourceStyle('tooltipsterCSS', 'tooltipsterNoirCSS', 'tooltipster-style');
             $("td").each(function () {
                 let ranking = skGetUniv($(this).text().trim());
                 if (ranking.color) {
@@ -2926,7 +2910,6 @@ function onInit() {
             });
         } catch (error) { }
     }
-
 
     //Maths-Related Journal Search + Rank ABC
     if (window.location.hostname.indexOf("google") + window.location.hostname.indexOf("scopus") > -2 && GM_config.get('Maths_J')) {
@@ -2957,7 +2940,7 @@ function onInit() {
                     $('span[data-testid="authorInstitution"]').each(function () {
                         let ranking = skGetUniv($(this).text().trim());
                         if (ranking.color) {
-                            if (!$('#tooltipster-style').length) { addCssTooltipster() }
+                            skAddResourceStyle('tooltipsterCSS', 'tooltipsterNoirCSS', 'tooltipster-style');
                             $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                                 .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                         }
@@ -2969,47 +2952,7 @@ function onInit() {
                         if (h1node.find('#sk-scopus-email-inline').length) return;
                         const authorId = new URLSearchParams(location.search).get('authorId') || (window.location.pathname.match(/\/pages\/authors\/(\d+)/) || [])[1];
                         if (!authorId) return;
-                        GM_addStyle(`
-                            .sk-scopus-card{border:1px solid #c6d5eb;border-radius:10px;padding:14px;margin:14px 0;background:#fff;color:#202124;font-size:15px}
-                            .sk-scopus-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.sk-scopus-toolbar strong{margin-right:auto;font-size:18px;color:#1558d6;font-weight:700}
-                            .sk-scopus-heading strong{margin-right:0}.sk-scopus-card>strong{font-size:18px;color:#1558d6}
-                            .sk-scopus-btn{border:1px solid #1a73e8;border-radius:6px;padding:6px 10px;background:#1a73e8;color:#fff;cursor:pointer;font:inherit;font-weight:600;white-space:nowrap}
-                            .sk-scopus-btn:hover{background:#1558d6}.sk-scopus-btn:disabled{opacity:.6;cursor:default}
-                            .sk-scopus-icon{display:inline-flex;align-items:center;justify-content:center;border:0;padding:0 3px;background:none;color:#1a73e8;font-size:20px;line-height:1.2;cursor:pointer;text-decoration:none}
-                            .sk-scopus-icon:hover{color:#d93025;text-decoration:none}.sk-scopus-note{font-size:13px;color:#444;line-height:1.5}
-                            #sk-coauthors-section .sk-scopus-icon{font-size:13px!important;width:18px;height:18px;min-width:0!important;min-height:0!important;padding:0!important;line-height:1!important;flex-shrink:0}
-                            .sk-scopus-years{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.sk-scopus-year{min-width:68px;padding:7px 10px;border-radius:8px;background:#e8f0fe;text-align:center}
-                            .sk-scopus-year span{display:block;font-size:13px;color:#333}.sk-scopus-year a,.sk-scopus-year b{display:block;font-size:22px;font-weight:700;color:#1a73e8;line-height:1.4}
-                            .sk-scopus-year a:hover{color:#d93025}.sk-scopus-year-current{background:#fff0da}.sk-scopus-year-current a,.sk-scopus-year-current b{color:#c65b00}
-                            .sk-scopus-bars{display:grid;gap:12px;margin-top:14px}.sk-scopus-bar-label{display:flex;justify-content:space-between;gap:10px;margin-bottom:5px;font-size:14px}
-                            .sk-scopus-bar-label span{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.sk-scopus-bar-label b{flex-shrink:0;font-weight:700;color:#1558d6}
-                            .sk-scopus-bar-track{height:8px;border-radius:4px;background:#dfe9f7;overflow:hidden}.sk-scopus-bar-fill{height:100%;border-radius:4px;background:#1a73e8}
-                            .sk-scopus-distribution{display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:12px;min-height:0}
-                            .sk-scopus-distribution>div{min-width:0;overflow:auto;padding:12px;border-radius:8px;background:#f0f6ff;border-left:4px solid #1a73e8}
-                            .sk-scopus-distribution>div>strong{font-size:17px;color:#1558d6}.sk-scopus-distribution>div:nth-child(2){background:#f6efff;border-left-color:#a142f4}
-                            .sk-scopus-distribution>div:nth-child(2)>strong,.sk-scopus-distribution>div:nth-child(2) b{color:#7b1fa2}
-                            .sk-scopus-scroll{overflow:auto;min-width:0;min-height:0;border:1px solid #c6d5eb;border-radius:7px}
-                            .sk-scopus-table{border-collapse:separate;border-spacing:0;width:100%;font-size:15px;text-align:left;color:#202124}
-                            .sk-scopus-table th{position:sticky;top:0;z-index:1;background:#1a73e8;color:#fff;font-weight:600;white-space:nowrap}
-                            .sk-scopus-table th,.sk-scopus-table td{padding:7px 8px;border-bottom:1px solid #dce5f2;vertical-align:top;line-height:1.5}
-                            #sk-publications-section .sk-scopus-table th,#sk-publications-section .sk-scopus-table td{padding:4px 8px;line-height:1.35}
-                            .sk-scopus-table tr:nth-child(even) td{background:#f4f8ff}.sk-scopus-table tbody tr:hover td{background:#e8f0fe}
-                            .sk-scopus-table a{color:#1a0dab;text-decoration:none}.sk-scopus-table a:hover{text-decoration:underline}
-                            #sk-coa-overlay{position:fixed;inset:0;background:rgba(25,38,52,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:12px}
-                            #sk-coa-popup{box-sizing:border-box;width:94vw;height:90vh;display:flex;flex-direction:column;gap:10px;background:#fff;color:#202124;font-size:14px;border-radius:12px;padding:14px;box-shadow:0 12px 48px #152c4940}
-                            #sk-coa-popup:not(.sk-coa-detailed){width:min(440px,94vw);height:min(76vh,680px)}
-                            #sk-coa-popup>.sk-scopus-toolbar{margin:0;flex-wrap:nowrap;flex-shrink:0}#sk-coa-popup>.sk-scopus-toolbar .sk-scopus-note{max-width:36vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-                            #sk-coa-body{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;flex:1;min-height:0}#sk-coa-popup.sk-coa-detailed #sk-coa-body{grid-template-columns:minmax(0,1fr) clamp(240px,20vw,320px)}
-                            #sk-coa-popup:not(.sk-coa-detailed) .sk-scopus-distribution{display:none}
-                            #sk-coa-popup .sk-scopus-table{table-layout:fixed;font-size:14px}#sk-coa-popup.sk-coa-detailed .sk-scopus-table{min-width:1050px}
-                            #sk-coa-popup .sk-scopus-table th,#sk-coa-popup .sk-scopus-table td{padding:4px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-                            #sk-coa-popup .sk-scopus-number{text-align:center}#sk-coa-popup td.sk-scopus-number{color:#1558d6;font-weight:600}
-                            #sk-coa-popup td.sk-coa-output{color:#000;font-weight:400}#sk-coa-popup td.sk-coa-country{font-weight:700}
-                            #sk-coa-publications{position:fixed;inset:0;z-index:10001;background:#19263480;display:flex;align-items:center;justify-content:center;padding:20px}
-                            #sk-coa-publications>section{box-sizing:border-box;width:min(1100px,90vw);max-height:85vh;overflow:auto;background:#fff;border-radius:12px;padding:18px;color:#202124;font-size:15px}
-                            #sk-coa-compact{display:flex;flex-wrap:wrap;gap:6px}#sk-coa-compact a{display:inline-block;padding:3px 10px;border-radius:16px;background:#e8f0fe;color:#1558d6;text-decoration:none;font-size:14px;line-height:1.6}
-                            #sk-coa-compact a:hover{background:#d2e3fc}@media(max-width:900px){#sk-coa-popup.sk-coa-detailed #sk-coa-body{grid-template-columns:minmax(0,1fr) 210px;gap:8px}}
-                        `);
+                        skAddResourceStyle('customCSS');
 
                         // ── 邮箱 span ──
                         const emailSpan = $('<span id="sk-scopus-email-inline">…</span>').css({fontSize:'0.5em',color:'#1a73e8',marginLeft:'16px',verticalAlign:'middle',cursor:'pointer',borderBottom:'1px dashed #1a73e8',overflowWrap:'anywhere'}).attr('title', 'Click to copy');
@@ -3532,7 +3475,7 @@ function onInit() {
                 $("div.gsc_prf_il").each(function () {
                     let ranking = skGetUniv($(this).text().trim());
                     if (ranking.color) {
-                        if (!$('#tooltipster-style').length) { addCssTooltipster() }
+                        skAddResourceStyle('tooltipsterCSS', 'tooltipsterNoirCSS', 'tooltipster-style');
                         $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
                             .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
                     }
@@ -3721,28 +3664,12 @@ function onInit() {
     //Interface: 修改图标
     if (window.location.href.indexOf("susy.mdpi.com") > -1 && GM_config.get('Old_Icon')) {
         try {
-            var customStyle = `#leftcol .menu li{text-align: left !important;justify-content: flex-start !important;position: relative !important;padding: 2px 0 2px 15px !important;font-size: 13px !important; border-bottom: 1px solid rgb(204, 204, 204) !important;}
-            #maincol .user_box_item,#maincol .user_box {font-size: 13px !important;}
-            #leftcol .menu li:not([class])::before{background-color: rgb(79, 86, 113);content: "";height: 6px;width: 6px;position: absolute;left: 4px;top: 8px;z-index: 1}
-            #leftcol .menu-hr {display: none !important;}
-            .light_green_theme #leftcol .menu li:not([class])::before {background-color: rgb(76, 142, 101) !important;}
-            .light_green_theme #leftcol .menu li {border-bottom: 1px solid rgb(197, 222, 208) !important;}
-            .light_green_theme #leftcol .menu li:not(.active) a:not(.active) {color: rgb(46, 57, 36) !important;}
-            #topmenu ul {padding: 3px 0 !important;}
-            #topmenu ul a {padding: 0 0.6rem !important;}`;
-
-            var styleSheet = document.createElement("style");
-            styleSheet.type = "text/css";
-            styleSheet.innerText = customStyle;
-            document.head.appendChild(styleSheet);
-
+            for (const [name, icon] of Object.entries({ pencil: icon_pencil, note: icon_note, note_add: icon_note_add, mail: icon_mail })) {
+                document.documentElement.style.setProperty('--sk-icon-' + name, `url("${icon}")`);
+            }
+            document.documentElement.classList.add('sk-old-icons');
+            skAddResourceStyle('customCSS');
             $("._removeEmail:contains('x')").text(" x");
-            $('head').append(
-            `<style>.ms-edit:before, .ms-note:before, .ms-note-add:before, .ms-mail:before{content: ''; display: inline-block; height: 16px; width: 16px; position: relative; top: -2px; background-size: contain;}
-            .ms-edit:before{background: url('${icon_pencil}') no-repeat center center;}
-            .ms-note:before{background: url('${icon_note}') no-repeat center center;}
-            .ms-note-add:before{background: url('${icon_note_add}') no-repeat center center;}
-            .ms-mail:before{background: url('${icon_mail}') no-repeat center center;} </style>`);
             waitForKeyElements("#intercom-frame", function () { $('.intercom-lightweight-app,#intercom-frame').remove(); }, true);
         } catch (error) { }
     }
@@ -4156,6 +4083,18 @@ function onInit() {
 
 //---------------------------------------------------------------------------------------------------------------------------Functions-------------------------------------------------------------------------------------------------------------------------
 
+function skAddResourceStyle(name, extraName, id = 'sk-style-' + [name].flat()[0]) {
+    if (document.getElementById(id)) return;
+    const css = [name, extraName].flat().filter(Boolean).map(name => {
+        const base = GM_info.script.resources.find(resource => resource.name === name).url;
+        return GM_getResourceText(name).replace(/url\(\s*(?:"([^"\n]*)"|'([^'\n]*)'|([^)]*?))\s*\)/gi, (match, double, single, plain) => {
+            const url = (double ?? single ?? plain).trim();
+            return !url || /^(?:data:|blob:|#)/i.test(url) ? match : 'url("' + new URL(url, base).href + '")';
+        });
+    }).join('\n');
+    GM_addStyle(css).id = id;
+}
+
 function waitForKeyElements(selectorTxt, actionFunction, bWaitOnce, iframeSelector) {
     var targetNodes, btargetsFound; if (typeof iframeSelector == "undefined") { targetNodes = $(selectorTxt); } else targetNodes = $(iframeSelector).contents().find(selectorTxt); if (targetNodes && targetNodes.length > 0) {
         btargetsFound = !0; targetNodes.each(function () {
@@ -4474,24 +4413,7 @@ function skOpenWorkLoginHub() {
 
     document.documentElement.innerHTML = `<!doctype html><html lang="en"><head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Work Login Hub</title>
-    <style id="sk-work-style">
-    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#f3f6f8;color:#26343d;font-family:Arial,"Microsoft YaHei",sans-serif}body{padding:42px 18px}
-    .sk-work-page{max-width:820px;margin:auto}.sk-work-head{margin-bottom:22px}.sk-work-head h1{margin:0;color:#244a63;font-size:28px}.sk-work-head p{margin:7px 0 0;color:#6b7881;font-size:14px}
-    .sk-work-card{overflow:hidden;background:#fff;border:1px solid #e0e6ea;border-radius:12px;box-shadow:0 8px 28px rgba(42,62,74,.09)}
-    .sk-work-summary{display:flex;align-items:center;gap:12px;padding:16px 20px;background:#f8fafb;border-bottom:1px solid #eee}.sk-work-badge{min-width:72px;padding:5px 10px;color:#26b;background:#e7f0ff;border-radius:20px;font-size:12px;font-weight:bold;text-align:center}
-    .sk-work-summary-text{color:#52616b;font-size:14px}.sk-work-row{display:grid;grid-template-columns:18px minmax(135px,1fr) minmax(210px,1.5fr) 58px;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid #edf1f3;font-size:14px}
-    .sk-work-dot{width:10px;height:10px;border-radius:50%;background:#3b82e6;box-shadow:0 0 0 4px #e8f1ff}.sk-work-name{font-weight:600}.sk-work-state{color:#2769b7}
-    .sk-work-open{padding:5px 8px;color:#405562;background:#fff;border:1px solid #b8c4cc;border-radius:6px;text-align:center;text-decoration:none}.sk-work-open:hover{color:#245e86;background:#f3f8fb}
-    .sk-work-row[data-state="ok"] .sk-work-dot{background:#22a060;box-shadow:none}.sk-work-row[data-state="ok"] .sk-work-state{color:#16804b;font-weight:600}.sk-work-row[data-state="login"] .sk-work-dot,.sk-work-row[data-state="unknown"]
-    .sk-work-dot,.sk-work-row[data-state="manual"] .sk-work-dot{background:#e59622;box-shadow:none}.sk-work-row[data-state="login"] .sk-work-state,.sk-work-row[data-state="unknown"] .sk-work-state,.sk-work-row[data-state="manual"] .sk-work-state{color:#ad6700}
-    .sk-work-microsoft{margin:14px 20px 0;padding:10px 12px;color:#805900;background:#fff6dc;border-radius:7px;font-size:13px}.sk-work-microsoft[hidden]{display:none}.sk-work-actions{padding:18px 20px 20px}
-    .sk-work-start{width:100%;padding:12px;color:#fff;background:#2f709b;border:0;border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}.sk-work-start:disabled{background:#a0adb5;cursor:default}
-    .sk-work-extra-actions{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-    .sk-work-btn{display:block;width:100%;padding:10px 12px;color:#2f709b;background:#f0f6fa;border:1px solid #c4d7e5;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s ease;text-align:center;text-decoration:none}
-    .sk-work-btn:hover:not(.sk-work-btn-placeholder){background:#2f709b;color:#fff;border-color:#2f709b}
-    .sk-work-btn-placeholder{opacity:0.5;cursor:default;background:#f8fafb;border-style:dashed}
-    @media(max-width:620px){body{padding:24px 12px}.sk-work-row{grid-template-columns:14px 1fr 54px;gap:9px;padding:13px 15px}.sk-work-state{grid-column:2/4}}
-    </style></head><body><main id="sk-work-login-page" class="sk-work-page">
+    <style id="sk-style-customCSS">${GM_getResourceText('customCSS')}</style></head><body class="sk-work-login"><main id="sk-work-login-page" class="sk-work-page">
     <section class="sk-work-card">
     <div class="sk-work-summary"><span id="sk-work-badge" class="sk-work-badge">Checking</span></div>
     <div id="sk-work-microsoft" class="sk-work-microsoft" hidden></div>
@@ -4714,38 +4636,6 @@ async function skWorkLoginHelper() {
     if (site.id === 'susy') skIsSusyLoggedIn().then(isOk => { if (isOk) finishLogin(); });
 }
 
-function addCssTooltipster() {GM_addStyle(`.tooltipster-fall,.tooltipster-grow.tooltipster-show{-webkit-transition-timing-function:cubic-bezier(.175,.885,.32,1);-moz-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);-ms-transition-timing-function:
-cubic-bezier(.175,.885,.32,1.15);-o-transition-timing-function:cubic-bezier(.175,.885,.32,1.15)}.tooltipster-base{display:flex;pointer-events:none;position:absolute}.tooltipster-box{flex:1 1 auto}.tooltipster-content{box-sizing:border-box;max-height:100%;max-width:100%;
-overflow:auto}.tooltipster-ruler{bottom:0;left:0;overflow:hidden;position:fixed;right:0;top:0;visibility:hidden}.tooltipster-fade{opacity:0;-webkit-transition-property:opacity;-moz-transition-property:opacity;-o-transition-property:opacity;-ms-transition-property:opacity;
-transition-property:opacity}.tooltipster-fade.tooltipster-show{opacity:1}.tooltipster-grow{-webkit-transform:scale(0,0);-moz-transform:scale(0,0);-o-transform:scale(0,0);-ms-transform:scale(0,0);transform:scale(0,0);-webkit-transition-property:-webkit-transform;
--moz-transition-property:-moz-transform;-o-transition-property:-o-transform;-ms-transition-property:-ms-transform;transition-property:transform;-webkit-backface-visibility:hidden}.tooltipster-grow.tooltipster-show{-webkit-transform:scale(1,1);-moz-transform:scale(1,1);
--o-transform:scale(1,1);-ms-transform:scale(1,1);transform:scale(1,1);-webkit-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);transition-timing-function:cubic-bezier(.175,.885,.32,1.15)}.tooltipster-swing{opacity:0;-webkit-transform:rotateZ(4deg);
--moz-transform:rotateZ(4deg);-o-transform:rotateZ(4deg);-ms-transform:rotateZ(4deg);transform:rotateZ(4deg);-webkit-transition-property:-webkit-transform,opacity;-moz-transition-property:-moz-transform;-o-transition-property:-o-transform;-ms-transition-property:
--ms-transform;transition-property:transform}.tooltipster-swing.tooltipster-show{opacity:1;-webkit-transform:rotateZ(0);-moz-transform:rotateZ(0);-o-transform:rotateZ(0);-ms-transform:rotateZ(0);transform:rotateZ(0);-webkit-transition-timing-function:cubic-bezier(.23,
-.635,.495,1);-webkit-transition-timing-function:cubic-bezier(.23,.635,.495,2.4);-moz-transition-timing-function:cubic-bezier(.23,.635,.495,2.4);-ms-transition-timing-function:cubic-bezier(.23,.635,.495,2.4);-o-transition-timing-function:cubic-bezier(.23,.635,.495,2.4);
-transition-timing-function:cubic-bezier(.23,.635,.495,2.4)}.tooltipster-fall{-webkit-transition-property:top;-moz-transition-property:top;-o-transition-property:top;-ms-transition-property:top;transition-property:top;-webkit-transition-timing-function:cubic-bezier(.175,
-.885,.32,1.15);transition-timing-function:cubic-bezier(.175,.885,.32,1.15)}.tooltipster-fall.tooltipster-initial{top:0!important}.tooltipster-fall.tooltipster-dying{-webkit-transition-property:all;-moz-transition-property:all;-o-transition-property:all;
--ms-transition-property:all;transition-property:all;top:0!important;opacity:0}.tooltipster-slide{-webkit-transition-property:left;-moz-transition-property:left;-o-transition-property:left;-ms-transition-property:left;transition-property:left;
--webkit-transition-timing-function:cubic-bezier(.175,.885,.32,1);-webkit-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);-moz-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);-ms-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);
--o-transition-timing-function:cubic-bezier(.175,.885,.32,1.15);transition-timing-function:cubic-bezier(.175,.885,.32,1.15)}.tooltipster-slide.tooltipster-initial{left:-40px!important}.tooltipster-slide.tooltipster-dying{-webkit-transition-property:all;
--moz-transition-property:all;-o-transition-property:all;-ms-transition-property:all;transition-property:all;left:0!important;opacity:0}@keyframes tooltipster-fading{0%{opacity:0}100%{opacity:1}}.tooltipster-update-fade{animation:tooltipster-fading .4s}
-@keyframes tooltipster-rotating{25%{transform:rotate(-2deg)}75%{transform:rotate(2deg)}100%{transform:rotate(0)}}.tooltipster-update-rotate{animation:tooltipster-rotating .6s}@keyframes tooltipster-scaling{50%{transform:scale(1.1)}100%{transform:scale(1)}}
-.tooltipster-update-scale{animation:tooltipster-scaling .6s}.tooltipster-sidetip .tooltipster-box{background:#565656;border:2px solid #000;border-radius:4px}.tooltipster-sidetip.tooltipster-bottom .tooltipster-box{margin-top:8px}.tooltipster-sidetip.tooltipster-left
-.tooltipster-box{margin-right:8px}.tooltipster-sidetip.tooltipster-right .tooltipster-box{margin-left:8px}.tooltipster-sidetip.tooltipster-top.tooltipster-box{margin-bottom:8px}.tooltipster-sidetip .tooltipster-content{color:#fff;line-height:18px;padding:6px 14px}
-.tooltipster-sidetip .tooltipster-arrow{overflow:hidden;position:absolute}.tooltipster-sidetip.tooltipster-bottom .tooltipster-arrow{height:10px;margin-left:-10px;top:0;width:20px}.tooltipster-sidetip.tooltipster-left .tooltipster-arrow{height:20px;margin-top:-10px;
-right:0;top:0;width:10px}.tooltipster-sidetip.tooltipster-right .tooltipster-arrow{height:20px;margin-top:-10px;left:0;top:0;width:10px}.tooltipster-sidetip.tooltipster-top.tooltipster-arrow{bottom:0;height:10px;margin-left:-10px;width:20px}.tooltipster-sidetip
-.tooltipster-arrow-background,.tooltipster-sidetip .tooltipster-arrow-border{height:0;position:absolute;width:0}.tooltipster-sidetip .tooltipster-arrow-background{border:10px solid transparent}.tooltipster-sidetip.tooltipster-bottom .tooltipster-arrow-background{
-border-bottom-color:#565656;left:0;top:3px}.tooltipster-sidetip.tooltipster-left .tooltipster-arrow-background{border-left-color:#565656;left:-3px;top:0}.tooltipster-sidetip.tooltipster-right.tooltipster-arrow-background{border-right-color:#565656;left:3px;top:0}
-.tooltipster-sidetip.tooltipster-top .tooltipster-arrow-background{border-top-color:#565656;left:0;top:-3px}.tooltipster-sidetip .tooltipster-arrow-border{border:10px solid transparent;left:0;top:0}.tooltipster-sidetip.tooltipster-bottom .tooltipster-arrow-border{
-border-bottom-color:#000}.tooltipster-sidetip.tooltipster-left .tooltipster-arrow-border{border-left-color:#000}.tooltipster-sidetip.tooltipster-right .tooltipster-arrow-border{border-right-color:#000}.tooltipster-sidetip.tooltipster-top .tooltipster-arrow-border{
-border-top-color:#000}.tooltipster-sidetip .tooltipster-arrow-uncropped{position:relative}.tooltipster-sidetip.tooltipster-bottom .tooltipster-arrow-uncropped{top:-10px}.tooltipster-sidetip.tooltipster-right.tooltipster-arrow-uncropped{left:-10px}
-.tooltipster-sidetip.tooltipster-noir .tooltipster-box{border-radius:0;border:3px solid #000;background:#fff}.tooltipster-sidetip.tooltipster-noir .tooltipster-content{color:#000}.tooltipster-sidetip.tooltipster-noir.tooltipster-arrow{height:11px;margin-left:-11px;
-width:22px}.tooltipster-sidetip.tooltipster-noir.tooltipster-left .tooltipster-arrow,.tooltipster-sidetip.tooltipster-noir.tooltipster-right .tooltipster-arrow{height:22px;margin-left:0;margin-top:-11px;width:11px}.tooltipster-sidetip.tooltipster-noir
-.tooltipster-arrow-background{border:11px solid transparent}.tooltipster-sidetip.tooltipster-noir.tooltipster-bottom .tooltipster-arrow-background{border-bottom-color:#fff;top:4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-left.tooltipster-arrow-background{
-border-left-color:#fff;left:-4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-right .tooltipster-arrow-background{border-right-color:#fff;left:4px}.tooltipster-sidetip.tooltipster-noir.tooltipster-top .tooltipster-arrow-background{border-top-color:#fff;top:-4px}
-.tooltipster-sidetip.tooltipster-noir .tooltipster-arrow-border{border-width:11px}.tooltipster-sidetip.tooltipster-noir.tooltipster-bottom .tooltipster-arrow-uncropped{top:-11px}.tooltipster-sidetip.tooltipster-noir.tooltipster-right.tooltipster-arrow-uncropped{
-left:-11px}`)}
-
 function AddManuscriptSourceErrorbox() {
     $(".jconfirm-content:contains('Please ')").append(`<select id="sourceSelect" size="6" style="height: auto;"><option value="1">Self-submission</option><option value="2">Invited via Call for Papers (CFP)</option><option value="3">In House Editor invited</option>
                                                        <option value="4">Academic Editor Invited</option><option value="5">Academic Editor Submission</option><option value="6">Conference SI invited</option></select>`);
@@ -4805,47 +4695,4 @@ var SK_SectionCandidatesMap = {
     'E5': ['luca.passalacqua@uniroma1.it','youri.kabanov@univ-fcomte.fr','yaozhong@ualberta.ca','li.xun@polyu.edu.hk','g.peters@hw.ac.uk','wim.schoutens@kuleuven.be']
 };
 
-//---------------------------------------------------------------------------------------------------------------------------ICON-------------------------------------------------------------------------------------------------------------------------
-var icon_magnifier = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAl5JREFUeNqMk01oE1EQx99+mmSTbLayWqtN+hWxIW21VeOhpDEVBIupFBQRAgUL6rWth57tVSgIvWnBiyj1EBDpQdCDH4RCIVAbTSm9pBGDJqkxyW42u+u8kGKzbsGBH++D"
-+ "/8ybmfceEYlEkJlRFIURCIIYgGUbwAElIKPrekJV1TyAaHSwddrs/MXzo5HeM4PnetpEZ2tVlnPxePzrm1cvu4q7ubeg2aa8Xi+CiE2ACZzTNTZxezbYffKU333EKdIkQbMM4/B0dHhau/ocycQqKUvlbRKnYaRWqw0GwhGfQzjsETiWJQlE7KWF5+4Tx3qGL1/rwzq6Wq2apd/u9Q+58SSTr0gYo8A3cLZzeelRO60oilkA3mK1tqhavRzUe9zpNArSuQoDvvx"
-+ "BGZQ1RSoi6hBv5lwvRa0WwbdMyrKMTEgn1z5laIqklJquGp1xYutrH3ewjhQEAfE8jxwOB7Lb7YjjOMSy7Gbs+VKaqf1WqqrWfDJJULs/v2cfLy4kS6XSKmmMDtfoYRhm/N6du/NTN6/GV2IvUroila0sZSFUubISW/5yffzKh43P668lSfpBhMNhpGnaHj6bjZuYnr7/IBq9NZ/P555BTD/QDeBe/AK2gHc2my3rcrn+vkQ4+YIoHo3MzMzNRaM3HoLzU9jeBD"
-+ "bMmghvAGWzWYRCoRAKBoNjk5NTC4nElt7ff3qRpukh/BfgH0DN5D80mdvtRoFAYDaVyuojI6NPwPkSdvxfw0qLKIrDUEKoUCh8g9Tewx6+uloDZd+o7FtjjYoD4D60NEa9gWaCahjruj8CDADbZyPFMNpHlwAAAABJRU5ErkJggg=="
-var icon_pencil = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAZlJREFUeNpiZCAAdNQYGSJ8GBjO3g8A86ds2ACixN4wMLx69P8/AwshjTpqEP7Z+3Apmz8MDEX/GBhuAtmVLIQ0IoP///+rxTg4GO81MQlkvHTp1f2dO/eyEKMRpvnjx4+ee/b"
-+ "smbBu/fpr/7q73/9mYNjDqCXPwBBkx8BgYs2IMxyAXnX4+ZOhQt8swP35s0cfvGOvzSz+8aNCBSjBVB3LwKApz0BQc0B4ufu/v/9fXThz9qKcxO+Ka4wQC5nwxQCy5rt3brzauXXD9b9/GRwUpP/B1TCRqhkojgKYKNF8A4hZyNEMjBGG9UD+f3QDCGm+95iBYfcxBoa7jxGmsRCjGaER07ss338CCWYGuXePeWwDkyPd9+3e8/LGtTM3QJrvPsKtEW7At58MjH"
-+ "//MaYUNO2vLc4wXfj9F8Ot7/8Z2w6f+49XIxy0pTL2PLu67H9OEONyRyNGYLJiEAdiUSAWBmJBIOYHYl4g5gJiDiBmg3qdGYjByel/hj/j6k1HGZY/e/MflOf+QjEw0zH8htLI7N9Iav4CBBgAZrcHTnowXc4AAAAASUVORK5CYII="
-var icon_mail = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAALdQTFRF////AAAAAAAAAAAAVX9/VX9/CyQkUnx8T3h4S3R0R29vQ2pqPmVlOV9fNFpaL1RUH0JCDS4una6uobKypba2qru7r8DAtMXFuMnJvc7OwNHRwdLSxdbWydrazdvb0t7e1"
-+ "OPj1uHh2Obm2unp3OXl3enp3e3t3uvr3+7u4enp4ezs4+7u4/Pz5ezs6PHx6Pb26e/v6/Hx7Pf37fHx7vX17/n58/j48/r69/v79/z8+v39+/39////VLvycQAAABJ0Uk5TAAYWGk1naGhpa21vcXN1eH6G7arvxgAAAJRJREFUGBmFwcEKgkAUBdB77fVyksAIEun//8yiaJFTijY6MxkURZvOAf6hEN+izNY7g7duf0lYVk18aaqSQrM9FBme2lNhmDCazdGG"
-+ "iT1uTKQwhGw4DznqOs8CKQwOurh4XFN1WFDoveuXYrHSW6qeQt85TdKIFPPOC4X3XjlijhGUXim0K8Wbs6Rm+NZygo8Y8esBKMtC8OXU0AUAAAAASUVORK5CYII="
-var icon_note = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAfZJREFUeNqMk01LG1EUht87DkkmtgsXWvIxUhLd6B+I27q1q/ZH9E9UULrouhTqupCu+geKUBAqBNy4r42tmoQgZPxIOh+Zj55zMpOZQJReONxz597zvs+ZO6Ne7+6Ch1LqJU0lP"
-+ "D6+h2F4FgYBoiiSB3qS0Fz+srd3ENCmd3wMbG0hpL1k/8fJCT4fHr5hL4qfiaLGanGoKAwlJxr44zE8z4PrunAcB8PhEF/39w9of5vq1hMBnR3joX79+Qs2NEmg251g8ppjMBjgY7OJFxsbnz40m2/p/DsRCFMBbf35Inxa+z2F2moeAVWOeU1kr0o7IlgoFPDt9NSaEvhZgosJQZUIfl95GYKUJIocNlFpC74/FVhbLSIgt7EQFOLCaIYkl8uBauYKaO0rW1wq"
-+ "QuDOIYiEgGq0tIWMwJpZlKtzmcCMCYAZEm1hAf4DAqrdmRCUmaDzEAFYINMC3XdCUK8W5ZBDBHXTkDz5mBISJqCa+S0wAR1DiQjOO85jBKnAba+HxeVlaaFembjaTFA1xD3+zKck8TuQFkbX19DPjo5gNhowlpb0dteWAv6jzrt25u5nCezRSLctC5etFnQ6a1Dy9Fmjka+VDRFgglqlOHWXOc75P7m1rHy/1VqhR/ciQLFy1+/fPNncfI//GKFt33ANhf9PgAE"
-+ "A+ImOPNiBpOQAAAAASUVORK5CYII="
-var icon_note_add = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAlRJREFUeNp8k0trE1EUx88kY161iyBtyauIaUAaXOki0bhRXAi6EMXP4EcQxWCDC3cFESy4q6QrcSlIoVJIXdgUik01YppYaWZoqLEpIZmZzNzrOTeTF9YeOMx9nf//d+feK"
-+ "91Lp4FCkqTb+AnAybHCGCsxywLOORRzOZCpQYHf4NLc3IKFk8baGkAyCQznevO59XVYXF5+QF6YP2jsfCoFDlKzU+KMiTbSgNnpgGEYoOs6aJoGzWYT3mYyCzh/HWtjPSSZHO2QdnZbQIYRFFCULib1Kev1OrzMZuHa7OyrF9nsE1z/TAiwgYAjdnYMTOybqgTnpt1gYWWH+kh2N3BLCHo8HviwufmnT2AOE/zqEoSR4OeeMUQwIOFcIxNpsAXT7AvMTPvAQreO"
-+ "IPDYhXyExOVyAdYcK+Ao77WFS0gQ6McQcEGANY7BFoYEZiI+cXQ6EURsAoAREofTCeZ/BKRytUsQJILqvwRPdx/D11YBahd+3x8/9M9brINbwPPuEUTDPrFYQ4JoxCvavctEJDvft+HylUuwWFsK18dVYMwa3QIRoB8EkKBS1frO6eJD2D7aEosaVgO4ziTmtvK4dENuqCqMTUyILURDXdc2EYS9wp2i9HkLJq+eEe0D8wBSd5IhbIY+vlsBubS6CpFEArx+v1x"
-+ "W2mIRvaiK0u6ffexUHArvv3R/1A0Jim++KabbUPFVbNCYF3NyKpHIcDta+TxHd5F4L0TiHeAXX6d4sBLnzkd+hWqoVu4JHO3vH56Ox5+f9Jb1uHqTfdKmoMYLtoD5V4ABAIRMpFbtaSpMAAAAAElFTkSuQmCC"
-var icon_arrow = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAe9JREFUeNqkUz1oE2EYfu7uuyRKLCFt6g+4VNQWWod+mQRRR1En0UFOHKoNCMKNju4SEQsOzsFNcRGl4CS42AzaKhKcsqhk0Etj7u+773y/6+USbOLSF5574b33eX+e906L4xh7"
-+ "MaYeC/c/IFcowMznEzDTBGPMoldnqEFtkPy708mIqvHHe0s7BcaYJYSwRwPu9vbYRH1XJI4tEYb2jYtHOHko9LvdxE9cYZQcBoF9+9oJ7jgRQt+HFAJSyv9rkO6UkGvXF3mr9QelkpkUINsYR6T8Jrkay8i+b9+5yfnmppMmSFw6e4yrIynBBsdS3jQ1PH/zeTiBIt+9dZpvbTlZh1+Oh/Z3F33XRUj7R1GUxA3DwMx0EYHnDUUMPe9Rfe1tc26uiL6M8aXno+U"
-+ "H6O7PIShPIapMQx6sQMxW4JbL+MkKCKhwNgGN2FD7Pnz82j63coF/aoc4ekDHtxfrzUniaZrW/FfEBomI9Scv7fnVq7zdBwIqajBWpeTd99d3vgBNCaQSzMOLyJ+6ApSPWxSzD61a/MfThupSjVuvxk2A3sazYYGBGbML0OcvW9rMyeRLFO8eVGXnKyacMiug5ikSplLs05dXzqNQWpbv6/URjpK+m6JH3GhQQI2QI+RTmBO0EwQ/RUBcqe31d/4rwAB0lPTXqN"
-+ "6HzgAAAABJRU5ErkJggg=="
-var icon_book = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAVRJREFUeNqsUzFOwzAUfUmdNglUwMLYoUsUdWDhCFyAgaEngAsgTsEBwpQJJE7QUyAWFBVBxQA7KKqQEifp/yaxAnUoA1968vez/9Oz/W0JIVDHGWEsj693sDkeCZeciBY5vpnNz"
-+ "vuOA7ffh++6GlueB38wgEu5S+sH0+lpUySKotACt1GEvaOLesr8ssb3eMDJIQ1XPx3Yk8kEYjRCnued3h1ygOrJ0g7aAmVZIssyJEnSKRCGIQmUdqcACJZlIQiCteL5fI56j1Ggp+6DYNs20jRdE2Be7SkLs4CUEmCAB2k8guK7BBoHfITW6+jQ/D846P3qQHWBwYHmOwTE3x1I4xFE46CqKqMDzRfyy8H7MwSTfDncZE0fMKdyg4DiCynwsQDuI+XAo4UhjUNe"
-+ "FPTW/Gm6gnsBn6lPxfs0TZUAgSeLOI63cbf7svEzL99e6xq5EmAAdSK/D3nWtn4AAAAASUVORK5CYII="
-var icon_plus = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAatJREFUeNqkU71KA0EQ/vaiib+lWCiordidpSg+QHwDBSt7n8DGhwhYCPoEgqCCINomARuLVIqgYKFG5f6z68xOzrvzYuXA3P7MzLffN7unjDH4jw3xx91bQXuxU4woNDjUX7Vgs"
-+ "FOIH3/BnHgC0J65AzwFjDpZgoG7vb7lMsPDq6MiuK+B+kjGwFpCUjwK1DIQ3/dl0ssVh5TTM0UJP8aBgBKGleSGIWyP0oKYRm3KPSgYJ0Q0EpEgCASA2WmWZQY3kazBmjP9UhBFEbTWAgA0f9W2yHeG+vrd+tqGy5r5xNTT9erSqpvfdxwHN7fXOQZ0QhzH1oWArLsfXXieJ/KTGEZLcbVaTVn9ALTOLk9L+mYX5lxd0Xh6eGyVgspK6APwI8n3x9hmNpORJOuB"
-+ "o5ah8GcTc7dAHmkhNpYQlpHr47Hq2NspA1yEwHkoO/MVYLMmWJNarjEUQBzQw7rPvardFC8tZuOEwwB4p9PHqXgCdm738sUDJPB8mnwKj7qCTtJ527+XyAs6tOf2Bb6SP0OeGxRTVMp2h9nweWMoKS20l3+QT/vwqfZbgAEAUCrnlLQ+w4QAAAAASUVORK5CYII="
-var icon_users = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAwxJREFUeNqEk+1LU2EUwM9zd7fr7nTlZuk0dfmyTdt813wp7IUQCZPqgxZLiL4EhQmJfSkQkj72zX+gDxkUFUmhoUUhZeZGlImvqdPN6Xb35nC7bndPz9VSEaIDP84597nn3HPu"
-+ "OQ8CIgxCkCBq2JH2arypKQrSyHEnMfWESYyhMxYD+9/3JKnklBUNAtqVYMGHAIVIUik81BqMDeqMLF2Qx3ke91rStB16V30AIhT8Q+xrAGMOJFv1gtHl9yfHqdT0scZGhejP2kFGABF6T1wyoZWgJcyTAp6teEHa2dYGrEIBAqld9MlZEsEhBtB4VzSx7xRXVDSbCgvV3ywWbtpqPeILkjZkMuDX14GWSkH0aQq0pPOtBLW6nc7fT+Gqzlv1GqNOA2NTqZqLZms"
-+ "pS8PK7MQEaHNyQNTsVs2nCJ82E5zUbcc3jTiVuUUmLUTCYRC1PEGZbNAEVgee9FjL6upKRvv7rfu2RnWG0LWZIBrbTkA1FfKT4bW16mgkAgKhoTgybktPcbOLy+ocnR4+9Pbgry35P+O94b6VdCU40uJBggouA0YUJAorYwpp1JCeayolA6V9HtfGkG9mjrnZoZPnl+s3eCM4awypySdqk97FuUK+BFoLMTwt+VX6AEbk9dCnvAoCRi7qx+PKYASlfh4etONz5p"
-+ "ykQ9kqRygE7fXX4KnDAhkH05RGVVYBi2WH51xL0l17gMsGlC1n3ZwHlZSVgz8QlL6arPg+b2OWwuSfcBwHohZF2IgyBlWmCQf4GiQx9+4HStrMMnT+9QbThQP+sTQtw8E8rwZ3Yq63+82AJUzZguUT1sGRKvtpHBHkwAssjsTiYCbwFkkuPb/dUJllLtVr8tSJCYzN5oSu8xlw94UNMjM1wHkDG6PjCzO9A8Mvhdetj/YsHkcBHygr0KqKYtHY5oD2losFkBVma"
-+ "/KBUWZJjndMihdqF24kKbpyDzTFtVjChDAtDwItX69xdn8ZSrlxFEXDLIqGFEjg5bBs/Yg9M/exfwmwf3G7BPRnr9Xwf+HEL+59+FuAAQBh80P/MCkZDgAAAABJRU5ErkJggg=="
-var icon_webs = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAydJREFUOMttU39MzGEYfw3DMLMZfxlTMTFjmT+s/Fi3lBKZy5HSUZ2Ou67rrvped9+774+7636jkkI3Jm04QoqprCYz8zvmH/+Iya9R2BLx8"
-+ "X6PtWre7dn7fp/3eT7P87zfz4fYbDYy0qxWK3GIAjnsdZFKv5t4yx3D/rGxko1KFAWeuB12UsyYZmapDqxW7M2Pzy/QR4k89Tvt4ZixQMPJUoCuyDhnqSwtOGOF7NvMlRsQES/H9OUyzItNeZCs2J0mdcON6Yaw9KPcLhKVRhcdFb/tvfnQcShLRZxvaYehvAKNNzqQoipGUq4Rkas3iCamlHDciA6ktiniFBKx6lVdqBlqqwf+ugYEQ02Iz9TgXvdz5Doq0T84"
-+ "BAsF56uO55axLGEt5r8A1QEviU1VGNN1VvCVdYiSyREINmBXkQ3LNmbAV38Rn9ub0GfMAvh9GKpx4HZnx8ESsyU8CrHzHIlct/k+6Oq6/wTswVrpGK680+wBPvWgb28ivt+7haE3PfhSJQB+BucuN21Vq9WEFOgNUxbKtr1z156GLEuDVJURzqOnkK4uRSbrAwKlGOi8hpHrh6hBd6i+8YCFjqDR6ScvSdz+NnT9JtK1ZcguFnC2uQ0FnA87y9yAW4/Bx3dHAfz"
-+ "0MXjWUNeiFZyE/gGBLFq/pUu6uP2gG+ZATTjozqOnyGD9wLMufNJux6+v/WH/QFcrBkXt76arV1X71PsJORLwkAR5Vo5MWQidGMD8tWlgvNXYlGfEgnVbUXO5FbgURL9WDngNGMhYg95i5Ueb20tMZjMhPMcRgefGTY2OfVh/pRVa3g/fiTM4R3mQtKcQL16+hnAyhIF3vag5fAQ3XFzwe9oKNGqU+gK7iwxzn7JwdnSCvNtaEUQKre45Vg8NfQdH9Ukk5hQhOZ"
-+ "9BTIoix8gJ5Em+vO1DdsJPs42bMExliY0MYxofu3mHZV5c6ouJi+Mwa1USpi1b3xeTrLigUObF+FxOQpOIwLKTAmUlEdJ5lJikcTxUEyxlms5QMnd/oSGyhDFNc9KHdtICYQ1Qs9BEE8cTTiLS/+Qs7S6qSkk8/6j+XylL9gf37xpjQOT4TAAAAABJRU5ErkJggg=="
-var icon_scopus = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAB0UlEQVR4nLWTvWtUURDFf3PfXd9LdjessGKMglYB0ahgOhtB0JVgodhaiVhYiWJnI6hY+R8IljYBP1AUjKCInYpgVmJQiIQY1w+St4v7vu5YvHXd4CpI8MCtzszcMzNnZPH0JmUVMKtJ7l9ANX/90IdbUUDTCIwBz0IW/yKyBE1jsGtABM2SLmV"
-+ "7g4KdE/jbawDEM49pv7iFJm0KW8bxx2p41c1oOyR6dY/4zSMwtlMgS7EjWykePEd44yxu+ROmsgF1Kf7YAQb3nqR1/yrZk1lMqYoEZRDTq0ARvwQoaeM9bmkB+TKHCUoU952ieecy8dunSCHAhQ1Q8ja7M/AsydxLovoUlRPX8XdMoC7DlNdhSlXSjzNIIch/Nbab3KNAQJXmzQv42/ZTrJ3Bq4wQ1adAvDxRFeSva1RwjvbzScLJ8wzsOYZGTdLGO4LxI7ioha"
-+ "YRmrThty2ow6zdSLDrENm3eQZ2HyaefYYLP9O8fZHy0Ut5K/PTmKH1ZF8/EL1+gBjvpwJBvy+jWYodHiWafkjr7hWkEJAt1Fm6dhwXNrDDo5jBIVy4mCsGpHsLqrmRVEEEsT5Ip2l1uZE6LhRbyIe5wkgi+aT7Qcwfuf9wTP+IH7tLvmy5ImEAAAAAAElFTkSuQmCC"
-var icon_retractiondatabase = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQAAAAA3iMLMAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAACxMAAAsTAQCanBgAAAA4SURBVAjXY/jxn+FTPcPy/QxdzQwnuxk4mhme72f4UM/w357h/34Gk/kMCv4Mvf4ME9IZ/n8HIgD7ARTNr5OwGQAAAABJRU5ErkJggg=="
-var icon_researchgate = "data:image/gif;base64,R0lGODdhEAAQAPIFAGZmZpmZmczMzP///zNmZjMzMwAAAAAAACwAAAAAEAAQAAADOTi63P7QBQIiK0PYRQQIjFAUAFBomAAyQTUEWNs1rSJa9VDiJLnVhVWkJtIMCQpTREAIJk+bqHSQAAA7"
+var { icon_magnifier, icon_pencil, icon_mail, icon_note, icon_note_add, icon_arrow, icon_book, icon_plus, icon_users, icon_webs, icon_scopus, icon_retractiondatabase, icon_researchgate } = JSON.parse(GM_getResourceText('icons'));
