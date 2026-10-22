@@ -46,10 +46,10 @@
 // @require       https://mrs.mdpi.com/bundles/mdpimrs/js/html5_scripts/zingchart-html5-min.js?v=6.10.20
 // @require       https://gcore.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js?v=6.10.20
 // @resource      chosenCSS             https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/css/chosen.min.css?v=6.10.20
-// @resource      customCSS             https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.css?v=6.10.20
+// @resource      customCSS             https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.css?v=6.10.22.5
 // @resource      tooltipsterCSS        https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/css/tooltipster.bundle.min.css?v=6.10.20
 // @resource      tooltipsterNoirCSS    https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-noir.min.css?v=6.10.20
-// @resource      icons                 https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/icons.json?v=6.10.20
+// @resource      icons                 https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/icons.json?v=6.10.22
 // @resource      mailsdbBaseCSS        https://mailsdb.i.mdpi.com/assets/application-98a08eef03d8f08cf84f0f5a890ccbf92dd20964127ea9c280f768a08e729027.css?v=6.10.20
 // @resource      mrsScreenCSS          https://mrs.mdpi.com/bundles/mdpimrs/css/screen.css?v=6.10.20
 // @resource      mrsMainCSS            https://mrs.mdpi.com/bundles/mdpimrs/css/main.css?v=6.10.20
@@ -422,15 +422,17 @@ function onInit() {
     const isBlacklisted = blacklist.some(name => $("#topmenu span:contains('@mdpi.com')").text().toLowerCase().includes(name));
 
     if (isBlacklisted) {
-        $("#topmenu > ul").append("<li><a style='color:red' onclick='alert(\"Access denied.\");'>!</a></li>");
+        $(`<li><a style='color:red' onclick='alert(\"Access denied.\");'>!</a></li>`).insertAfter($("#topmenu>ul>li>a[href='https://www.mdpi.com/about']").parent())
         return false;
     }
     else if ((Date.now() - date_v) / 86400000 > 75) {
-        $("#topmenu > ul").append("<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! Outdated !!!</a></li>");
+        $(`<li><a style='color:pink' onclick='alert(\"Please update.\");'>!!! Outdated !!!</a></li>`).insertAfter($("#topmenu>ul>li>a[href='https://www.mdpi.com/about']").parent())
         return false;
     }
     else {
-        $("#topmenu > ul").append(`<li><a id=susymodifier_config class="topmenu-tab">SusyMod</a></li>`);
+        $(`<li class="sk-susy-tool"><a id=susymodifier_config class="topmenu-tab">SusyMod</a></li>`).insertAfter($("#topmenu>ul>li>a[href='https://www.mdpi.com/about']").parent());
+        $("#topmenu a.show-submit-dialog[href='/user/manuscripts/upload']").remove();
+        skAddResourceStyle('customCSS');
         $("#susymodifier_config").on("click", function () { GM_config.open() });
         // 记录今天首次访问时间 ☀
         (function () {
@@ -473,8 +475,8 @@ function onInit() {
     }
 
     if (GM_config.get('Easy_Journal')) {
-        $("#topmenu > ul").append(`<li><select id="SusyModifier_Journal_Easy"><option value="555">Analytics</option><option value="25">Games</option><option value="599">Geometry</option><option value="154">Mathematics</option>
-                                   <option value="743">MCB</option><option value="162">Risks</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select></li>`);
+        $(`<li class="sk-susy-tool"><select id="SusyModifier_Journal_Easy"><option value="555">Analytics</option><option value="25">Games</option><option value="599">Geometry</option><option value="154">Mathematics</option>
+                                   <option value="743">MCB</option><option value="162">Risks</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select></li>`).insertAfter($("#susymodifier_config").parent());
         $("#SusyModifier_Journal_Easy").val(S_J).on("change", function () {
             let J_old = S_J, J_new = $(this).find('option:selected').val(); S_J = J_new;
             GM_config.set('Journal', $(this).find('option:selected').text());
@@ -505,6 +507,7 @@ function onInit() {
     //susy侧边栏的按钮🔎
     if (window.location.href.indexOf("susy.mdpi.com/") > -1 && GM_config.get('Interface_sidebar') && $('#leftcol').length) {
         try {
+            $('#leftcol').addClass('sk-susy-sidebar');
             $("body").append(`<div id='si_search' role='dialog' style='display: none; position: fixed; height: auto; width: 500px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #F5F5F5; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             border-radius: 5px; overflow: hidden;'><div id='si_search_header' style='background-color: #616161; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px; cursor: move;'><span>Quick Search</span>
             <button type='button' onclick='document.getElementById("si_search").style.display="none"' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div>
@@ -556,38 +559,34 @@ function onInit() {
             if (S_S > 0 && S_J > 0) {
                 $(".menu [href='/special_issue_pending/list']").after("<a href='/special_issue_pending/list/online?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[S]</a>");
                 $(".menu [href='/user/assigned/status/ongoing']").after(" <a href='/user/managing/status/submitted?form[journal_id]=" + S_J + "&form[section_id]=" + S_S + "'>[S]</a>");
-            } else {
-                $(".menu [href='/special_issue_pending/list']").after("<a href='/special_issue_pending/list/online?form[journal_id]=" + S_J + "&show_all=my_journals&sort_field=special_issue_pending.deadline&sort=ASC'>[J]</a>");
             }
             if ($("#topmenu span:contains('@mdpi.com')").text() === 'syna.mu@mdpi.com') {
                 $(".menu [href='/voucher/application/list']").after("<div style='float:right;'><a href='//skday.com/task/susylog.php' target=_blank>[Log]</a> </div> ");
             }
             if (S_J > 0) {
-                $(".menu [href='/user/assigned/status/ongoing']").after("<a href='/user/managing/status/published?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.publish_date&sort=DESC'>[Pub]</a> ");
-                $(".menu [href='/user/assigned/status/ongoing']").after(" <a href='/user/managing/status/production?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.last_action&sort=DESC'>[Fin]</a> ");
-                $(".menu [href='/user/managing/status/submitted']").after(" <a id='owner' href='#'>[Owner]</a>");
+                $(".menu [href='/user/assigned/status/ongoing']").after("<div style='float:right;'><a href='/user/managing/status/production?form[journal_id]=" + S_J +
+                    "&sort_field=submission_manuscript_state.last_action&sort=DESC'>📙</a> <a href='/user/managing/status/published?form[journal_id]=" + S_J + "&sort_field=submission_manuscript_state.publish_date&sort=DESC'>📗</a></div>");
+                $(".menu [href='/user/managing/status/submitted']").after("<div style='float:right;'><a id='owner' href='#'>👑</a></div>");
                 $(".menu [href='/voucher/application/list']").attr("href", "/voucher/application/list/my_journal?form[journal_id]=" + S_J);
                 $(".menu [href='/user/manage/award_request']").attr("href", "/user/manage/award_request?form[journal_id]=" + S_J);
                 $(".menu [href='/user/manage/awards_item']").attr("href", "/user/manage/awards_item?form[journal_id]=" + S_J);
                 $(".menu [href='/si/proposal/list']").attr("href", "/si/proposal/list?form[journal_id]=" + S_J);
                 $(".menu [href='/list/list_volunteer_reviewers']").attr("href", "/list/list_volunteer_reviewers?form[journal_id]=" + S_J);
-                $(".menu [href='/tap/list']").after("<a href='/tap/list/pending/my_journals?form[journal_id]=" + S_J + "'> [J]</a>");
                 $(".menu [href='/topic/proposal/list']").attr("href", "/topic/proposal/list?form[journal_id]=" + S_J);
                 $(".menu [href='/user/conference/list']").attr("href", "/user/conference/list?form[subject_id]=4");
-                $(".menu [href='/user/submission_sponsorships/list']").after(" <a href='/user/submission_sponsorships/list/my_journal?form[sponsorship_journal_id]=" + S_J + "'>[J]</a>");
                 $(".menu [href='/user/manuscript/list/owner']").attr("href", '/user/manuscript/list/owner/my_journal');
                 $(".menu [href='/user/manuscript/special_approval_list']").attr("href", '/user/manuscript/special_approval_list/my_journal');
                 $(".menu [href='/user/issues/list']").after(" <a href='/user/issues/list/progress?form[journal_id]=" + S_J + "'>[J]</a> <a href='/user/public_forum/list?form[journal_id]=" + S_J + "'>[P]</a>");
-                $(".menu [href='/publisher/manuscripts']").after(" <a href='/publisher/manuscripts?form[journal_id]=" + S_J + "'>[J1]</a> <a href='/publisher/manuscripts/unchecked?form[journal_id]=" + S_J + "'>[J2]</a>");
+                $(".menu [href='/publisher/manuscripts']").text("Check Published").after(" <a href='/publisher/manuscripts?form[journal_id]=" + S_J + "'>[J1]</a> <a href='/publisher/manuscripts/unchecked?form[journal_id]=" + S_J + "'>[J2]</a>");
             }
-            $(".menu [href='/user/myprofile']").after("<div style='float:right;'><a href='//mrs.mdpi.com/login_check_ajax#statistics' target=_blank>[MRS]</a></div> ");
-            $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC&page_limit=100'>Special Issues</a> <a href='/user/sme/status/submitted'>[MS]</a> ");
+            $(".menu [href='/user/myprofile']").after(`<div style='float:right;'><a href='//mrs.mdpi.com/login_check_ajax#statistics' target=_blank title='MRS'><img src='${icon_mrs}' alt='MRS' width='16' height='16'></a></div> `);
+            $(".menu [href='/special_issue_pending/list']").after(" <a href='/special_issue_pending/list?&sort_field=special_issue_pending.date_update&sort=DESC&page_limit=100'>Special Issues</a> <a href='/user/sme/status/submitted'>📝</a> ");
             $(".menu [href='/special_issue_pending/list']").text("Manage").attr("href", "/special_issue_pending/list/online?sort_field=special_issue_pending.publish_date&sort=DESC&page_limit=100")
-            $(".menu [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>[MS]</a>");
+            $(".menu [href='/submission/topic/list']").after(" <a href='/user/topic/status/submitted'>📝</a>");
             $(".menu [href='/submission/topic/list']").attr("href", "/submission/topic/list/online");
             $(".menu [href='/user/manuscript/approval/manage']").attr("href", "/user/manuscript/special_approval_list/my_journal");
-            $(".menu [href='/planned_paper/my/list']").after(" <a href='/planned_paper/my/list?form[submission_topic_id]=-1&form[special_issue_id]=-1'>[Reg.]</a>");
-            $(".menu [href='/user/ebm-new/management']").after(`<div style='float:right;'><a onclick='$("#si_search").toggle();'><img src='${icon_magnifier}'></a> </div> `);
+            $(".menu [href='/planned_paper/my/list']").after("<div style='float:right;'><a href='/planned_paper/my/list?form[submission_topic_id]=-1&form[special_issue_id]=-1'>🗞️</a></div>");
+            $(".menu [href='/user/ebm-new/management']").after(`<div style='float:right;'><a onclick='$("#si_search").toggle();'>🔎</a> </div> `);
 
             $(".menu [href='/manuscript/quality/check/list']").after(`<div style='float:right;'><a id='sf_b'><img src='${icon_webs}'></a></div>`); $("#sf_b").on("click", skOpenUrls)
 
@@ -2158,9 +2157,33 @@ function onInit() {
             document.body.innerHTML = document.body.innerHTML.replace(/ data-url=/g, ' href=').replace(/ data-load-url=/g, ' href=');
             var mailsdb_email = window.location.href.match(/search_content=(\S*)/)[1], susycheck;
 
+            let mailPopup = $(`<dialog id="sk-mailsdb-mail" aria-labelledby="sk-mailsdb-mail-title"><div id="sk-mailsdb-mail-toolbar"><strong id="sk-mailsdb-mail-title">Email preview</strong>
+            <button type="button" aria-label="Close email preview">×</button></div><iframe title="Email content"></iframe></dialog>`).appendTo("body")[0];
+            $(mailPopup).find("button").on("click", function () { mailPopup.close(); });
+            $(mailPopup).on("click", function (event) { if (event.target === this) this.close(); })
+                .on("close", function () { $(this).find("iframe").attr("src", "about:blank"); });
+            $(mailPopup).find("iframe").on("load", function () {
+                let doc = this.contentDocument;
+                if (!doc) return;
+                $(doc).on("keydown", function (event) { if (event.key === "Escape") { event.preventDefault(); mailPopup.close(); } });
+                if (doc.location.pathname !== "/fulltext" || doc.querySelector(".download-origin-email, a[href*='download=yes']")) return;
+                let downloadUrl = new URL(doc.location.href);
+                downloadUrl.searchParams.set("download", "yes");
+                $('<a class="download-origin-email" data-turbolinks="false">Download Original email</a>').attr("href", downloadUrl.href).appendTo(doc.body);
+            });
+            $("body").on("click", "a[href*='/fulltext?']", function (event) {
+                let url = new URL(this.href);
+                if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || url.origin !== location.origin || url.pathname !== "/fulltext" || !url.searchParams.has("code") || url.searchParams.get("download") === "yes") return;
+                event.preventDefault();
+                event.stopPropagation();
+                $("#sk-mailsdb-mail-title").text($(this).text().trim() || "Email preview");
+                $(mailPopup).find("iframe").attr("src", url.href);
+                if (!mailPopup.open) mailPopup.showModal();
+            });
+
             if (/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(mailsdb_email)) {
-                $("body").prepend(`<div style='margin:10px;'><div id='d1'>Loading Invitation Record...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div id='d2'>Loading Overview...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a>
-                <div id='d3'>Loading Review History...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div>`);
+                $("body").prepend(`<div><div id='d1'>Loading Invitation Record...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div id='d2'>Loading Overview...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a>
+                <div id='d3'>Loading Review History...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a></div>`);
                 $('.scroll-icon').on("click", function () {
                     let currentIndex = $('.scroll-icon').index(this);
                     let nextIcon = $('.scroll-icon').eq(currentIndex + 1);
@@ -2175,6 +2198,23 @@ function onInit() {
                     onload: function (responseDetails) {
                         var $jQueryObject = $($.parseHTML(responseDetails.responseText.replace(/href="\//g, "href=\"//susy.mdpi.com/").replace(/ data-url=/g, ' href=').replace(/ data-load-url=/g, ' href=').replace(/<h1>[\s\S]*<\/h1>/g, '')));
                         $("#d2").html($jQueryObject);
+                        $("#d2 a[onclick*='next().toggle()']").removeAttr("onclick").on("click", function (event) { event.preventDefault(); $(this).next().toggle(); });
+                        $("#d2 .show-voucher").on("click", function (event) { event.preventDefault(); $(this).next(".discount-voucher").toggleClass("hide"); });
+                        $("#d2 #Box").css("cursor", "auto").html("<h3>User Notes</h3><div>Loading notes...</div>");
+                        GM_xmlhttpRequest({
+                            method: 'GET',
+                            url: "https://susy.mdpi.com/user/comment?emails=" + encodeURIComponent(mailsdb_email),
+                            timeout: 30000,
+                            onload: function (responseDetails) {
+                                var $notes = $($.parseHTML(responseDetails.responseText)).filter('form[data-html-content="1"]');
+                                if (responseDetails.status !== 200 || !$notes.length) { $("#d2 #Box > div").text("Unable to load user notes. Please check your SuSy login."); return; }
+                                $notes.find(".author-note").parent().remove();
+                                $notes.find(".delete-comment, input, button, textarea").remove();
+                                $("#d2 #Box > div").empty().append($notes);
+                            },
+                            onerror: function () { $("#d2 #Box > div").text("Unable to load user notes. Please try again later."); },
+                            ontimeout: function () { $("#d2 #Box > div").text("Loading user notes timed out. Please try again later."); }
+                        });
                         $("[title='Generate unsubscribe link']").each(function () {
                             $(this).attr("href", "//scholar.google.com/scholar?hl=en&q=" + $(this).attr('data-email')).attr("target", "_blank").text("").append('<img width="20px" height="20px" src="//www.google.com/favicon.ico">')
                         });
@@ -2218,6 +2258,7 @@ function onInit() {
                     onload: function (responseDetails) {
                         var $jQueryObject = $($.parseHTML(responseDetails.responseText.replace(/data-load-url="\/user/g, 'data-load-url="//susy.mdpi.com/user')));
                         $("#d1").html($jQueryObject);
+                        $("#d1 .table-show-hide-btn").on("click", function (event) { event.preventDefault(); let rows = $(this).closest("table").find(".show-hide-tr").toggle(); $(this).text(rows.is(":visible") ? "Show less" : "Show more"); });
                         $("[data-title='Blocked Info']").attr("href", "//susy.mdpi.com" + $("[data-title='Blocked Info']").attr("data-uri"));
                     }
                 });
@@ -2952,7 +2993,6 @@ function onInit() {
                         if (h1node.find('#sk-scopus-email-inline').length) return;
                         const authorId = new URLSearchParams(location.search).get('authorId') || (window.location.pathname.match(/\/pages\/authors\/(\d+)/) || [])[1];
                         if (!authorId) return;
-                        skAddResourceStyle('customCSS');
 
                         // ── 邮箱 span ──
                         const emailSpan = $('<span id="sk-scopus-email-inline">…</span>').css({fontSize:'0.5em',color:'#1a73e8',marginLeft:'16px',verticalAlign:'middle',cursor:'pointer',borderBottom:'1px dashed #1a73e8',overflowWrap:'anywhere'}).attr('title', 'Click to copy');
@@ -3668,7 +3708,6 @@ function onInit() {
                 document.documentElement.style.setProperty('--sk-icon-' + name, `url("${icon}")`);
             }
             document.documentElement.classList.add('sk-old-icons');
-            skAddResourceStyle('customCSS');
             $("._removeEmail:contains('x')").text(" x");
             waitForKeyElements("#intercom-frame", function () { $('.intercom-lightweight-app,#intercom-frame').remove(); }, true);
         } catch (error) { }
@@ -4695,4 +4734,4 @@ var SK_SectionCandidatesMap = {
     'E5': ['luca.passalacqua@uniroma1.it','youri.kabanov@univ-fcomte.fr','yaozhong@ualberta.ca','li.xun@polyu.edu.hk','g.peters@hw.ac.uk','wim.schoutens@kuleuven.be']
 };
 
-var { icon_magnifier, icon_pencil, icon_mail, icon_note, icon_note_add, icon_arrow, icon_book, icon_plus, icon_users, icon_webs, icon_scopus, icon_retractiondatabase, icon_researchgate } = JSON.parse(GM_getResourceText('icons'));
+var { icon_mrs, icon_magnifier, icon_pencil, icon_mail, icon_note, icon_note_add, icon_arrow, icon_book, icon_plus, icon_users, icon_webs, icon_scopus, icon_retractiondatabase, icon_researchgate } = JSON.parse(GM_getResourceText('icons'));

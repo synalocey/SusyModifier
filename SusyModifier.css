@@ -1,10 +1,24 @@
 /* SusyModifier: stable custom styles. Short or frequently edited styles stay in the userscript. */
 
+/* SuSy navigation and sidebar shortcuts. */
+#topmenu > ul:has(.sk-susy-tool){align-items:center}
+#topmenu > ul > li.sk-susy-tool{flex:0 0 auto;white-space:nowrap}
+#topmenu > ul > li:has(.susy-global-search-li){flex:1 1 0%;min-width:0}
+#topmenu .susy-global-search-li,#topmenu .susy-global-search-li .gs-root,#topmenu .susy-global-search-li input{min-width:0}
+#SusyModifier_Journal_Easy{width:110px;max-width:110px;margin:0 8px 0 0;font-size:13px}
+#leftcol.sk-susy-sidebar .menu li{padding-left:15px;font-size:13px;line-height:26px}
+@media(max-width:1200px){
+    #topmenu > ul:has(.sk-susy-tool){padding-left:8px!important;padding-right:8px!important}
+    #topmenu > ul:has(.sk-susy-tool) > li > a{padding-left:6px!important;padding-right:6px!important;font-size:12px}
+    #SusyModifier_Journal_Easy{width:100px;max-width:100px;font-size:12px}
+}
+
 /* Old Icon: enabled only by the sk-old-icons class on <html>. */
 
-:where(.sk-old-icons) #leftcol .menu li{text-align: left !important;justify-content: flex-start !important;position: relative !important;padding: 2px 0 2px 15px !important;font-size: 13px !important; border-bottom: 1px solid rgb(204, 204, 204) !important;}
+:where(.sk-old-icons) #leftcol .menu{gap:0!important}
+:where(.sk-old-icons) #leftcol .menu li{text-align: left !important;justify-content: flex-start !important;position: relative !important;padding: 2px 0 2px 15px !important;font-size: 13px !important;line-height:20px!important; border-bottom: 1px solid rgb(204, 204, 204) !important;}
 :where(.sk-old-icons) #maincol .user_box_item, :where(.sk-old-icons) #maincol .user_box{font-size: 13px !important;}
-:where(.sk-old-icons) #leftcol .menu li:not([class])::before{background-color: rgb(79, 86, 113);content: "";height: 6px;width: 6px;position: absolute;left: 4px;top: 8px;z-index: 1}
+:where(.sk-old-icons) #leftcol .menu li:not([class])::before{background-color: rgb(79, 86, 113);content: "";height: 6px;width: 6px;position: absolute;left: 4px;top: 9px;z-index: 1}
 :where(.sk-old-icons) #leftcol .menu-hr{display: none !important;}
 :where(.sk-old-icons) :is(.light_green_theme #leftcol .menu li:not([class]))::before{background-color: rgb(76, 142, 101) !important;}
 :where(.sk-old-icons) :is(.light_green_theme #leftcol .menu li){border-bottom: 1px solid rgb(197, 222, 208) !important;}
@@ -19,18 +33,23 @@
 
 /* MailsDB email search: keep generic table and color rules on this page only. */
 
-:where(.sk-mailsdb) table{width:80%}
+html.sk-mailsdb{background:#f5f6f8}
+html.sk-mailsdb body{box-sizing:border-box;max-width:1600px;margin:0 auto;padding:20px;color:#303943;line-height:1.55}
+html.sk-mailsdb #d1,html.sk-mailsdb #d2,html.sk-mailsdb #d3,html.sk-mailsdb .search-all-info{padding:16px 20px;background:#fff;border:1px solid #dce2e8;border-radius:6px;overflow-x:auto}
+html.sk-mailsdb table{width:100%;border-collapse:collapse}
+html.sk-mailsdb .editor-invitation-history-table th,html.sk-mailsdb .editor-invitation-history-table td,html.sk-mailsdb #d3 th,html.sk-mailsdb #d3 td{padding:6px 8px;border-bottom:1px solid #e5e9ee;font-size:13px;vertical-align:top}
 :where(.sk-mailsdb) .colorgray{color:gray!important}
 :where(.sk-mailsdb) .bgcoloref{background:#efefef!important}
-:where(.sk-mailsdb) #user-info .user-info-section{margin-bottom:10px}
+html.sk-mailsdb #user-info .user-info-section{margin-bottom:16px}
 :where(.sk-mailsdb) #user-info span.email{font-weight:400;color:#103247}
 :where(.sk-mailsdb) #user-info span.number{font-weight:400;color:#123}
-:where(.sk-mailsdb) #user-info a{color:#00f}
-:where(.sk-mailsdb) #user-info a:visited{color:#cd7e53}
+html.sk-mailsdb #user-info a{color:#225b8d}
+html.sk-mailsdb #user-info a:visited{color:#6d5a81}
 :where(.sk-mailsdb) #user-info a:hover{color:#47566d}
-:where(.sk-mailsdb) #user-info table{margin-left:2%;width:98%;background:#99a4b5;margin-bottom:10px;border-right:1px solid #ccc;border-bottom:1px solid #ccc;font-size:14px}
-:where(.sk-mailsdb) #user-info table tr th{text-align:left;background:#4f5671;color:#fefefe;font-weight:400;border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem}
-:where(.sk-mailsdb) #user-info table tr td{border-left:1px solid #ccc;border-top:1px solid #ccc;padding:.2rem;background:#fefefe}
+html.sk-mailsdb #user-info table{width:100%;margin:10px 0 16px;background:#fff;border:1px solid #dce2e8;font-size:13px}
+html.sk-mailsdb #user-info table tr th,html.sk-mailsdb #user-info table tr td{border:1px solid #dce2e8;padding:6px 8px}
+html.sk-mailsdb #user-info table tr th{text-align:left;background:#f0f3f6;color:#45505c;font-weight:600}
+:where(.sk-mailsdb) #user-info table tr td{background:#fefefe}
 :where(.sk-mailsdb) #user-info table tr td span.msid{color:#4e6c88;font-weight:400}
 :where(.sk-mailsdb) #user-info table tr td.title{width:50%}
 :where(.sk-mailsdb) #user-info table tr td.journal{width:10%;text-align:center}
@@ -38,6 +57,24 @@
 :where(.sk-mailsdb) #user-info table tr td.submission-date{width:10%;text-align:center}
 :where(.sk-mailsdb) #user-info table tr td.invoice-info{width:10%;text-align:center}
 :where(.sk-mailsdb) #user-info table tr td.invoice-payment-info{width:10%;text-align:center}
+html.sk-mailsdb #d2 h2{margin:0 0 16px;font-size:20px;font-weight:600}
+html.sk-mailsdb .scroll-icon{display:block;margin:6px 0;text-align:center;color:#748296;cursor:pointer;font-size:12px;text-decoration:none}
+html.sk-mailsdb #Box{margin-top:20px;padding-top:14px;border-top:1px solid #dce2e8}
+html.sk-mailsdb #Box h3{margin:0 0 12px;font-size:16px;font-weight:600}
+html.sk-mailsdb #Box p{overflow-wrap:anywhere}
+html.sk-mailsdb #Box hr{display:none}
+html.sk-mailsdb .search-all-info .table{min-width:900px}
+html.sk-mailsdb .search-all-info .table th,html.sk-mailsdb .search-all-info .table td{padding:10px 12px;text-align:left;vertical-align:top}
+
+/* MailsDB email preview. */
+html.sk-mailsdb #sk-mailsdb-mail{box-sizing:border-box;position:fixed;inset:0;width:min(1600px,94vw);height:92vh;max-width:none;max-height:none;margin:auto;padding:0;border:1px solid #cbd3dd;border-radius:6px;background:#fff;color:#303943;overflow:hidden}
+html.sk-mailsdb #sk-mailsdb-mail[open]{display:flex;flex-direction:column}
+html.sk-mailsdb #sk-mailsdb-mail::backdrop{background:rgba(25,35,45,.45)}
+html.sk-mailsdb #sk-mailsdb-mail-toolbar{display:flex;align-items:center;gap:16px;padding:10px 16px;background:#f7f8fa;border-bottom:1px solid #dce2e8;flex-shrink:0}
+html.sk-mailsdb #sk-mailsdb-mail-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;font-weight:600}
+html.sk-mailsdb #sk-mailsdb-mail button{width:28px;height:28px;padding:0;border:0;border-radius:4px;background:transparent;color:#45505c;font-size:24px;line-height:1;cursor:pointer}
+html.sk-mailsdb #sk-mailsdb-mail button:hover{background:#e6ebf1}
+html.sk-mailsdb #sk-mailsdb-mail iframe{display:block;flex:1;min-height:0;width:100%;border:0;background:#fff}
 
 /* MRS Quick Statistics. */
 
