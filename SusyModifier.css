@@ -2,15 +2,16 @@
 
 /* SuSy navigation and sidebar shortcuts. */
 #topmenu > ul:has(.sk-susy-tool){align-items:center}
-#topmenu > ul > li.sk-susy-tool{flex:0 0 auto;white-space:nowrap}
+#topmenu .sk-susy-tool{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;white-space:nowrap}
+#topmenu .sk-susy-tool > a{padding:0 6px!important;font-size:13px;line-height:28px}
 #topmenu > ul > li:has(.susy-global-search-li){flex:1 1 0%;min-width:0}
 #topmenu .susy-global-search-li,#topmenu .susy-global-search-li .gs-root,#topmenu .susy-global-search-li input{min-width:0}
-#SusyModifier_Journal_Easy{width:110px;max-width:110px;margin:0 8px 0 0;font-size:13px}
+#SusyModifier_Journal_Easy{width:100px;max-width:100px;height:28px;margin:0;padding:0 18px 0 6px;font-size:12px}
 #leftcol.sk-susy-sidebar .menu li{padding-left:15px;font-size:13px;line-height:26px}
 @media(max-width:1200px){
     #topmenu > ul:has(.sk-susy-tool){padding-left:8px!important;padding-right:8px!important}
     #topmenu > ul:has(.sk-susy-tool) > li > a{padding-left:6px!important;padding-right:6px!important;font-size:12px}
-    #SusyModifier_Journal_Easy{width:100px;max-width:100px;font-size:12px}
+    #SusyModifier_Journal_Easy{width:96px;max-width:96px}
 }
 
 /* Old Icon: enabled only by the sk-old-icons class on <html>. */
@@ -110,7 +111,7 @@ html.sk-mailsdb #sk-mailsdb-mail iframe{display:block;flex:1;min-height:0;width:
 .sk-scopus-year-current a,.sk-scopus-year-current b{color:#c65b00}
 .sk-scopus-bars{display:grid;gap:12px;margin-top:14px}
 .sk-scopus-bar-label{display:flex;justify-content:space-between;gap:10px;margin-bottom:5px;font-size:14px}
-.sk-scopus-bar-label span{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sk-scopus-bar-label span{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical}
 .sk-scopus-bar-label b{flex-shrink:0;font-weight:700;color:#1558d6}
 .sk-scopus-bar-track{height:8px;border-radius:4px;background:#dfe9f7;overflow:hidden}
 .sk-scopus-bar-fill{height:100%;border-radius:4px;background:#1a73e8}

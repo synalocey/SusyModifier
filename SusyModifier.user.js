@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.10.20
+// @version       6.10.23
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -46,7 +46,7 @@
 // @require       https://mrs.mdpi.com/bundles/mdpimrs/js/html5_scripts/zingchart-html5-min.js?v=6.10.20
 // @require       https://gcore.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js?v=6.10.20
 // @resource      chosenCSS             https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/css/chosen.min.css?v=6.10.20
-// @resource      customCSS             https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.css?v=6.10.22.5
+// @resource      customCSS             https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.css?v=6.10.23
 // @resource      tooltipsterCSS        https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/css/tooltipster.bundle.min.css?v=6.10.20
 // @resource      tooltipsterNoirCSS    https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-noir.min.css?v=6.10.20
 // @resource      icons                 https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/icons.json?v=6.10.22
@@ -430,8 +430,7 @@ function onInit() {
         return false;
     }
     else {
-        $(`<li class="sk-susy-tool"><a id=susymodifier_config class="topmenu-tab">SusyMod</a></li>`).insertAfter($("#topmenu>ul>li>a[href='https://www.mdpi.com/about']").parent());
-        $("#topmenu a.show-submit-dialog[href='/user/manuscripts/upload']").remove();
+        $("#topmenu a.show-submit-dialog[href='/user/manuscripts/upload']").replaceWith(`<span class="sk-susy-tool"><a id=susymodifier_config class="topmenu-tab">SusyMod</a></span>`);
         skAddResourceStyle('customCSS');
         $("#susymodifier_config").on("click", function () { GM_config.open() });
         // 记录今天首次访问时间 ☀
@@ -475,8 +474,8 @@ function onInit() {
     }
 
     if (GM_config.get('Easy_Journal')) {
-        $(`<li class="sk-susy-tool"><select id="SusyModifier_Journal_Easy"><option value="555">Analytics</option><option value="25">Games</option><option value="599">Geometry</option><option value="154">Mathematics</option>
-                                   <option value="743">MCB</option><option value="162">Risks</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select></li>`).insertAfter($("#susymodifier_config").parent());
+        $(`<select id="SusyModifier_Journal_Easy"><option value="555">Analytics</option><option value="25">Games</option><option value="599">Geometry</option><option value="154">Mathematics</option>
+                                   <option value="743">MCB</option><option value="162">Risks</option><option value="598">IJT</option><option value="276">Telecom</option><option value="-1">None</option></select>`).insertAfter($("#susymodifier_config"));
         $("#SusyModifier_Journal_Easy").val(S_J).on("change", function () {
             let J_old = S_J, J_new = $(this).find('option:selected').val(); S_J = J_new;
             GM_config.set('Journal', $(this).find('option:selected').text());
