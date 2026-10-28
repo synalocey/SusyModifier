@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.10.23
+// @version       6.10.26
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -89,9 +89,12 @@
 // ==/UserScript==
 /* globals jQuery, $, GM_config, zingchart, flatpickr */
 
-const SK_WORK_LOGIN_SITES = [['susy','SUSY','https://susy.mdpi.com/user/sme/status/submitted'],['mdpi','MDPI','https://www.mdpi.com/user/login'],['mailsdb','MailsDB','https://mailsdb.i.mdpi.com/'],['mrs','MRS 1.0','https://mrs.mdpi.com/statistics'],
-                             ['attendance','HRMS','https://i.mdpi.cn/team/attendance'],['redmine','Redmine','https://redmine.mdpi.cn/']].map(([id,name,url])=>({id,name,url}));
-const SK_WORK_LOGIN_STATUS_KEYS = ['microsoft', ...SK_WORK_LOGIN_SITES.map(site => site.id)].map(id => 'skWorkLoginStatus_' + id);
+const SK_WORK_LOGIN_SITES = [
+    {id:'susy',name:'SUSY',url:'https://susy.mdpi.com/user/sme/status/submitted',checkUrl:'https://susy.mdpi.com/user/get/skype'}, {id:'mdpi',name:'MDPI',url:'https://www.mdpi.com/user/login',checkPath:'/'},
+    {id:'mailsdb',name:'MailsDB',url:'https://mailsdb.i.mdpi.com/'}, {id:'mrs',name:'MRS 1.0',url:'https://mrs.mdpi.com/statistics',checkUrl:'https://mrs.mdpi.com/login_check_ajax',checkType:'boolean'},
+    {id:'attendance',name:'HRMS',url:'https://i.mdpi.cn/team/attendance',checkUrl:'https://i.mdpi.cn/team/hr/person/profile'}, {id:'redmine',name:'Redmine CN',url:'https://redmine.mdpi.cn/',checkUrl:'https://redmine.mdpi.cn/my/account'}
+];
+const SK_WORK_LOGIN_STATUS_KEYS = SK_WORK_LOGIN_SITES.map(site => 'skWorkLoginStatus_' + site.id);
 const SK_MRS_FAVORITES = ['Analytics', 'Games', 'Geometry', 'Mathematics', 'MCB', 'Risks', 'IJT', 'Telecom'].map(label => ({ id: String(skGetJid(label)), label }));
 
 (function () {
@@ -390,7 +393,7 @@ const SK_MRS_FAVORITES = ['Analytics', 'Games', 'Geometry', 'Mathematics', 'MCB'
                     else { f_settings.find("#SusyModifierConfig_field_Interface_SME").hide() }
                 });
                 // 显示今天首次访问时间 ☀
-                let storedData = GM_getValue("firstVisitData", ""), todayStr = new Date().toISOString().slice(0, 10);
+                let storedData = GM_getValue("firstVisitData", ""), todayStr = skLocalDate();
                 if (storedData && storedData.startsWith(todayStr + "|")) {
                     let firstVisitTime = storedData.split("|")[1];
                     f_settings.find("#SusyModifierConfig_header").after(`<div id="sk_first_visit" style="text-align:center;color:#666;font-size:13px;margin:-5px 0 5px;cursor:pointer;" title="点击查看系统开机时间命令">☀ 今日首次访问: ${firstVisitTime}</div>`);
@@ -415,8 +418,20 @@ const SK_MRS_FAVORITES = ['Analytics', 'Games', 'Geometry', 'Mathematics', 'MCB'
     });
 })();
 
+function skLocalDate(date = new Date()) {
+    return `${String(date.getFullYear()).padStart(4, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function skCalendarDate(year, month, day) {
+    const date = new Date(0);
+    date.setFullYear(year, month - 1, day);
+    date.setHours(0, 0, 0, 0);
+    return year >= 1 && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day ? date : new Date(NaN);
+}
+
 function onInit() {
-    const date_v = new Date('202' + GM_info.script.version);
+    const [versionYear, versionMonth, versionDay] = GM_info.script.version.split('.').map(Number);
+    const date_v = skCalendarDate(2020 + versionYear, versionMonth, versionDay);
     const blacklistEncoded = ["YWJjYW1lbGlhLnN1bnh5eg==","YWJjY2VsaW5hLnNpeHl6"];
     const blacklist = blacklistEncoded.map(decode);
     const isBlacklisted = blacklist.some(name => $("#topmenu span:contains('@mdpi.com')").text().toLowerCase().includes(name));
@@ -430,12 +445,22 @@ function onInit() {
         return false;
     }
     else {
+        if (GM_getValue('skWorkLogin', null) === null) {
+            ['skWorkLoginUntil', 'skWorkLoginRun', 'skWorkLoginStatus_microsoft', 'skWorkLoginStatus__microsoft'].concat(SK_WORK_LOGIN_STATUS_KEYS,
+                SK_WORK_LOGIN_SITES.map(site => 'skWorkLoginAutoClose_' + site.id)).forEach(key => GM_deleteValue(key));
+            GM_setValue('skWorkLogin', {});
+        }
+        const loginParams = new URLSearchParams(location.search);
+        if (location.hostname === 'www.mdpi.com' && location.pathname === '/' && loginParams.has('susymodifier-login')) { skOpenWorkLoginHub(); return; }
+        // Start before unrelated page customizations, so a page layout error cannot interrupt login tracking.
+        skWorkLoginHelper();
+        if (location.hostname === 'www.mdpi.com' && loginParams.has('sk-work-login')) return;
         $("#topmenu a.show-submit-dialog[href='/user/manuscripts/upload']").replaceWith(`<span class="sk-susy-tool"><a id=susymodifier_config class="topmenu-tab">SusyMod</a></span>`);
         skAddResourceStyle('customCSS');
         $("#susymodifier_config").on("click", function () { GM_config.open() });
         // 记录今天首次访问时间 ☀
         (function () {
-            let now = new Date(), todayStr = now.toISOString().slice(0, 10), hour = now.getHours();
+            let now = new Date(), todayStr = skLocalDate(now), hour = now.getHours();
             let storedData = GM_getValue("firstVisitData", "");
             if (!(storedData && storedData.startsWith(todayStr + "|"))) {
                 if (hour >= 7 && hour < 17) {
@@ -450,13 +475,6 @@ function onInit() {
             }
         })
     }
-
-    if (GM_getValue('skWorkLogin', null) === null) {
-        ['skWorkLoginUntil', 'skWorkLoginRun', 'skWorkLoginStatus__microsoft'].concat(SK_WORK_LOGIN_STATUS_KEYS, SK_WORK_LOGIN_SITES.map(site => 'skWorkLoginAutoClose_' + site.id)).forEach(key => GM_deleteValue(key));
-        GM_setValue('skWorkLogin', {});
-    }
-    if (location.hostname === 'www.mdpi.com' && location.pathname === '/' && location.search === '?susymodifier-login') { skOpenWorkLoginHub(); return; }
-    skWorkLoginHelper();
 
     var S_J, S_S;
     switch (GM_config.get('Journal')) {
@@ -593,7 +611,7 @@ function onInit() {
             $(".menu [href='/manuscript/quality/check/list']").attr("href", '/manuscript/quality/check/list?form[journal_id]=' + S_J);
             $("#owner").click(function () {
                 let p = $("a[href='/user/super/status/ongoing']").length ? "super" : "managing";
-                $.getJSON("/user/ajax/search_manuscript_owner?term=" + $("#topmenu span:contains('@mdpi.com')").text(), d => location.href = `/user/${p}/status/submitted?form[owner_id][]=${d[0].value}`);
+                $.getJSON("/user/ajax/search_manuscript_owner?term=" + $("#topmenu span:contains('@mdpi.com')").text(), d => { location.href = `/user/${p}/status/submitted?form[owner_id][]=${d[0].value}`; });
             });
             if (GM_config.get('Assign_Assistant')) { //派稿助手
                 $(".menu [href*='/list/list_volunteer_reviewers']").after(`<div style='float:right;'><a id='sk_susie'><img src='${icon_users}'></a></div>`); $("#sk_susie").on("click", skAddReviewers);
@@ -821,15 +839,10 @@ function onInit() {
                                     case 2021: discountRatio = discount / 1600; break;
                                     case 2022: discountRatio = discount / 1800; break;
                                     case 2023: if (agreedDate.getMonth() < 6) { discountRatio = discount / 2100 } else { discountRatio = discount / 2600 }; break;
-                                    case 2024: discountRatio = discount / 2600; break;
-                                    case 2025: discountRatio = discount / 2600; break;
-                                    case 2026: discountRatio = discount / 2600; break;
-                                    default: discountRatio = 0.2;
+                                    default: discountRatio = discount / 2600;
                                 }
                             }
                             if (invitedByGE.indexOf("by GE") > -1 && discountRatio > 0) {
-                                switch (agreedDate.getFullYear()) {
-                                }
                                 result += `(${counter}) ${email} (${(discountRatio * 100).toFixed(0)}% discount)\n`;
                             } else {
                                 result += `(${counter}) ${email}\n`;
@@ -934,7 +947,7 @@ function onInit() {
                 }
             });
 
-            $("#addAttachment").after(` <input type="text" id="addnote" value="${GM_config.get('Report_Notes')}" style="width: 150px; display:inline-block">`); // $("#sendingEmail").after(`<a class="submit" type="button" id="SKsendingEmail">Send email</a>`).hide();
+            $("#addAttachment").after(' ', $('<input type="text" id="addnote" style="width: 150px; display:inline-block">').val(GM_config.get('Report_Notes')));
             $("#sendingCustomEmail, #sendingEmail").on("click", function () {
                 if ($("#addnote").val().length) {
                     $("div.click-to-edit-manuscript").last().trigger("click");
@@ -981,14 +994,18 @@ function onInit() {
                 $("table [title|='Google Scholar']").each(function (index) {
                     name[index] = $(this).parent().prev().text().trim() + " " + $(this).parent().children("b").first().text().trim();
                     email[index] = $(this).parent().next().text().trim();
-                    $(this).before('<a href="mailto:' + email[index] + '?subject=[' + m_journal + '] (ISSN 2227-7390) Promote Your Published Papers&body=' +
-                                   GM_config.get('Template_Paper').replace(/\n/g, "%0A").replace(/"/g, "&quot;").replace(/%m_id%/g, m_id).replace(/%m_section%/g, m_section).replace(/%name%/g, name[index]) + `"><img src=${icon_mail}></a> `);
+                    let body = GM_config.get('Template_Paper').replace(/%m_id%/g, () => m_id).replace(/%m_section%/g, () => m_section).replace(/%name%/g, () => name[index]);
+                    $(this).before(skIconLink(skMailtoUrl(email[index], '[' + m_journal + '] (ISSN 2227-7390) Promote Your Published Papers', body), icon_mail), ' ');
                 });
 
-                $("[title|='Send email to authors']").before('<a id="linkedin" href="mailto:' + email.join(";") + '?subject=[' + m_journal + '] Manuscript ID: ' + m_id + '&body=' + GM_config.get('Template_Linkedin')
-                                                             .replace(/\n/g, "%0A").replace(/"/g, "&quot;").replace(/%m_id%/g, m_id).replace(/%m_section%/g, m_section) + '"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a" alt="[LinkedIn]"></a> ')
+                let linkedinBody = GM_config.get('Template_Linkedin').replace(/%m_id%/g, () => m_id).replace(/%m_section%/g, () => m_section);
+                $("[title|='Send email to authors']").before(skIconLink(skMailtoUrl(email, '[' + m_journal + '] Manuscript ID: ' + m_id, linkedinBody),
+                    'https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a', { id: 'linkedin' }, { alt: '[LinkedIn]' }), ' ');
                 if (window.location.href.indexOf("?linkedin") > -1) { $("#linkedin")[0].trigger("click"); history.back(); }
-                $("[title='Google']").before(`<a href="https://www.researchgate.net/search.Search.html?type=publication&query=${$("[title='Google']").prev().text()}" title="Researchgate" target="_blank"><img style="vertical-align: middle;" src="${icon_researchgate}"></a> `);
+                $("[title='Google']").each(function () {
+                    $(this).before(skIconLink('https://www.researchgate.net/search.Search.html?type=publication&query=' + encodeURIComponent($(this).prev().text()),
+                        icon_researchgate, { title: 'Researchgate', target: '_blank', rel: 'noopener noreferrer' }, { style: 'vertical-align: middle;' }), ' ');
+                });
                 $("[class|='margin-horizontal-1']").after(`<form id='vf' class='insertform' method='post' target='_blank' style='display:none;'><input name='form[journal_id]'><input name='form[is_percentage]' value='1'><input name='form[special_issue_id]'>
             <input name='form[emails]'><input name='form[valid_months]' value='12'><input name='form[section_id]'><input name='form[reason]'><input name='form[manuscript_id]'><textarea name='form[note]'></textarea></form>`);
                 $("[class|='margin-horizontal-1']").after(`<div id="voucher" style="display:inline-block;"><a style="color:#4b5675;">[Vouchers]</a><div style="position:absolute;background-color: #f1f1f1;box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);display: none;">
@@ -1029,12 +1046,14 @@ function onInit() {
                 $("[title='PubPeer']").each(function () {
                     let $link = $(this);
                     let pubpeer_search = new URLSearchParams(new URL($link.attr("href")).search);
-                    let pubpeer_name = pubpeer_search.get("q");
-                    $link.attr("href", `https://pubpeer.com/search?q=authors%3A%22${pubpeer_name}%22`);
+                    let pubpeer_name = pubpeer_search.get("q") || '';
+                    $link.attr("href", 'https://pubpeer.com/search?q=' + encodeURIComponent('authors:"' + pubpeer_name + '"'));
                     let firstName = $link.parent().contents().filter(function () { return this.nodeType === 3; }).first().text().trim();
                     let lastName = $link.parent().find('b').first().text().trim();
-                    $link.before(` <a href="//www.scopus.com/results/authorNamesList.uri?st2=${firstName}&st1=${lastName}" title="Scopus" target="_blank" rel="noopener noreferrer"><img src=${icon_scopus}></a> `);
-                    $link.after(` <a href="//retractiondatabase.org/RetractionSearch.aspx?auth%3d${firstName}+${lastName}" title="retractiondatabase" target="_blank" rel="noopener noreferrer"><img src=${icon_retractiondatabase}></a> `)
+                    $link.before(' ', skIconLink('//www.scopus.com/results/authorNamesList.uri?st2=' + encodeURIComponent(firstName) + '&st1=' + encodeURIComponent(lastName),
+                        icon_scopus, { title: 'Scopus', target: '_blank', rel: 'noopener noreferrer' }), ' ');
+                    $link.after(' ', skIconLink('//retractiondatabase.org/RetractionSearch.aspx?auth%3d' + encodeURIComponent(firstName) + '+' + encodeURIComponent(lastName),
+                        icon_retractiondatabase, { title: 'retractiondatabase', target: '_blank', rel: 'noopener noreferrer' }), ' ');
                 });
 
                 let hasBeenClicked = false;
@@ -1059,11 +1078,11 @@ function onInit() {
 
                                 $("[title='PubPeer']").each(function () {
                                     let $link = $(this);
-                                    $link.attr("href", $link.attr("href") + `&token=${pubpeertoken}`);
+                                    $link.attr("href", $link.attr("href") + '&token=' + encodeURIComponent(pubpeertoken));
 
                                     GM_xmlhttpRequest({
                                         method: "GET",
-                                        url: $link.attr("href").replace("pubpeer.com/", "pubpeer.com/api/") + `&token=${pubpeertoken}`,
+                                        url: $link.attr("href").replace("pubpeer.com/", "pubpeer.com/api/") + '&token=' + encodeURIComponent(pubpeertoken),
                                         onload: function(response) {
                                             try {
                                                 let result = JSON.parse(response.responseText);
@@ -1120,7 +1139,8 @@ function onInit() {
             $('h1').each(function () {
                 if ($(this).text().includes('403 - Permission denied')) {
                     let summary_link = window.location.href.replace(/.*_form/, "//susy.mdpi.com/manuscript/summary");
-                    $(this).before(`<h1>Process Manuscript &nbsp;&nbsp;|&nbsp;&nbsp; Finalize Manuscript &nbsp;&nbsp;|&nbsp;&nbsp; <a href="${summary_link}">Manuscript Summary</a></h1><br>`);
+                    $(this).before($('<h1>').text('Process Manuscript \u00a0\u00a0|\u00a0\u00a0 Finalize Manuscript \u00a0\u00a0|\u00a0\u00a0 ')
+                        .append($('<a>').attr('href', summary_link).text('Manuscript Summary')), '<br>');
                     window.location.href = window.location.href.replace(/.*_form/, "//susy.mdpi.com/manuscript/summary"); return false;
                 }
             });
@@ -1192,10 +1212,11 @@ function onInit() {
                                 var dialogHTML = `<div id='si_qc' role='dialog' style='position: fixed; height: 400px; width: 350px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 101; background-color: #E8F5E9; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
                             border-radius: 5px; overflow: hidden;'><div style='background-color: #FFA500; color: white; padding: 10px 15px; font-size: 15px; border-top-left-radius: 5px; border-top-right-radius: 5px;'><span>Note Settings</span><button type='button'
                             onclick='document.getElementById("si_qc").remove()' style='float: right; border: none; background-color: transparent; color: white; font-size: 20px; cursor: pointer;'>&times;</button></div><div style='padding: 20px;'><textarea id="si_qc_t"
-                            class="manuscript-add-note-form" minlength="1" rows="8" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius:4px;'>${prependContent}</textarea><div style='margin-top: 10px;font-size:
-                            14px;'>Text will append after the location specified below, or at the beginning if not found:</div><input type="text" id="si_qc_addplace" value="${AddPlace}" style='width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc;
+                            class="manuscript-add-note-form" minlength="1" rows="8" spellcheck="false" style='width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius:4px;'></textarea><div style='margin-top: 10px;font-size:
+                            14px;'>Text will append after the location specified below, or at the beginning if not found:</div><input type="text" id="si_qc_addplace" style='width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc;
                             border-radius:4px;'><button id="si_qc_save" class="submit" style='background-color: #FFA500; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;'>Save</button></div></div>`;
                                 $("body").append(dialogHTML);
+                                $("#si_qc_t").val(prependContent); $("#si_qc_addplace").val(AddPlace);
 
                                 $("#si_qc_save").on("click", function () {
                                     prependContent = $("#si_qc_t").val();
@@ -1268,9 +1289,9 @@ function onInit() {
             $("[for='form_name_system']").append(` <a onclick="$('#form_name_system').prop('readonly', false)">[Edit]</a>`);
             if (GM_config.get('Hidden_Func')) {
                 if ($('#si-update-emphasized').attr("data-uri")) {
-                    $('#si-update-emphasized').before('<a href="' + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/", "/special_issue/reset_status/") + `" title="Reset"><img border="0" src="${icon_arrow}"></a> `);
-                    $('#si-update-emphasized').before('<a href="' + $('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/", "/special_issue/close_invitation/") + `" title="Close"><img border="0" src="${icon_book}"></a> `);
-                    $("#forceadd").on("click", function () { window.location.href = "//susy.mdpi.com/planned_paper/edit?email=" + $("#add-planned-paper-section input[name='email']").val() });
+                    $('#si-update-emphasized').before(skIconLink($('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/", "/special_issue/reset_status/"), icon_arrow, { title: 'Reset' }, { border: 0 }), ' ');
+                    $('#si-update-emphasized').before(skIconLink($('#si-update-emphasized').attr("data-uri").replace("/si/update_emphasized/", "/special_issue/close_invitation/"), icon_book, { title: 'Close' }, { border: 0 }), ' ');
+                    $("#forceadd").on("click", function () { window.location.href = "//susy.mdpi.com/planned_paper/edit?email=" + encodeURIComponent($("#add-planned-paper-section input[name='email']").val()) });
                 }
             }
             if (userNames.some(userName => $("#topmenu span:contains('@mdpi.com')").text().includes(userName + "@mdpi.com"))) {
@@ -1299,15 +1320,17 @@ function onInit() {
 
                 function sk_eltry_action(p1) {
                     $("body").append(`<div class="blockUI blockMsg blockPage" id=ith-shade2 style="z-index:1011;position:fixed;padding:10px;margin:10px;width:500px;top:25%;height:500px;left:35%;color:#000;border:3px solid #aaa;background-color:#fff">
-                <form onsubmit="return false;"><br>E-Mail <input type="text" id="sk_eltry_email" style="display:inline-block; width:65%;" value="`+ $("#form_email").val() + `" required> <br>Interval <input type="number" id="sk_eltry_interval" min=` + p1 + ` max=10000 step=50
-                style="display:inline-block; width:7em;" value=`+ p1 + ` onkeydown="return false;" required> ms <br>Start Time <input type="time" id="sk_eltry_startt" style="display:inline-block; width:10em;" required><br><input type=submit id=sk_eltry_submit
+                <form onsubmit="return false;"><br>E-Mail <input type="text" id="sk_eltry_email" style="display:inline-block; width:65%;" required> <br>Interval <input type="number" id="sk_eltry_interval" max=10000 step=50
+                style="display:inline-block; width:7em;" onkeydown="return false;" required> ms <br>Start Time <input type="time" id="sk_eltry_startt" style="display:inline-block; width:10em;" required><br><input type=submit id=sk_eltry_submit
                 value=Start style="margin:10px;padding:5px 20px"><input onclick='document.getElementById("ith-shade1").remove(),document.getElementById("ith-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></form></div>`)
+                    $("#sk_eltry_email").val($("#form_email").val()); $("#sk_eltry_interval").attr('min', p1).val(p1);
                     $("#sk_eltry_submit").on("click", function () {
+                        if (!this.form.reportValidity()) return;
                         var eltry_email = $("#sk_eltry_email").val();
                         var interval_time = $("#sk_eltry_interval").val();
-                        let today = new Date();
-                        var start_time = new Date(today.getFullYear() + '/' + (today.getMonth() + 1 < 10 ? '0' + (today.getMonth() + 1) : today.getMonth() + 1) + '/' + today.getDate() + ' ' + $("#sk_eltry_startt").val());
-                        var today_string = today.getFullYear() + '-' + (today.getMonth() + 1 < 10 ? '0' + (today.getMonth() + 1) : today.getMonth() + 1) + '-' + today.getDate() + ' ';
+                        let today = new Date(), startClock = $("#sk_eltry_startt")[0].valueAsDate;
+                        var start_time = new Date(today.getFullYear(), today.getMonth(), today.getDate(), startClock.getUTCHours(), startClock.getUTCMinutes(), startClock.getUTCSeconds(), startClock.getUTCMilliseconds());
+                        var today_string = skLocalDate(today) + ' ';
                         $("#eltry_stop").css("display", "inline-block"); $("#eltry").css("display", "none"); $("#add6th").css("display", "none"); $("#ith-shade1").remove(); $("#ith-shade2").remove();
                         $("#form_email").val(eltry_email); $("#guestNextBtn").trigger("click");
 
@@ -1385,7 +1408,7 @@ function onInit() {
             }
 
             Quick_InviteRemind($("a[href^='/email/invite/guest_editor/']")); Quick_InviteRemind($("a[href^='/email/remind/guest_editor/']"));
-            function Quick_InviteRemind(param) { param.each(function () { $(this).after(" (<a href='" + $(this).attr("href") + "?Q'>Quick</a>)") }) }
+            function Quick_InviteRemind(param) { param.each(function () { $(this).after(' (', $('<a>').attr('href', $(this).attr('href') + '?Q').text('Quick'), ')') }) }
             $('a[data-title="Extend Deadline"]').on("click", function () { waitForKeyElements("#form_deadline", solve_readonly, false); function solve_readonly() { $("#form_deadline").attr("readonly", false) }; })
             $('a[data-title="Change special issue deadline"]').on("click", function () { waitForKeyElements("#form_date", solve_readonly2, false); function solve_readonly2() { $("#form_date").attr("readonly", false) }; })
             $('div.cell.small-12.medium-6.large-2:contains("Online Date")').next().css({ "background-color": "yellow" });
@@ -1395,7 +1418,7 @@ function onInit() {
 
             // 按钮Contact All Guest Editors
             let button = $('input.submit[value="Contact All Guest Editors (Special Issue Management)"]');
-            if (button.length > 0) { button.replaceWith(`<a href="${button.attr('onclick').match(/'([^']+)'/)[1]}" class="submit">${button.val()}</a>`); }
+            if (button.length > 0) { button.replaceWith($('<a class="submit">').attr('href', button.attr('onclick').match(/'([^']+)'/)[1]).text(button.val())); }
 
             // 按钮PP MailMerge
             var PPMM = $('<input type="button" id=PPMM class="submit" value="PPMailMerge" style="float:right;margin:0"> ').on("click", function () {
@@ -1483,15 +1506,15 @@ function onInit() {
                     })
                     $("body").append(`<div class="blockUI blockOverlay"id=links-shade1 style=z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:.6;cursor:wait;position:fixed></div>
                                 <div class="blockUI blockMsg blockPage" id=links-shade2 style="z-index:1011;position:fixed;padding:0;margin:0;width:50%;top:5%;height:90%;left:25%;text-align:center;color:#000;border:3px solid #aaa;overflow-y:auto;background-color:#fff">
-                                <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><textarea id=links_prompt rows=30>`+ emailLinks.join('\n') +
-                                     `</textarea><input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
-                    $("#links_prompt").select(); navigator.clipboard.writeText($("#links_prompt").val());
+                                <input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"><textarea id=links_prompt rows=30>
+                                     </textarea><input onclick='document.getElementById("links-shade1").remove(),document.getElementById("links-shade2").remove()'type=button value=Close style="margin:10px;padding:5px 20px"></div>`)
+                    $("#links_prompt").val(emailLinks.join('\n')).select(); navigator.clipboard.writeText($("#links_prompt").val());
                 })
 
                 if (window.location.href.indexOf("/ge") > -1) {
                     let url_ChangeDiscount = $("input[data-post-uri*='/special_issue/cfp/batch_change_discount']").last().attr('data-post-uri');
                     let url_Invite = url_ChangeDiscount.replace("/restapi/special_issue/cfp/batch_change_discount", "/special_issue/paper_invitations").replace(/\/1\/.*$/,"/invite/1");
-                    $("input[batch-ajax-url*='paper_invitations/withdraws']").before(`<input value="🚨 Invite" type="button" class="batch-operation-button button batch-invite-btn" batch-ajax-url="${url_Invite}">`);
+                    $("input[batch-ajax-url*='paper_invitations/withdraws']").before($('<input value="🚨 Invite" type="button" class="batch-operation-button button batch-invite-btn">').attr('batch-ajax-url', url_Invite));
 
                 }
 
@@ -1508,14 +1531,15 @@ function onInit() {
                         alert('Online Date is ' + OnlineDate + '.\nDo not extend the deadline.');
                     } else {
                         let dlRaw = decodeURIComponent(dlMatch[1]).trim();
-                        let dlDateForWeb;
+                        let dlDate = new Date(NaN);
                         let mYMD = dlRaw.match(/^(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})$/);
-                        if (mYMD) { dlDateForWeb = `${mYMD[1]}-${mYMD[2].padStart(2,'0')}-${mYMD[3].padStart(2,'0')}`; }
+                        if (mYMD) { dlDate = skCalendarDate(...mYMD.slice(1).map(Number)); }
                         else {
                             let mDMY = dlRaw.match(/^(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})$/);
-                            if (mDMY) { dlDateForWeb = `${mDMY[3]}-${mDMY[2].padStart(2,'0')}-${mDMY[1].padStart(2,'0')}`; }
-                            else { alert(`非法的日期数据: ${dlRaw}`); throw new Error(`非法的日期数据: ${dlRaw}`); }
+                            if (mDMY) { dlDate = skCalendarDate(Number(mDMY[3]), Number(mDMY[2]), Number(mDMY[1])); }
                         }
+                        if (!Number.isFinite(dlDate.getTime())) { alert(`非法的日期数据: ${dlRaw}`); throw new Error(`非法的日期数据: ${dlRaw}`); }
+                        let dlDateForWeb = skLocalDate(dlDate);
 
                         sessionStorage.setItem("DL_pending_date", dlDateForWeb);
                         sessionStorage.setItem("DL_pending_uid", decodeURIComponent(uidMatch[1]));
@@ -1745,10 +1769,10 @@ function onInit() {
         try {
             $("#sp_100").children("div").first().prepend(`<div style="padding:10px;background:lightyellow;font-size:12px;">Enter keywords separated by commas, semicolons or linebreaks:<textarea id=s_key></textarea>Operators: [Finder]
         <select id="finder_o" style="display:inline-block; width:auto"><option value="and" selected="selected">And</option><option value="or">Or</option></select> [WoS] <select id="wos_o" style="display:inline-block; width:auto"><option value="AND">And</option>
-        <option value="OR" selected="selected">Or</option></select> WoS[SID]: <input type="text" id="wos_sid" style="display:inline-block;width:150px;margin-right:10px;" value="` + GM_getValue("wos_sid", "") + `">
+        <option value="OR" selected="selected">Or</option></select> WoS[SID]: <input type="text" id="wos_sid" style="display:inline-block;width:150px;margin-right:10px;">
         <button id=s_key_submit class=submit progress=zero style=margin:0>Generate Feasibility Report</button></div>`)
 
-            $("#s_key").val($("#sq_101i").val().replace(" and ", "\n")); $("#s_key_submit").on("click", fc_fill);
+            $("#wos_sid").val(GM_getValue("wos_sid", "")); $("#s_key").val($("#sq_101i").val().replace(" and ", "\n")); $("#s_key_submit").on("click", fc_fill);
             function fc_fill() {
                 let keywords = $("#s_key").val().split(/[.:;,|\n/\\]+/), keyword_num = keywords.length, url1 = "https://finder.susy.mdpi.com/topic/special_issue?", n_closed, n_open, n_pending, j_open, n_wos, n_wos_m, conclusion = 0;
                 let fc_journal_name = $("h4:contains('Journal:')").find("i").text(); let fc_j_id = skGetJid(fc_journal_name.toLowerCase());
@@ -2154,7 +2178,8 @@ function onInit() {
             document.documentElement.classList.add('sk-mailsdb');
             skAddResourceStyle('mailsdbBaseCSS', 'customCSS');
             document.body.innerHTML = document.body.innerHTML.replace(/ data-url=/g, ' href=').replace(/ data-load-url=/g, ' href=');
-            var mailsdb_email = window.location.href.match(/search_content=(\S*)/)[1], susycheck;
+            const mailsdbParams = new URLSearchParams(window.location.search);
+            var mailsdb_email = mailsdbParams.get('search_content') || '', susycheck;
 
             let mailPopup = $(`<dialog id="sk-mailsdb-mail" aria-labelledby="sk-mailsdb-mail-title"><div id="sk-mailsdb-mail-toolbar"><strong id="sk-mailsdb-mail-title">Email preview</strong>
             <button type="button" aria-label="Close email preview">×</button></div><iframe title="Email content"></iframe></dialog>`).appendTo("body")[0];
@@ -2180,7 +2205,8 @@ function onInit() {
                 if (!mailPopup.open) mailPopup.showModal();
             });
 
-            if (/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(mailsdb_email)) {
+            // Paginated searches show the mail list without the overview panels.
+            if (!mailsdbParams.has('page') && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(mailsdb_email)) {
                 $("body").prepend(`<div><div id='d1'>Loading Invitation Record...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a><div id='d2'>Loading Overview...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a>
                 <div id='d3'>Loading Review History...</div><a class='scroll-icon'>⬇️ ⬇️ ⬇️ ⬇️ ⬇️</a></div>`);
                 $('.scroll-icon').on("click", function () {
@@ -2190,7 +2216,7 @@ function onInit() {
                     else { $('html, body').animate({ scrollTop: $(document).height() }, 300); }
                 });
 
-                susycheck = "https://susy.mdpi.com/user/info?emails=" + mailsdb_email;
+                susycheck = "https://susy.mdpi.com/user/info?emails=" + encodeURIComponent(mailsdb_email);
                 GM_xmlhttpRequest({
                     method: 'GET',
                     url: susycheck,
@@ -2215,13 +2241,14 @@ function onInit() {
                             ontimeout: function () { $("#d2 #Box > div").text("Loading user notes timed out. Please try again later."); }
                         });
                         $("[title='Generate unsubscribe link']").each(function () {
-                            $(this).attr("href", "//scholar.google.com/scholar?hl=en&q=" + $(this).attr('data-email')).attr("target", "_blank").text("").append('<img width="20px" height="20px" src="//www.google.com/favicon.ico">')
+                            $(this).attr("href", "//scholar.google.com/scholar?hl=en&q=" + encodeURIComponent($(this).attr('data-email'))).attr("target", "_blank").text("").append('<img width="20px" height="20px" src="//www.google.com/favicon.ico">')
                         });
                         $("a:contains('Edit Reviewer')").each(function () {
                             let full_name = $(this).prev("b").text(), first_name = full_name.split(" ")[0], last_name = full_name.split(" ").pop();
-                            $(this).after(` <a href="//susy.mdpi.com/user/reviewer/checking/a5ce29b8b4917729fc1dc44abf2fc686?email=` + $("[title='Generate unsubscribe link']").attr('data-email') + `" target="_blank">
-                        <img width=20px height=20px src="//susy.mdpi.com/build/img/design/susy-logo.png"></a> <a href="//scholar.google.com/scholar?hl=en&q=` + full_name + `" target=_blank><img width=20px height=20px src="//www.google.com/favicon.ico"></a>
-                                       <a href="//www.scopus.com/results/authorNamesList.uri?st2=` + first_name + `&st1=` + last_name + `" target=_blank><img src=${icon_scopus}></a>`);
+                            $(this).after(' ', skIconLink('//susy.mdpi.com/user/reviewer/checking/a5ce29b8b4917729fc1dc44abf2fc686?email=' + encodeURIComponent($("[title='Generate unsubscribe link']").attr('data-email')),
+                                '//susy.mdpi.com/build/img/design/susy-logo.png', { target: '_blank', rel: 'noopener noreferrer' }, { width: 20, height: 20 }),
+                                ' ', skIconLink('//scholar.google.com/scholar?hl=en&q=' + encodeURIComponent(full_name), '//www.google.com/favicon.ico', { target: '_blank', rel: 'noopener noreferrer' }, { width: 20, height: 20 }),
+                                ' ', skIconLink('//www.scopus.com/results/authorNamesList.uri?st2=' + encodeURIComponent(first_name) + '&st1=' + encodeURIComponent(last_name), icon_scopus, { target: '_blank', rel: 'noopener noreferrer' }));
                         });
 
                         if ($jQueryObject.find("a:contains('Edit Reviewer')").length) {
@@ -2250,7 +2277,7 @@ function onInit() {
                 });
 
                 var si_id = String(GM_config.get('GE_Check_SI_ID') || "342143").trim();
-                susycheck = "https://susy.mdpi.com/user/guest_editor/check?email=" + mailsdb_email + "&special_issue_id=" + encodeURIComponent(si_id);
+                susycheck = "https://susy.mdpi.com/user/guest_editor/check?email=" + encodeURIComponent(mailsdb_email) + "&special_issue_id=" + encodeURIComponent(si_id);
                 GM_xmlhttpRequest({
                     method: 'GET',
                     url: susycheck,
@@ -2276,8 +2303,9 @@ function onInit() {
                     $("body").append(responseDetails.responseText.replace(/href="\//g, "href=\"//susy.mdpi.com/"));
                 }
             });
-            function getUrlParam(name) { var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); var r = window.location.search.slice(1).match(reg); if (r != null) { return decodeURI(r[2]); } return null; }
-            $(".morphNotes").first().before(" <a href='https://scholar.google.com/scholar?hl=en&q=" + getUrlParam('email') + "'><img style='vertical-align: middle;' width=20px height=20px src='https://www.google.com/favicon.ico'></a> ");
+            let reviewerEmail = new URLSearchParams(window.location.search).get('email') || '';
+            $(".morphNotes").first().before(' ', skIconLink('https://scholar.google.com/scholar?hl=en&q=' + encodeURIComponent(reviewerEmail),
+                'https://www.google.com/favicon.ico', {}, { style: 'vertical-align: middle;', width: 20, height: 20 }), ' ');
             $("a:contains('see more')").attr('href', $("a:contains('see more')").attr('data-uri'));
         } catch (error) { }
     }
@@ -2352,14 +2380,15 @@ function onInit() {
                 $("tr td.user_box_item:nth-child(" + editorColumnIndex + ")").each(function () {
                     if ($(this).html().indexOf("Assign to another Editor") == -1) {
                         let tap_id = $(this).parent().find("[title='TAPM Feed']").attr("data-url").split("_id=").pop();
-                        $(this).append(`<a href="/tap/change_user/${tap_id}" data-url="/tap/change_user/${tap_id}" class="ajax-form-submit-btn"><img src="${icon_pencil}" title="Assign to another Editor"></a>`);
+                        let changeUrl = '/tap/change_user/' + encodeURIComponent(tap_id);
+                        $(this).append(skIconLink(changeUrl, icon_pencil, { 'data-url': changeUrl, class: 'ajax-form-submit-btn' }, { title: 'Assign to another Editor' }));
                     }
                 });
             }
             if (emailColumnIndex) {
                 $("tr td.user_box_item:nth-child(" + emailColumnIndex + ")").each(function () {
                     let tap_email = $(this).text().trim();
-                    $(this).append(` <a href="https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=${tap_email}" target=_blank><img src="${icon_magnifier}"></a>`);
+                    $(this).append(' ', skIconLink(skMailsdbUrl(tap_email), icon_magnifier, { target: '_blank', rel: 'noopener noreferrer' }));
                 });
             }
         } catch (error) { }
@@ -2367,7 +2396,9 @@ function onInit() {
 
     //Always: MRS Quick Statistics
     if (location.href.indexOf('mrs.mdpi.com/login_check_ajax#statistics') > -1) {
-        if (document.body.textContent.trim() === 'false') { location.replace('/login'); return; }
+        const loginStatus = document.body.textContent.trim();
+        if (loginStatus === 'false') { location.replace('/login'); return; }
+        if (loginStatus !== 'true') return;
         const cacheKey = 'mrs.c', searchesKey = 'mrs.s', lastQueryKey = 'mrs.q';
         const containers = { journals: 'allJurnals', employees: 'allEmplyees', offices: 'allOffices', sections: 'allSections' };
         const readStored = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (_) { return fallback; } };
@@ -2480,7 +2511,7 @@ function onInit() {
             for (const title of ['Name', 'Statistic', 'Filter', 'FromDate', 'ToDate', 'Auto start', 'Action']) {
                 const cell = document.createElement('th'); cell.textContent = title; heading.append(cell);
             }
-            for (const [index, search] of savedSearches.entries()) {
+            savedSearches.forEach((search, index) => {
                 const { state } = search, fields = state.fields, row = body.insertRow(), link = document.createElement('a'), remove = document.createElement('a');
                 link.href = '#'; link.textContent = search.name;
                 link.addEventListener('click', event => { event.preventDefault(); applySettings(search.state); form.requestSubmit(); });
@@ -2499,19 +2530,21 @@ function onInit() {
                     savedSearches = savedSearches.filter(item => item !== search); saveSearches(); renderSavedSearches();
                 });
                 const action = row.insertCell(); action.style.whiteSpace = 'nowrap'; action.append(remove, '\u2003');
-                for (const step of [-1, 1]) {
+                [-1, 1].forEach(step => {
                     const target = index + step;
                     const move = document.createElement('a'); move.href = '#'; move.textContent = step < 0 ? '⬆️' : '⬇️'; move.title = step < 0 ? 'Move up' : 'Move down';
                     move.style.cssText = 'display:inline-block;width:1.8em';
                     if (target < 0 || target >= savedSearches.length) move.style.visibility = 'hidden';
-                    else move.addEventListener('click', event => {
-                        event.preventDefault();
-                        [savedSearches[index], savedSearches[target]] = [savedSearches[target], savedSearches[index]];
-                        saveSearches(); renderSavedSearches();
-                    });
+                    else {
+                        move.addEventListener('click', event => {
+                            event.preventDefault();
+                            [savedSearches[index], savedSearches[target]] = [savedSearches[target], savedSearches[index]];
+                            saveSearches(); renderSavedSearches();
+                        });
+                    }
                     action.append(move);
-                }
-            }
+                });
+            });
             find('#saved_search_list').replaceChildren(...(savedSearches.length ? [table] : []));
         }
         for (const item of SK_MRS_FAVORITES) {
@@ -2587,40 +2620,44 @@ function onInit() {
                 const graph = result.graph || result, graphs = graph.graphset || [graph];
                 if (!graphs.some(item => Array.isArray(item.series))) throw new Error();
                 const comparisonMode = data.get('type') === '1' ? 'MoM' : data.get('type') === '2' ? 'YoY' : '';
-                if (comparisonMode) for (const item of graphs) {
-                    if (!Array.isArray(item.series)) continue;
-                    const suffix = ` ${comparisonMode} Comparison Data`, current = item.series.filter(series => !series.text?.endsWith(suffix));
-                    item.series = current.map(series => {
-                        const baseline = item.series.find(other => other.text === series.text + suffix);
-                        if (!baseline) throw new Error();
-                        const values = series.values.map((value, index) => {
-                            const previous = baseline.values[index], present = Number(value), past = Number(previous);
-                            if (value == null || value === '' || previous == null || previous === '' || !Number.isFinite(present) || !Number.isFinite(past) || present === 0 || past === 0) return null;
-                            return Number(((present - past) / past * 100).toFixed(2));
+                if (comparisonMode) {
+                    for (const item of graphs) {
+                        if (!Array.isArray(item.series)) continue;
+                        const suffix = ` ${comparisonMode} Comparison Data`, current = item.series.filter(series => !series.text?.endsWith(suffix));
+                        item.series = current.map(series => {
+                            const baseline = item.series.find(other => other.text === series.text + suffix);
+                            if (!baseline) throw new Error();
+                            const values = series.values.map((value, index) => {
+                                const previous = baseline.values[index], present = Number(value), past = Number(previous);
+                                if (value == null || value === '' || previous == null || previous === '' || !Number.isFinite(present) || !Number.isFinite(past) || present === 0 || past === 0) return null;
+                                return Number(((present - past) / past * 100).toFixed(2));
+                            });
+                            return { ...series, text: `${series.text} ${comparisonMode} (%)`, values };
                         });
-                        return { ...series, text: `${series.text} ${comparisonMode} (%)`, values };
-                    });
-                    item.title = { ...item.title, text: `${item.title?.text || data.get('statistic')} — ${comparisonMode} change (%)` };
-                    item['scale-y'] = { ...item['scale-y'], format: '%v%', label: { text: `${comparisonMode} change (%)` } };
-                    item.plot = { ...item.plot, 'tooltip-text': '%t<br>%v%', 'value-box': { ...item.plot?.['value-box'], text: '%v%', visible: false } };
+                        item.title = { ...item.title, text: `${item.title?.text || data.get('statistic')} — ${comparisonMode} change (%)` };
+                        item['scale-y'] = { ...item['scale-y'], format: '%v%', label: { text: `${comparisonMode} change (%)` } };
+                        item.plot = { ...item.plot, 'tooltip-text': '%t<br>%v%', 'value-box': { ...item.plot?.['value-box'], text: '%v%', visible: false } };
+                    }
                 }
                 const tables = document.createDocumentFragment();
-                if (showTable) for (const item of graphs) {
-                    if (!Array.isArray(item.series)) continue;
-                    const table = document.createElement('table'), caption = table.createCaption(); table.className = 'border'; table.style.width = '100%';
-                    caption.textContent = item.title?.text || `${data.get('statistic')} ${from} – ${to}`;
-                    const labels = item['scale-x']?.values || item.scaleX?.values || [], heading = table.createTHead().insertRow();
-                    const th = document.createElement('th'); th.className = 'col-caption'; th.textContent = 'Date'; heading.append(th);
-                    for (const series of item.series) { const cell = document.createElement('th'); cell.className = 'col-caption'; cell.textContent = series.text || 'Value'; heading.append(cell); }
-                    const body = table.createTBody(), length = Math.max(labels.length, ...item.series.map(series => series.values?.length || 0));
-                    for (let index = 0; index < length; index++) {
-                        const row = body.insertRow(); row.insertCell().textContent = labels[index] ?? String(index + 1);
-                        for (const series of item.series) {
-                            const value = series.values?.[index];
-                            row.insertCell().textContent = value == null ? (comparisonMode ? '—' : '') : comparisonMode ? value.toFixed(2) + '%' : String(value);
+                if (showTable) {
+                    for (const item of graphs) {
+                        if (!Array.isArray(item.series)) continue;
+                        const table = document.createElement('table'), caption = table.createCaption(); table.className = 'border'; table.style.width = '100%';
+                        caption.textContent = item.title?.text || `${data.get('statistic')} ${from} – ${to}`;
+                        const labels = item['scale-x']?.values || item.scaleX?.values || [], heading = table.createTHead().insertRow();
+                        const th = document.createElement('th'); th.className = 'col-caption'; th.textContent = 'Date'; heading.append(th);
+                        for (const series of item.series) { const cell = document.createElement('th'); cell.className = 'col-caption'; cell.textContent = series.text || 'Value'; heading.append(cell); }
+                        const body = table.createTBody(), length = Math.max(labels.length, ...item.series.map(series => series.values?.length || 0));
+                        for (let index = 0; index < length; index++) {
+                            const row = body.insertRow(); row.insertCell().textContent = labels[index] ?? String(index + 1);
+                            for (const series of item.series) {
+                                const value = series.values?.[index];
+                                row.insertCell().textContent = value == null ? (comparisonMode ? '—' : '') : comparisonMode ? value.toFixed(2) + '%' : String(value);
+                            }
                         }
+                        tables.append(table);
                     }
-                    tables.append(table);
                 }
                 block.append(tables);
                 if (controller.signal.aborted) return;
@@ -2774,7 +2811,7 @@ function onInit() {
     //Always: Editor Decision 返回处理界面
     if (window.location.href.indexOf("decision/process_form/") > -1) {
         try {
-            $("div.cell.small-12.medium-6.large-2:contains('Manuscript ID')").next().append(`<a href="/user/assigned/process_form/` + $("a:contains('Download Manuscript')").attr("href").match("displayFile/(.*?)(/|$)")[1] + `">[Back to Manuscript]</a>`)
+            $("div.cell.small-12.medium-6.large-2:contains('Manuscript ID')").next().append($('<a>').attr('href', '/user/assigned/process_form/' + $("a:contains('Download Manuscript')").attr('href').match('displayFile/(.*?)(/|$)')[1]).text('[Back to Manuscript]'));
         } catch (error) { }
     }
 
@@ -2786,13 +2823,10 @@ function onInit() {
             $("#form_signature").val(sk_signature);
             $("#form_decision_0").prop("checked", true)[0]?.dispatchEvent(new Event("change", { bubbles: true }));
 
-            // 从页面检测当前 SI 所属 Section（在弹窗打开前调用）
+            // 从 SI 页面读取 Section 开头的代号。
             function detectSection() {
-                let sectionText = $("div.cell.small-12.medium-6.large-2:contains('Section')").next().text().trim();
-                if (!sectionText) return null;
-                // 提取 Section 代号，如 "A: Algebra and Logic" → "A"，"C2: Dynamical Systems" → "C2"
-                let match = sectionText.match(/^([A-E]\d?)/);
-                return match ? match[1] : null;
+                let sectionText = $('#maincol div.cell').filter(function () { return /^Section\s*[:：]?$/i.test($(this).text().trim()); }).first().next().text().trim();
+                return sectionText.match(/^([A-E]\d?):/)?.[1];
             }
 
             let stopWords = ['and','the','for','with','from','into','its','any','all','new','via','using','of','mathematical','mathematics','methods','method','applications','application'];
@@ -2825,11 +2859,13 @@ function onInit() {
             }
             function filterEditorRI(titleWords) {
                 let $dialog = $("#select-ebm-for-oversee"), $tbody = $dialog.find("tbody");
-                let ranked = [], weakCount = 0;
+                let ranked = [];
                 $tbody.find("tr").each(function () {
                     let $row = $(this), $cells = $row.find("td");
                     if ($cells.length < 6) return;
-                    if (parseInt($cells.eq(4).text().trim(), 10) >= 3) { $row.remove(); return; }
+                    let overseeCount = parseInt($cells.eq(4).text().trim(), 10);
+                    $row.toggleClass('sk-oversee-unavailable', !Number.isFinite(overseeCount) || overseeCount >= 3);
+                    if ($row.hasClass('sk-oversee-unavailable') || $row.hasClass('sk-oversee-other-section')) return;
                     let $riCell = $cells.eq(3), riText = $riCell.text(), score = 0, ranges = [];
                     for (let term of titleWords) {
                         let matches = [...riText.matchAll(term.regex)];
@@ -2850,79 +2886,63 @@ function onInit() {
                         offset = end;
                     }
                     $riCell.append(document.createTextNode(riText.slice(offset)));
-                    let weak = titleWords.length > 0 && score === 0;
-                    $row.toggleClass('sk-ri-weak', weak).css('opacity', weak ? '0.35' : '');
-                    if (weak) weakCount++;
                     ranked.push({ row: this, score });
                 });
                 $tbody.append(ranked.sort((a, b) => b.score - a.score).map(item => item.row));
-                $dialog.removeClass('sk-show-weak').find('#sk-ri-toggle, #sk-ri-style').remove();
-                $dialog.prepend('<style id="sk-ri-style">#select-ebm-for-oversee:not(.sk-show-weak) tr.sk-ri-weak{display:none!important;}</style>');
-                if (weakCount) {
-                    $('<a href="javascript:void(0);" id="sk-ri-toggle" style="color:#3156A2; margin-left:8px;"></a>')
-                        .text('Show weak matches (' + weakCount + ')').prependTo($dialog).on('click', function () {
-                            let show = !$dialog.hasClass('sk-show-weak');
-                            $dialog.toggleClass('sk-show-weak', show);
-                            $(this).text((show ? 'Hide' : 'Show') + ' weak matches (' + weakCount + ')');
-                        });
-                }
+                $dialog.find('#sk-ri-style').remove();
+                $dialog.prepend('<style id="sk-ri-style">#select-ebm-for-oversee tr.sk-oversee-unavailable,#select-ebm-for-oversee tr.sk-oversee-other-section{display:none!important;}</style>');
             }
 
-            if ($("#selectEBMForOversee").length) {
-                // $("#selectEBMForOversee").after('<input type="button" id="autoDetectEBM" style="margin-left: 8px; cursor: pointer;" value="Auto Detect">');
-                runAutoDetect();
-            }
+            let editorObserver, editorAutoSelect = false;
+            $('#selectEBMForOversee').on('click.skOversee', function () {
+                let sectionOnly = editorAutoSelect, autoSelect = sectionOnly, processedTable; editorAutoSelect = false;
+                editorObserver?.disconnect();
+                editorObserver = new MutationObserver(function () {
+                    let $table = $('#select-ebm-for-oversee #filter_1').closest('table');
+                    if (!$table.length || $table[0] === processedTable) return;
+                    let $rows = $table.find('tbody tr').filter(function () { return $(this).find('td').length >= 6 && $(this).find('a.select-overseer').length; });
+                    if (!$rows.length) return;
+                    processedTable = $table[0];
+                    editorObserver.disconnect();
+                    $rows.removeClass('sk-oversee-unavailable sk-oversee-other-section');
+                    let rowEmail = row => $(row).find('td').eq(1).text().trim().toLowerCase();
+                    let $available = $rows.filter(function () {
+                        let count = parseInt($(this).find('td').eq(4).text().trim(), 10); return Number.isFinite(count) && count < 3;
+                    });
+                    let emails = $('#maincol div.decisionHistory').filter(function () { return /Decision Type:\s*First Approval\b/.test($(this).text()); })
+                        .map(function () { return $(this).find('a[href^="mailto:"]').first().text().trim().toLowerCase(); }).get();
+                    let $matchRow = $();
+                    for (let email of emails) {
+                        $matchRow = $available.filter(function () { return rowEmail(this) === email; }).first();
+                        if ($matchRow.length) break;
+                    }
+                    if (autoSelect && $matchRow.length) $matchRow.find('a.select-overseer')[0].click();
+                    autoSelect = false;
+                    // 原站校验成功会关闭弹窗；不能选中时，下方候选表仍可继续选择。
+                    let candidateEmails = new Set(SK_SectionCandidatesMap[detectSection()] || []);
+                    // 自动打开默认按 Section；手动 Choose Editor 展示所有未满 3 个 SI 的编辑。
+                    if (sectionOnly && $available.filter(function () { return candidateEmails.has(rowEmail(this)); }).length) {
+                        $rows.each(function () { $(this).toggleClass('sk-oversee-other-section', !candidateEmails.has(rowEmail(this))); });
+                    }
+                    filterEditorRI(getSITitleWords());
+                    // 自动打开和手动点击的请求可能交错返回，每次替换表格都沿用最后一次的模式。
+                    editorObserver.observe(document.getElementById('select-ebm-for-oversee'), { childList: true, subtree: true });
+                });
+                editorObserver.observe(document.getElementById('select-ebm-for-oversee'), { childList: true, subtree: true });
+            });
+            window.addEventListener('pagehide', function () { editorObserver?.disconnect(); });
+            if ($("#selectEBMForOversee").length) runAutoDetect();
             $("#autoDetectEBM").on("click", runAutoDetect);
             // 在 form_decision 中添加手动触发 Choose Editor + 高亮匹配的链接
             if ($("#form_decision").length && $("#selectEBMForOversee").length) {
                 $("#form_decision").append(' <a href="javascript:void(0);" id="sk-choose-editor-link" style="color: #3156A2; cursor: pointer; margin-left: 8px;">[Choose Editor]</a>');
                 $("#sk-choose-editor-link").on("click", function () {
-                    $("#selectEBMForOversee")[0].click();
-                    setTimeout(function () {
-                        let pollTimer = setInterval(function () {
-                            let $rows = $("#select-ebm-for-oversee:visible tbody tr");
-                            if ($rows.length === 0) return;
-                            clearInterval(pollTimer);
-                            filterEditorRI(getSITitleWords());
-                        }, 300);
-                    }, 500);
+                    document.getElementById('selectEBMForOversee')?.click();
                 });
             }
             function runAutoDetect() {
-                let email = $("div.decisionHistory:contains('First Approval')").find("a[href^='mailto:']").last().text();
-                let section = detectSection();
-                $("#selectEBMForOversee")[0].click();
-                waitForKeyElements("#filter_1", function () {
-                    let $matchRow = $("td:contains('" + email + "')").parent();
-                    $("#select-ebm-for-oversee tbody tr").each(function () {
-                        if (parseInt($(this).find("td").eq(4).text().trim(), 10) >= 3) $(this).remove();
-                    });
-                    if ($matchRow.length === 0) return;
-
-                    let rowText = $matchRow.text();
-                    let overseeCount = parseInt($matchRow.find("td").eq(4).text().trim(), 10) || 0;
-                    let needCandidateFilter = (rowText.indexOf("Editor-in-Chief") > -1 || rowText.indexOf("Associate Editor") > -1 || overseeCount >= 3);
-                    if (needCandidateFilter && section && SK_SectionCandidatesMap[section]) {
-                        let candidates = SK_SectionCandidatesMap[section];
-                        let candidateRowCount = $("#select-ebm-for-oversee tbody tr").filter(function () {
-                            return candidates.includes($(this).find("td").eq(1).text().trim());
-                        }).length;
-                        if (candidateRowCount === 0) {
-                            if (overseeCount < 3) $matchRow.find("td a:contains('Select')")[0].click();
-                        } else {
-                            $("#select-ebm-for-oversee tbody tr").each(function () {
-                                if (!candidates.includes($(this).find("td").eq(1).text().trim())) {
-                                    $(this).remove();
-                                }
-                            });
-                            filterEditorRI(getSITitleWords());
-                        }
-                    } else if (needCandidateFilter) {
-                        // EiC/AE/Oversee>=3 但无 Section 匹配，不自动选中
-                    } else {
-                        $matchRow.find("td a:contains('Select')")[0].click();
-                    }
-                }, true);
+                let button = document.getElementById('selectEBMForOversee'); if (!button) return;
+                editorAutoSelect = true; button.click();
             }
         } catch (error) { }
     }
@@ -3246,8 +3266,7 @@ function onInit() {
                                                     const cell = $('<td></td>').toggleClass('sk-scopus-number', !!columns[i + 1][2]).attr('title', text);
                                                     cell.toggleClass('sk-coa-output', ['Docs', 'Citations'].includes(columns[i + 1][0])).toggleClass('sk-coa-country', columns[i + 1][0] === 'Country');
                                                     if (detailsRequested && i === 0 && /^[^\s@]+@[^\s@]+$/.test(text)) {
-                                                        cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content='
-                                                                                                                     + encodeURIComponent(text).replace(/%40/gi, '@')).text(text));
+                                                        cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', skMailsdbUrl(text)).text(text));
                                                     } else if (detailsRequested && i === 1 && Number.isFinite(Number(text))) {
                                                         cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id).text(text));
                                                     } else if (columns[i + 1][0] === 'Latest Pub') {
@@ -3272,9 +3291,11 @@ function onInit() {
                                             const counts = new Map(row.pubData.years.map(y => [Number(y.code), y.noOfDocuments]));
                                             const years = [...counts.keys()];
                                             const tiles = $('<div class="sk-scopus-years"></div>');
-                                            if (years.length) for (let year = Math.max(...years); year >= Math.min(...years); year--) {
-                                                tiles.append($('<div class="sk-scopus-year"></div>').toggleClass('sk-scopus-year-current', year === new Date().getFullYear())
-                                                    .append($('<span></span>').text(year), $('<b></b>').text(counts.get(year) ?? 0)));
+                                            if (years.length) {
+                                                for (let year = Math.max(...years); year >= Math.min(...years); year--) {
+                                                    tiles.append($('<div class="sk-scopus-year"></div>').toggleClass('sk-scopus-year-current', year === new Date().getFullYear())
+                                                        .append($('<span></span>').text(year), $('<b></b>').text(counts.get(year) ?? 0)));
+                                                }
                                             }
                                             panel.append(tiles);
                                             if (row.pubData.documents.length) {
@@ -3584,7 +3605,7 @@ function onInit() {
                 }
             });
             $("tr.manuscript-status-table > td:nth-child(6)").not(":has('.user_info_modal')").css("text-align", "center").on("bind", "contextmenu", function () { return false; }).each(function () {
-                $(this).append("<a class='sk_reject' style='font-style:italic' href='//susy.mdpi.com/user/managing/reject/" + $(this).parents("tr").find("td:nth-child(4) >> a").attr("href").split("/").pop() + "'>[Reject]</a>");
+                $(this).append($('<a class="sk_reject" style="font-style:italic">').attr('href', '//susy.mdpi.com/user/managing/reject/' + $(this).parents('tr').find('td:nth-child(4) >> a').attr('href').split('/').pop()).text('[Reject]'));
             });
 //             $(".sk_reject").on('mouseup', function (e) {
 //                 switch (e.which) {
@@ -3617,7 +3638,7 @@ function onInit() {
     //ManuscriptFunc: 文章页面加[Linkedin]
     if ((window.location.href.indexOf("www.mdpi.com/2") + window.location.href.indexOf("www.mdpi.com/3")) > -2 && GM_config.get('ManuscriptFunc')) {
         try {
-            $("a:contains('Peer-Reviewed')").parent().after('<a id="s_linkedin" href="' + $("a:contains('Peer-Reviewed')").attr("href") + '?linkedin"><img src="https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a"></a>');
+            $("a:contains('Peer-Reviewed')").parent().after(skIconLink($("a:contains('Peer-Reviewed')").attr('href') + '?linkedin', 'https://static.licdn.com/sc/h/413gphjmquu9edbn2negq413a', { id: 's_linkedin' }));
             $("#s_linkedin").on("click", function () { $("#container").after(`<div class="ui-widget-overlay ui-front" style="background: #aaaaaa;opacity: .5;filter: Alpha(Opacity=50);position: fixed;top: 0;left: 0;width: 100%;height: 100%;"></div>`) });
         } catch (error) { }
 
@@ -3745,9 +3766,9 @@ function onInit() {
                 waitForKeyElements('div[data-testid="author-list"]', mark_emais, true);
                 function mark_emais() {
                     $('div[data-testid="author-list"] a[href^="mailto"]').each(function () {
-                        var scopus_email = $(this).attr('href').split('mailto:')[1];
+                        var scopus_email = $(this).attr('href').slice('mailto:'.length).split('?')[0]; try { scopus_email = decodeURIComponent(scopus_email); } catch (_) { }
                         var scopus_name = $(this).prevAll('button').first().text();
-                        $("#recordPageBoxes").before(`<b>${scopus_name}</b>&emsp;<a href="//mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=${scopus_email}" target=_blank>${scopus_email}</a><br>`);
+                        $("#recordPageBoxes").before($('<b>').text(scopus_name), '\u2003', $('<a target="_blank" rel="noopener noreferrer">').attr('href', skMailsdbUrl(scopus_email)).text(scopus_email), '<br>');
                     });
                 }
             }
@@ -4121,6 +4142,12 @@ function onInit() {
 
 //---------------------------------------------------------------------------------------------------------------------------Functions-------------------------------------------------------------------------------------------------------------------------
 
+function skIconLink(href, src, attributes = {}, imageAttributes = {}) { return $('<a>').attr(attributes).attr('href', href).append($('<img>').attr(imageAttributes).attr('src', src)); }
+function skMailtoUrl(emails, subject, body) {
+    return 'mailto:' + [emails].flat().map(email => encodeURIComponent(email).replace(/%40/gi, '@')).join(';') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+}
+function skMailsdbUrl(email) { return 'https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=' + encodeURIComponent(email); }
+
 function skAddResourceStyle(name, extraName, id = 'sk-style-' + [name].flat()[0]) {
     if (document.getElementById(id)) return;
     const css = [name, extraName].flat().filter(Boolean).map(name => {
@@ -4148,9 +4175,10 @@ function waitForKeyElements(selectorTxt, actionFunction, bWaitOnce, iframeSelect
 }
 
 function waitForText(element, text, callback, freq) {
-    let interval = window.setInterval(test, freq || 300); if (!element || !callback || typeof text !== 'string') { throw new TypeError('Bad value'); }
+    if (!element || typeof callback !== 'function' || typeof text !== 'string') { throw new TypeError('Bad value'); }
+    let interval = window.setInterval(test, freq || 300);
     function test() {
-        if (!element.parentNode) { window.clearInterval(interval); }
+        if (!element.parentNode) { window.clearInterval(interval); return; }
         if (element.value.indexOf(text) > -1) { window.clearInterval(interval); callback.call(element); }
     }
 }
@@ -4161,8 +4189,8 @@ function skStringToRegex(str) { if (str.startsWith("[Regex]")) { return RegExp(s
 function skStringToFunction(str) { if (str.indexOf("function ") == 0) { let funcTest = new Function('return ' + str); return funcTest(); } else { return str } };
 function skSidebarSize() {
     $(".note-list-container").css("padding", "0"); $(".note-box-component").css("margin-bottom", "10px");
-    if ($(".section-note-box .manuscript-note-item-content").height() || 0 > 200) { $(".section-note-box .manuscript-note-item-content").height(200).css("overflow-y", "auto") }
-    if ($(".apc-container .manuscript-note-item-content").height() || 0 > 200) { $(".apc-container .manuscript-note-item-content").height(200).css("overflow-y", "auto") }
+    if ($(".section-note-box .manuscript-note-item-content").height() > 200) { $(".section-note-box .manuscript-note-item-content").height(200).css("overflow-y", "auto") }
+    if ($(".apc-container .manuscript-note-item-content").height() > 200) { $(".apc-container .manuscript-note-item-content").height(200).css("overflow-y", "auto") }
     $(".special-issue-note-box,.manuscript-add-note-form").prop("rows", 22)
     if ($('.special-issue-note-box').length > 0) { $(".manuscript-note-box .manuscript-note-item-content").height(200).css("overflow-y", "auto") }
 }
@@ -4375,7 +4403,7 @@ function skOpenUrls() {
             textContent = textContent.replace(urlRegex, ''); // 移除已找到的网址
             // 查找邮箱
             var emails = textContent.match(emailRegex) || [];
-            emails.forEach(function (email) { window.open('https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=' + email, '_blank') });
+            emails.forEach(function (email) { window.open(skMailsdbUrl(email), '_blank') });
             textContent = textContent.replace(emailRegex, '');
             // 查找连续的6位或7位数字
             var digits = textContent.match(digitRegex) || [];
@@ -4427,251 +4455,209 @@ function skMyAccountOnly() {
     }
 }
 
-async function skCheckWorkLoginStatus(url, isLoggedIn) {
-    for (const timeout of [5000, 8000]) {
-        let guard;
-        const res = await Promise.race([skGMFetchGet(url, timeout).catch(() => null), new Promise(resolve => { guard = setTimeout(() => resolve(null), timeout + 1000); })]);
-        clearTimeout(guard);
-        const text = res?.responseText || '';
-        if (res?.status === 401) return false;
-        if (res?.status >= 200 && res.status < 400) {
-            if (isLoggedIn(text)) return true;
-            if (/<input\b[^>]*type\s*=\s*["']password["']/i.test(text) || /^https:\/\/(?:auth\.mdpi\.(?:com|cn)|login\.microsoftonline\.com)\//i.test(res.finalUrl || '')) return false;
-        }
-    }
-    return null;
+function skReadWorkLoginRun(runId) { const run = GM_getValue('skWorkLogin', {}); return run.run && (!runId || run.run === runId) && Array.isArray(run.sites) && Date.now() <= Number(run.until || 0) ? run : null; }
+
+function skCheckWorkLoginStatus(siteId, timeout = 6000, signal) {
+    const site = SK_WORK_LOGIN_SITES.find(site => site.id === siteId), target = new URL(site.checkUrl || site.url);
+    return new Promise(resolve => {
+        let request, settled = false;
+        const finish = value => { if (!settled) { settled = true; clearTimeout(guard); signal?.removeEventListener('abort', abort); resolve(value); } };
+        const abort = () => { finish(null); request?.abort(); }, guard = setTimeout(abort, timeout + 250);
+        if (signal?.aborted) { abort(); return; } signal?.addEventListener('abort', abort, { once: true });
+        try {
+            request = GM_xmlhttpRequest({
+                method:site.checkType === 'boolean' ? 'GET' : 'HEAD',url:target.href,redirect:'manual',timeout,headers:{'Cache-Control':'no-cache'},
+                onload(res) {
+                    if (res.status === 401) { finish(false); return; } if (res.status < 200 || res.status >= 400) { finish(null); return; }
+                    const redirect = res.status >= 300, location = /^location:\s*(.+)$/im.exec(res.responseHeaders || '')?.[1]?.trim();
+                    let finalUrl; try { finalUrl = new URL(redirect ? location : res.finalUrl, target); } catch (_) { finish(null); return; }
+                    if (redirect ? !location : !res.finalUrl) { finish(null); return; }
+                    if (/^(?:auth|login|keycloak)\.mdpi\.(?:com|cn)$|^login\.microsoftonline\.com$/i.test(finalUrl.hostname) ||
+                        /\/(?:login|welcome|2fa|mfa)(?:\/|$)/i.test(finalUrl.pathname)) { finish(false); return; }
+                    // Inspect the first response: no HTML download and no trip through a home page or authentication chain.
+                    if (finalUrl.origin !== target.origin || finalUrl.pathname !== (site.checkPath || target.pathname)) { finish(null); return; }
+                    if (site.checkType === 'boolean') { const text = (res.responseText || '').trim(); finish(!redirect && /^(true|false)$/.test(text) ? text === 'true' : null); }
+                    else finish(true);
+                },
+                onerror: () => finish(null), ontimeout: () => finish(null), onabort: () => finish(null)
+            });
+        } catch (_) { finish(null); }
+    });
 }
 
-function skIsSusyLoggedIn() { return skCheckWorkLoginStatus('https://susy.mdpi.com/user/info?emails=', text => text.includes('reviewer-profile')); }
-
 function skOpenWorkLoginHub() {
-    let hubRun, loginStarted = false;
-    const siteUrl = id => SK_WORK_LOGIN_SITES.find(site => site.id === id).url;
-    let isUserNameMatch = GM_getValue('isUserNameMatch', false);
-
-    document.documentElement.innerHTML = `<!doctype html><html lang="en"><head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Work Login Hub</title>
-    <style id="sk-style-customCSS">${GM_getResourceText('customCSS')}</style></head><body class="sk-work-login"><main id="sk-work-login-page" class="sk-work-page">
-    <section class="sk-work-card">
+    document.documentElement.innerHTML = `<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Work Login Hub</title>
+    <style id="sk-style-customCSS">${GM_getResourceText('customCSS')}</style></head><body class="sk-work-login"><main id="sk-work-login-page" class="sk-work-page"><section class="sk-work-card">
     <div class="sk-work-summary"><span id="sk-work-badge" class="sk-work-badge">Checking</span></div>
-    <div id="sk-work-microsoft" class="sk-work-microsoft" hidden></div>
-    <div class="sk-work-row" data-site="susy" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">SUSY</span><span class="sk-work-state">Checking…</span><a class="sk-work-open" href="${siteUrl('susy')}" target="_blank">Open</a></div>
-    <div class="sk-work-row" data-site="mdpi" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MDPI</span><span class="sk-work-state">Checking…</span><a class="sk-work-open" href="${siteUrl('mdpi')}" target="_blank">Open</a></div>
-    <div class="sk-work-row" data-site="mailsdb" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MailsDB</span><span class="sk-work-state">Checking…</span><a class="sk-work-open" href="${siteUrl('mailsdb')}" target="_blank">Open</a></div>
-    <div class="sk-work-row" data-site="mrs" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">MRS 1.0</span><span class="sk-work-state">Checking…</span><a class="sk-work-open" href="${siteUrl('mrs')}" target="_blank">Open</a></div>
-    <div class="sk-work-row" data-site="attendance" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">HRMS</span><span class="sk-work-state">Checking…</span><a class="sk-work-open" href="${siteUrl('attendance')}" target="_blank">Open</a></div>
-    <div class="sk-work-row" data-site="redmine" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">Redmine CN</span><span class="sk-work-state">Checking…</span><a class="sk-work-open" href="${siteUrl('redmine')}" target="_blank">Open</a></div>
-    <div class="sk-work-actions">
-        <button type="button" id="sk-work-start" class="sk-work-start">Start Batch Login</button>
-        ${isUserNameMatch ? `
-        <div class="sk-work-extra-actions">
-            <a id="sk-scholar-check" class="sk-work-btn" href="https://susy.mdpi.com/user/settings#G" target=_blank>Scholar Check</a>
-            <button type="button" class="sk-work-btn sk-work-btn-placeholder">            </button>
-        </div>` : ''}
-    </div>
-    </section></main></body></html>`;
-
-    function updateSiteStatus(siteId, isOk) {
-        $(`.sk-work-row[data-site="${siteId}"]`).attr('data-state', isOk === null ? 'unknown' : isOk ? 'ok' : 'login').find('.sk-work-state').text(isOk === null ? 'Unconfirmed, ready to log in' : isOk ? 'Logged in' : 'Not logged in');
-        if (loginStarted) return;
-        let remaining = $('.sk-work-row[data-state!="ok"]').length;
-        $('#sk-work-start').prop('disabled', !remaining).text(remaining ? 'Start Batch Login' : 'All Logged In');
-        $('#sk-work-badge').text(!remaining ? 'All Logged In' : $('.sk-work-row[data-state="checking"]').length ? 'Checking' : 'Check Completed');
+    ${SK_WORK_LOGIN_SITES.map(site => `<div class="sk-work-row" data-site="${site.id}" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">${site.name}</span>
+    <span class="sk-work-state" aria-live="polite">Checking…</span><a class="sk-work-open" href="${site.url}" target="_blank" rel="noopener">Open</a></div>`).join('')}
+    <div class="sk-work-actions"><button type="button" id="sk-work-start" class="sk-work-start">Start Batch Login</button>
+    ${GM_getValue('isUserNameMatch', false) ? `<div class="sk-work-extra-actions"><a id="sk-scholar-check" class="sk-work-btn" href="https://susy.mdpi.com/user/settings#G" target="_blank">Scholar Check</a>
+    <button type="button" class="sk-work-btn sk-work-btn-placeholder"></button></div>` : ''}</div></section></main></body>`;
+    const systems = SK_WORK_LOGIN_SITES.map(site => ({ ...site, row: document.querySelector('.sk-work-row[data-site="' + site.id + '"]'), state: 'checking', job: false, queued: false, serial: 0 }));
+    const start = document.getElementById('sk-work-start'), badge = document.getElementById('sk-work-badge'), owner = crypto.randomUUID(), listeners = [];
+    let run = null, nextVerify = 0, disposed = false;
+    const pending = () => systems.filter(site => site.job), statusKey = site => 'skWorkLoginStatus_' + site.id, currentRun = () => run && skReadWorkLoginRun(run.run);
+    function setRow(site, state, text) { site.state = site.row.dataset.state = state; site.row.querySelector('.sk-work-state').textContent = text; }
+    function render() {
+        const jobs = pending(), remaining = systems.filter(site => site.state !== 'ok'), checking = systems.some(site => site.check), retryable = jobs.some(site => site.state === 'unknown');
+        badge.textContent = !remaining.length ? 'All Logged In' : jobs.length ? 'Logging In' : checking ? 'Checking' : run ? 'Login Incomplete' : 'Check Completed';
+        start.disabled = !remaining.length || (jobs.length > 0 && !retryable);
+        start.textContent = !remaining.length ? (run ? 'All Logins Completed' : 'All Logged In') : retryable ? 'Retry Incomplete Logins' : jobs.length ? 'Batch logging in…' : run ? 'Retry Incomplete Logins' : 'Start Batch Login';
     }
-
-    const checkSite = (id, check) => check.then(isOk => {
-        // 开始登录后，忽略启动前发出的检查，避免旧结果覆盖登录进度。
-        if ($(`.sk-work-row[data-site="${id}"]`).attr('data-state') === 'checking') updateSiteStatus(id, isOk);
-    });
-    checkSite('susy', skIsSusyLoggedIn());
-    checkSite('mdpi', skCheckWorkLoginStatus('https://www.mdpi.com/user/login', text => /href=["'][^"']*logout/i.test(text)));
-    checkSite('mailsdb', skCheckWorkLoginStatus('https://mailsdb.i.mdpi.com/', text => /search will look through all from|href=["'][^"']*logout_by_keycloak/i.test(text)));
-    checkSite('mrs', skCheckWorkLoginStatus('https://mrs.mdpi.com/data/', text => /Special Issue|href=["'][^"']*logout/i.test(text)));
-    checkSite('attendance', skCheckWorkLoginStatus('https://i.mdpi.cn/team/attendance', text => text.includes('Team List')));
-    checkSite('redmine', skCheckWorkLoginStatus('https://redmine.mdpi.cn/', text => /href=["'][^"']*logout/i.test(text)));
-
-    $('#sk-work-start').on('click', function () {
-        if (loginStarted) return;
-        let needLoginSites = $('.sk-work-row[data-state!="ok"]').map((_, el) => $(el).data('site')).get();
-        if (needLoginSites.length === 0) { $(this).text('All Logged In'); return; }
-        loginStarted = true;
-        hubRun = crypto.randomUUID();
-        $(this).prop('disabled', true).text('Batch logging in…');
-        $('#sk-work-badge').text('Logging In');
-        $('#sk-work-microsoft').text('').prop('hidden', true);
-
-        SK_WORK_LOGIN_STATUS_KEYS.forEach(key => GM_deleteValue(key));
-        GM_setValue('skWorkLogin', { run: hubRun, until: Date.now() + 5 * 60 * 1000, sites: needLoginSites });
-
-        needLoginSites.forEach(function (id) {
-            $(`.sk-work-row[data-site="${id}"]`).attr('data-state', 'working').find('.sk-work-state').text('Logging in…');
-            GM_openInTab('https://www.mdpi.com/?sk-work-login#sk-work-login=' + hubRun + ':' + id, { active: false, insert: true });
-        });
-
-        let timer = setInterval(() => {
-            let current = GM_getValue('skWorkLogin', {});
-            if (current.run !== hubRun || Date.now() > Number(current.until || 0)) {
-                clearInterval(timer);
-                loginStarted = false;
-                needLoginSites.forEach(id => updateSiteStatus(id, null));
-                $('#sk-work-start').prop('disabled', false).text('Retry Incomplete Logins');
-                $('#sk-work-badge').text('Login Incomplete');
-                if (current.run === hubRun) GM_setValue('skWorkLogin', {});
-                return;
-            }
-            needLoginSites = needLoginSites.filter(id => {
-                let key = 'skWorkLoginStatus_' + id, s = GM_getValue(key, {});
-                if (s.run !== hubRun) return true;
-                GM_deleteValue(key);
-                if (s.state === 'ok') updateSiteStatus(id, true);
-                else if (s.text) $(`.sk-work-row[data-site="${id}"]`).attr('data-state', s.state).find('.sk-work-state').text(s.text);
-                return s.state !== 'ok';
-            });
-            let ms = GM_getValue('skWorkLoginStatus_microsoft', {});
-            if (ms.run === hubRun) {
-                $('#sk-work-microsoft').text(ms?.text || '').prop('hidden', !ms?.text);
-                GM_deleteValue('skWorkLoginStatus_microsoft');
-            }
-            if (!needLoginSites.length) {
-                clearInterval(timer);
-                $('#sk-work-start').text('All Logins Completed');
-                $('#sk-work-badge').text('All Logged In');
-                $('#sk-work-microsoft').text('').prop('hidden', true);
-                GM_setValue('skWorkLogin', {});
+    function writeStatus(site, state, text) { if (currentRun()) GM_setValue(statusKey(site), { run: run.run, state, text }); }
+    function finish(site) {
+        site.serial++; site.job = site.queued = false; setRow(site, 'ok', 'Logged in'); if (site.tab && !site.tab.closed) { site.tab.onclose = null; site.tab.close(); }
+        const current = currentRun(), saved = GM_getValue(statusKey(site), {});
+        if (current && current.sites.includes(site.id)) {
+            if (saved.run !== run.run || saved.state !== 'ok') writeStatus(site, 'ok', 'Logged in');
+            if (!pending().length && !current.finishedAt) GM_setValue('skWorkLogin', { ...current, finishedAt: Date.now() });
+        }
+        render();
+    }
+    function receive(site) {
+        if (!site.job || !currentRun()) return; const saved = GM_getValue(statusKey(site), {}); if (saved.run !== run.run) return;
+        if (saved.state === 'ok') finish(site);
+        else if (saved.text) { site.queued = saved.state === 'queued'; setRow(site, site.queued ? 'checking' : saved.state, saved.text); }
+    }
+    function coordinate() {
+        // One hub launches queued tabs; a reopened hub takes over after the previous owner closes or stops responding.
+        const current = currentRun(); if (!current || current.finishedAt) return false; if (current.owner !== owner && Date.now() - Number(current.heartbeat || 0) < 5000) return false;
+        if (current.owner !== owner || Date.now() - Number(current.heartbeat || 0) >= 2000) GM_setValue('skWorkLogin', { ...current, owner, heartbeat: Date.now() });
+        return skReadWorkLoginRun(run.run)?.owner === owner;
+    }
+    function launch(site) {
+        if (!site.job || !site.queued || !coordinate() || (site.tab && !site.tab.closed)) return;
+        site.queued = false; writeStatus(site, 'working', 'Logging in…');
+        try {
+            site.tab = GM_openInTab('https://www.mdpi.com/?sk-work-login#sk-work-login=' + run.run + ':' + site.id, { active: false, insert: true });
+            if (!site.tab) throw new Error('No login tab');
+            site.tab.onclose = () => {
+                if (!disposed && site.job && currentRun()) { writeStatus(site, 'unknown', 'Could not confirm automatically. Please open and check.'); verify(site); render(); }
+            };
+        } catch (_) { writeStatus(site, 'unknown', 'Could not confirm automatically. Please open and check.'); }
+        nextVerify = Date.now() + 3000; render();
+    }
+    function verify(site) {
+        if (site.check) return site.check.promise;
+        const check = {serial:++site.serial,run:run?.run,controller:new AbortController()}; if (!site.job) setRow(site, 'checking', 'Checking…');
+        check.promise = skCheckWorkLoginStatus(site.id, 6000, check.controller.signal).then(isOk => {
+            if (disposed || check.serial !== site.serial || check.run !== run?.run) return; site.checkedAt = Date.now();
+            if (isOk) finish(site);
+            else if (site.job) { if (site.queued) launch(site); }
+            else setRow(site, isOk === false ? 'login' : 'unknown', isOk === false ? 'Not logged in' : 'Unconfirmed, ready to log in');
+        }).finally(() => { if (site.check === check) site.check = null; render(); });
+        site.check = check; return check.promise;
+    }
+    function restore(saved) {
+        run = saved; systems.forEach(site => { site.serial++; site.check?.controller.abort(); site.check = null; site.job = saved.sites.includes(site.id); site.queued = false; });
+        pending().forEach(site => { setRow(site, 'working', 'Logging in…'); receive(site); }); nextVerify = 0; render();
+    }
+    start.addEventListener('click', () => {
+        if (start.disabled) return;
+        if (!pending().length) {
+            const saved = skReadWorkLoginRun();
+            if (saved && !saved.finishedAt) restore(saved);
+            else {
+                run = { run: crypto.randomUUID(), until: Date.now() + 5 * 60 * 1000, sites: systems.filter(site => site.state !== 'ok').map(site => site.id), owner, heartbeat: Date.now() };
                 SK_WORK_LOGIN_STATUS_KEYS.forEach(key => GM_deleteValue(key));
+                systems.forEach(site => { site.job = run.sites.includes(site.id); site.queued = site.job; if (site.check) site.check.run = run.run; });
+                GM_setValue('skWorkLogin', run);
+                pending().forEach(site => writeStatus(site, 'queued', 'Logging in…'));
             }
-        }, 500);
+        }
+        pending().forEach(site => {
+            if (site.state === 'unknown') {
+                if (site.tab && !site.tab.closed) { site.tab.onclose = null; site.tab.close(); }
+                site.queued = true; writeStatus(site, 'queued', 'Logging in…');
+            }
+            if (!site.check) { if (site.checkedAt && Date.now() - site.checkedAt < 5000) launch(site); else verify(site); }
+        });
+        render();
     });
-
-    $('#sk-scholar-check').on('click', function (event) {if (['susy', 'mailsdb'].some(id => $(`.sk-work-row[data-site="${id}"]`).attr('data-state') !== 'ok')) {event.preventDefault(); alert('Please log in to SUSY and MailsDB first!'); }});
+    document.getElementById('sk-scholar-check')?.addEventListener('click', event => {
+        if (systems.some(site => ['susy', 'mailsdb'].includes(site.id) && site.state !== 'ok')) { event.preventDefault(); alert('Please log in to SUSY and MailsDB first!'); }
+    });
+    if (typeof GM_addValueChangeListener === 'function') {
+        systems.forEach(site => listeners.push(GM_addValueChangeListener(statusKey(site), () => { receive(site); render(); })));
+        listeners.push(GM_addValueChangeListener('skWorkLogin', (_, old, value) => {
+            if (value?.run !== run?.run && value?.run && !value.finishedAt && skReadWorkLoginRun(value.run)) restore(value);
+        }));
+    }
+    const saved = skReadWorkLoginRun();
+    if (saved && !saved.finishedAt) restore(saved);
+    systems.forEach(verify);
+    const timer = setInterval(() => {
+        if (!pending().length || disposed) return;
+        if (!currentRun()) {
+            pending().forEach(site => { site.job = site.queued = false; site.serial++; setRow(site, 'unknown', 'Unconfirmed, ready to log in'); });
+        } else {
+            pending().forEach(receive);
+            if (coordinate() && Date.now() >= nextVerify) { nextVerify = Date.now() + 5000; pending().forEach(verify); }
+        }
+        render();
+    }, 1000);
+    const onFocus = () => { if (!document.hidden) systems.filter(site => site.state !== 'ok').forEach(verify); };
+    window.addEventListener('focus', onFocus); document.addEventListener('visibilitychange', onFocus);
+    window.addEventListener('pagehide', () => {
+        disposed = true; clearInterval(timer); systems.forEach(site => site.check?.controller.abort()); listeners.forEach(id => GM_removeValueChangeListener(id));
+        window.removeEventListener('focus', onFocus); document.removeEventListener('visibilitychange', onFocus);
+        const current = currentRun();
+        if (current?.owner === owner && !current.finishedAt) GM_setValue('skWorkLogin', { ...current, heartbeat: 0 });
+    }, { once: true });
+    render();
 }
 
 async function skWorkLoginHelper() {
-    if (window.top !== window || document.getElementById('sk-work-login-page')) return;
-    let workLogin = GM_getValue('skWorkLogin', {});
-    if (Date.now() > Number(workLogin.until || 0)) {
-        if (workLogin.run) {
-            GM_setValue('skWorkLogin', {});
-            SK_WORK_LOGIN_STATUS_KEYS.forEach(key => GM_deleteValue(key));
-        }
-        return;
-    }
-    if (!workLogin.run || typeof GM_getTab !== 'function' || typeof GM_saveTab !== 'function') return;
+    if (window.top !== window || document.getElementById('sk-work-login-page') || typeof GM_getTab !== 'function' || typeof GM_saveTab !== 'function') return;
+    const initial = skReadWorkLoginRun(); if (!initial) return;
     const tab = await new Promise(resolve => GM_getTab(resolve));
-    const launch = location.hostname === 'www.mdpi.com' && location.pathname === '/' && location.search === '?sk-work-login' && /^#sk-work-login=([^:]+):([a-z0-9]+)$/.exec(location.hash);
+    const launch = location.hostname === 'www.mdpi.com' && location.pathname === '/' && new URLSearchParams(location.search).has('sk-work-login') &&
+        /^#sk-work-login=([^:]+):([a-z0-9]+)$/.exec(location.hash);
     if (launch) {
-        const target = SK_WORK_LOGIN_SITES.find(site => site.id === launch[2]);
-        const current = GM_getValue('skWorkLogin', {});
-        if (!target || launch[1] !== current.run || Date.now() > Number(current.until || 0) || !(current.sites || []).includes(target.id)) return;
-        tab.skWorkLogin = { run: current.run, site: target.id };
-        GM_saveTab(tab, () => {
-            const latest = GM_getValue('skWorkLogin', {});
-            if (latest.run === current.run && Date.now() <= Number(latest.until || 0)) location.replace(target.url);
-        });
-        return;
+        const site = SK_WORK_LOGIN_SITES.find(site => site.id === launch[2]), current = skReadWorkLoginRun(launch[1]);
+        if (!site || !current || !current.sites.includes(site.id)) return;
+        tab.skWorkLogin = { run: current.run, site: site.id };
+        GM_saveTab(tab, () => { if (skReadWorkLoginRun(current.run)) location.replace(site.url); }); return;
     }
-    if (tab.skWorkLogin?.run !== workLogin.run || !(workLogin.sites || []).includes(tab.skWorkLogin.site)) return;
-    let host = location.hostname, run = workLogin.run, sentStatus = {};
-    const tabSite = tab.skWorkLogin.site;
-    const isCurrentRun = () => {
-        let current = GM_getValue('skWorkLogin', {});
-        return current.run === run && Date.now() <= Number(current.until || 0) && (current.sites || []).includes(tabSite);
-    };
-
-    const skSetWorkLoginStatus = (id, state, text) => {
-        if (!isCurrentRun()) return;
-        let key = 'skWorkLoginStatus_' + id;
-        if (sentStatus[id] === state + text) return;
-        sentStatus[id] = state + text;
-        if (GM_getValue(key, {}).state === 'ok' && state !== 'ok') return;
-        GM_setValue(key, { state, text, run });
-    };
-
-    if (host === 'login.microsoftonline.com') { // 1. 微软统一登录页
-        let loginUrl = decodeURIComponent(location.href);
-        if (!['keycloak.mdpi.cn', 'auth.mdpi.com', 'auth.mdpi.cn'].some(k => loginUrl.includes(k))) return;
-        let tries = 0, timer = setInterval(() => {
-            if (!isCurrentRun()) { clearInterval(timer); return; }
-            let acc = [...document.querySelectorAll('button,[role="button"]')].find(el => /@mdpi\.com/i.test(el.textContent || ''));
-            if (acc) { clearInterval(timer); acc.click(); }
-            else if (++tries > 30) { clearInterval(timer); skSetWorkLoginStatus('microsoft', 'manual', 'Please sign in with your @mdpi.com account on Microsoft'); }
-        }, 500);
-        return;
+    const site = SK_WORK_LOGIN_SITES.find(site => site.id === tab.skWorkLogin?.site), run = initial.run, host = location.hostname;
+    if (!site || tab.skWorkLogin?.run !== run || !initial.sites.includes(site.id)) return;
+    const business = host === new URL(site.url).hostname, microsoft = host === 'login.microsoftonline.com', auth = /^(?:auth|login|keycloak)\.mdpi\.(?:com|cn)$/.test(host);
+    if (!business && !microsoft && !auth) return;
+    if (microsoft && !/^https:\/\/(?:keycloak\.mdpi\.cn|auth\.mdpi\.(?:com|cn)|login\.mdpi\.com)\//i.test(new URLSearchParams(location.search).get('redirect_uri') || '')) return;
+    let lastStatus = '', finished = false, timer, observer, scheduled, checking = false, nextVerify = 0, checkController;
+    const started = Date.now(), currentRun = () => { const current = skReadWorkLoginRun(run); return current?.sites.includes(site.id) ? current : null; };
+    function report(state, text) {
+        const current = currentRun(), previous = GM_getValue('skWorkLoginStatus_' + site.id, {});
+        if (!current || lastStatus === state + text || (previous.run === run && previous.state === 'ok' && state !== 'ok')) return;
+        lastStatus = state + text; GM_setValue('skWorkLoginStatus_' + site.id, {run,state,text});
     }
-
-    if (host === 'auth.mdpi.com' || host === 'auth.mdpi.cn') { // 2. MDPI Keycloak
-        if (!isCurrentRun()) return;
-        let msBtn = document.querySelector('a[href="/mdpi_keycloak/login"]');
-        if (msBtn) {
-            if (!msBtn.dataset.skClicked) {
-                msBtn.dataset.skClicked = '1';
-                skSetWorkLoginStatus(tabSite, 'working', 'Authenticating via Microsoft…');
-                msBtn.click();
-            }
-        } else if ($('#username').length || $('#password').length || $('input[type="password"]').length) {
-            if (['susy', 'mdpi'].includes(tabSite)) skSetWorkLoginStatus(tabSite, 'manual', 'Please enter your credentials and click Continue');
+    function stop() { clearInterval(timer); clearTimeout(scheduled); observer?.disconnect(); checkController?.abort(); }
+    function finish() {
+        if (finished || !currentRun()) return; finished = true; stop(); report('ok', 'Logged in'); const current = currentRun();
+        if (current && current.sites.every(id => { const status = GM_getValue('skWorkLoginStatus_' + id, {}); return status.run === run && status.state === 'ok'; })) {
+            GM_setValue('skWorkLogin', { ...current, finishedAt: Date.now() });
         }
-        return;
+        GM_saveTab(tab, () => window.close());
     }
-
-    let site = SK_WORK_LOGIN_SITES.find(s => host === new URL(s.url).hostname || (s.id === 'mdpi' && host === 'login.mdpi.com')); // 3. 各业务系统页面
-    if (!site || site.id !== tabSite || !isCurrentRun()) return;
-
-    let tries = 0, pageTimer, loginFinished = false;
-    const finishLogin = () => {
-        if (loginFinished || !isCurrentRun()) return;
-        loginFinished = true;
-        clearInterval(pageTimer);
-        skSetWorkLoginStatus(site.id, 'ok', 'Logged in');
-        const finishedUrl = location.href;
-        setTimeout(() => {
-            let current = GM_getValue('skWorkLogin', {});
-            if ((!current.run || current.run === run) && Date.now() <= Number(workLogin.until || 0) && location.href === finishedUrl) GM_getTab(saved => {
-                const latest = GM_getValue('skWorkLogin', {});
-                if (saved.skWorkLogin?.run !== run || saved.skWorkLogin.site !== site.id || (latest.run && latest.run !== run) || location.href !== finishedUrl) return;
-                delete saved.skWorkLogin;
-                GM_saveTab(saved);
-                window.close();
-            });
-        }, 700);
-    };
-
-    pageTimer = setInterval(() => {
-        if (!isCurrentRun()) { clearInterval(pageTimer); return; }
-        let text = document.body?.innerText || '', path = location.pathname;
-        let isAuthPage = path.includes('/login') || path.includes('/2fa') || location.hostname === 'login.mdpi.com';
-        let loggedIn = (site.id === 'susy' && path.startsWith('/user/sme/status/submitted')) ||
-            (site.id === 'mdpi' && !isAuthPage && ($('a[href*="logout"]').length || text.includes('Manage the SI'))) ||
-            (site.id === 'mailsdb' && ($('a[href*="logout_by_keycloak"]').length || (path.startsWith('/reversion/') && !path.includes('/login')))) ||
-            (site.id === 'mrs' && path.startsWith('/statistics') && $('a[href*="logout"]').length) ||
-            (site.id === 'attendance' && path === '/team/attendance' && /@mdpi\.com/i.test(text)) ||
-            (site.id === 'redmine' && $('a[href*="logout"]').length);
-
-        if (loggedIn) {
-            finishLogin();
-            return;
+    function inspect() {
+        const current = currentRun(); if (!current) { stop(); return; }
+        if (business && !/\/(?:login|2fa|mfa)(?:\/|$)/i.test(location.pathname) && document.querySelector('a[href*="logout"]')) { finish(); return; }
+        // A child also verifies its own session when the hub has closed, so completing login does not depend on the hub's lifetime.
+        if (!checking && Date.now() >= nextVerify && (business || Date.now() - Number(current.heartbeat || 0) >= 5000)) {
+            checking = true; nextVerify = Date.now() + 5000; checkController = new AbortController();
+            skCheckWorkLoginStatus(site.id, 6000, checkController.signal).then(ok => { if (ok && !finished) finish(); }).finally(() => { checking = false; });
         }
-
-        // 企业认证自动继续；仅 SUSY / MDPI 的密码登录页提示人工 Continue。
-        let btn = document.querySelector('a[href*="/mdpi_keycloak/login"]') || [...document.querySelectorAll('a,button')].find(el => /Continue as .*@mdpi\.com/i.test(el.textContent) || /(Microsoft MDPI|MDPI Microsoft) Authentication/i.test(el.textContent));
-        if (btn) {
-            if (!btn.dataset.skClicked) {
-                btn.dataset.skClicked = '1';
-                skSetWorkLoginStatus(site.id, 'working', 'Authenticating via Microsoft…');
-                if (btn.href) window.location.href = btn.href;
-                else btn.click();
-            }
-        } else if (['susy', 'mdpi'].includes(site.id) && ($('#username').length || $('#password').length || $('input[type="password"]').length)) {
-            skSetWorkLoginStatus(site.id, 'manual', 'Please enter your credentials and click Continue');
-            return;
-        }
-        if (++tries > 60) {
-            clearInterval(pageTimer);
-            skSetWorkLoginStatus(site.id, 'unknown', 'Could not confirm automatically. Please open and check.');
-        }
-    }, 500);
-
-    if (site.id === 'susy') skIsSusyLoggedIn().then(isOk => { if (isOk) finishLogin(); });
+        const buttons = [...document.querySelectorAll('a,button,[role="button"],input[type="submit"]')];
+        const button = microsoft ? buttons.find(el => /@mdpi\.com/i.test(el.textContent || '')) : document.querySelector('a[href*="/mdpi_keycloak/login"]') ||
+            buttons.find(el => /Continue as .*@mdpi\.com|(?:Microsoft MDPI|MDPI Microsoft) Authentication/i.test(el.textContent || ''));
+        if (button && !button.dataset.skClicked) { button.dataset.skClicked = '1'; report('working', 'Authenticating via Microsoft…'); button.click(); }
+        else if (!button && document.querySelector('input[type="password"],#username')) report('manual', 'Please enter your credentials and click Continue');
+        else if (!button && Date.now() - started > 15000) report('manual', 'Could not confirm automatically. Please open and check.');
+    }
+    observer = new MutationObserver(() => { if (!scheduled) scheduled = setTimeout(() => { scheduled = null; inspect(); }, 100); });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    timer = setInterval(inspect, 1000); window.addEventListener('pagehide', stop, { once: true }); inspect();
 }
 
 function AddManuscriptSourceErrorbox() {
@@ -4703,13 +4689,6 @@ function AddManuscriptSourceErrorbox() {
     })
 }
 
-var SK_SectionNames = {
-    'A': 'Algebra and Logic', 'B': 'Geometry and Topology', 'C': 'Mathematical Analysis',
-    'C1': 'Difference and Differential Equations', 'C2': 'Dynamical Systems', 'C3': 'Real Analysis', 'C4': 'Complex Analysis',
-    'D': 'Statistics and Operations Research', 'D1': 'Probability and Statistics', 'D2': 'Operations Research and Fuzzy Decision Making',
-    'E': 'Applied Mathematics', 'E1': 'Mathematics and Computer Science', 'E2': 'Control Theory and Mechanics',
-    'E3': 'Mathematical Biology', 'E4': 'Mathematical Physics', 'E5': 'Financial Mathematics'
-};
 var SK_SectionCandidatesMap = {
     'A': ['lkadison@broadpark.no','gigel.militaru@fmi.unibuc.ro','maietti@math.unipd.it','thomas.tucker@rochester.edu','cristina.sernadas@tecnico.ulisboa.pt'],
     'B': ['ggerla@unisa.it','eric.grinberg@umb.edu','jhh8@cornell.edu','alexander.kasprzyk@warwick.ac.uk'],
