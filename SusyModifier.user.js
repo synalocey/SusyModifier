@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.10.26
+// @version       6.10.31
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2252,7 +2252,7 @@ function onInit() {
                         });
 
                         if ($jQueryObject.find("a:contains('Edit Reviewer')").length) {
-                            let ReviewerHistory = $jQueryObject.find("a:contains('Edit Reviewer')").attr("href").replace('//susy.mdpi.com/reivewer/managment/edit', 'https://susy.mdpi.com/list/reviewer/invitations-history');
+                            let ReviewerHistory = $jQueryObject.find("a:contains('Edit Reviewer')").attr("href").replace('//susy.mdpi.com/reviewer/management/edit', '//susy.mdpi.com/list/reviewer/invitations-history');
                             $jQueryObject.find("a:contains('Edit Reviewer')").parent().find('td').each(function () {
                                 let ranking = skGetUniv($(this).text().trim());
                                 if (ranking.color) {
