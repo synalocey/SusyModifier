@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.10.31
+// @version       6.11.6
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -2781,6 +2781,14 @@ function onInit() {
     if (window.location.href.indexOf(".mdpi.com/voucher/application/list/") > -1) { try { document.getElementById("show-more-budgets").trigger("click"); } catch (error) { } }
     if (window.location.href.indexOf(".mdpi.com/voucher/application/view/") > -1) {
         try {
+            if (/guest editor|by editorial board/i.test($("div.cell.large-2:contains('Reason')").next().text())) {
+                $.get($("div.cell.large-2:contains('Manuscript ID')").next().find("a").attr("href"), function (res) {
+                    let warn = [];
+                    if (res.includes("Self-submission")) warn.push("Manuscript Source is \"Self-submission\", which is incorrect for an invited paper.");
+                    if (!res.includes('title="Planned Paper"')) warn.push("No Planned Paper is linked to this manuscript.");
+                    if (warn.length) alert(warn.join("\n\n"));
+                });
+            }
             $("[value='Approve']").on("click", function () {
                 waitForKeyElements("button:contains('confirm')", click_confirm, false);
                 function click_confirm() { $("button:contains('confirm')").trigger("click") }
@@ -4648,10 +4656,14 @@ async function skWorkLoginHelper() {
             checking = true; nextVerify = Date.now() + 5000; checkController = new AbortController();
             skCheckWorkLoginStatus(site.id, 6000, checkController.signal).then(ok => { if (ok && !finished) finish(); }).finally(() => { checking = false; });
         }
+        const mailsdbContinue = business && site.id === 'mailsdb' && location.pathname === '/reversion/login'
+            && document.querySelector('a#login-current[href="/reversion/login/auth"]');
         const buttons = [...document.querySelectorAll('a,button,[role="button"],input[type="submit"]')];
-        const button = microsoft ? buttons.find(el => /@mdpi\.com/i.test(el.textContent || '')) : document.querySelector('a[href*="/mdpi_keycloak/login"]') ||
-            buttons.find(el => /Continue as .*@mdpi\.com|(?:Microsoft MDPI|MDPI Microsoft) Authentication/i.test(el.textContent || ''));
-        if (button && !button.dataset.skClicked) { button.dataset.skClicked = '1'; report('working', 'Authenticating via Microsoft…'); button.click(); }
+        const button = mailsdbContinue || (microsoft ? buttons.find(el => /@mdpi\.com/i.test(el.textContent || '')) : document.querySelector('a[href*="/mdpi_keycloak/login"]') ||
+            buttons.find(el => /Continue as .*@mdpi\.com|(?:Microsoft MDPI|MDPI Microsoft) Authentication/i.test(el.textContent || '')));
+        if (button && !button.dataset.skClicked) {
+            button.dataset.skClicked = '1'; report('working', mailsdbContinue ? 'Finishing MailsDB sign-in…' : 'Authenticating via Microsoft…'); button.click();
+        }
         else if (!button && document.querySelector('input[type="password"],#username')) report('manual', 'Please enter your credentials and click Continue');
         else if (!button && Date.now() - started > 15000) report('manual', 'Could not confirm automatically. Please open and check.');
     }
