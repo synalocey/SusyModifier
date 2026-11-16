@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         SuSy Scholar Screener
-// @version      6.9.22
+// @version      6.11.11
 // @author       SKDAY
 // @match        https://susy.mdpi.com/user/settings*
 // @match        https://www.scopus.com/authid/detail.uri*
+// @match        https://www.scopus.com/pages/authors/*
 // @match        https://www.scopus.com/search/form.uri*
 // @require      https://gcore.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js
 // @grant        GM_xmlhttpRequest
@@ -244,10 +245,10 @@
 
   function extractScopusIdFromDocument(documentObject) {
     for (const anchor of $('a[href]', documentObject)) {
-      const match = String(anchor.href || '').match(/scopus\.com\/authid\/detail\.uri\?[^#]*authorId=(\d+)/i);
+      const match = String(anchor.href || '').match(/scopus\.com\/(?:authid\/detail\.uri\?[^#]*authorId=|pages\/authors\/)(\d+)/i);
       if (match) return match[1];
     }
-    const textMatch = documentText(documentObject).match(/scopus\.com\/authid\/detail\.uri\?[^\s]*authorId=(\d+)/i);
+    const textMatch = documentText(documentObject).match(/scopus\.com\/(?:authid\/detail\.uri\?[^\s]*authorId=|pages\/authors\/)(\d+)/i);
     return textMatch ? textMatch[1] : null;
   }
 
@@ -455,7 +456,9 @@
     const subjects = Array.isArray(data.publishedSubjectAreas)
       ? data.publishedSubjectAreas.map((subject) => ({ code: subject.code || '', name: normalizeSpace(subject.name) })).filter((subject) => subject.name)
       : [];
-    const hIndex = numberOr(data.hindex, null);
+    // 预览版缺失的指标必须保持未知；Number(null) / Number('') 会误变成 0。
+    const rawHIndex = typeof data.hindex === 'number' || typeof data.hindex === 'string' && data.hindex.trim() !== '' ? Number(data.hindex) : NaN;
+    const hIndex = Number.isSafeInteger(rawHIndex) && rawHIndex >= 0 ? rawHIndex : null;
     const emails = unique([
       ...extractEmails(data.emailAddress),
       ...extractEmails(data.email),

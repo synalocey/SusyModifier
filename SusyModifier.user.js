@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.11.6
+// @version       6.11.11
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -42,11 +42,11 @@
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/js/chosen.jquery.min.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
-// @require       https://raw.githubusercontent.com/synalocey/SusyModifier/master/Scholar-screening.user.js?v=6.9.23
+// @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/Scholar-screening.user.js?v=6.11.11
 // @require       https://mrs.mdpi.com/bundles/mdpimrs/js/html5_scripts/zingchart-html5-min.js?v=6.10.20
 // @require       https://gcore.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js?v=6.10.20
 // @resource      chosenCSS             https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/css/chosen.min.css?v=6.10.20
-// @resource      customCSS             https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.css?v=6.10.23
+// @resource      customCSS             https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.css?v=6.11.11
 // @resource      tooltipsterCSS        https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/css/tooltipster.bundle.min.css?v=6.10.20
 // @resource      tooltipsterNoirCSS    https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-noir.min.css?v=6.10.20
 // @resource      icons                 https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/icons.json?v=6.10.22
@@ -69,6 +69,7 @@
 // @grant         GM_saveTab
 // @grant         GM_addStyle
 // @grant         GM_getResourceText
+// @grant         GM_getResourceURL
 // @grant         GM_registerMenuCommand
 // @grant         GM.cookie
 // @grant         window.close
@@ -96,6 +97,12 @@ const SK_WORK_LOGIN_SITES = [
 ];
 const SK_WORK_LOGIN_STATUS_KEYS = SK_WORK_LOGIN_SITES.map(site => 'skWorkLoginStatus_' + site.id);
 const SK_MRS_FAVORITES = ['Analytics', 'Games', 'Geometry', 'Mathematics', 'MCB', 'Risks', 'IJT', 'Telecom'].map(label => ({ id: String(skGetJid(label)), label }));
+// MDPI Feature Paper 折扣区（1 = Zone I 100%，2 = Zone II ≤50%，3 = Zone III 无折扣），键为 Scopus 国家筛选值的写法（已在 Scopus 中逐一核对；Turkey/Türkiye、Russia/Russian Federation、Libya/Libyan Arab Jamahiriya 在 Scopus 中并存）。
+const SK_COUNTRY_ZONES = new Map([
+    [1, 'Australia|Austria|Belgium|Bulgaria|Canada|Croatia|Cyprus|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Iceland|Ireland|Israel|Italy|Japan|South Korea|Latvia|Liechtenstein|Lithuania|Luxembourg|Malta|Netherlands|New Zealand|Norway|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|Switzerland|Taiwan|United Kingdom|United States|Singapore|China|Hong Kong|Macao'],
+    [2, 'Argentina|Bahrain|Belarus|Brazil|Chile|Colombia|Cuba|Ecuador|Egypt|French Guiana|Guyana|Mexico|Morocco|Oman|Peru|Qatar|Saudi Arabia|Serbia|South Africa|Ukraine|United Arab Emirates|Uruguay|Algeria|Bosnia and Herzegovina|Costa Rica|Georgia|Malaysia|North Macedonia|Northern Mariana Islands|Thailand|Turkey|Türkiye|Viet Nam'],
+    [3, 'Afghanistan|Andorra|Angola|Antigua and Barbuda|Armenia|Aruba|Azerbaijan|Bahamas|Bangladesh|Barbados|Belize|Benin|Bhutan|Bolivia|Botswana|Brunei Darussalam|Burkina Faso|Burundi|Cape Verde|Cambodia|Cameroon|Central African Republic|Chad|Comoros|Congo|Cote d\'Ivoire|Democratic Republic Congo|Djibouti|Dominica|Dominican Republic|El Salvador|Equatorial Guinea|Eritrea|Swaziland|Ethiopia|Faroe Islands|Fiji|French Polynesia|Gabon|Gambia|Ghana|Greenland|Grenada|Guatemala|Guinea|Guinea-Bissau|Haiti|Honduras|India|Indonesia|Iran|Iraq|Jamaica|Jordan|Kazakhstan|Kenya|Kiribati|Kosovo|Kuwait|Kyrgyzstan|Laos|Lebanon|Lesotho|Liberia|Libya|Libyan Arab Jamahiriya|Madagascar|Malawi|Maldives|Mali|Marshall Islands|Mauritania|Mauritius|Federated States of Micronesia|Moldova|Mongolia|Montenegro|Mozambique|Myanmar|Namibia|Nauru|Nepal|Nicaragua|Niger|Nigeria|Pakistan|Palau|Palestine|Panama|Papua New Guinea|Paraguay|Philippines|Puerto Rico|South Sudan|Russian Federation|Russia|Rwanda|Samoa|San Marino|Sao Tome and Principe|Senegal|Seychelles|Sierra Leone|Solomon Islands|Somalia|Sri Lanka|Saint Kitts and Nevis|Saint Lucia|Saint Vincent and the Grenadines|Sudan|Suriname|Syrian Arab Republic|Tajikistan|Tanzania|Timor-Leste|Togo|Tonga|Trinidad and Tobago|Tunisia|Turkmenistan|Tuvalu|Uganda|Uzbekistan|Vanuatu|Venezuela|Yemen|Zambia|Zimbabwe']
+].flatMap(([zone, names]) => names.split('|').map(name => [name, zone])));
 
 (function () {
     'use strict';
@@ -2397,7 +2404,8 @@ function onInit() {
     //Always: MRS Quick Statistics
     if (location.href.indexOf('mrs.mdpi.com/login_check_ajax#statistics') > -1) {
         const loginStatus = document.body.textContent.trim();
-        if (loginStatus === 'false') { location.replace('/login'); return; }
+        if (loginStatus === 'false') { sessionStorage.setItem('mrs.login_redirect', '1'); location.replace('/login'); return; }
+        sessionStorage.removeItem('mrs.login_redirect');
         if (loginStatus !== 'true') return;
         const cacheKey = 'mrs.c', searchesKey = 'mrs.s', lastQueryKey = 'mrs.q';
         const containers = { journals: 'allJurnals', employees: 'allEmplyees', offices: 'allOffices', sections: 'allSections' };
@@ -2427,7 +2435,7 @@ function onInit() {
         };
         const selected = Object.fromEntries(Object.keys(containers).map(kind => [kind, new Set(settings.selected?.[kind] || (kind === 'journals' ? [String(S_J > 0 ? S_J : 154)] : []))]));
         const pageWindow = unsafeWindow;
-        let queryController, chartIndex = 0;
+        let queryGeneration = 0, pendingQueries = 0, chartIndex = 0;
         const root = document.createElement('div');
         root.id = 'ms';
         root.innerHTML = `
@@ -2567,9 +2575,11 @@ function onInit() {
             if (event.target.type !== 'radio') return;
             refreshChoices(); $(items).trigger('chosen:open');
         });
-        find('#reload').addEventListener('click', () => form.requestSubmit());
-        find('#ms-prepend').addEventListener('click', () => submitQuery(true));
-        find('#save_search').addEventListener('click', () => {
+        function flashButton(button) { button.classList.remove('ms-clicked'); void button.offsetWidth; button.classList.add('ms-clicked'); }
+        find('#reload').addEventListener('click', event => { flashButton(event.currentTarget); form.requestSubmit(); });
+        find('#ms-prepend').addEventListener('click', event => { flashButton(event.currentTarget); submitQuery(true); });
+        find('#save_search').addEventListener('click', event => {
+            flashButton(event.currentTarget);
             if (!validateQuery()) return;
             const name = pageWindow.prompt('Search name:')?.trim(); if (!name) return;
             const autoStart = Boolean(savedSearches.find(search => search.name === name)?.autoStart);
@@ -2602,9 +2612,13 @@ function onInit() {
                 results.replaceChildren();
             }
             if (name) { const title = document.createElement('h3'); title.textContent = name; block.append(title); }
-            chart.id = 'ms-chart-' + ++chartIndex; chart.hidden = true; block.append(chart);
+            const loading = document.createElement('p'); loading.className = 'ms-loading'; loading.textContent = name ? `Loading: ${name}…` : 'Loading…';
+            chart.id = 'ms-chart-' + ++chartIndex; chart.hidden = true; block.append(loading, chart);
             if (prepend) results.prepend(block); else results.append(block);
-            queryStatus.textContent = name ? `Loading: ${name}…` : 'Loading…'; const started = performance.now();
+            pendingQueries++;
+            const updateStatus = text => { queryStatus.textContent = pendingQueries > 1 ? `Loading (${pendingQueries})…` : pendingQueries ? 'Loading…' : text; };
+            updateStatus(loading.textContent); const started = performance.now();
+            const abort = () => controller.abort(); root.addEventListener('ms:abort-all', abort, { once: true });
             const data = new URLSearchParams({
                 from, to, employees: kind + ':' + [...selected[kind]].join(','), statistic: metric.value,
                 dateFilter: find('#date-format').value, type: find('input[name="ms-type"]:checked').value,
@@ -2616,7 +2630,7 @@ function onInit() {
             try {
                 const response = await fetch('/statistic', { method: 'POST', credentials: 'same-origin', body: data, signal: controller.signal });
                 const result = await response.json();
-                if (controller.signal.aborted) return;
+                if (controller.signal.aborted) { pendingQueries--; return; }
                 const graph = result.graph || result, graphs = graph.graphset || [graph];
                 if (!graphs.some(item => Array.isArray(item.series))) throw new Error();
                 const comparisonMode = data.get('type') === '1' ? 'MoM' : data.get('type') === '2' ? 'YoY' : '';
@@ -2659,20 +2673,23 @@ function onInit() {
                         tables.append(table);
                     }
                 }
-                block.append(tables);
-                if (controller.signal.aborted) return;
+                loading.remove(); block.append(tables);
                 chart.hidden = false;
                 zingchart.render({ id: chart.id, output: 'svg', width: '100%', height: Math.max(400, graphs.length * 400), data: graph }); chart.className = 'ms-chart';
-                queryStatus.textContent = `Done (${((performance.now() - started) / 1000).toFixed(2)} s).`;
+                pendingQueries--; updateStatus(`Done (${((performance.now() - started) / 1000).toFixed(2)} s).`);
             } catch (error) {
+                pendingQueries--;
                 if (!controller.signal.aborted) {
-                    const message = document.createElement('p'); message.textContent = 'Failed.'; block.append(message); queryStatus.textContent = 'Failed.';
+                    loading.textContent = 'Failed.'; updateStatus('Failed.');
                 }
+            } finally {
+                root.removeEventListener('ms:abort-all', abort);
             }
         }
         function submitQuery(prepend = false) {
             if (!validateQuery()) return;
-            queryController?.abort(); runQuery(queryController = new AbortController(), { prepend });
+            if (!prepend) { queryGeneration++; root.dispatchEvent(new Event('ms:abort-all')); }
+            runQuery(new AbortController(), { prepend });
         }
         form.addEventListener('submit', event => { event.preventDefault(); submitQuery(); });
         skAddResourceStyle('chosenCSS');
@@ -2684,12 +2701,12 @@ function onInit() {
             onOpen(_, __, picker) { picker.setDate(picker.input.value, false); },
         });
         if (startupSearches.length) {
-            const controller = queryController = new AbortController();
+            const generation = ++queryGeneration;
             (async () => {
                 for (const [index, search] of startupSearches.entries()) {
-                    if (controller.signal.aborted) break;
+                    if (generation !== queryGeneration) break;
                     applySettings(search.state);
-                    if (validateQuery()) await runQuery(controller, { append: index > 0, name: search.name, showTable: false });
+                    if (validateQuery()) await runQuery(new AbortController(), { append: index > 0, name: search.name, showTable: false });
                 }
             })();
         } else if (settings.fields) form.requestSubmit();
@@ -2697,6 +2714,7 @@ function onInit() {
 
     //Always: MRS Chosen
     if (window.location.href.indexOf("//mrs.mdpi.com/statistics") > -1) {
+        if (sessionStorage.getItem('mrs.login_redirect')) { sessionStorage.removeItem('mrs.login_redirect'); location.replace('/login_check_ajax#statistics'); return; }
         try {
             skAddResourceStyle('chosenCSS');
             $('<style>').text('.chosen-container .chosen-results{max-height:65vh}').appendTo('head');
@@ -2979,6 +2997,16 @@ function onInit() {
         } catch (error) { }
     }
 
+    // Scopus 作者搜索仅有一个结果时直接进入详情。
+    if (location.hostname === 'www.scopus.com' && /^\/results\/author(?:NamesList|ListResults)\.uri$/.test(location.pathname)) {
+        waitForKeyElements('#srchResultsList .authorResultsNamesCol a[href]', function () {
+            const links = $('#srchResultsList .authorResultsNamesCol a[href]');
+            if ($('h1.documentHeader .resultsCount').text().trim() !== '1' || links.length !== 1) return;
+            const id = new URL(links[0].href).searchParams.get('authorId');
+            if (/^\d+$/.test(id || '')) location.replace('/authid/detail.uri?authorId=' + id);
+        }, true);
+    }
+
     //Maths-Related Journal Search + Rank ABC
     if (window.location.hostname.indexOf("google") + window.location.hostname.indexOf("scopus") > -2 && GM_config.get('Maths_J')) {
         try {
@@ -3002,24 +3030,79 @@ function onInit() {
             var geometry_j = ["geometr", "fractal", "manifold"];
             var maths_regex = new RegExp("(" + maths_j.join("|") + ")", "i");
             var geometry_regex = new RegExp("(" + geometry_j.join("|") + ")", "i");
+            // 作者单位按大学排名着色，悬停显示排名详情（Scopus、Google Scholar 共用）。
+            const markUniversity = function () {
+                const ranking = skGetUniv($(this).text().trim());
+                if (!ranking.color) return;
+                skAddResourceStyle('tooltipsterCSS', 'tooltipsterNoirCSS', 'tooltipster-style');
+                $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
+                    .tooltipster({ functionInit: function (instance, helper) { instance.content($(helper.origin).attr('title')); }, contentAsHTML: true, theme: 'tooltipster-noir' });
+            };
             if (window.location.hostname.indexOf("scopus") > -1) {
                 waitForKeyElements("div[data-component='document-source'],div[data-testid='author-list']+span", function () {
                     mark_journals();
-                    $('span[data-testid="authorInstitution"]').each(function () {
-                        let ranking = skGetUniv($(this).text().trim());
-                        if (ranking.color) {
-                            skAddResourceStyle('tooltipsterCSS', 'tooltipsterNoirCSS', 'tooltipster-style');
-                            $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
-                                .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
-                        }
-                    });
+                    $('span[data-testid="authorInstitution"]').each(markUniversity);
                 }, true);
-                // 作者详情页：内联显示邮箱（点击复制）+ Hirsch数据按钮
-                if (window.location.pathname.indexOf('authid/detail.uri') > -1 || /\/pages\/authors\/\d+/.test(window.location.pathname)) {
+                // 作者详情页：内联显示邮箱（点击复制）+ Hirsch数据按钮；Scholar Screening 的后台工作页不自动分析，避免额外请求。
+                const pageAuthorId = new URLSearchParams(location.search).get('authorId') || (location.pathname.match(/\/pages\/authors\/(\d+)/) || [])[1];
+                if ((location.pathname.indexOf('authid/detail.uri') > -1 || /\/pages\/authors\/\d+/.test(location.pathname)) && /^\d+$/.test(pageAuthorId || '') && !new URLSearchParams(location.search).has('ge_screen_request')) {
+                    // /api/authors 只请求一次，Lightweight 头部与邮箱共用；失败后允许重试。
+                    let authorApiTask = null;
+                    const loadAuthorApi = () => authorApiTask ||= fetch('https://www.scopus.com/api/authors/' + pageAuthorId, {
+                        credentials: 'include', cache: 'no-store', headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(15000)
+                    }).then(r => {
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        if (!r.headers.get('content-type')?.includes('json')) throw new Error('Scopus returned a page instead of author data.');
+                        return r.json();
+                    }).then(d => {
+                        if (String(d?.authorId) !== pageAuthorId) throw new Error('Unexpected author profile');
+                        return d;
+                    }).catch(error => { authorApiTask = null; throw error; });
+
+                    // Lightweight profile：不等 Scopus 自身的作者页（加载慢，限流时显示 "Unable to display author profile"），
+                    // 用 /api/authors 渲染作者头部，其下为 Research profile 与左右分栏的 Publications | Co-authors + Sources；保留站点页眉页脚与已加载的样式。
+                    const liteKey = 'skScopusLightweightProfile', lite = GM_getValue(liteKey, false) === true;
+                    const liteRoot = $('#authorDetailsBotoxRoot');
+                    // 开关放在作者页容器之上，Scopus 作者页渲染失败时也能切换。
+                    const liteBar = $('<div id="sk-lite-bar"></div>').append($('<label></label>')
+                        .append($('<input type="checkbox" role="switch">').prop('checked', lite).on('change', function () { GM_setValue(liteKey, this.checked); location.reload(); }), ' Lightweight Mode (Beta)'));
+                    (liteRoot.length ? liteRoot : $('body')).prepend(liteBar);
+                    if (lite && liteRoot.length) {
+                        liteRoot.children().not(liteBar).remove();
+                        $('html').addClass('sk-scopus-lite');
+                        const litePage = $('<div id="sk-lite-page"></div>').appendTo(liteRoot);
+                        const count = v => v == null || v === '' || !Number.isSafeInteger(Number(v)) || Number(v) < 0 ? '—' : Number(v).toLocaleString('en');
+                        const renderLite = () => {
+                            litePage.empty().append($('<p class="sk-scopus-note" role="status"></p>').text('Loading author profile…'));
+                            loadAuthorApi().then(p => {
+                                const name = p.preferredName?.full || 'Author ' + pageAuthorId;
+                                document.title = name + ' - Scopus Lightweight Profile';
+                                const inst = p.latestAffiliatedInstitution, place = [inst?.address?.city, inst?.address?.country].filter(Boolean).join(', ');
+                                // 单位用 authorInstitution 标记，复用大学排名着色与机构历史的插入位置。
+                                const affil = $('<div class="sk-lite-affil"></div>');
+                                if (inst?.name) affil.append($('<span data-testid="authorInstitution"></span>').text(inst.name), place ? ', ' + place : '');
+                                const ids = $('<ul class="sk-lite-ids"></ul>').append($('<li></li>').text('Scopus ID: ' + pageAuthorId));
+                                if (/^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/.test(p.orcId || '')) ids.append($('<li></li>').append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://orcid.org/' + p.orcId).text('ORCID ' + p.orcId)));
+                                ids.append($('<li></li>').append($('<a target="_blank" rel="noopener">Documents in Scopus ↗</a>')
+                                    .attr('href', '/results/results.uri?sort=plf-f&src=s&sot=a&sdt=a&origin=AuthorEval&s=' + encodeURIComponent('AU-ID(' + pageAuthorId + ')'))));
+                                const metrics = $('<dl class="sk-lite-metrics"></dl>').append([
+                                    [p.citedByCount == null ? ['Citations'] : ['Citations by ', $('<b></b>').text(count(p.citedByCount)), ' documents'], p.citationsCount],
+                                    [['Documents'], p.documentCount], [['h-index'], p.hindex], [['Co-authors'], p.coAuthorsCount]
+                                ].map(([label, value]) => $('<div></div>').append($('<dt></dt>').append(label), $('<dd></dd>').text(count(value)))));
+                                litePage.empty().append($('<div class="sk-lite-header"></div>').append($('<h1 data-testid="author-profile-name"></h1>').text(name), affil, ids, metrics),
+                                    $('<div id="sk-lite-cols"><div id="sk-lite-main"></div><aside id="sk-lite-side"></aside></div>'));
+                                affil.children('span').each(markUniversity);
+                            }).catch(error => {
+                                litePage.empty().append($('<p class="sk-scopus-note" role="alert"></p>').text('Could not load author ' + pageAuthorId + '. ' + (error.name === 'TimeoutError' ? 'The request timed out.' : error.message) + ' '),
+                                    $('<button type="button" class="sk-scopus-btn">Retry</button>').on('click', renderLite));
+                            });
+                        };
+                        renderLite();
+                    }
+
                     waitForKeyElements('h1[data-testid="author-profile-name"]', function (h1node) {
                         if (h1node.find('#sk-scopus-email-inline').length) return;
-                        const authorId = new URLSearchParams(location.search).get('authorId') || (window.location.pathname.match(/\/pages\/authors\/(\d+)/) || [])[1];
-                        if (!authorId) return;
+                        const authorId = pageAuthorId;
 
                         // ── 邮箱 span ──
                         const emailSpan = $('<span id="sk-scopus-email-inline">…</span>').css({fontSize:'0.5em',color:'#1a73e8',marginLeft:'16px',verticalAlign:'middle',cursor:'pointer',borderBottom:'1px dashed #1a73e8',overflowWrap:'anywhere'}).attr('title', 'Click to copy');
@@ -3031,11 +3114,7 @@ function onInit() {
                         .on('mouseout', function(){ $(this).css('opacity','0.5'); });
                         h1node.append(emailSpan).append(tipSpan).append(inlineLoadBtn);
                         let authorProfile = null;
-                        fetch('https://www.scopus.com/api/authors/' + authorId, { signal: AbortSignal.timeout(15000) }).then(r => {
-                            if (!r.ok) throw new Error('HTTP ' + r.status);
-                            return r.json();
-                        }).then(d => {
-                            if (String(d.authorId) !== authorId) throw new Error('Unexpected author profile');
+                        loadAuthorApi().then(d => {
                             authorProfile = d;
                             const email = d.emailAddress || '';
                             if (email && email !== 'null') { emailSpan.text(email); }
@@ -3079,29 +3158,103 @@ function onInit() {
                                 return btn;
                             }
 
-                            // 左栏按钮
+                            // 左栏按钮（Lightweight 模式放入左栏，否则放在 Documents 标签页内）
                             const section = $('<div id="sk-hirsch-section"></div>').css({ padding: '16px 0' });
                             const seeAllBtn = makeBtn('See All Publications');
                             section.append(seeAllBtn);
-                            const hr = $('#documents-panel hr').first();
-                            if (hr.length) { hr.after(section); } else { h1node.closest('section, div[class*="Author"]').first().append(section); }
+                            const liteMain = $('#sk-lite-main'), hr = $('#documents-panel hr').first();
+                            if (liteMain.length) { liteMain.append(section); } else if (hr.length) { hr.after(section); } else { h1node.closest('section, div[class*="Author"]').first().append(section); }
 
-                            // 右栏按钮
+                            // 右栏按钮（Lightweight 右栏或 Author Position 下方）
                             const seeCoBtn = makeBtn('See Co-authors');
-                            const authorPos = $('section.author-position').first();
+                            const authorPos = $('#sk-lite-side').length ? $('#sk-lite-side') : $('section.author-position').first();
                             if (authorPos.length) { authorPos.append(seeCoBtn); }
 
                             // 共享加载逻辑
                             let loaded = false;
+                            const spinner = '<span class="sk-scopus-spinner" aria-hidden="true"></span>';
+                            const setBtn = (btn, text, busy = false) => btn.empty().append(busy ? spinner : '', text).prop('disabled', busy).css({ opacity: busy ? '.85' : '1', cursor: busy ? 'wait' : 'pointer' });
+                            // 数学/几何相关文字高亮（标题、期刊、主题共用）。
+                            const mark = el => el.addClass(geometry_regex.test(el.text()) ? 'sk-hl-geo' : maths_regex.test(el.text()) ? 'sk-hl-math' : '');
+
+                            function fetchMainAuthorGraphql() {
+                                const query = `query($id: String!) {
+                                    author(id: $id) {
+                                        id
+                                        profile {
+                                            nameVariants
+                                            currentInstitution { id name }
+                                            institutionHistory { id name parentName city country dateRange }
+                                        }
+                                        funding { awardedGrantsCount }
+                                        preprints { preprintCount }
+                                        topicDetails {
+                                            topicsRange { yearFrom yearTo }
+                                            topics { topic authorDocumentCount authorFwci topicFwci }
+                                        }
+                                        publications {
+                                            eid doi title pubYear subType openAccess citationCount authKeywords
+                                            journals { srcTitle }
+                                        }
+                                    }
+                                }`;
+                                return fetch('https://www.scopus.com/gateway/author-profile-api/author', {
+                                    method: 'POST', credentials: 'include', signal: AbortSignal.timeout(20000),
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ query, variables: { id: authorId } })
+                                }).then(r => r.ok ? r.json() : { httpStatus: r.status }).then(j => {
+                                    // 记录失败原因：整个请求被拒（HTTP 状态）与 SciVal 主题服务报错（GraphQL errors）分开提示。
+                                    const topicError = j?.errors?.find(e => /topic/i.test(e.message));
+                                    const topicsError = j?.httpStatus ? 'HTTP ' + j.httpStatus : topicError ? 'SciVal: ' + topicError.message + (topicError.extensions?.httpStatus ? ' (' + topicError.extensions.httpStatus + ')' : '') : '';
+                                    return { ...j?.data?.author, topicsFailed: !j?.data?.author || !!topicError, topicsError };
+                                }).catch(error => ({ topicsFailed: true, topicsError: error.name === 'TimeoutError' ? 'timed out' : error.message }));
+                            }
+
+                            async function fetchAuthorSearchDocsMeta(expectedCount) {
+                                const metaByEid = new Map(), metaByTitle = new Map(), countries = [];
+                                const normTitle = s => String(s || '').toLowerCase().replace(/[^a-z0-9\u00c0-\u024f]+/g, ' ').trim();
+                                const parsePage = html => {
+                                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                                    // \u9996\u9875\u4fa7\u680f Country/territory \u7b5b\u9009\uff1a\u6309\u4f5c\u8005\u5355\u4f4d\u56fd\u5bb6\u7edf\u8ba1\u7684\u8bba\u6587\u6570\uff08\u542b\u672c\u4eba\u5355\u4f4d\uff0c\u524d 10 \u4e2a\uff09\uff0c\u65e0\u9700\u989d\u5916\u8bf7\u6c42\u3002
+                                    if (!countries.length) doc.querySelectorAll('input[name="selectedCountryClusterCategories"]').forEach(input => {
+                                        const count = Number(input.closest('li')?.querySelector('.badge')?.textContent.replace(/\D/g, ''));
+                                        if (input.value && input.value !== 'Undefined' && count > 0) countries.push({ name: input.value, count });
+                                    });
+                                    const rows = [...doc.querySelectorAll('tr.searchArea')];
+                                    rows.forEach(tr => {
+                                        const text = el => el?.textContent?.replace(/\s+/g, ' ').trim() || '';
+                                        const eid = tr.querySelector('input[name="selectedEIDs"]')?.value?.trim() || '', title = text(tr.querySelector('.docTitle')), year = text(tr.children[3]);
+                                        const info = { year: /^\d{4}$/.test(year) ? year : '', journal: text(tr.children[4]), oa: !!tr.querySelector('.openAccessTxt') };
+                                        if (eid) metaByEid.set(eid, info);
+                                        if (title) metaByTitle.set(normTitle(title), info);
+                                    });
+                                    return rows.length;
+                                };
+                                try {
+                                    const baseSearchUrl = 'https://www.scopus.com/results/results.uri?sort=plf-f&src=s&sot=a&sdt=a&s=AU-ID%28' + encodeURIComponent(authorId) + '%29&origin=AuthorEval&resultsPerPage=200';
+                                    const firstRes = await fetch(baseSearchUrl, { credentials: 'include', signal: AbortSignal.timeout(20000) });
+                                    if (firstRes.ok) {
+                                        const firstCount = parsePage(await firstRes.text());
+                                        const targetPages = Math.min(3, Math.ceil((Number(expectedCount) || firstCount) / 200));
+                                        for (let p = 2; p <= targetPages && firstCount === 200; p++) {
+                                            const nextRes = await fetch(baseSearchUrl + '&offset=' + ((p - 1) * 200 + 1), { credentials: 'include', signal: AbortSignal.timeout(20000) });
+                                            if (!nextRes.ok || parsePage(await nextRes.text()) < 200) break;
+                                        }
+                                    }
+                                } catch (_) { }
+                                return { metaByEid, metaByTitle, normTitle, countries };
+                            }
+
                             function triggerLoad() {
                                 if (loaded || $('#sk-coa-overlay').length) return;
                                 loaded = true;
                                 $('#sk-hirsch-error').remove();
-                                seeAllBtn.text('Loading…').prop('disabled', true).css({ opacity: '0.7' });
-                                seeCoBtn.text('Loading…').prop('disabled', true).css({ opacity: '0.7' });
-                                inlineLoadBtn.text('⏳').css({ cursor: 'default', opacity: '0.5' });
+                                setBtn(seeAllBtn, 'Loading publications…', true);
+                                setBtn(seeCoBtn, 'Loading co-authors…', true);
+                                inlineLoadBtn.html(spinner).css({ cursor: 'wait', opacity: '1' });
                                 $('[class*="AuthorHeader-module"]').filter((i, el) => $(el).text().includes('Scopus Preview')).remove();
 
+                                const gqlPromise = fetchMainAuthorGraphql();
                                 fetch(hirschPageUrl, { credentials: 'include', signal: AbortSignal.timeout(20000) }).then(r => {
                                     if (!r.ok) throw new Error('HTTP ' + r.status);
                                     return r.text();
@@ -3113,34 +3266,93 @@ function onInit() {
                                         const jsonPre = pageDoc.getElementById('getAuthEvalJsonData');
                                         if (jsonPre) { docData = JSON.parse(jsonPre.textContent); }
                                     } catch (e) { /* ignore parse errors */ }
-                                    return Promise.allSettled([postData('hIndex'), postData('CoAuthors')]).then(results => [
-                                        results[0].status === 'fulfilled' ? results[0].value : {},
-                                        results[1].status === 'fulfilled' ? results[1].value : {}, docData
-                                    ]);
-                                }).then(([hData, coData, docData]) => {
+                                    // GraphQL 与检索页请求自带兜底，不会 reject。
+                                    return Promise.all([postData('hIndex').catch(() => ({})), postData('CoAuthors').catch(() => ({})), gqlPromise, fetchAuthorSearchDocsMeta(docData.docCount)])
+                                        .then(([hData, coData, gqlAuthor, searchMeta]) => [hData, coData, docData, gqlAuthor, searchMeta]);
+                                }).then(([hData, coData, docData, gqlAuthor, searchMeta]) => {
                                     seeAllBtn.hide();
                                     seeCoBtn.hide();
-                                    $('#sk-hirsch-content, #sk-subject-overlay, #sk-coauthors-section, #sk-sources-section').remove();
+                                    $('#sk-hirsch-content, #sk-subject-overlay, #sk-inst-history, #sk-coauthors-section, #sk-sources-section').remove();
                                     inlineLoadBtn.text('✅').css({ cursor: 'default', opacity: '1' }).off('click');
                                     const content = $('<div id="sk-hirsch-content"></div>');
 
-                                    // 学科按论文数计算覆盖率；同一篇论文可以属于多个学科。
+                                    // ── 历史机构：按主机构去重（系所放入提示），复用大学排名高亮 ──
+                                    const gqlProfile = gqlAuthor?.profile || {};
+                                    const currentInst = gqlProfile.currentInstitution || authorProfile?.latestAffiliatedInstitution || {};
+                                    const history = new Map();
+                                    (gqlProfile.institutionHistory || []).forEach(inst => {
+                                        const primary = (inst.parentName || inst.name || '').trim();
+                                        if (!primary) return;
+                                        const key = (primary + '|' + (inst.country || '')).toLowerCase();
+                                        if (!history.has(key)) history.set(key, { primary, subs: new Set(), loc: [inst.city, inst.country].filter(Boolean).join(', '), dateRange: inst.dateRange || '' });
+                                        const item = history.get(key);
+                                        if (inst.parentName && inst.name && inst.name !== inst.parentName) item.subs.add(inst.name.trim());
+                                        if ((inst.id && String(inst.id) === String(currentInst.id)) || primary.toLowerCase() === String(currentInst.name || '').toLowerCase()) item.current = true;
+                                    });
+                                    const pastInst = [...history.values()].filter(x => !x.current), shownInst = pastInst.length ? pastInst : [...history.values()];
+                                    if (shownInst.length) {
+                                        const variants = (gqlProfile.nameVariants || []).filter(Boolean);
+                                        const list = $('<div class="sk-inst-hist-list"></div>').append(shownInst.map(item => {
+                                            const rank = skGetUniv(item.primary);
+                                            const tip = [item.subs.size && 'Dept: ' + [...item.subs].join(' / '), rank.color && rank.detail.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()].filter(Boolean).join(' · ');
+                                            return $('<span class="sk-inst-hist-chip"></span>').text(item.primary + (item.loc ? ' (' + item.loc + ')' : '') + (item.dateRange ? ' [' + item.dateRange + ']' : ''))
+                                                .css(rank.color ? { background: rank.color, fontWeight: 700 } : {}).attr('title', tip || null);
+                                        }));
+                                        if (variants.length) list.append($('<div class="sk-scopus-note"></div>').text('Also published as: ' + variants.join(' · ')));
+                                        const anchor = $('span[data-testid="authorInstitution"]').first().closest('ul, div');
+                                        (anchor.length ? anchor : h1node).after($('<details id="sk-inst-history"></details>').append(
+                                            $('<summary></summary>').text('Affiliation history (' + shownInst.length + ')' + (variants.length ? ' · Name variants (' + variants.length + ')' : '')), list));
+                                    }
+
+                                    // ── Research profile：学科占比 + 合作国家 + SciVal 主题，各默认显示前 6 行（Mathematics 始终可见），一个按钮同时展开 ──
                                     const docTotal = Number(docData.docCount ?? docData.totalDataForSourceData?.noOfDocuments);
-                                    const subjectAreas = docData.documentSubjectAreaViewBeans || [];
-                                    if (subjectAreas.length) {
-                                        const saColors = ['#1a73e8','#e8710a','#0d652d','#a142f4','#d93025','#129eaf','#7b1fa2','#c2185b'];
-                                        const saOverlay = $('<div id="sk-subject-overlay"></div>').css({ background: 'rgba(255,255,255,0.97)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', padding: '14px 18px', lineHeight: '1.8', margin: '14px 0 16px' });
-                                        saOverlay.append($('<strong></strong>').text('Subject Areas').css({ display: 'block', marginBottom: '6px', fontSize: '16px', color: '#202124' }));
-                                        [...subjectAreas].sort((a, b) => Number(b.noOfDocuments) - Number(a.noOfDocuments)).forEach((s, i) => {
-                                            const bg = saColors[i % saColors.length];
-                                            const pct = docTotal > 0 ? ' (' + (Number(s.noOfDocuments) / docTotal * 100).toFixed(1) + '%)' : '';
-                                            const isMath = s.code === 'MATH' || /^Mathematics$/i.test(s.displayName);
-                                            saOverlay.append($('<span></span>').text(s.displayName + ' · ' + s.noOfDocuments + pct).css({
-                                                display: 'inline-block', padding: '3px 12px', borderRadius: '12px', margin: '2px 4px 2px 0',
-                                                background: bg + '18', color: bg, border: '1px solid ' + bg + '40', fontWeight: isMath ? '800' : '500', fontSize: isMath ? '16px' : '14px'
-                                            }));
+                                    const subjectAreas = [...(docData.documentSubjectAreaViewBeans || [])].sort((a, b) => b.noOfDocuments - a.noOfDocuments);
+                                    const topics = [...(gqlAuthor?.topicDetails?.topics || [])].sort((a, b) => b.authorDocumentCount - a.authorDocumentCount || b.authorFwci - a.authorFwci);
+                                    const range = gqlAuthor?.topicDetails?.topicsRange;
+                                    const rpHead = $('<div class="sk-rp-head"></div>').append($('<strong>Research profile</strong>'));
+                                    [['Grants', gqlAuthor?.funding?.awardedGrantsCount], ['Preprints', gqlAuthor?.preprints?.preprintCount]].forEach(([label, n]) => { if (n > 0) rpHead.append($('<span></span>').text(label + ' ').append($('<b></b>').text(n))); });
+                                    if (subjectAreas.length || topics.length || searchMeta.countries.length || rpHead.children().length > 1 || gqlAuthor.topicsFailed) {
+                                        const cells = values => values.map(v => v?.jquery ? v : $('<span></span>').text(v));
+                                        // 表头行兼作面板标题，说明放在表头提示中。
+                                        const rpPanel = (labels, note, rows, limit = 6) => {
+                                            rows.forEach((li, i) => li.toggleClass('sk-rp-extra', i >= limit && !li.hasClass('sk-rp-math')));
+                                            return $('<section class="sk-rp-panel"></section>').append($('<ul class="sk-rp-list"></ul>').append($('<li class="sk-rp-labels"></li>').attr('title', note || null).append(cells(labels)), rows));
+                                        };
+                                        // 名称 | 占比条（本面板最大值为满格）| 论文数 | 占总论文比例（学科、国家共用）。
+                                        const shareRow = (label, n, max, url, math = false) => {
+                                            const name = $(url ? '<a target="_blank" rel="noopener"></a>' : '<span></span>').attr({ href: url || null, title: label }).text((math ? '★ ' : '') + label);
+                                            return $('<li></li>').toggleClass('sk-rp-math', math).append(cells([name, $('<span class="sk-rp-bar"></span>').append($('<i></i>').css('width', (max > 0 ? n / max * 100 : 0) + '%')),
+                                                n, docTotal > 0 ? Math.min(100, n / docTotal * 100).toFixed(1) + '%' : '']));
+                                        };
+                                        const subjectMax = Math.max(0, ...subjectAreas.map(s => Number(s.noOfDocuments) || 0));
+                                        const subjectRows = subjectAreas.map(s => shareRow(s.displayName, Number(s.noOfDocuments) || 0, subjectMax, s.url, s.code === 'MATH' || /^Mathematics$/i.test(s.displayName))
+                                            .attr('data-subject', s.code || (/^Mathematics$/i.test(s.displayName) ? 'MATH' : 'MULT')));
+                                        const countryMax = Math.max(0, ...searchMeta.countries.map(c => c.count));
+                                        const countryRows = searchMeta.countries.map(c => {
+                                            const zone = SK_COUNTRY_ZONES.get(c.name);
+                                            return shareRow(c.name, c.count, countryMax).attr({ 'data-zone': zone || null, title: zone ? 'MDPI discount zone ' + ['I', 'II', 'III'][zone - 1] : null });
                                         });
-                                        h1node.parent().append(saOverlay);
+                                        const topicRows = topics.map(t => {
+                                            const fwci = t.authorFwci == null ? NaN : Number(t.authorFwci);
+                                            return $('<li></li>').attr('title', 'Topic world FWCI: ' + Number(t.topicFwci || 0).toFixed(2)).append(cells([mark($('<span></span>').attr('title', t.topic || null).text(t.topic || '?')), t.authorDocumentCount,
+                                                $('<span class="sk-rp-fwci"></span>').toggleClass('sk-rp-high', fwci >= 1).text(Number.isFinite(fwci) ? fwci.toFixed(2) : '—')]));
+                                        });
+                                        const panels = [
+                                            subjectAreas.length && rpPanel(['Subject areas', 'Papers', 'Share'], (docTotal > 0 ? 'Share of ' + docTotal + ' publications. ' : '')
+                                                + 'A publication can belong to several subject areas, so shares may sum to more than 100%.', subjectRows),
+                                            countryRows.length && rpPanel(['Countries in published papers', 'Papers', 'Share'], 'Papers with an author affiliated there, from the Scopus search filter of this author\'s documents (top 10); '
+                                                + 'includes the author\'s own affiliation. Colours: MDPI discount zone I / II / III.', countryRows)
+                                        ].filter(Boolean);
+                                        const topicPanel = rpPanel(['SciVal topics', 'Papers', 'FWCI'], (range?.yearFrom ? range.yearFrom + '–' + range.yearTo + ' · ' : '') + 'FWCI 1.00 = world average', topicRows).addClass('sk-rp-topics');
+                                        if (!topics.length) topicPanel.append($('<div class="sk-scopus-note"></div>').text(gqlAuthor.topicsFailed
+                                            ? 'Scopus could not load topics' + (gqlAuthor.topicsError ? ' (' + gqlAuthor.topicsError + ')' : '') + '. Try again later.' : 'No topic data returned by Scopus.'));
+                                        // Lightweight 模式默认展开全部行，普通页面默认只显示前 6 行。
+                                        const rpBox = $('<div id="sk-subject-overlay"></div>').toggleClass('sk-rp-open', $('html').hasClass('sk-scopus-lite'))
+                                            .append(rpHead, $('<div class="sk-rp-cols"></div>').append(panels, topicPanel));
+                                        if (rpBox.find('.sk-rp-extra').length) rpBox.append($('<button type="button" class="sk-rp-more"></button>').text(rpBox.hasClass('sk-rp-open') ? 'Show less' : 'Show more').on('click', function () {
+                                            $(this).text(rpBox.toggleClass('sk-rp-open').hasClass('sk-rp-open') ? 'Show less' : 'Show more');
+                                        }));
+                                        h1node.parent().append(rpBox);
                                     }
 
                                     const yearData = [...(docData.documentYearDataViewBeans || [])].sort((a, b) => Number(b.code || b.displayName) - Number(a.code || a.displayName));
@@ -3152,10 +3364,23 @@ function onInit() {
                                         }
                                     }
                                     const docs = Array.isArray(hData.hirschGraphData) ? hData.hirschGraphData : [];
+                                    // 合并 GraphQL 最新论文元数据（关键词/DOI/文献类型/期刊）与站内检索页补全的全部论文年份+期刊
+                                    const gqlPubByEid = new Map((gqlAuthor?.publications || []).filter(p => p?.eid).map(p => [String(p.eid), p]));
+                                    const enrichedDocs = docs.map(d => {
+                                        const eid = String(d.eid || ''), gp = gqlPubByEid.get(eid);
+                                        const sm = searchMeta.metaByEid.get(eid) || searchMeta.metaByTitle.get(searchMeta.normTitle(d.documentTitle));
+                                        return {
+                                            ...d, pubYear: gp?.pubYear ? String(gp.pubYear) : (sm?.year || ''), journal: gp?.journals?.[0]?.srcTitle || sm?.journal || '',
+                                            subType: gp?.subType || '', doi: gp?.doi || '', oa: Boolean(gp?.openAccess || sm?.oa), keywords: Array.isArray(gp?.authKeywords) ? gp.authKeywords.filter(Boolean) : []
+                                        };
+                                    });
                                     const thisYear = new Date().getFullYear();
-                                    if (yearData.length || docs.length) {
+                                    if (yearData.length || enrichedDocs.length) {
                                         const pubBox = $('<div id="sk-publications-section" class="sk-scopus-card"></div>');
-                                        pubBox.append($('<div class="sk-scopus-toolbar sk-scopus-heading"></div>').append($('<strong>Publications</strong>')).append($('<a target="_blank" class="sk-scopus-icon" aria-label="Scopus analysis">↗</a>').attr('href', hirschPageUrl)));
+                                        // 标题右侧右对齐显示文献类型统计。
+                                        const types = docData.documentTypeDataViewBeans || [];
+                                        pubBox.append($('<div class="sk-scopus-toolbar sk-scopus-heading"></div>').append($('<strong>Publications</strong>'), $('<a target="_blank" class="sk-scopus-icon" aria-label="Scopus analysis">↗</a>').attr('href', hirschPageUrl),
+                                            types.length ? $('<span class="sk-scopus-note sk-pub-types"></span>').text(types.map(t => t.displayName + ': ' + t.noOfDocuments).join(' · ')) : ''));
                                         const yearCounts = $('<div class="sk-scopus-years"></div>');
                                         yearData.forEach(y => {
                                             const current = Number(y.code || y.displayName) === thisYear;
@@ -3164,21 +3389,43 @@ function onInit() {
                                                 .append(Number(y.noOfDocuments) === 0 ? $('<b>0</b>') : $('<a target="_blank" rel="noopener"></a>').attr('href', y.url || hirschPageUrl).text(y.noOfDocuments)));
                                         });
                                         if (yearData.length) pubBox.append(yearCounts);
-                                        const types = docData.documentTypeDataViewBeans || [];
-                                        if (types.length) pubBox.append($('<div class="sk-scopus-note"></div>').css('margin-bottom', '8px').text(types.map(t => t.displayName + ': ' + t.noOfDocuments).join(' · ')));
 
-                                        // 年度数据下方完整展示文章列表。
+                                        // 年度数据下方完整展示文章列表（含年份、期刊、OA/DOI 与近期关键词；默认按 Year 倒序，点击 Year / Cited 表头排序）。
                                         const pubBody = $('<tbody></tbody>');
-                                        docs.forEach((d, i) => {
-                                            const title = d.documentTitle || '?';
-                                            let href = hirschPageUrl;
-                                            try { const url = new URL(d.detailsUrl, 'https://www.scopus.com'); if (url.protocol === 'https:' && url.hostname === 'www.scopus.com') href = url.href; } catch (e) { }
-                                            const link = $('<a target="_blank" rel="noopener"></a>').attr('href', href).text(title);
-                                            if (geometry_regex.test(title)) link.css({ background: 'Aquamarine', padding: '1px 4px', borderRadius: '3px' });
-                                            else if (maths_regex.test(title)) link.css({ background: 'Wheat', padding: '1px 4px', borderRadius: '3px' });
-                                            pubBody.append($('<tr></tr>').append($('<td></td>').text(i + 1)).append($('<td></td>').append(link)).append($('<td></td>').css({ textAlign: 'right', fontWeight: '700', color: '#1a73e8' }).text(d.count ?? '—')));
-                                        });
-                                        if (docs.length) pubBox.append($('<table class="sk-scopus-table"><thead><tr><th>#</th><th>Title</th><th>Cited</th></tr></thead></table>').append(pubBody));
+                                        let sortMode = 'year', sortAsc = false;
+                                        const sortHeads = {
+                                            year: $('<th scope="col" class="sk-pub-sort sk-pub-year-head"><button type="button">Year <span class="sk-pub-sort-arrow" aria-hidden="true"></span></button></th>'),
+                                            cited: $('<th scope="col" class="sk-pub-sort sk-pub-cited-head"><button type="button">Cited <span class="sk-pub-sort-arrow" aria-hidden="true"></span></button></th>')
+                                        };
+                                        $.each(sortHeads, (mode, th) => th.find('button').on('click', () => { sortAsc = mode === sortMode ? !sortAsc : false; sortMode = mode; renderPubRows(); }));
+                                        const pubNumber = value => value == null || String(value).trim() === '' ? NaN : Number(String(value).replace(/,/g, ''));
+                                        const renderPubRows = () => {
+                                            $.each(sortHeads, (mode, th) => th.attr('aria-sort', mode === sortMode ? (sortAsc ? 'ascending' : 'descending') : 'none')
+                                                .find('.sk-pub-sort-arrow').text(mode === sortMode ? (sortAsc ? '↑' : '↓') : '↕'));
+                                            const field = sortMode === 'year' ? 'pubYear' : 'count';
+                                            const sorted = [...enrichedDocs].sort((a, b) => {
+                                                const x = pubNumber(a[field]), y = pubNumber(b[field]);
+                                                if (!Number.isFinite(x)) return Number.isFinite(y) ? 1 : 0;
+                                                if (!Number.isFinite(y)) return -1;
+                                                return (x - y) * (sortAsc ? 1 : -1);
+                                            });
+                                            pubBody.empty().append(sorted.map((d, i) => {
+                                                let href = hirschPageUrl;
+                                                try { const url = new URL(d.detailsUrl, 'https://www.scopus.com'); if (url.protocol === 'https:' && url.hostname === 'www.scopus.com') href = url.href; } catch (e) { }
+                                                const titleCell = $('<td></td>').append(mark($('<a target="_blank" rel="noopener"></a>').attr('href', href).text(d.documentTitle || '?')), d.oa ? '<span class="sk-pub-oa" title="Open Access">OA</span>' : '');
+                                                const meta = [d.journal && mark($('<i></i>').text(d.journal)), d.subType !== 'ARTICLE' && d.subType,
+                                                    d.doi && $('<a target="_blank" rel="noopener"></a>').attr('href', 'https://doi.org/' + encodeURIComponent(d.doi).replace(/%2F/gi, '/')).text('DOI ↗')].filter(Boolean);
+                                                if (meta.length) titleCell.append($('<div class="sk-pub-meta"></div>').append(meta.flatMap((m, j) => j ? [' · ', m] : [m])));
+                                                if (d.keywords.length) titleCell.append($('<div class="sk-pub-kw"></div>').text('🔑 ' + d.keywords.slice(0, 6).join(' · ')));
+                                                return $('<tr></tr>').append($('<td></td>').text(i + 1), $('<td class="sk-pub-year"></td>').text(d.pubYear || '—'), titleCell, $('<td class="sk-pub-cited"></td>').text(d.count ?? '—'));
+                                            }));
+                                        };
+                                        if (enrichedDocs.length) {
+                                            renderPubRows();
+                                            pubBox.append($('<div class="sk-scopus-scroll"></div>').append(
+                                                $('<table class="sk-scopus-table"></table>').append($('<thead></thead>').append($('<tr></tr>').append('<th>#</th>', sortHeads.year, '<th>Title &amp; Source</th>', sortHeads.cited)), pubBody)
+                                            ));
+                                        }
                                         content.append(pubBox);
                                     }
 
@@ -3191,227 +3438,302 @@ function onInit() {
                                             const nm = name.match(/^(.+?),\s*(.+)$/);
                                             return [String(c.coAuthorId), { id: String(c.coAuthorId), name, first: nm ? nm[2].trim() : name, last: nm ? nm[1].trim() : '', shared: c.noOfCoAuthoredDocuments ?? null, profile: null, state: 'Not loaded', error: '' }];
                                         })).values()].sort((a, b) => Number(b.shared) - Number(a.shared) || a.name.localeCompare(b.name));
+                                        const scopusSubjectNames = {
+                                            AGRI: 'Agricultural and Biological Sciences', ARTS: 'Arts and Humanities', BIOC: 'Biochemistry, Genetics and Molecular Biology',
+                                            BUSI: 'Business, Management and Accounting', CENG: 'Chemical Engineering', CHEM: 'Chemistry', COMP: 'Computer Science',
+                                            DECI: 'Decision Sciences', DENT: 'Dentistry', EART: 'Earth and Planetary Sciences', ECON: 'Economics, Econometrics and Finance',
+                                            ENER: 'Energy', ENGI: 'Engineering', ENVI: 'Environmental Science', HEAL: 'Health Professions', IMMU: 'Immunology and Microbiology',
+                                            MATE: 'Materials Science', MATH: 'Mathematics', MEDI: 'Medicine', MULT: 'Multidisciplinary', NEUR: 'Neuroscience',
+                                            NURS: 'Nursing', PHAR: 'Pharmacology, Toxicology and Pharmaceutics', PHYS: 'Physics and Astronomy', PSYC: 'Psychology',
+                                            SOCI: 'Social Sciences', VETE: 'Veterinary'
+                                        };
                                         const coSection = $('<div id="sk-coauthors-section" class="sk-scopus-card"></div>');
                                         const coExportIcon = $('<button type="button" class="sk-scopus-icon" aria-label="Co-author details">📋</button>');
-                                        const coCompact = $('<div id="sk-coa-compact"></div>');
-                                        coRows.forEach(row => coCompact.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id).text(row.name + ' (' + (row.shared ?? '—') + ')')));
-                                        let detailRunning = false, detailPaused = false, detailsRequested = false, detailController = null, detailTask = null, detailMessage = '', allTsv = '', publicationsRequested = false;
+                                        // 侧栏合作者列表：Name | Country | Co-docs；国家由下方的轻量查询逐批填入。
+                                        const coSideNote = $('<div class="sk-scopus-note"></div>').text('Loading countries…');
+                                        const coCompact = $('<div id="sk-coa-compact" class="sk-scopus-scroll"></div>').append($('<table class="sk-scopus-table"></table>')
+                                            .append($('<tbody></tbody>').append(coRows.map(row => $('<tr></tr>').append(
+                                                $('<td></td>').attr('title', row.name).append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id).text(row.name)),
+                                                $('<td></td>').append(row.sideCountry = $('<span class="sk-zone-tag"></span>')),
+                                                $('<td></td>').attr('title', 'Co-authored documents').text(row.shared ?? '—'))))));
+                                        const showLiteCountry = row => {
+                                            const country = row.liteInst?.country || '';
+                                            row.sideCountry.text(country || '—').attr({ 'data-zone': SK_COUNTRY_ZONES.get(country) || null, title: row.liteInst?.name || null });
+                                        };
+                                        let detailRunning = false, detailPaused = false, detailsRequested = false, detailTask = null, detailMessage = '', columns = [];
+                                        let overlay, coTable, tableBody, countrySummary, tip, loadBtn;
                                         const activeControllers = new Set();
-                                        const abortAll = () => { for (const c of activeControllers) { try { c.abort(); } catch (_) { } } activeControllers.clear(); detailController?.abort(); };
-                                        let overlay, coTable, tableBody, countrySummary, tip;
+                                        const abortAll = () => { for (const c of activeControllers) c.abort(); activeControllers.clear(); };
+                                        const isOpen = () => overlay?.[0]?.isConnected;
+                                        // 加载中只显示已“揭示”的行；加载结束后显示全部已有数据。
+                                        const isReady = row => row.shown || !detailRunning;
 
-                                        function renderCoauthors() {
-                                            const loadedRows = coRows.filter(row => row.profile);
-                                            const countries = new Map(), institutions = new Map(), institutionNames = new Map();
-                                            let countryKnown = 0, institutionKnown = 0, sameInstitution = 0;
-                                            loadedRows.forEach(row => {
-                                                const institution = row.profile.latestAffiliatedInstitution;
-                                                const country = institution?.address?.country;
-                                                if (country && country !== 'null') { countryKnown++; countries.set(country, (countries.get(country) || 0) + 1); }
-                                                if (institution?.name) {
-                                                    const key = String(institution.id || institution.name);
-                                                    institutionKnown++; institutions.set(key, (institutions.get(key) || 0) + 1); institutionNames.set(key, institution.name);
-                                                }
-                                                if (institution?.id && authorProfile?.latestAffiliatedInstitution?.id && String(institution.id) === String(authorProfile.latestAffiliatedInstitution.id)) sameInstitution++;
-                                            });
-                                            const errors = coRows.filter(row => row.state === 'Failed').length;
-                                            const headers = detailsRequested ? ['Email','H-Index','Institution','City','Country','Documents','Citations','Citing Documents','ORCID','Subject Areas','First Name','Last Name','Co-Docs','Scopus Link']
+                                        function coauthorTsv() {
+                                            const headers = detailsRequested ? ['Email','H-Index','Latest Pub','Institution','Country','Documents','Citations','Subject Areas','First Name','Last Name','Co-Docs','Scopus Link']
                                             : ['First Name','Last Name','Co-Docs','Scopus Link'];
-                                            const exportYears = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
-                                            if (publicationsRequested) headers.splice(2, 0, 'Latest Pub');
-                                            headers.push(...exportYears.map(year => year + 'Pub'));
-                                            allTsv = [headers, ...coRows.map(row => {
-                                                const p = row.profile || {}, institution = p.latestAffiliatedInstitution || {};
-                                                const base = [p.preferredName?.first || row.first, p.preferredName?.last || row.last, row.shared ?? '', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id];
-                                                const values = detailsRequested ? [p.emailAddress, p.hindex, institution.name, institution.address?.city, institution.address?.country, p.documentCount, p.citationsCount, p.citedByCount, p.orcId,
-                                                                           (p.publishedSubjectAreas || []).map(s => s.name).join('; '), ...base] : base;
-                                                if (publicationsRequested) values.splice(2, 0, row.pubData?.latest ?? '');
-                                                return values.concat(exportYears.map(year => row.pubData ? row.pubData.years.find(y => Number(y.code || y.displayName) === year)?.noOfDocuments ?? 0 : ''));
+                                            return [headers, ...coRows.map(row => {
+                                                const p = row.profile || {};
+                                                const base = [row.first, row.last, row.shared ?? '', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id];
+                                                return detailsRequested ? [p.email, p.hindex, row.latestPub, p.inst?.name, p.inst?.country, p.docs, p.cites, p.subjects, ...base] : base;
                                             })].map(row => row.map(value => {
-                                                const text = value == null || value === 'null' ? '' : String(value).replace(/[\t\r\n]+/g, ' ').trim();
+                                                const text = value == null ? '' : String(value).replace(/[\t\r\n]+/g, ' ').trim();
                                                 return /^[=+@]/.test(text) ? "'" + text : text;
                                             }).join('\t')).join('\n');
-                                            if (!overlay?.[0]?.isConnected) return;
-                                            coTable.closest('#sk-coa-popup').toggleClass('sk-coa-detailed', detailsRequested);
-                                            const columns = detailsRequested ? [
-                                                ['Name', '12%'], ['Email', '17%'], ['h-index', '62px', true], ['Docs', '48px', true], ['Citations', '70px', true],
-                                                ['Country', '110px'], ['City', '105px'], ['Institution', ''], ['Subject areas', ''], ['Co-docs', '68px', true]
-                                            ] : [['Name', ''], ['Co-docs', '68px', true]];
-                                            if (publicationsRequested) columns.splice(3, 0, ['Latest Pub', '84px', true]);
-                                            const heading = $('<tr></tr>'), colGroup = coTable.find('colgroup').empty();
-                                            columns.forEach(([label, width, numeric]) => {
-                                                colGroup.append($('<col>').css('width', width));
-                                                heading.append($('<th></th>').toggleClass('sk-scopus-number', !!numeric).text(label));
+                                        }
+
+                                        function renderSummary() {
+                                            const loadedRows = coRows.filter(row => isReady(row) && row.profile);
+                                            const countries = new Map(), institutions = new Map(), institutionNames = new Map(), mainInstId = String(authorProfile?.latestAffiliatedInstitution?.id || '');
+                                            let countryKnown = 0, institutionKnown = 0, sameInstitution = 0;
+                                            loadedRows.forEach(({ profile: { inst } }) => {
+                                                if (inst?.country) { countryKnown++; countries.set(inst.country, (countries.get(inst.country) || 0) + 1); }
+                                                if (inst?.name) {
+                                                    const key = String(inst.id || inst.name);
+                                                    institutionKnown++; institutions.set(key, (institutions.get(key) || 0) + 1); institutionNames.set(key, inst.name);
+                                                }
+                                                if (mainInstId && String(inst?.id) === mainInstId) sameInstitution++;
                                             });
-                                            coTable.find('thead').empty().append(heading);
                                             countrySummary.empty();
                                             for (const [label, counts, known] of [['Countries', countries, countryKnown], ['Institutions', institutions, institutionKnown]]) {
                                                 const chart = $('<div></div>').append($('<strong></strong>').text(label + (loadedRows.length ? ' · ' + known + '/' + loadedRows.length : '')));
                                                 const bars = $('<div class="sk-scopus-bars"></div>');
                                                 [...counts].sort((a, b) => b[1] - a[1]).slice(0, 5).forEach(([key, n]) => {
                                                     const name = counts === institutions ? institutionNames.get(key) : key;
-                                                    bars.append($('<div></div>').append($('<div class="sk-scopus-bar-label"></div>').append($('<span></span>').attr('title', name).text(name), $('<b></b>').text(n)))
-                                                                .append($('<div class="sk-scopus-bar-track"></div>').append($('<div class="sk-scopus-bar-fill"></div>').css({ width: (n / known * 100) + '%', background: counts === institutions ? '#a142f4' : '#1a73e8' }))));
+                                                    // 国家条按 MDPI 折扣区着色（与 Research profile 的国家面板一致），不在名单中的保持蓝色。
+                                                    const zone = counts === countries ? SK_COUNTRY_ZONES.get(name) : 0;
+                                                    bars.append($('<div></div>').attr('data-zone', zone || null).append($('<div class="sk-scopus-bar-label"></div>').append($('<span></span>').attr('title', name).text(name), $('<b></b>').text(n)))
+                                                                .append($('<div class="sk-scopus-bar-track"></div>').append($('<div class="sk-scopus-bar-fill"></div>').css({ width: (n / known * 100) + '%', background: counts === institutions ? '#a142f4' : null }))));
                                                 });
                                                 if (!counts.size) bars.text('—');
                                                 chart.append(bars); countrySummary.append(chart);
                                             }
-                                            if (authorProfile?.latestAffiliatedInstitution?.id && loadedRows.length) countrySummary.children().last().append($('<div class="sk-scopus-note"></div>').text('Same institution: ' + sameInstitution));
-                                            tip.text(detailsRequested ? (detailRunning ? 'Loading… ' : '') + loadedRows.length + '/' + coRows.length + (errors ? ' · ' + errors + ' failed' : '') + (detailMessage ? ' · ' + detailMessage : '') : '');
-                                            if (publicationsRequested) tip.text('Publications ' + coRows.filter(row => row.pubData).length + '/' + coRows.length + (detailRunning ? ' · Loading…' : '') + (detailMessage ? ' · ' + detailMessage : ''));
-                                            tableBody.empty();
-                                            coRows.forEach(row => {
-                                                const p = row.profile, institution = p?.latestAffiliatedInstitution;
-                                                const name = p?.preferredName?.full || row.name;
-                                                const nameCell = $('<td></td>').attr('title', name + (row.error ? ' · ' + row.error : '')).css({ color: '#1558d6', fontWeight: '700' }).text(name);
-                                                if (row.state === 'Failed') nameCell.append(' ⚠');
-                                                const tr = $('<tr></tr>').append(nameCell);
-                                                const subjects = (p?.publishedSubjectAreas || []).map(s => s.name).join('; ') || '—';
-                                                const values = detailsRequested ? [p?.emailAddress, p?.hindex, p?.documentCount, p?.citationsCount, institution?.address?.country, institution?.address?.city, institution?.name, subjects, row.shared] : [row.shared];
-                                                if (publicationsRequested) values.splice(2, 0, row.pubData?.latest ?? '');
-                                                values.forEach((value, i) => {
-                                                    const text = value == null || value === '' || value === 'null' ? '—' : value;
-                                                    const cell = $('<td></td>').toggleClass('sk-scopus-number', !!columns[i + 1][2]).attr('title', text);
-                                                    cell.toggleClass('sk-coa-output', ['Docs', 'Citations'].includes(columns[i + 1][0])).toggleClass('sk-coa-country', columns[i + 1][0] === 'Country');
-                                                    if (detailsRequested && i === 0 && /^[^\s@]+@[^\s@]+$/.test(text)) {
-                                                        cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', skMailsdbUrl(text)).text(text));
-                                                    } else if (detailsRequested && i === 1 && Number.isFinite(Number(text))) {
-                                                        cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id).text(text));
-                                                    } else if (columns[i + 1][0] === 'Latest Pub') {
-                                                        cell.attr('title', row.pubError || row.pubState || 'Not loaded');
-                                                        if (row.pubData?.latest) cell.append($('<a href="#"></a>').text(text).on('click', e => { e.preventDefault(); showCoauthorPublications(row); }));
-                                                        else cell.text(row.pubState === 'Failed' ? '⚠' : text);
-                                                    } else { cell.text(text); }
-                                                    tr.append(cell);
-                                                });
-                                                tableBody.append(tr);
+                                            if (mainInstId && loadedRows.length) countrySummary.children().last().append($('<div class="sk-scopus-note"></div>').text('Same institution: ' + sameInstitution));
+                                            const errors = coRows.filter(row => isReady(row) && row.state === 'Failed').length;
+                                            tip.text(detailsRequested ? loadedRows.length + '/' + coRows.length + ' loaded' + (errors ? ' · ' + errors + ' failed' : '') + (detailMessage ? ' · ' + detailMessage : '') : '');
+                                        }
+
+                                        function buildRow(row, cursor = false) {
+                                            const ready = isReady(row), p = ready ? row.profile : null, name = row.name;
+                                            const tr = $('<tr></tr>').toggleClass('sk-coa-pending', detailsRequested && !ready);
+                                            tr.append($('<td></td>').attr('title', name + (row.error ? ' · ' + row.error : '')).append(cursor ? spinner : '', document.createTextNode(name + (ready && row.state === 'Failed' ? ' ⚠' : ''))));
+                                            const values = detailsRequested ? [p?.email, p?.hindex, p && row.latestPub, p?.docs, p?.cites, p?.inst?.country, p?.inst?.name, p?.subjects, row.shared] : [row.liteInst?.country, row.shared];
+                                            values.forEach((value, i) => {
+                                                const [label, , numeric] = columns[i + 1];
+                                                const text = value == null || value === '' ? (ready ? '—' : '') : String(value);
+                                                const cell = $('<td></td>').attr('title', text).toggleClass('sk-scopus-number', !!numeric)
+                                                    .toggleClass('sk-coa-output', label === 'Docs' || label === 'Citations').toggleClass('sk-coa-country', label === 'Country');
+                                                // 国家按 MDPI 折扣区、机构按大学排名着色（与作者主页一致）。
+                                                if (label === 'Country') cell.attr('data-zone', SK_COUNTRY_ZONES.get(text) || null);
+                                                if (label === 'Institution' && p?.rank?.color) cell.css('background-color', p.rank.color).attr('title', text + ' · ' + p.rank.text);
+                                                if (label === 'Email' && /^[^\s@]+@[^\s@]+$/.test(text)) cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', skMailsdbUrl(text)).text(text));
+                                                else if (label === 'h-index' && p && Number.isFinite(Number(text))) cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id).text(text));
+                                                else if (label === 'Latest Pub' && p && row.latestPub) cell.attr('title', row.pubError || 'Click to view yearly publications').append($('<a href="#"></a>').text(text).on('click', e => { e.preventDefault(); showCoauthorPublications(row); }));
+                                                else cell.text(text);
+                                                tr.append(cell);
                                             });
+                                            return row.tr = tr;
+                                        }
+
+                                        function renderCoauthors() {
+                                            if (!isOpen()) return;
+                                            coTable.closest('#sk-coa-popup').toggleClass('sk-coa-detailed', detailsRequested);
+                                            loadBtn.toggle(!detailRunning && coRows.some(row => !row.profile)).text(coRows.some(row => row.profile || row.state === 'Failed') ? 'Retry / Resume' : 'Load Details');
+                                            columns = detailsRequested ? [
+                                                ['Name', '12%'], ['Email', '17%'], ['h-index', '62px', true], ['Latest Pub', '84px', true], ['Docs', '48px', true], ['Citations', '70px', true],
+                                                ['Country', '110px'], ['Institution', ''], ['Subject areas', ''], ['Co-docs', '68px', true]
+                                            ] : [['Name', ''], ['Country', '140px'], ['Co-docs', '68px', true]];
+                                            const heading = $('<tr></tr>'), colGroup = coTable.find('colgroup').empty();
+                                            columns.forEach(([label, width, numeric]) => {
+                                                colGroup.append($('<col>').css('width', width));
+                                                heading.append($('<th></th>').toggleClass('sk-scopus-number', !!numeric).text(label));
+                                            });
+                                            coTable.find('thead').empty().append(heading);
+                                            renderSummary();
+                                            const cursor = detailRunning && coRows.find(row => !row.shown);
+                                            tableBody.empty().append(coRows.map(row => buildRow(row, row === cursor)));
+                                        }
+
+                                        async function loadSingleCoauthorPubData(row, signal) {
+                                            if (row.pubData) return row.pubData;
+                                            if (row.pubTask) return row.pubTask;
+                                            const coPost = display => fetch(dataUrl, {
+                                                method: 'POST', credentials: 'include', signal,
+                                                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest' },
+                                                body: 'display=' + display + '&accessor=authorProfile&keyEventCutState=n&auidList=' + row.id + '&origin=AuthorEval&ajax=true'
+                                            }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+                                            row.pubTask = Promise.all([coPost('Documents'), coPost('hIndex').catch(() => ({}))]).then(([docJson, hJson]) => {
+                                                const counts = new Map();
+                                                for (const y of docJson.documentYearDataViewBeans || []) {
+                                                    const year = Number(y.code || y.displayName), count = Number(y.noOfDocuments);
+                                                    if (Number.isInteger(year) && year > 1800 && Number.isInteger(count) && count >= 0) counts.set(year, (counts.get(year) || 0) + count);
+                                                }
+                                                const years = [...counts].sort((a, b) => b[0] - a[0]).map(([year, count]) => ({ code: String(year), noOfDocuments: count }));
+                                                const documents = Array.isArray(hJson.hirschGraphData) ? hJson.hirschGraphData : [];
+                                                row.pubError = '';
+                                                return (row.pubData = { years, latest: years.find(y => y.noOfDocuments > 0)?.code ?? row.latestPub ?? null, documents });
+                                            }).finally(() => { row.pubTask = null; });
+                                            return row.pubTask;
                                         }
 
                                         function showCoauthorPublications(row) {
-                                            if (!row.pubData) return;
                                             $('#sk-coa-publications').remove();
                                             const returnFocus = document.activeElement;
+                                            let dialogController = null;
                                             const page = $('<div id="sk-coa-publications" role="dialog" aria-modal="true" aria-labelledby="sk-coa-pub-title"></div>');
                                             const panel = $('<section></section>');
-                                            const close = $('<button type="button" class="sk-scopus-btn" aria-label="Close publications">✕</button>').on('click', () => { page.remove(); if (returnFocus?.isConnected) returnFocus.focus(); });
-                                            panel.append($('<div class="sk-scopus-toolbar"></div>').append($('<strong id="sk-coa-pub-title"></strong>').text((row.profile?.preferredName?.full || row.name) + ' · Publications'), close));
-                                            const counts = new Map(row.pubData.years.map(y => [Number(y.code), y.noOfDocuments]));
-                                            const years = [...counts.keys()];
-                                            const tiles = $('<div class="sk-scopus-years"></div>');
-                                            if (years.length) {
-                                                for (let year = Math.max(...years); year >= Math.min(...years); year--) {
-                                                    tiles.append($('<div class="sk-scopus-year"></div>').toggleClass('sk-scopus-year-current', year === new Date().getFullYear())
-                                                        .append($('<span></span>').text(year), $('<b></b>').text(counts.get(year) ?? 0)));
+                                            const close = $('<button type="button" class="sk-scopus-btn" aria-label="Close publications">✕</button>').on('click', () => {
+                                                dialogController?.abort(); page.remove(); if (returnFocus?.isConnected) returnFocus.focus();
+                                            });
+                                            const coHirschUrl = 'https://www.scopus.com/hirsch/author.uri?accessor=authorProfile&auidList=' + row.id + '&origin=AuthorProfile';
+                                            panel.append($('<div class="sk-scopus-toolbar"></div>').append(
+                                                $('<strong id="sk-coa-pub-title"></strong>').text(row.name + ' · Publications'),
+                                                $('<a target="_blank" rel="noopener" class="sk-scopus-icon" aria-label="Scopus analysis">↗</a>').attr('href', coHirschUrl),
+                                                close
+                                            ));
+                                            const bodyWrap = $('<div class="sk-coa-pub-body"></div>');
+                                            panel.append(bodyWrap);
+                                            const renderPanel = (pubData, loadingText, errorText) => {
+                                                bodyWrap.empty();
+                                                if (loadingText) bodyWrap.append($('<div class="sk-scopus-note"></div>').append(spinner, loadingText));
+                                                if (errorText) bodyWrap.append($('<div class="sk-scopus-note"></div>').css('color', '#d93025').text(errorText));
+                                                const counts = new Map((pubData?.years || []).map(y => [Number(y.code), y.noOfDocuments]));
+                                                const years = [...counts.keys()];
+                                                if (years.length) {
+                                                    const tiles = $('<div class="sk-scopus-years"></div>');
+                                                    for (let year = Math.max(...years); year >= Math.min(...years); year--) {
+                                                        const n = counts.get(year) ?? 0;
+                                                        const yearUrl = 'https://www.scopus.com/search/submit/author.uri?authorId=' + row.id + '&origin=AuthorEval&pubYear=' + year + '&pubStartYear=1970&pubEndYear=' + (new Date().getFullYear() + 1) + '&zone=Documents-Years';
+                                                        tiles.append($('<div class="sk-scopus-year"></div>').toggleClass('sk-scopus-year-current', year === new Date().getFullYear())
+                                                            .append($('<span></span>').text(year), n === 0 ? $('<b>0</b>') : $('<a target="_blank" rel="noopener"></a>').attr('href', yearUrl).text(n)));
+                                                    }
+                                                    bodyWrap.append(tiles);
                                                 }
-                                            }
-                                            panel.append(tiles);
-                                            if (row.pubData.documents.length) {
-                                                const body = $('<tbody></tbody>');
-                                                row.pubData.documents.forEach((d, i) => {
-                                                    const title = $('<span></span>').text(d.documentTitle || '?');
-                                                    let link = title;
-                                                    try {
-                                                        const url = new URL(d.detailsUrl, 'https://www.scopus.com');
-                                                        if (d.detailsUrl && url.protocol === 'https:' && url.hostname === 'www.scopus.com') link = $('<a target="_blank" rel="noopener"></a>').attr('href', url.href).append(title);
-                                                    } catch (e) { }
-                                                    if (geometry_regex.test(d.documentTitle || '')) title.css('background', 'Aquamarine');
-                                                    else if (maths_regex.test(d.documentTitle || '')) title.css('background', 'Wheat');
-                                                    body.append($('<tr></tr>').append($('<td></td>').text(i + 1), $('<td></td>').append(link), $('<td></td>').text(d.count ?? '—')));
-                                                });
-                                                panel.append($('<table class="sk-scopus-table"><thead><tr><th>#</th><th>Title</th><th>Cited</th></tr></thead></table>').append(body));
-                                            }
+                                                const docs = pubData?.documents || [];
+                                                if (docs.length) {
+                                                    const body = $('<tbody></tbody>');
+                                                    docs.forEach((d, i) => {
+                                                        const title = mark($('<span></span>').text(d.documentTitle || '?'));
+                                                        let link = title;
+                                                        try {
+                                                            const url = new URL(d.detailsUrl, 'https://www.scopus.com');
+                                                            if (d.detailsUrl && url.protocol === 'https:' && url.hostname === 'www.scopus.com') link = $('<a target="_blank" rel="noopener"></a>').attr('href', url.href).append(title);
+                                                        } catch (e) { }
+                                                        body.append($('<tr></tr>').append($('<td></td>').text(i + 1), $('<td></td>').append(link), $('<td class="sk-pub-cited"></td>').text(d.count ?? '—')));
+                                                    });
+                                                    bodyWrap.append($('<div class="sk-scopus-scroll"></div>').append(
+                                                        $('<table class="sk-scopus-table"><thead><tr><th>#</th><th>Title</th><th>Cited</th></tr></thead></table>').append(body)
+                                                    ));
+                                                }
+                                            };
                                             page.append(panel).on('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); close.trigger('click'); } });
                                             $('body').append(page); close.trigger('focus');
+
+                                            if (row.pubData) {
+                                                renderPanel(row.pubData, '', '');
+                                            } else {
+                                                renderPanel(null, 'Loading yearly publication counts…', '');
+                                                dialogController = new AbortController();
+                                                const timeout = setTimeout(() => dialogController?.abort(), 20000);
+                                                loadSingleCoauthorPubData(row, dialogController.signal).then(pubData => {
+                                                    if (page[0].isConnected) renderPanel(pubData, '', '');
+                                                }).catch(err => {
+                                                    if (err.name === 'AbortError' && !page[0].isConnected) return;
+                                                    row.pubError = err.name === 'AbortError' ? 'Timed out' : err.message;
+                                                    if (page[0].isConnected) renderPanel(null, '', 'Failed to load yearly breakdown: ' + row.pubError);
+                                                }).finally(() => clearTimeout(timeout));
+                                            }
+                                        }
+
+                                        // 只取表格与导出用到的字段；论文只取年份（Latest Pub），以减轻每批请求。
+                                        const coFragment = `fragment F on Author {
+                                            profile {
+                                                emailAddress
+                                                currentInstitution { id name country }
+                                                subjectAreas { code documentCount }
+                                            }
+                                            metrics { hindex documentCount citationCount }
+                                            publications { pubYear }
+                                        }`;
+                                        // 一次 GraphQL 请求查询整批作者（别名 a0、a1…，服务端约按人数线性耗时）；返回是否应停止后续请求。
+                                        let coMsPerRow = 450;
+                                        async function fetchCoauthorBatch(batch) {
+                                            const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 35000);
+                                            activeControllers.add(controller);
+                                            let stop = false, started = performance.now();
+                                            try {
+                                                const response = await fetch('https://www.scopus.com/gateway/author-profile-api/author', {
+                                                    method: 'POST', credentials: 'include', signal: controller.signal, headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ query: 'query {\n' + batch.map((row, i) => `a${i}: author(id: "${row.id}") { ...F }`).join('\n') + '\n}\n' + coFragment })
+                                                });
+                                                if ([401, 403, 429].includes(response.status)) {
+                                                    stop = true;
+                                                    detailMessage = response.status === 429 ? 'Rate limited; wait before retrying.' : 'Scopus access needs checking before retrying.';
+                                                }
+                                                if (!response.ok) throw new Error('HTTP ' + response.status);
+                                                const payload = await response.json(), data = payload?.data || {};
+                                                coMsPerRow = (performance.now() - started) / batch.length;
+                                                batch.forEach((row, i) => {
+                                                    const a = data['a' + i];
+                                                    if (!a?.profile) { row.state = 'Failed'; row.error = payload?.errors?.find(e => e.path?.[0] === 'a' + i)?.message || 'Author profile unavailable'; return; }
+                                                    const prof = a.profile, met = a.metrics || {}, pubs = a.publications || [];
+                                                    const years = pubs.map(p => Number(p.pubYear)).filter(y => y > 1800);
+                                                    row.latestPub = years.length ? String(Math.max(...years)) : null;
+                                                    const inst = prof.currentInstitution, rank = inst?.name ? skGetUniv(inst.name) : {};
+                                                    row.profile = {
+                                                        email: prof.emailAddress, hindex: met.hindex, docs: met.documentCount, cites: met.citationCount, inst,
+                                                        // 大学排名每人只算一次，渲染表格时复用。
+                                                        rank: rank.color ? { color: rank.color, text: rank.detail.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() } : null,
+                                                        subjects: [...(prof.subjectAreas || [])].sort((x, y) => y.documentCount - x.documentCount)
+                                                            .map(s => (scopusSubjectNames[s.code] || s.code) + ' (' + s.documentCount + ')').join('; ')
+                                                    };
+                                                    row.state = 'Loaded';
+                                                });
+                                            } catch (error) {
+                                                batch.forEach(row => {
+                                                    if (!row.profile) { row.state = detailPaused ? 'Not loaded' : 'Failed'; row.error = detailPaused ? '' : error.name === 'AbortError' ? 'Timed out' : error.message; }
+                                                });
+                                            } finally {
+                                                clearTimeout(timeout);
+                                                activeControllers.delete(controller);
+                                            }
+                                            return stop;
                                         }
 
                                         async function loadCoauthorDetails() {
                                             if (detailRunning) return;
-                                            publicationsRequested = true;
+                                            coRows.forEach(row => { row.shown = Boolean(row.profile); if (!row.shown) row.error = ''; });
+                                            const pending = coRows.filter(row => !row.shown);
                                             detailsRequested = true; detailRunning = true; detailPaused = false; detailMessage = '';
                                             renderCoauthors();
-
-                                            const tasks = [];
-                                            for (const row of coRows) {
-                                                if (!row.profile) tasks.push({ row, publications: false });
-                                                if (!row.pubData) tasks.push({ row, publications: true });
+                                            // 递增分批 6 → 18 → 30 → 45…：首批尽快出结果，后续放大以减少请求；尾部不足 8 人并入当前批。
+                                            const batches = [];
+                                            for (let i = 0, n; i < pending.length; i += n) {
+                                                n = [6, 18, 30][batches.length] ?? 45;
+                                                if (pending.length - i - n < 8) n = pending.length - i;
+                                                batches.push(pending.slice(i, i + n));
                                             }
-
-                                            const CONCURRENCY = 3;
-                                            const LAUNCH_INTERVAL = 500;
-                                            let lastLaunchTime = 0, taskIndex = 0, rateLimited = false;
-
-                                            async function executeTask(row, publications) {
-                                                const stateKey = publications ? 'pubState' : 'state', errorKey = publications ? 'pubError' : 'error';
-                                                if (publications ? row.pubData : row.profile) return;
-                                                if (publications) row.pubAttempted = true;
-                                                row[stateKey] = 'Loading'; row[errorKey] = ''; renderCoauthors();
-
-                                                const controller = new AbortController();
-                                                activeControllers.add(controller);
-                                                detailController = controller;
-                                                const timeout = setTimeout(() => controller.abort(), 15000);
-
-                                                try {
-                                                    const url = publications ? 'https://www.scopus.com/hirsch/author.uri?accessor=authorProfile&auidList=' + row.id + '&origin=AuthorProfile' : 'https://www.scopus.com/api/authors/' + row.id;
-                                                    const response = await fetch(url, { credentials: 'include', signal: controller.signal });
-                                                    if ([401, 403, 429].includes(response.status)) {
-                                                        row[stateKey] = 'Failed'; row[errorKey] = 'HTTP ' + response.status;
-                                                        detailMessage = response.status === 429 ? 'Rate limited; wait before retrying.' : 'Scopus access needs checking before retrying.';
-                                                        rateLimited = true;
-                                                        abortAll();
-                                                        return;
-                                                    }
-                                                    if (!response.ok) throw new Error('HTTP ' + response.status);
-                                                    if (publications) {
-                                                        const html = new DOMParser().parseFromString(await response.text(), 'text/html');
-                                                        const embedded = html.getElementById('getAuthEvalJsonData');
-                                                        if (!embedded) throw new Error('Publication data unavailable');
-                                                        const data = JSON.parse(embedded.textContent);
-                                                        const rawYears = data.documentYearDataViewBeans;
-                                                        if ((!Array.isArray(rawYears) || !rawYears.length) && data.docCount !== 0 && data.docCount !== '0') throw new Error('Publication years unavailable');
-                                                        const counts = new Map();
-                                                        for (const y of rawYears || []) {
-                                                            const year = String(y.code || y.displayName), count = Number(y.noOfDocuments);
-                                                            if (!/^\d{4}$/.test(year) || y.noOfDocuments == null || y.noOfDocuments === '' || !Number.isInteger(count) || count < 0) throw new Error('Invalid publication year data');
-                                                            counts.set(Number(year), (counts.get(Number(year)) || 0) + count);
-                                                        }
-                                                        const years = [...counts].sort((a, b) => b[0] - a[0]).map(([year, count]) => ({ code: String(year), noOfDocuments: count }));
-                                                        row.pubData = { years, latest: years.find(y => y.noOfDocuments > 0)?.code ?? null, documents: Array.isArray(data.hirschGraphData) ? data.hirschGraphData : [] };
-                                                    } else {
-                                                        const p = await response.json();
-                                                        if (!p || String(p.authorId) !== row.id) throw new Error('Unexpected author profile');
-                                                        row.profile = p;
-                                                    }
-                                                    row[stateKey] = 'Loaded';
-                                                } catch (error) {
-                                                    row[stateKey] = (detailPaused || rateLimited) && !publications ? 'Not loaded' : 'Failed';
-                                                    row[errorKey] = (detailPaused || rateLimited) ? (publications ? 'Interrupted' : '') : error.name === 'AbortError' ? 'Timed out' : error.message;
-                                                } finally {
-                                                    clearTimeout(timeout);
-                                                    activeControllers.delete(controller);
-                                                    renderCoauthors();
-                                                }
-                                            }
-
-                                            async function worker() {
-                                                while (taskIndex < tasks.length) {
-                                                    if (detailPaused || rateLimited || !overlay?.[0]?.isConnected) return;
-                                                    const task = tasks[taskIndex++];
-                                                    if (!task) return;
-
-                                                    const now = Date.now();
-                                                    const wait = Math.max(0, lastLaunchTime + LAUNCH_INTERVAL - now);
-                                                    lastLaunchTime = Math.max(now, lastLaunchTime + LAUNCH_INTERVAL);
-                                                    if (wait > 0) await new Promise(r => setTimeout(r, wait));
-
-                                                    if (detailPaused || rateLimited || !overlay?.[0]?.isConnected) return;
-                                                    await executeTask(task.row, task.publications);
-                                                }
-                                            }
-
                                             try {
-                                                await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+                                                let request = batches.length && fetchCoauthorBatch(batches[0]);
+                                                for (const [b, batch] of batches.entries()) {
+                                                    const stop = await request;
+                                                    if (detailPaused || !isOpen()) break;
+                                                    // 显示本批的同时，稍作间隔后后台请求下一批。
+                                                    const nextBatch = !stop && batches[b + 1];
+                                                    let arrived = !nextBatch;
+                                                    if (nextBatch) (request = new Promise(r => setTimeout(r, 650 + Math.random() * 500)).then(() => detailPaused || !isOpen() || fetchCoauthorBatch(nextBatch))).then(() => { arrived = true; });
+                                                    // 本批逐行显示，按下一批的预计耗时铺开（每行 60–400ms），让表格持续推进；下一批已到或本行失败则快速显示。
+                                                    const pace = nextBatch ? Math.min(400, Math.max(60, (900 + coMsPerRow * nextBatch.length) / batch.length)) : 60;
+                                                    for (const row of batch) {
+                                                        if (!isOpen()) break;
+                                                        row.shown = true;
+                                                        const next = coRows.find(r => !r.shown);
+                                                        row.tr.replaceWith(buildRow(row).addClass('sk-coa-in'));
+                                                        next?.tr.replaceWith(buildRow(next, true));
+                                                        renderSummary();
+                                                        await new Promise(r => setTimeout(r, arrived || !row.profile ? 60 : pace));
+                                                    }
+                                                    if (stop) break;
+                                                }
                                             } finally {
                                                 detailRunning = false;
                                                 if (detailPaused) detailMessage = 'Paused';
@@ -3431,9 +3753,12 @@ function onInit() {
                                             tableBody = $('<tbody></tbody>');
                                             coTable = $('<table class="sk-scopus-table"><colgroup></colgroup><thead></thead></table>').append(tableBody);
                                             const scroll = $('<div class="sk-scopus-scroll"></div>').append(coTable);
+                                            loadBtn = $('<button type="button" class="sk-scopus-btn">Load Details</button>').on('click', function () {
+                                                if (!detailRunning && coRows.some(row => !row.profile)) detailTask = loadCoauthorDetails();
+                                            });
                                             let copyPending = false;
                                             const copyIcon = $('<button type="button" id="sk-inner-copy-btn" class="sk-scopus-btn">Copy</button>').on('click', function () {
-                                                const textToCopy = allTsv;
+                                                const textToCopy = coauthorTsv();
                                                 navigator.clipboard.writeText(textToCopy).then(() => {
                                                     tip.text('Copied'); setTimeout(() => { if (tip.text() === 'Copied') tip.text(''); }, 1500);
                                                 }).catch(() => {
@@ -3450,7 +3775,7 @@ function onInit() {
                                                 try {
                                                     if (detailPaused && detailRunning) await detailTask;
                                                     if (!popup[0].isConnected) return;
-                                                    if (!detailRunning && coRows.some(row => !row.profile || !row.pubData)) detailTask = loadCoauthorDetails();
+                                                    if (!detailRunning && coRows.some(row => !row.profile)) detailTask = loadCoauthorDetails();
                                                     await detailTask;
                                                     if (popup[0].isConnected && !detailPaused) $(this).trigger('click');
                                                 } catch (e) {
@@ -3461,14 +3786,34 @@ function onInit() {
                                                 detailPaused = true; abortAll(); $('#sk-coa-publications').remove(); overlay.remove(); coExportIcon.trigger('focus');
                                             });
                                             const popup = $('<div id="sk-coa-popup" role="dialog" aria-modal="true" aria-labelledby="sk-coa-title"></div>');
-                                            popup.append($('<div class="sk-scopus-toolbar"></div>').append($('<strong id="sk-coa-title"></strong>').text('Co-authors (' + coRows.length + ')')).append(tip, copyIcon, closeBtn));
+                                            popup.append($('<div class="sk-scopus-toolbar"></div>').append($('<strong id="sk-coa-title"></strong>').text('Co-authors (' + coRows.length + ')')).append(tip, loadBtn, copyIcon, closeBtn));
                                             popup.append($('<div id="sk-coa-body"></div>').append(scroll, countrySummary));
                                             overlay = $('<div id="sk-coa-overlay"></div>').append(popup).on('keydown', e => { if (e.key === 'Escape') closeBtn.trigger('click'); });
                                             $('body').append(overlay); renderCoauthors(); copyIcon.trigger('focus');
                                         });
-                                        coSection.append($('<div class="sk-scopus-toolbar sk-scopus-heading"></div>').append($('<strong></strong>').text('Co-authors (' + coRows.length + ')')).append(coExportIcon)).append(coCompact);
+                                        coSection.append($('<div class="sk-scopus-toolbar sk-scopus-heading"></div>').append($('<strong></strong>').text('Co-authors (' + coRows.length + ')')).append(coExportIcon)).append(coSideNote, coCompact);
                                         (authorPos.length ? authorPos : content).append(coSection);
-                                        renderCoauthors();
+
+                                        // 主页加载时只查合作者当前机构（轻量，约 0.1 秒/人），每批 50 人依次请求；邮箱、指标等重字段留给 Load Details。
+                                        (async () => {
+                                            for (let i = 0; i < coRows.length; i += 50) {
+                                                const batch = coRows.slice(i, i + 50);
+                                                try {
+                                                    const response = await fetch('https://www.scopus.com/gateway/author-profile-api/author', {
+                                                        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(35000),
+                                                        body: JSON.stringify({ query: 'query {\n' + batch.map((row, j) => `a${j}: author(id: "${row.id}") { profile { currentInstitution { id name country } } }`).join('\n') + '\n}' })
+                                                    });
+                                                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                                                    const data = (await response.json())?.data || {};
+                                                    batch.forEach((row, j) => { row.liteInst = data['a' + j]?.profile?.currentInstitution || null; showLiteCountry(row); });
+                                                } catch (error) {
+                                                    coSideNote.text('Countries could not be loaded (' + (error.name === 'TimeoutError' ? 'timed out' : error.message) + ').');
+                                                    return;
+                                                }
+                                                if (isOpen() && !detailRunning) renderCoauthors();
+                                            }
+                                            coSideNote.remove();
+                                        })();
                                     }
 
                                     if (!Array.isArray(hData.hirschGraphData) || !Array.isArray(coData.coAuthorsViewBeans)) {
@@ -3477,45 +3822,32 @@ function onInit() {
                                         inlineLoadBtn.text('↻').css({ cursor: 'pointer', opacity: '1' }).off('click').on('click', triggerLoad);
                                     }
 
-                                    // ── 来源表格 → 插入右栏，保留折叠，展开时完整显示 ──
+                                    // ── 来源表格 → 插入右栏（找不到右栏则落回主内容区），保留折叠，展开时完整显示 ──
                                     const sources = [...(docData.documentSourceDataViewBeans || [])].sort((a, b) => Number(b.noOfDocuments) - Number(a.noOfDocuments));
-                                    if (sources.length && authorPos.length) {
+                                    if (sources.length) {
                                         const maxSourceDocs = Math.max(1, ...sources.map(s => Number(s.noOfDocuments) || 0));
                                         const srcSection = $('<details id="sk-sources-section" class="sk-scopus-card" open></details>');
-                                        srcSection.append($('<summary></summary>').css({ fontSize: '18px', fontWeight: '700', color: '#1558d6', cursor: 'pointer', marginBottom: '10px' }).text('Sources (' + sources.length + ')'));
-                                        const srcTable = $('<table></table>').css({ width: '100%', borderCollapse: 'collapse', fontSize: '15px' });
-                                        srcTable.append($(`<thead><tr><th style="text-align:left;padding:4px 6px;border-bottom:2px solid #c6d5eb;color:#202124;font-weight:600">Source</th><th style="text-align:right;padding:4px 6px;border-bottom:2px solid #c6d5eb;color:#202124;
-                                        font-weight:600;width:40px">Docs</th></tr></thead>`));
+                                        srcSection.append($('<summary></summary>').text('Sources (' + sources.length + ')'));
                                         const srcTbody = $('<tbody></tbody>');
-                                        sources.forEach((s, i) => {
-                                            const srcTr = $('<tr></tr>').css({ borderBottom: '1px solid #dce5f2', backgroundImage: 'linear-gradient(to right, #d2e3fc ' + (Number(s.noOfDocuments) / maxSourceDocs * 100) + '%, transparent 0%)' });
+                                        sources.forEach(s => {
+                                            const srcTr = $('<tr></tr>').css('background-image', 'linear-gradient(to right, #d2e3fc ' + (Number(s.noOfDocuments) / maxSourceDocs * 100) + '%, transparent 0%)');
                                             const jName = s.displayName || s.code || '?';
-                                            const jCell = $('<td></td>').css({ padding: '4px 6px' });
-                                            const jLink = s.url ? $('<a target="_blank"></a>').attr('href', s.url).css({ color: '#1a0dab', textDecoration: 'none' }).text(jName) : $('<span></span>').text(jName);
-                                            // 只高亮文字，不高亮整行
-                                            if (geometry_regex.test(jName)) { jLink.css({ background: 'Aquamarine', padding: '1px 3px', borderRadius: '3px' }); }
-                                            else if (maths_regex.test(jName)) { jLink.css({ background: 'Wheat', padding: '1px 3px', borderRadius: '3px' }); }
-                                            jCell.append(jLink);
-                                            srcTr.append(jCell);
-                                            srcTr.append($('<td></td>').css({ padding: '4px 6px', textAlign: 'right', fontWeight: '600', color: '#1a73e8' }).text(s.noOfDocuments));
+                                            const jLink = mark((s.url ? $('<a target="_blank" rel="noopener"></a>').attr('href', s.url) : $('<span></span>')).text(jName));
+                                            srcTr.append($('<td></td>').append(jLink), $('<td></td>').text(s.noOfDocuments));
                                             srcTbody.append(srcTr);
                                         });
                                         if (docData.totalDataForSourceData) {
-                                            const totalTr = $('<tr></tr>').css({ borderTop: '2px solid #e0e0e0', background: '#f5f5f5', fontWeight: '600' });
-                                            totalTr.append($('<td></td>').css({ padding: '4px 6px' }).text('Total'));
-                                            totalTr.append($('<td></td>').css({ padding: '4px 6px', textAlign: 'right', color: '#202124' }).text(docData.totalDataForSourceData.noOfDocuments));
-                                            srcTbody.append(totalTr);
+                                            srcTbody.append($('<tr class="sk-sources-total"></tr>').append($('<td>Total</td>'), $('<td></td>').text(docData.totalDataForSourceData.noOfDocuments)));
                                         }
-                                        srcTable.append(srcTbody);
-                                        srcSection.append(srcTable);
-                                        authorPos.append(srcSection);
+                                        srcSection.append($('<table><thead><tr><th>Source</th><th>Docs</th></tr></thead></table>').append(srcTbody));
+                                        (authorPos.length ? authorPos : content).append(srcSection);
                                     }
 
                                     section.append(content);
                                 }).catch(() => {
                                     loaded = false;
-                                    seeAllBtn.show().text('Retry author analysis').prop('disabled', false).css({ opacity: '1' });
-                                    seeCoBtn.show().text('Retry author analysis').prop('disabled', false).css({ opacity: '1' });
+                                    setBtn(seeAllBtn.show(), 'Retry author analysis');
+                                    setBtn(seeCoBtn.show(), 'Retry author analysis');
                                     inlineLoadBtn.text('↻').css({ cursor: 'pointer', opacity: '1' }).off('click').on('click', triggerLoad);
                                     $('#sk-hirsch-error').remove();
                                     section.append($('<div id="sk-hirsch-error" class="sk-scopus-note"></div>').text('Author analysis could not be loaded. Retry or ').append($('<a target="_blank" rel="noopener">open Scopus analysis</a>').attr('href', hirschPageUrl)));
@@ -3527,8 +3859,12 @@ function onInit() {
                             inlineLoadBtn.on('click', triggerLoad);
                             triggerLoad(); // 页面加载完成后自动触发
                         }
-                        // 等 hr 分割线出现再注入
-                        waitForKeyElements('#documents-panel hr', skInjectHirschSection, true);
+                        // Lightweight 分栏已就绪时直接注入；否则等 hr 分割线出现，若新版页面无 #documents-panel hr，则在短延迟后使用回退锚点注入。
+                        if ($('#sk-lite-main').length) { skInjectHirschSection(); }
+                        else {
+                            waitForKeyElements('#documents-panel hr', skInjectHirschSection, true);
+                            setTimeout(skInjectHirschSection, 1500);
+                        }
                     }, true);
                 }
 
@@ -3540,14 +3876,7 @@ function onInit() {
                     let observer = new MutationObserver(function () { mark_journals() });
                     observer.observe(targetNode, { characterData: true, childList: true, subtree: true });
                 })
-                $("div.gsc_prf_il").each(function () {
-                    let ranking = skGetUniv($(this).text().trim());
-                    if (ranking.color) {
-                        skAddResourceStyle('tooltipsterCSS', 'tooltipsterNoirCSS', 'tooltipster-style');
-                        $(this).css("background-color", ranking.color).attr("title", ranking.detail.replace(/^<br\s*\/?>/i, ''))
-                            .tooltipster({ functionInit: function (instance, helper) { var content = $(helper.origin).attr('title'); instance.content(content); }, contentAsHTML: true, theme: 'tooltipster-noir' });
-                    }
-                });
+                $("div.gsc_prf_il").each(markUniversity);
             };
             function mark_journals() {
                 $("div.gs_gray:not([style]),div[data-component='document-source'],div[data-testid='author-list']+span").each(function () {
@@ -3746,11 +4075,13 @@ function onInit() {
         try {
             if (window.location.href.indexOf("/results/authorListResults.uri?") + window.location.href.indexOf("/results/coAuthorResults.uri?") > -2) {
                 $("h1.documentHeader").append(" <a href='#' id='scopus_list'> [Export CSV]</a>");
-                $("#scopus_list").on("click", function () {
+                $("#scopus_list").on("click", function (e) {
+                    e.preventDefault();
                     var csvContent = "";
                     $('#srchResultsList tbody tr.searchArea').each(function () {
-                        var authorName = $(this).find('.authorResultsNamesCol a').text().trim();
-                        var authorId = $(this).find('.authorResultsNamesCol a').attr('href').match(/authorId=(\d+)/)[1];
+                        var $nameLink = $(this).find('.authorResultsNamesCol a');
+                        var authorName = $nameLink.text().trim();
+                        var authorId = ($nameLink.attr('href') || '').match(/authorId=(\d+)/)?.[1] || '';
                         var affiliation = $(this).find('.dataCol5').text().trim();
                         var country = $(this).find('.dataCol7').text().trim();
                         var hIndex = $(this).find('.dataCol4').text().trim();
@@ -3760,14 +4091,17 @@ function onInit() {
                         csvContent += line + "\n";
                     });
 
-                    $("body").append(`<div class="blockUI blockOverlay" id="csv-shade" style="z-index: 1000; border: none; margin: 0; padding: 0; width: 100%; height: 100%; top: 0; left: 0; background-color: #000; opacity: 0.6; cursor: wait; position: fixed;"></div>
-                <div class="blockUI blockMsg blockPage" id="csv-popup" style="z-index: 1011; position: fixed; padding: 0; margin: 0; width: 50%; top: 25%; left: 25%; text-align: center; color: #000; border: 3px solid #aaa; background-color: #fff; overflow-y: auto;">
-                <input type="button" value="Close" onclick="document.getElementById('csv-shade').remove(); document.getElementById('csv-popup').remove();" style="margin: 10px; padding: 5px 20px;">
-                <textarea id="csv_content" readonly rows="30" style="width: 90%;">${csvContent}</textarea></div>`);
+                    $('#csv-shade, #csv-popup').remove();
+                    const $shade = $('<div class="blockUI blockOverlay" id="csv-shade" style="z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:0.6;position:fixed;"></div>');
+                    const $close = $('<input type="button" value="Close" style="margin:10px;padding:5px 20px;cursor:pointer;">');
+                    const $textarea = $('<textarea id="csv_content" readonly rows="30" style="width:90%;"></textarea>').val(csvContent);
+                    const $popup = $('<div class="blockUI blockMsg blockPage" id="csv-popup" style="z-index:1011;position:fixed;padding:0 0 12px;margin:0;width:50%;top:12%;left:25%;max-height:76vh;text-align:center;color:#000;border:3px solid #aaa;background-color:#fff;overflow-y:auto;"></div>')
+                        .append($close, '<br>', $textarea);
+                    $close.add($shade).on('click', () => { $shade.remove(); $popup.remove(); });
+                    $("body").append($shade, $popup);
 
-                    var textarea = document.getElementById("csv_content");
-                    textarea.select();
-                    navigator.clipboard.writeText(textarea.value);
+                    $textarea[0].select();
+                    navigator.clipboard?.writeText($textarea.val()).catch(() => {});
                 })
             }
             if (window.location.href.indexOf("/record/display.uri?eid=") > -1) {
@@ -4156,16 +4490,35 @@ function skMailtoUrl(emails, subject, body) {
 }
 function skMailsdbUrl(email) { return 'https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=' + encodeURIComponent(email); }
 
+function skDecodeResourceText(name) {
+    const text = typeof GM_getResourceText === 'function' ? GM_getResourceText(name) : '';
+    if (text) return text;
+    try {
+        const url = typeof GM_getResourceURL === 'function' ? GM_getResourceURL(name, false) : '';
+        if (!url || !url.startsWith('data:')) return '';
+        const comma = url.indexOf(',');
+        if (comma < 0) return '';
+        const meta = url.slice(5, comma), payload = url.slice(comma + 1);
+        if (!/;base64/i.test(meta)) return decodeURIComponent(payload);
+        const binary = atob(payload.replace(/\s+/g, '')), bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return new TextDecoder('utf-8').decode(bytes);
+    } catch (_) { return ''; }
+}
+
 function skAddResourceStyle(name, extraName, id = 'sk-style-' + [name].flat()[0]) {
-    if (document.getElementById(id)) return;
-    const css = [name, extraName].flat().filter(Boolean).map(name => {
-        const base = GM_info.script.resources.find(resource => resource.name === name).url;
-        return GM_getResourceText(name).replace(/url\(\s*(?:"([^"\n]*)"|'([^'\n]*)'|([^)]*?))\s*\)/gi, (match, double, single, plain) => {
+    const existing = document.getElementById(id);
+    if (existing && existing.textContent.trim()) return;
+    const css = [name, extraName].flat().filter(Boolean).map(resName => {
+        const base = GM_info.script.resources.find(resource => resource.name === resName)?.url || location.href;
+        return skDecodeResourceText(resName).replace(/url\(\s*(?:"([^"\n]*)"|'([^'\n]*)'|([^)]*?))\s*\)/gi, (match, double, single, plain) => {
             const url = (double ?? single ?? plain).trim();
             return !url || /^(?:data:|blob:|#)/i.test(url) ? match : 'url("' + new URL(url, base).href + '")';
         });
     }).join('\n');
-    GM_addStyle(css).id = id;
+    if (existing) existing.remove();
+    const styleEl = GM_addStyle(css);
+    if (styleEl) styleEl.id = id;
 }
 
 function waitForKeyElements(selectorTxt, actionFunction, bWaitOnce, iframeSelector) {
@@ -4495,7 +4848,7 @@ function skCheckWorkLoginStatus(siteId, timeout = 6000, signal) {
 
 function skOpenWorkLoginHub() {
     document.documentElement.innerHTML = `<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Work Login Hub</title>
-    <style id="sk-style-customCSS">${GM_getResourceText('customCSS')}</style></head><body class="sk-work-login"><main id="sk-work-login-page" class="sk-work-page"><section class="sk-work-card">
+    <style id="sk-style-customCSS">${skDecodeResourceText('customCSS')}</style></head><body class="sk-work-login"><main id="sk-work-login-page" class="sk-work-page"><section class="sk-work-card">
     <div class="sk-work-summary"><span id="sk-work-badge" class="sk-work-badge">Checking</span></div>
     ${SK_WORK_LOGIN_SITES.map(site => `<div class="sk-work-row" data-site="${site.id}" data-state="checking"><span class="sk-work-dot"></span><span class="sk-work-name">${site.name}</span>
     <span class="sk-work-state" aria-live="polite">Checking…</span><a class="sk-work-open" href="${site.url}" target="_blank" rel="noopener">Open</a></div>`).join('')}
@@ -4724,4 +5077,4 @@ var SK_SectionCandidatesMap = {
     'E5': ['luca.passalacqua@uniroma1.it','youri.kabanov@univ-fcomte.fr','yaozhong@ualberta.ca','li.xun@polyu.edu.hk','g.peters@hw.ac.uk','wim.schoutens@kuleuven.be']
 };
 
-var { icon_mrs, icon_magnifier, icon_pencil, icon_mail, icon_note, icon_note_add, icon_arrow, icon_book, icon_plus, icon_users, icon_webs, icon_scopus, icon_retractiondatabase, icon_researchgate } = JSON.parse(GM_getResourceText('icons'));
+var { icon_mrs, icon_magnifier, icon_pencil, icon_mail, icon_note, icon_note_add, icon_arrow, icon_book, icon_plus, icon_users, icon_webs, icon_scopus, icon_retractiondatabase, icon_researchgate } = JSON.parse(skDecodeResourceText('icons') || '{}');
