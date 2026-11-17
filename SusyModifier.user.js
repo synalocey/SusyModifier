@@ -3076,10 +3076,15 @@ function onInit() {
                     method: 'POST', credentials: 'include', signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(variables ? { query, variables } : { query })
                 });
                 const fetchBatchGql = (batch, fields, signal) => fetchScopusGql('query {\n' + batch.map((r, i) => `a${i}: author(id: "${r.id}", disableTombstoneResolution: true) { ${fields} }`).join('\n') + '\n}', null, signal);
-                const liteKey = 'skScopusLightweightProfile', lite = GM_getValue(liteKey, false) === true;
+                const liteKey = 'skScopusLightweightProfile', forceLite = new URLSearchParams(location.hash.replace(/^#(?:sk_)?/, '')).get('lite') === '1';
+                const lite = forceLite || GM_getValue(liteKey, false) === true;
                 const mountLiteShell = root => {
                     const bar = $('<div id="sk-lite-bar"></div>').append($('<label></label>').append(
-                        $('<input type="checkbox" role="switch">').prop('checked', lite).on('change', function () { GM_setValue(liteKey, this.checked); location.reload(); }), ' Lightweight Mode (Beta)'));
+                        $('<input type="checkbox" role="switch">').prop('checked', lite).on('change', function () {
+                            GM_setValue(liteKey, this.checked);
+                            if (!this.checked && forceLite) history.replaceState(history.state, '', location.pathname + location.search);
+                            location.reload();
+                        }), ' Lightweight Mode (Beta)'));
                     (root.length ? root : $('body')).prepend(bar);
                     if (!lite || !root.length) return null;
                     if (!$('#sk-lite-banner').length) $('body').prepend('<div id="sk-lite-banner">Experimental Lightweight Mode (inspired by Eden): stability is unverified, use at your own risk.</div>');
