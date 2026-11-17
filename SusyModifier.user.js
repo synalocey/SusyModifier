@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.11.11
+// @version       6.11.16
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -46,7 +46,6 @@
 // @require       https://mrs.mdpi.com/bundles/mdpimrs/js/html5_scripts/zingchart-html5-min.js?v=6.10.20
 // @require       https://gcore.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js?v=6.10.20
 // @resource      chosenCSS             https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/css/chosen.min.css?v=6.10.20
-// @resource      customCSS             https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/SusyModifier.css?v=6.11.11
 // @resource      tooltipsterCSS        https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/css/tooltipster.bundle.min.css?v=6.10.20
 // @resource      tooltipsterNoirCSS    https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-noir.min.css?v=6.10.20
 // @resource      icons                 https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/icons.json?v=6.10.22
@@ -99,9 +98,16 @@ const SK_WORK_LOGIN_STATUS_KEYS = SK_WORK_LOGIN_SITES.map(site => 'skWorkLoginSt
 const SK_MRS_FAVORITES = ['Analytics', 'Games', 'Geometry', 'Mathematics', 'MCB', 'Risks', 'IJT', 'Telecom'].map(label => ({ id: String(skGetJid(label)), label }));
 // MDPI Feature Paper 折扣区（1 = Zone I 100%，2 = Zone II ≤50%，3 = Zone III 无折扣），键为 Scopus 国家筛选值的写法（已在 Scopus 中逐一核对；Turkey/Türkiye、Russia/Russian Federation、Libya/Libyan Arab Jamahiriya 在 Scopus 中并存）。
 const SK_COUNTRY_ZONES = new Map([
-    [1, 'Australia|Austria|Belgium|Bulgaria|Canada|Croatia|Cyprus|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Iceland|Ireland|Israel|Italy|Japan|South Korea|Latvia|Liechtenstein|Lithuania|Luxembourg|Malta|Netherlands|New Zealand|Norway|Poland|Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|Switzerland|Taiwan|United Kingdom|United States|Singapore|China|Hong Kong|Macao'],
-    [2, 'Argentina|Bahrain|Belarus|Brazil|Chile|Colombia|Cuba|Ecuador|Egypt|French Guiana|Guyana|Mexico|Morocco|Oman|Peru|Qatar|Saudi Arabia|Serbia|South Africa|Ukraine|United Arab Emirates|Uruguay|Algeria|Bosnia and Herzegovina|Costa Rica|Georgia|Malaysia|North Macedonia|Northern Mariana Islands|Thailand|Turkey|Türkiye|Viet Nam'],
-    [3, 'Afghanistan|Andorra|Angola|Antigua and Barbuda|Armenia|Aruba|Azerbaijan|Bahamas|Bangladesh|Barbados|Belize|Benin|Bhutan|Bolivia|Botswana|Brunei Darussalam|Burkina Faso|Burundi|Cape Verde|Cambodia|Cameroon|Central African Republic|Chad|Comoros|Congo|Cote d\'Ivoire|Democratic Republic Congo|Djibouti|Dominica|Dominican Republic|El Salvador|Equatorial Guinea|Eritrea|Swaziland|Ethiopia|Faroe Islands|Fiji|French Polynesia|Gabon|Gambia|Ghana|Greenland|Grenada|Guatemala|Guinea|Guinea-Bissau|Haiti|Honduras|India|Indonesia|Iran|Iraq|Jamaica|Jordan|Kazakhstan|Kenya|Kiribati|Kosovo|Kuwait|Kyrgyzstan|Laos|Lebanon|Lesotho|Liberia|Libya|Libyan Arab Jamahiriya|Madagascar|Malawi|Maldives|Mali|Marshall Islands|Mauritania|Mauritius|Federated States of Micronesia|Moldova|Mongolia|Montenegro|Mozambique|Myanmar|Namibia|Nauru|Nepal|Nicaragua|Niger|Nigeria|Pakistan|Palau|Palestine|Panama|Papua New Guinea|Paraguay|Philippines|Puerto Rico|South Sudan|Russian Federation|Russia|Rwanda|Samoa|San Marino|Sao Tome and Principe|Senegal|Seychelles|Sierra Leone|Solomon Islands|Somalia|Sri Lanka|Saint Kitts and Nevis|Saint Lucia|Saint Vincent and the Grenadines|Sudan|Suriname|Syrian Arab Republic|Tajikistan|Tanzania|Timor-Leste|Togo|Tonga|Trinidad and Tobago|Tunisia|Turkmenistan|Tuvalu|Uganda|Uzbekistan|Vanuatu|Venezuela|Yemen|Zambia|Zimbabwe']
+    [1, 'Australia|Austria|Belgium|Bulgaria|Canada|Croatia|Cyprus|Czech Republic|Denmark|Estonia|Finland|France|Germany|Greece|Hungary|Iceland|Ireland|Israel|Italy|Japan|South Korea|Latvia|Liechtenstein|Lithuania|Luxembourg|Malta|Netherlands|New Zealand|Norway|Poland|'
+        + 'Portugal|Romania|Slovakia|Slovenia|Spain|Sweden|Switzerland|Taiwan|United Kingdom|United States|Singapore|China|Hong Kong|Macao'],
+    [2, 'Argentina|Bahrain|Belarus|Brazil|Chile|Colombia|Cuba|Ecuador|Egypt|French Guiana|Guyana|Mexico|Morocco|Oman|Peru|Qatar|Saudi Arabia|Serbia|South Africa|Ukraine|United Arab Emirates|Uruguay|Algeria|Bosnia and Herzegovina|Costa Rica|Georgia|Malaysia|North Macedonia|'
+        + 'Northern Mariana Islands|Thailand|Turkey|Türkiye|Viet Nam'],
+    [3, 'Afghanistan|Andorra|Angola|Antigua and Barbuda|Armenia|Aruba|Azerbaijan|Bahamas|Bangladesh|Barbados|Belize|Benin|Bhutan|Bolivia|Botswana|Brunei Darussalam|Burkina Faso|Burundi|Cape Verde|Cambodia|Cameroon|Central African Republic|Chad|Comoros|Congo|Cote d\'Ivoire|'
+        + 'Democratic Republic Congo|Djibouti|Dominica|Dominican Republic|El Salvador|Equatorial Guinea|Eritrea|Swaziland|Ethiopia|Faroe Islands|Fiji|French Polynesia|Gabon|Gambia|Ghana|Greenland|Grenada|Guatemala|Guinea|Guinea-Bissau|Haiti|Honduras|India|Indonesia|Iran|'
+        + 'Iraq|Jamaica|Jordan|Kazakhstan|Kenya|Kiribati|Kosovo|Kuwait|Kyrgyzstan|Laos|Lebanon|Lesotho|Liberia|Libya|Libyan Arab Jamahiriya|Madagascar|Malawi|Maldives|Mali|Marshall Islands|Mauritania|Mauritius|Federated States of Micronesia|Moldova|Mongolia|Montenegro|'
+        + 'Mozambique|Myanmar|Namibia|Nauru|Nepal|Nicaragua|Niger|Nigeria|Pakistan|Palau|Palestine|Panama|Papua New Guinea|Paraguay|Philippines|Puerto Rico|South Sudan|Russian Federation|Russia|Rwanda|Samoa|San Marino|Sao Tome and Principe|Senegal|Seychelles|Sierra Leone|'
+        + 'Solomon Islands|Somalia|Sri Lanka|Saint Kitts and Nevis|Saint Lucia|Saint Vincent and the Grenadines|Sudan|Suriname|Syrian Arab Republic|Tajikistan|Tanzania|Timor-Leste|Togo|Tonga|Trinidad and Tobago|Tunisia|Turkmenistan|Tuvalu|Uganda|Uzbekistan|Vanuatu|'
+        + 'Venezuela|Yemen|Zambia|Zimbabwe']
 ].flatMap(([zone, names]) => names.split('|').map(name => [name, zone])));
 
 (function () {
@@ -111,16 +117,16 @@ const SK_COUNTRY_ZONES = new Map([
         GM_registerMenuCommand('🗑️ Reset Scopus', async function () {
             try {
                 let cookies = await GM.cookie.list({ domain: 'scopus.com', partitionKey: {} });
-                alert(`Cleared ${cookies.length} accessible cookies. \n\nFirst-time users: Open the Tampermonkey Dashboard > Settings (Advanced mode) > Security, set "Allow scripts to access cookies" to "All", save the changes, and reload this page.\n\n`
-                      + `首次使用：请打开 Tampermonkey 管理面板 > 设置（高级模式）> 安全，将“允许脚本访问 Cookie”设置为“All”，保存后重新加载此页面。`);
-                await Promise.allSettled(cookies.map(cookie => {
+                await Promise.all(cookies.map(cookie => {
                     const details = { url: `${cookie.secure ? 'https' : 'http'}://${cookie.domain.replace(/^\./, '')}${cookie.path}`, name: cookie.name };
                     if (cookie.partitionKey) details.partitionKey = cookie.partitionKey;
                     if (cookie.firstPartyDomain !== undefined) details.firstPartyDomain = cookie.firstPartyDomain;
                     return GM.cookie.delete(details);
                 }));
+                alert(`✅ Success! Cleared ${cookies.length} accessible cookies.`);
             } catch (_) {
-                alert('⚠️ Clear Scopus Cookie Failed!');
+                alert(`⚠️ Clear Scopus Cookie Failed!\n\nOpen the Tampermonkey Dashboard > Settings (Advanced mode) > Security, set "Allow scripts to access cookies" to "All", save the changes, and reload this page.\n\n`
+                      + `请打开 Tampermonkey 管理面板 > 设置（高级模式）> 安全，将“允许脚本访问 Cookie”设置为“All”，保存后重新加载此页面。`);
             }
         });
     }
@@ -1050,14 +1056,20 @@ function onInit() {
                     $("#vf").attr("action", "/voucher/application/create?waiverApplyForm[types]=" + searchParams.get("waiverApplyForm[types]")).submit();
                 });
 
+                const allLastNames = [...new Set($("[title='PubPeer']").map((_, el) => $(el).parent().find('b').first().text().trim()).get().filter(Boolean))];
                 $("[title='PubPeer']").each(function () {
-                    let $link = $(this);
+                    let $link = $(this), $td = $link.parent();
                     let pubpeer_search = new URLSearchParams(new URL($link.attr("href")).search);
                     let pubpeer_name = pubpeer_search.get("q") || '';
                     $link.attr("href", 'https://pubpeer.com/search?q=' + encodeURIComponent('authors:"' + pubpeer_name + '"'));
-                    let firstName = $link.parent().contents().filter(function () { return this.nodeType === 3; }).first().text().trim();
-                    let lastName = $link.parent().find('b').first().text().trim();
-                    $link.before(' ', skIconLink('//www.scopus.com/results/authorNamesList.uri?st2=' + encodeURIComponent(firstName) + '&st1=' + encodeURIComponent(lastName),
+                    let firstName = $td.contents().filter(function () { return this.nodeType === 3; }).first().text().trim();
+                    let lastName = $td.find('b').first().text().trim();
+                    let rowEmail = $td.next().text().trim();
+                    let rowAffil = $td.nextAll(':last-child').text().trim();
+                    let rowOrcid = ($td.find('a[href*="orcid.org/"]').attr('href') || '').match(/(\d{4}-\d{4}-\d{4}-\d{3}[\dX])/i)?.[1] || '';
+                    let coLast = allLastNames.filter(n => n.toLowerCase() !== lastName.toLowerCase()).slice(0, 4).join(',');
+                    let scopusHash = new URLSearchParams(Object.entries({ email: rowEmail, affil: rowAffil, orcid: rowOrcid, co: coLast }).filter(([, v]) => v)).toString();
+                    $link.before(' ', skIconLink('//www.scopus.com/pages/search/authors?firstName=' + encodeURIComponent(firstName) + '&lastName=' + encodeURIComponent(lastName) + (scopusHash ? '#sk_' + scopusHash : ''),
                         icon_scopus, { title: 'Scopus', target: '_blank', rel: 'noopener noreferrer' }), ' ');
                     $link.after(' ', skIconLink('//retractiondatabase.org/RetractionSearch.aspx?auth%3d' + encodeURIComponent(firstName) + '+' + encodeURIComponent(lastName),
                         icon_retractiondatabase, { title: 'retractiondatabase', target: '_blank', rel: 'noopener noreferrer' }), ' ');
@@ -2255,7 +2267,7 @@ function onInit() {
                             $(this).after(' ', skIconLink('//susy.mdpi.com/user/reviewer/checking/a5ce29b8b4917729fc1dc44abf2fc686?email=' + encodeURIComponent($("[title='Generate unsubscribe link']").attr('data-email')),
                                 '//susy.mdpi.com/build/img/design/susy-logo.png', { target: '_blank', rel: 'noopener noreferrer' }, { width: 20, height: 20 }),
                                 ' ', skIconLink('//scholar.google.com/scholar?hl=en&q=' + encodeURIComponent(full_name), '//www.google.com/favicon.ico', { target: '_blank', rel: 'noopener noreferrer' }, { width: 20, height: 20 }),
-                                ' ', skIconLink('//www.scopus.com/results/authorNamesList.uri?st2=' + encodeURIComponent(first_name) + '&st1=' + encodeURIComponent(last_name), icon_scopus, { target: '_blank', rel: 'noopener noreferrer' }));
+                                ' ', skIconLink('//www.scopus.com/pages/search/authors?firstName=' + encodeURIComponent(first_name) + '&lastName=' + encodeURIComponent(last_name), icon_scopus, { target: '_blank', rel: 'noopener noreferrer' }));
                         });
 
                         if ($jQueryObject.find("a:contains('Edit Reviewer')").length) {
@@ -2997,8 +3009,8 @@ function onInit() {
         } catch (error) { }
     }
 
-    // Scopus 作者搜索仅有一个结果时直接进入详情。
-    if (location.hostname === 'www.scopus.com' && /^\/results\/author(?:NamesList|ListResults)\.uri$/.test(location.pathname)) {
+    // Scopus 作者搜索仅有一个结果时直接进入详情（Lightweight Mode 开启时由轻量搜索页接管）。
+    if (location.hostname === 'www.scopus.com' && /^\/results\/author(?:NamesList|ListResults)\.uri$/.test(location.pathname) && GM_getValue('skScopusLightweightProfile', false) !== true) {
         waitForKeyElements('#srchResultsList .authorResultsNamesCol a[href]', function () {
             const links = $('#srchResultsList .authorResultsNamesCol a[href]');
             if ($('h1.documentHeader .resultsCount').text().trim() !== '1' || links.length !== 1) return;
@@ -3024,9 +3036,9 @@ function onInit() {
                            "journal of inverse and ill","journal of modern dynamics","differential operators and applications","journal of spectral theory","kinetic and related models","logic journal of the igpl","optimal control applications","optimization letters",
                            "pacific journal of optimization","problems of information transmission","chaotic dynamics","set-valued and variational analysis","siam journal on control and optimization","siam journal on matrix analysis and applications",
                            "siam journal on optimization","advances in data science and adaptive analysis","cybernetics and systems analysis","international journal of modelling and simulation","journal of dynamics and games","journal of multiscale modelling",
-                           "p-adic numbers ultrametric analysis and applications","engineering optimization","annales henri poincare","computer physics communications","quantum information processing","decisions in economics and finance","journal of time series econometrics",
-                           "monte carlo methods and applications","advances in data analysis and classification","astin bulletin-the journal of the international actuarial association","bayesian analysis","journal of multivariate analysis","journal of time series analysis",
-                           "lifetime data analysis","markov process","random matrices","scandinavian actuarial journal"];
+                           "p-adic numbers ultrametric analysis and applications","engineering optimization","annales henri poincare","computer physics communications","quantum information processing","decisions in economics and finance",
+                           "journal of time series econometrics","monte carlo methods and applications","advances in data analysis and classification","astin bulletin-the journal of the international actuarial association","bayesian analysis",
+                           "journal of multivariate analysis","journal of time series analysis","lifetime data analysis","markov process","random matrices","scandinavian actuarial journal"];
             var geometry_j = ["geometr", "fractal", "manifold"];
             var maths_regex = new RegExp("(" + maths_j.join("|") + ")", "i");
             var geometry_regex = new RegExp("(" + geometry_j.join("|") + ")", "i");
@@ -3043,34 +3055,223 @@ function onInit() {
                     mark_journals();
                     $('span[data-testid="authorInstitution"]').each(markUniversity);
                 }, true);
-                // 作者详情页：内联显示邮箱（点击复制）+ Hirsch数据按钮；Scholar Screening 的后台工作页不自动分析，避免额外请求。
+                const scopusSubjectNames = {
+                    AGRI: 'Agricultural and Biological Sciences', ARTS: 'Arts and Humanities', BIOC: 'Biochemistry, Genetics and Molecular Biology',
+                    BUSI: 'Business, Management and Accounting', CENG: 'Chemical Engineering', CHEM: 'Chemistry', COMP: 'Computer Science',
+                    DECI: 'Decision Sciences', DENT: 'Dentistry', EART: 'Earth and Planetary Sciences', ECON: 'Economics, Econometrics and Finance',
+                    ENER: 'Energy', ENGI: 'Engineering', ENVI: 'Environmental Science', HEAL: 'Health Professions', IMMU: 'Immunology and Microbiology',
+                    MATE: 'Materials Science', MATH: 'Mathematics', MEDI: 'Medicine', MULT: 'Multidisciplinary', NEUR: 'Neuroscience',
+                    NURS: 'Nursing', PHAR: 'Pharmacology, Toxicology and Pharmaceutics', PHYS: 'Physics and Astronomy', PSYC: 'Psychology',
+                    SOCI: 'Social Sciences', VETE: 'Veterinary'
+                };
+                // Scopus 公共请求与 Lightweight 壳层复用（搜索页、作者页、合作者面板共用）。
+                const fetchAuthorJson = (id, ms = 12000) => fetch('/api/authors/' + id, {
+                    credentials: 'include', cache: 'no-store', headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(ms)
+                }).then(r => {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    if (!r.headers.get('content-type')?.includes('json')) throw new Error('Scopus returned a page instead of author data.');
+                    return r.json();
+                }).then(d => { if (String(d?.authorId) !== String(id)) throw new Error('Unexpected author profile'); return d; });
+                const fetchScopusGql = (query, variables, signal = AbortSignal.timeout(25000)) => fetch('/gateway/author-profile-api/author', {
+                    method: 'POST', credentials: 'include', signal, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(variables ? { query, variables } : { query })
+                });
+                const fetchBatchGql = (batch, fields, signal) => fetchScopusGql('query {\n' + batch.map((r, i) => `a${i}: author(id: "${r.id}", disableTombstoneResolution: true) { ${fields} }`).join('\n') + '\n}', null, signal);
+                const liteKey = 'skScopusLightweightProfile', lite = GM_getValue(liteKey, false) === true;
+                const mountLiteShell = root => {
+                    const bar = $('<div id="sk-lite-bar"></div>').append($('<label></label>').append(
+                        $('<input type="checkbox" role="switch">').prop('checked', lite).on('change', function () { GM_setValue(liteKey, this.checked); location.reload(); }), ' Lightweight Mode (Beta)'));
+                    (root.length ? root : $('body')).prepend(bar);
+                    if (!lite || !root.length) return null;
+                    if (!$('#sk-lite-banner').length) $('body').prepend('<div id="sk-lite-banner">Experimental Lightweight Mode (inspired by Eden): stability is unverified, use at your own risk.</div>');
+                    $('html').addClass('sk-scopus-lite');
+                    root.children().not(bar)[root.is('#__next') ? 'hide' : 'remove']();
+                    return $('<div id="sk-lite-page"></div>').appendTo(root);
+                };
+
+                // 作者搜索页：共用 Lightweight Mode，结合清洗机构、邮箱反查、ORCID、合著者并发检索，高置信唯一命中时自动进入详情页。
+                const isAuthorSearchPage = /^\/results\/author(?:NamesList|ListResults)\.uri$/.test(location.pathname) || /^\/(?:pages\/)?(?:new-scopus\/)?search\/authors\/?$/.test(location.pathname);
+                function mountLiteSearch() {
+                    const root = $('#contentWrapper, main, #__next').first();
+                    if (lite) root.addClass('sk-lite-search-root');
+                    if (root.children('#sk-lite-page').length || (!lite && root.children('#sk-lite-bar').length)) return true;
+                    root.children('#sk-lite-bar').remove();
+                    const litePage = mountLiteShell(root);
+                    if (litePage) {
+                        const qs = new URLSearchParams(location.search), hs = new URLSearchParams(location.hash.replace(/^#(?:sk_)?/, ''));
+                        const cleanAffils = raw => {
+                            if (!raw) return [];
+                            const mapped = (skGetUniv(raw).detail || '').replace(/<[^>]+>/g, '').replace(/^(?:Abbr|Top150|Rank\s+\w+):\s*/i, '').replace(/^\d+\+?\s+/, '').split('(')[0].trim();
+                            const parts = raw.replace(/^\s*\d+\s*/, '').split(/[,;，；]/).map(s => s.replace(/\b\d{4,6}\b/g, '').trim()).filter(Boolean);
+                            const mainRe = /\b(university|univ\.?|universit\S*|institute|inst\.?|academy|polytechnic|politecnico|hochschule|college|hospital|cnrs|inria|csic|infn|cern)\b/i;
+                            const picked = parts.filter(p => mainRe.test(p) && !/\b(department|dept\.?|school|college|faculty|laboratory|lab|center|centre|division|ministry|group|program)\b/i.test(p));
+                            if (!picked.length) picked.push(...parts.filter(p => mainRe.test(p) && !/\b(department|dept\.?|school of|college of|faculty of|laboratory|key lab)\b/i.test(p)));
+                            return [...new Set([/^[\x20-\x7e]+$/.test(mapped) ? mapped : '', ...picked, parts.length === 1 ? parts[0] : ''].filter(Boolean))];
+                        };
+                        const resolveEmailOrg = async email => {
+                            const dom = (email || '').split('@')[1]?.toLowerCase().trim();
+                            if (!dom || /^(gmail|163|126|qq|sina|sohu|yeah|foxmail|outlook|hotmail|live|msn|yahoo|icloud|me|protonmail|proton|aol|mail|yandex|gmx|web|naver|hanmail|daum|aliyun|139|189)\./.test(dom)) return [];
+                            const segs = dom.split('.'), min = /^(edu|ac|gov|org|co|com)\.[a-z]{2}$/i.test(segs.slice(-2).join('.')) ? 3 : 2;
+                            for (const d of [...new Set([dom, segs.length > min ? segs.slice(-min).join('.') : dom])]) {
+                                const items = await fetch('https://api.ror.org/v2/organizations?query.advanced=' + encodeURIComponent('domains:' + d), { signal: AbortSignal.timeout(3500) })
+                                    .then(r => r.ok ? r.json() : null).then(j => j?.items || []).catch(() => []);
+                                const exact = items.filter(x => (x.domains || []).some(k => d === k.toLowerCase() || d.endsWith('.' + k.toLowerCase())));
+                                const names = (exact.length ? exact : items.slice(0, 1)).map(x => x.names?.find(n => n.types?.includes('ror_display'))?.value).filter(Boolean);
+                                if (names.length) return names;
+                            }
+                            return [];
+                        };
+                        const getJson = (url, init) => fetch(url, { credentials: 'include', headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(12000), ...init }).then(r => r.ok ? r.json() : null).catch(() => null);
+                        const previewDocs = (q, n = 15) => getJson('/api/documents/search/preview?query=' + encodeURIComponent(q) + '&itemcount=' + n + '&offset=0&sort=plf-f&allauthors=true').then(j => j?.items || []);
+                        const searchAuthors = (last, first, affiliation = '') => getJson('/gateway/author-search-api/authors/search', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                            body: JSON.stringify({ authorLastName: last, authorFirstName: first, ...(affiliation ? { affiliation } : {}), itemCount: 20, offset: 0, sort: { fieldName: 'count', sortOrder: 'DESC' } })
+                        }).then(j => j?.items || []);
+
+                        const parseName = raw => {
+                            const v = String(raw || '').replace(/^(?:Dr|Prof|Mr|Ms|Mrs)\.?\s+/i, '').replace(/\s+/g, ' ').trim();
+                            if (!v) return { last: '', first: '', formatted: '' };
+                            let last = v, first = '';
+                            if (v.includes(',')) {
+                                const [l, ...rest] = v.split(',');
+                                last = l.trim(); first = rest.join(' ').trim();
+                            } else if (v.includes(' ')) {
+                                const p = v.split(' '), i = p.length > 2 && /^(?:van|von|de|del|della|di|da|dos|das|du|le|la|el|al|bin|ibn|st\.?)$/i.test(p[p.length - 2]) ? p.length - 2 : p.length - 1;
+                                last = p.slice(i).join(' '); first = p.slice(0, i).join(' ');
+                            }
+                            return { last, first, formatted: first ? `${last}, ${first}` : last };
+                        };
+                        const initLast = (qs.get('st1') || qs.get('lastName') || '').trim(), initFirst = (qs.get('st2') || qs.get('firstName') || '').trim();
+                        const inName = $('<input name="name" placeholder="Name (e.g. Alotaibi, Rashed)">').val(hs.get('name') ?? [initLast, initFirst].filter(Boolean).join(', '));
+                        const swapBtn = $('<button type="button" class="sk-lite-swap" title="Swap Last & First name">🔄</button>');
+                        const inAffil = $('<input name="affil" placeholder="Affiliation (auto-cleaned)">').val((hs.get('affil') ?? (qs.get('affilName') || qs.get('affiliation') || '')).trim());
+                        const inExtra = $('<input name="extra" placeholder="Email or ORCID (optional)">').val((hs.get('extra') ?? (qs.get('orcidId') || qs.get('orcid') || hs.get('orcid') || hs.get('email') || '')).trim());
+                        const inCo = $('<input name="co" placeholder="Co-authors (comma-separated)" title="Co-author surnames, separated by commas">').val(hs.get('co') || '');
+                        const searchBtn = $('<button type="submit" class="sk-scopus-btn">Search</button>');
+                        const statusNote = $('<p class="sk-scopus-note" role="status"></p>'), resultBox = $('<div></div>');
+                        const formatInName = () => { const n = parseName(inName.val()); if (n.formatted) inName.val(n.formatted); return n; };
+                        inName.on('blur', formatInName).on('paste', () => setTimeout(formatInName, 0));
+                        swapBtn.on('click', () => {
+                            const { last, first } = formatInName();
+                            if (last && first) { inName.val(`${first}, ${last}`); runSearch(false); }
+                        });
+                        const form = $('<form class="sk-lite-search"></form>').append(inName, swapBtn, inAffil, inExtra, inCo, searchBtn);
+                        litePage.append($('<div class="sk-lite-header"><h1>Scopus Author Search</h1></div>'), form, statusNote, resultBox);
+
+                        const runSearch = async autoJump => {
+                            const { last, first } = formatInName(), rawAffil = inAffil.val().trim(), extra = inExtra.val().trim();
+                            const coList = inCo.val().split(/[,;，；]/).map(s => s.trim()).filter(Boolean);
+                            const orcid = extra.match(/(\d{4}-\d{4}-\d{4}-\d{3}[\dX])/i)?.[1] || '', email = !orcid && extra.includes('@') ? extra.toLowerCase() : '';
+                            if (!last && !orcid && !email) {
+                                if (rawAffil || extra) statusNote.text('Please enter an author name, email, or ORCID (searching by affiliation alone is not supported).');
+                                return;
+                            }
+                            hs.set('name', inName.val()); hs.set('affil', rawAffil); hs.set('extra', extra);
+                            hs.set('co', coList.join(',')); hs.set('auto', autoJump ? '1' : '0');
+                            history.replaceState(history.state, '', location.pathname + location.search + '#sk_' + hs);
+                            document.title = ([last, first].filter(Boolean).join(', ') || email || orcid) + ' - Scopus Author Search';
+                            searchBtn.prop('disabled', true); statusNote.empty().append('<span class="sk-scopus-spinner"></span>Searching Scopus…'); resultBox.empty();
+
+                            const affils = [...new Set([...(email ? await resolveEmailOrg(email) : []), ...cleanAffils(rawAffil)])].slice(0, 2);
+                            const qStr = s => '"' + String(s).replace(/"/g, '') + '"', fi = first[0] || '';
+                            const nameQ = last ? (fi ? `(AUTHOR-NAME(${qStr(last + ', ' + first)}) OR AUTHOR-NAME(${qStr(last + ', ' + fi + '*')}))` : `AUTHLASTNAME(${qStr(last)})`) : '';
+                            const [orcidHits, emailDocs, coDocs, affilDocs, affilList, baseList] = await Promise.all([
+                                orcid ? getJson('/gateway/author-search-api/authors/orcid/' + encodeURIComponent(orcid)).then(j => j?.items || []) : [],
+                                email ? previewDocs(`ALL(${qStr(email)})`, 10) : [],
+                                last && coList.length ? previewDocs(`AUTHLASTNAME(${qStr(last)}) AND (${coList.map(c => `AUTHLASTNAME(${qStr(c)})`).join(' OR ')})`, 15) : [],
+                                nameQ && affils.length ? previewDocs(`${nameQ} AND (${affils.map(a => `AFFIL(${qStr(a)})`).join(' OR ')})`, 20) : [],
+                                last && affils[0] ? searchAuthors(last, first, affils[0]) : [],
+                                last ? searchAuthors(last, first) : []
+                            ]);
+
+                            const map = new Map(), norm = s => (s || '').toLowerCase().replace(/[^a-z]/g, ''), tLast = norm(last), tFirst = norm(first);
+                            const ensure = id => /^\d+$/.test(String(id || '')) ? (map.get(String(id)) || map.set(String(id), { id: String(id), tags: new Set(), row: null, profile: null }).get(String(id))) : null;
+                            const nameOk = (l, f) => {
+                                const nl = norm(l), nf = norm(f);
+                                return (!tLast || nl.includes(tLast) || tLast.includes(nl)) && (!tFirst || !nf || nf[0] === tFirst[0] || nf.includes(tFirst) || tFirst.includes(nf));
+                            };
+                            orcidHits.forEach(it => { const c = ensure(it.identifier); if (c) { c.tags.add('ORCID'); c.row = it; } });
+                            [[emailDocs, 'Email'], [coDocs, 'Co-author'], [affilDocs, 'Affiliation']].forEach(([docs, tag]) =>
+                                docs.forEach(d => (d.authors || []).forEach(a => { if (!tLast || nameOk(a.preferredName?.last, a.preferredName?.first)) ensure(a.authorId)?.tags.add(tag); })));
+                            affilList.forEach(it => { if (nameOk(it.preferredFamilyName, it.preferredFirstName)) { const c = ensure(it.identifier); if (c) { c.tags.add('Affiliation'); c.row ||= it; } } });
+                            baseList.forEach(it => { const c = ensure(it.identifier); if (c) c.row ||= it; });
+
+                            const rank = c => (c.tags.has('EmailExact') ? 200 : 0) + (c.tags.has('ORCID') ? 150 : 0) + (c.tags.has('Email') ? 90 : 0) + (c.tags.has('Co-author') ? 50 : 0) + (c.tags.has('Affiliation') ? 25 : 0);
+                            const enrich = async batch => {
+                                if (!batch.length) return;
+                                if (batch.length <= 3) {
+                                    await Promise.all(batch.map(c => fetchAuthorJson(c.id).then(p => { c.profile = p; }).catch(() => { })));
+                                } else {
+                                    const data = (await fetchBatchGql(batch, 'profile { emailAddress orcId subjectAreas { code documentCount } } metrics { hindex documentCount }').then(r => r.ok ? r.json() : null).catch(() => null))?.data || {};
+                                    batch.forEach((c, i) => {
+                                        const prof = data['a' + i]?.profile;
+                                        if (!prof) return;
+                                        const subjects = [...(prof.subjectAreas || [])].sort((x, y) => y.documentCount - x.documentCount).map(s => ({ code: s.code, name: scopusSubjectNames[s.code] || s.code }));
+                                        c.profile = { ...data['a' + i]?.metrics, emailAddress: prof.emailAddress, orcId: prof.orcId, publishedSubjectAreas: subjects };
+                                    });
+                                }
+                                batch.forEach(c => {
+                                    if (email && String(c.profile?.emailAddress || '').toLowerCase() === email) c.tags.add('EmailExact');
+                                    if (orcid && String(c.profile?.orcId || '').toUpperCase() === orcid.toUpperCase()) c.tags.add('ORCID');
+                                });
+                            };
+
+                            let list = [...map.values()].sort((a, b) => rank(b) - rank(a) || (b.row?.authorOfCount || 0) - (a.row?.authorOfCount || 0));
+                            const hinted = list.filter(c => c.tags.size > 0);
+                            if (list.length <= 3 || (autoJump && hinted.length && hinted.length <= 3)) await enrich(list.length <= 3 ? list : hinted);
+                            const findExact = () => list.filter(c => c.tags.has('ORCID') || c.tags.has('EmailExact') || (email && list.filter(x => x.tags.has('Email')).length === 1 && c.tags.has('Email')));
+                            let exact = findExact();
+                            if (autoJump && (exact.length === 1 || (list.length === 1 && !rawAffil && !email))) return location.replace('/authid/detail.uri?authorId=' + (exact[0] || list[0]).id);
+
+                            const renderTable = () => {
+                                list.sort((a, b) => rank(b) - rank(a) || ((b.profile?.documentCount ?? b.row?.authorOfCount ?? 0) - (a.profile?.documentCount ?? a.row?.authorOfCount ?? 0)));
+                                const rows = list.slice(0, 20).map((c, idx) => {
+                                    const p = c.profile, r = c.row, inst = p?.latestAffiliatedInstitution || r?.affiliations?.[0], mail = p?.emailAddress && p.emailAddress !== 'null' ? p.emailAddress : '';
+                                    const name = p?.preferredName?.full || [r?.preferredFamilyName, r?.preferredFirstName].filter(Boolean).join(', ') || ('Author ' + c.id);
+                                    const subList = (p?.publishedSubjectAreas || []).map(s => s.name || s.code);
+                                    const nameTd = $('<td></td>').append($('<a target="_blank" rel="noopener"></a>').attr('href', '/authid/detail.uri?authorId=' + c.id).text(name));
+                                    [['EmailExact', '✓ Email Match', true], ['ORCID', '✓ ORCID', true], ['Email', '📄 Email in Paper', false], ['Co-author', '✓ Co-author', false], ['Affiliation', '✓ Affiliation', false]].forEach(([k, t, ok]) => {
+                                        if (c.tags.has(k) && !(k === 'Email' && c.tags.has('EmailExact'))) nameTd.append($('<span class="sk-lite-tag"></span>').toggleClass('sk-lite-tag-ok', ok).toggleClass('sk-lite-tag-paper', k === 'Email').text(t));
+                                    });
+                                    const mailEl = mail ? $('<span class="sk-lite-email" title="Click to copy"></span>').text(mail).on('click', function () {
+                                        const el = $(this); navigator.clipboard.writeText(mail).then(() => { el.text('✓ Copied'); setTimeout(() => el.text(mail), 1200); });
+                                    }) : (p ? '' : '…');
+                                    return $('<tr></tr>').append($('<td></td>').text(idx + 1), nameTd,
+                                        $('<td></td>').append(inst?.name ? $('<span data-testid="authorInstitution"></span>').text(inst.name) : ''),
+                                        $('<td></td>').text([inst?.address?.city ?? inst?.city, inst?.address?.country ?? inst?.country].filter(Boolean).join(', ')),
+                                        $('<td></td>').text(p?.documentCount ?? r?.authorOfCount ?? '—'), $('<td></td>').text(p?.hindex ?? r?.hIndex ?? '—'), $('<td></td>').append(mailEl),
+                                        $('<td></td>').attr('title', subList.join('; ')).text(p ? subList.join('; ') : '…'));
+                                });
+                                const head = '<thead><tr><th>#</th><th>Author</th><th>Affiliation</th><th>Location</th><th>Docs</th><th>h-index</th><th>Email</th><th>Subjects</th></tr></thead>';
+                                resultBox.empty().append($('<div class="sk-scopus-scroll"><table id="sk-lite-results" class="sk-scopus-table">' + head + '<tbody></tbody></table></div>'));
+                                resultBox.find('tbody').append(rows);
+                                resultBox.find('span[data-testid="authorInstitution"]').each(markUniversity);
+                            };
+
+                            searchBtn.prop('disabled', false);
+                            statusNote.text(list.length ? `${list.length} candidate author(s)` + (affils.length ? ' · Affiliation filter: ' + affils.join(' / ') : '') : 'No matching authors found.');
+                            if (!list.length) return;
+                            renderTable();
+                            const pending = list.slice(0, 20).filter(c => !c.profile);
+                            if (pending.length) {
+                                await enrich(pending);
+                                exact = findExact();
+                                if (autoJump && exact.length === 1) return location.replace('/authid/detail.uri?authorId=' + exact[0].id);
+                                renderTable();
+                            }
+                        };
+                        form.on('submit', e => { e.preventDefault(); runSearch(false); });
+                        runSearch(hs.get('auto') !== '0');
+                    }
+                    return true;
+                }
+                if (isAuthorSearchPage && !new URLSearchParams(location.search).has('ge_screen_request')) waitForKeyElements('#contentWrapper, main, #__next', mountLiteSearch, false);
                 const pageAuthorId = new URLSearchParams(location.search).get('authorId') || (location.pathname.match(/\/pages\/authors\/(\d+)/) || [])[1];
                 if ((location.pathname.indexOf('authid/detail.uri') > -1 || /\/pages\/authors\/\d+/.test(location.pathname)) && /^\d+$/.test(pageAuthorId || '') && !new URLSearchParams(location.search).has('ge_screen_request')) {
                     // /api/authors 只请求一次，Lightweight 头部与邮箱共用；失败后允许重试。
                     let authorApiTask = null;
-                    const loadAuthorApi = () => authorApiTask ||= fetch('https://www.scopus.com/api/authors/' + pageAuthorId, {
-                        credentials: 'include', cache: 'no-store', headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(15000)
-                    }).then(r => {
-                        if (!r.ok) throw new Error('HTTP ' + r.status);
-                        if (!r.headers.get('content-type')?.includes('json')) throw new Error('Scopus returned a page instead of author data.');
-                        return r.json();
-                    }).then(d => {
-                        if (String(d?.authorId) !== pageAuthorId) throw new Error('Unexpected author profile');
-                        return d;
-                    }).catch(error => { authorApiTask = null; throw error; });
-
-                    // Lightweight profile：不等 Scopus 自身的作者页（加载慢，限流时显示 "Unable to display author profile"），
-                    // 用 /api/authors 渲染作者头部，其下为 Research profile 与左右分栏的 Publications | Co-authors + Sources；保留站点页眉页脚与已加载的样式。
-                    const liteKey = 'skScopusLightweightProfile', lite = GM_getValue(liteKey, false) === true;
-                    const liteRoot = $('#authorDetailsBotoxRoot');
-                    // 开关放在作者页容器之上，Scopus 作者页渲染失败时也能切换。
-                    const liteBar = $('<div id="sk-lite-bar"></div>').append($('<label></label>')
-                        .append($('<input type="checkbox" role="switch">').prop('checked', lite).on('change', function () { GM_setValue(liteKey, this.checked); location.reload(); }), ' Lightweight Mode (Beta)'));
-                    (liteRoot.length ? liteRoot : $('body')).prepend(liteBar);
-                    if (lite && liteRoot.length) {
-                        liteRoot.children().not(liteBar).remove();
-                        $('html').addClass('sk-scopus-lite');
-                        const litePage = $('<div id="sk-lite-page"></div>').appendTo(liteRoot);
+                    const loadAuthorApi = () => authorApiTask ||= fetchAuthorJson(pageAuthorId, 15000).catch(error => { authorApiTask = null; throw error; });
+                    const litePage = mountLiteShell($('#authorDetailsBotoxRoot'));
+                    if (litePage) {
                         const count = v => v == null || v === '' || !Number.isSafeInteger(Number(v)) || Number(v) < 0 ? '—' : Number(v).toLocaleString('en');
                         const renderLite = () => {
                             litePage.empty().append($('<p class="sk-scopus-note" role="status"></p>').text('Loading author profile…'));
@@ -3101,31 +3302,35 @@ function onInit() {
                     }
 
                     waitForKeyElements('h1[data-testid="author-profile-name"]', function (h1node) {
-                        if (h1node.find('#sk-scopus-email-inline').length) return;
+                        if (h1node.find('#sk-scopus-h1-tools').length) return;
                         const authorId = pageAuthorId;
 
-                        // ── 邮箱 span ──
-                        const emailSpan = $('<span id="sk-scopus-email-inline">…</span>').css({fontSize:'0.5em',color:'#1a73e8',marginLeft:'16px',verticalAlign:'middle',cursor:'pointer',borderBottom:'1px dashed #1a73e8',overflowWrap:'anywhere'}).attr('title', 'Click to copy');
-                        const tipSpan = $('<span id="sk-scopus-email-tip"></span>').css({fontSize: '0.5em', color: '#888', marginLeft: '5px', verticalAlign: 'middle', fontWeight: 'normal'});
-
-                        // ── 内联加载按钮（与 See All Publications 相同功能）──
-                        const inlineLoadBtn = $('<span>📊</span>').css({fontSize: '0.45em', marginLeft: '8px', cursor: 'pointer', verticalAlign: 'middle', opacity: '0.7', transition: 'opacity .2s'}).attr('title', 'Load Publications & Co-authors')
-                        .on('mouseover', function(){ $(this).css('opacity','1'); })
-                        .on('mouseout', function(){ $(this).css('opacity','0.5'); });
-                        h1node.append(emailSpan).append(tipSpan).append(inlineLoadBtn);
-                        let authorProfile = null;
+                        // 用空格文本节点 + user-select:none 工具容器隔开姓名与邮箱，避免双击名字末尾时连带选中邮箱。
+                        const toolsWrap = $('<span id="sk-scopus-h1-tools"></span>').css({ userSelect: 'none', marginLeft: '14px', fontWeight: 'normal' });
+                        const copyNameBtn = $('<span></span>').attr('title', 'Click to copy First Last name').hide()
+                            .css({ fontSize: '0.45em', color: '#5f6368', marginRight: '12px', padding: '2px 8px', border: '1px solid #dadce0', borderRadius: '6px', background: '#f8f9fa', verticalAlign: 'middle', cursor: 'pointer' });
+                        const emailSpan = $('<span id="sk-scopus-email-inline">…</span>').attr('title', 'Click to copy')
+                            .css({ fontSize: '0.5em', color: '#1a73e8', verticalAlign: 'middle', cursor: 'pointer', borderBottom: '1px dashed #1a73e8', overflowWrap: 'anywhere' });
+                        const tipSpan = $('<span id="sk-scopus-email-tip"></span>').css({ fontSize: '0.5em', color: '#888', marginLeft: '5px', verticalAlign: 'middle' });
+                        const inlineLoadBtn = $('<span>📊</span>').css({ fontSize: '0.45em', marginLeft: '8px', cursor: 'pointer', verticalAlign: 'middle', opacity: '0.7', transition: 'opacity .2s' })
+                            .attr('title', 'Load Publications & Co-authors').on('mouseover', function () { $(this).css('opacity', '1'); }).on('mouseout', function () { $(this).css('opacity', '0.5'); });
+                        const flashCopied = text => navigator.clipboard.writeText(text)
+                            .then(() => { tipSpan.text('✓ Copied').css('color', '#1e8e3e'); setTimeout(() => tipSpan.text(''), 1500); })
+                            .catch(() => { tipSpan.text('Failed').css('color', '#d93025'); setTimeout(() => tipSpan.text(''), 1500); });
+                        h1node.append(' ', toolsWrap.append(copyNameBtn, emailSpan, tipSpan, inlineLoadBtn));
+                        let authorProfile = null, naturalName = '';
                         loadAuthorApi().then(d => {
                             authorProfile = d;
+                            naturalName = [d.preferredName?.first, d.preferredName?.last].map(s => (s || '').trim()).filter(Boolean).join(' ');
+                            if (naturalName) copyNameBtn.text(naturalName).show();
                             const email = d.emailAddress || '';
                             if (email && email !== 'null') { emailSpan.text(email); }
                             else { emailSpan.text('--').css({ color: '#aaa', borderBottom: 'none', cursor: 'default' }); }
                         }).catch(() => emailSpan.text('--').css({ color: '#aaa', borderBottom: 'none', cursor: 'default' }));
+                        copyNameBtn.on('click', () => naturalName && flashCopied(naturalName));
                         emailSpan.on('click', function () {
                             const email = emailSpan.text();
-                            if (!email || email.startsWith('-') || email === '…') return;
-                            navigator.clipboard.writeText(email)
-                                .then(() => { tipSpan.text('✓ Copied').css('color', '#1e8e3e'); setTimeout(() => tipSpan.text(''), 1500); })
-                                .catch(() => { tipSpan.text('Failed').css('color', '#d93025'); setTimeout(() => tipSpan.text(''), 1500); });
+                            if (email && !email.startsWith('-') && email !== '…') flashCopied(email);
                         });
 
                         // ── Hirsch: 注入按钮 ──
@@ -3198,11 +3403,7 @@ function onInit() {
                                         }
                                     }
                                 }`;
-                                return fetch('https://www.scopus.com/gateway/author-profile-api/author', {
-                                    method: 'POST', credentials: 'include', signal: AbortSignal.timeout(20000),
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ query, variables: { id: authorId } })
-                                }).then(r => r.ok ? r.json() : { httpStatus: r.status }).then(j => {
+                                return fetchScopusGql(query, { id: authorId }, AbortSignal.timeout(20000)).then(r => r.ok ? r.json() : { httpStatus: r.status }).then(j => {
                                     // 记录失败原因：整个请求被拒（HTTP 状态）与 SciVal 主题服务报错（GraphQL errors）分开提示。
                                     const topicError = j?.errors?.find(e => /topic/i.test(e.message));
                                     const topicsError = j?.httpStatus ? 'HTTP ' + j.httpStatus : topicError ? 'SciVal: ' + topicError.message + (topicError.extensions?.httpStatus ? ' (' + topicError.extensions.httpStatus + ')' : '') : '';
@@ -3215,7 +3416,7 @@ function onInit() {
                                 const normTitle = s => String(s || '').toLowerCase().replace(/[^a-z0-9\u00c0-\u024f]+/g, ' ').trim();
                                 const parsePage = html => {
                                     const doc = new DOMParser().parseFromString(html, 'text/html');
-                                    // \u9996\u9875\u4fa7\u680f Country/territory \u7b5b\u9009\uff1a\u6309\u4f5c\u8005\u5355\u4f4d\u56fd\u5bb6\u7edf\u8ba1\u7684\u8bba\u6587\u6570\uff08\u542b\u672c\u4eba\u5355\u4f4d\uff0c\u524d 10 \u4e2a\uff09\uff0c\u65e0\u9700\u989d\u5916\u8bf7\u6c42\u3002
+                                    // 首页侧栏 Country/territory 筛选：按作者单位国家统计的论文数（含本人单位，前 10 个），无需额外请求。
                                     if (!countries.length) doc.querySelectorAll('input[name="selectedCountryClusterCategories"]').forEach(input => {
                                         const count = Number(input.closest('li')?.querySelector('.badge')?.textContent.replace(/\D/g, ''));
                                         if (input.value && input.value !== 'Undefined' && count > 0) countries.push({ name: input.value, count });
@@ -3252,7 +3453,7 @@ function onInit() {
                                 setBtn(seeAllBtn, 'Loading publications…', true);
                                 setBtn(seeCoBtn, 'Loading co-authors…', true);
                                 inlineLoadBtn.html(spinner).css({ cursor: 'wait', opacity: '1' });
-                                $('[class*="AuthorHeader-module"]').filter((i, el) => $(el).text().includes('Scopus Preview')).remove();
+                                waitForKeyElements('[class*="AuthorHeader-module"]:contains("Scopus Preview")', el => { el.remove(); }, false);
 
                                 const gqlPromise = fetchMainAuthorGraphql();
                                 fetch(hirschPageUrl, { credentials: 'include', signal: AbortSignal.timeout(20000) }).then(r => {
@@ -3438,15 +3639,6 @@ function onInit() {
                                             const nm = name.match(/^(.+?),\s*(.+)$/);
                                             return [String(c.coAuthorId), { id: String(c.coAuthorId), name, first: nm ? nm[2].trim() : name, last: nm ? nm[1].trim() : '', shared: c.noOfCoAuthoredDocuments ?? null, profile: null, state: 'Not loaded', error: '' }];
                                         })).values()].sort((a, b) => Number(b.shared) - Number(a.shared) || a.name.localeCompare(b.name));
-                                        const scopusSubjectNames = {
-                                            AGRI: 'Agricultural and Biological Sciences', ARTS: 'Arts and Humanities', BIOC: 'Biochemistry, Genetics and Molecular Biology',
-                                            BUSI: 'Business, Management and Accounting', CENG: 'Chemical Engineering', CHEM: 'Chemistry', COMP: 'Computer Science',
-                                            DECI: 'Decision Sciences', DENT: 'Dentistry', EART: 'Earth and Planetary Sciences', ECON: 'Economics, Econometrics and Finance',
-                                            ENER: 'Energy', ENGI: 'Engineering', ENVI: 'Environmental Science', HEAL: 'Health Professions', IMMU: 'Immunology and Microbiology',
-                                            MATE: 'Materials Science', MATH: 'Mathematics', MEDI: 'Medicine', MULT: 'Multidisciplinary', NEUR: 'Neuroscience',
-                                            NURS: 'Nursing', PHAR: 'Pharmacology, Toxicology and Pharmaceutics', PHYS: 'Physics and Astronomy', PSYC: 'Psychology',
-                                            SOCI: 'Social Sciences', VETE: 'Veterinary'
-                                        };
                                         const coSection = $('<div id="sk-coauthors-section" class="sk-scopus-card"></div>');
                                         const coExportIcon = $('<button type="button" class="sk-scopus-icon" aria-label="Co-author details">📋</button>');
                                         // 侧栏合作者列表：Name | Country | Co-docs；国家由下方的轻量查询逐批填入。
@@ -3527,7 +3719,9 @@ function onInit() {
                                                 if (label === 'Institution' && p?.rank?.color) cell.css('background-color', p.rank.color).attr('title', text + ' · ' + p.rank.text);
                                                 if (label === 'Email' && /^[^\s@]+@[^\s@]+$/.test(text)) cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', skMailsdbUrl(text)).text(text));
                                                 else if (label === 'h-index' && p && Number.isFinite(Number(text))) cell.append($('<a target="_blank" rel="noopener"></a>').attr('href', 'https://www.scopus.com/authid/detail.uri?authorId=' + row.id).text(text));
-                                                else if (label === 'Latest Pub' && p && row.latestPub) cell.attr('title', row.pubError || 'Click to view yearly publications').append($('<a href="#"></a>').text(text).on('click', e => { e.preventDefault(); showCoauthorPublications(row); }));
+                                                else if (label === 'Latest Pub' && p && row.latestPub) {
+                                                    cell.attr('title', row.pubError || 'Click to view yearly publications').append($('<a href="#"></a>').text(text).on('click', e => { e.preventDefault(); showCoauthorPublications(row); }));
+                                                }
                                                 else cell.text(text);
                                                 tr.append(cell);
                                             });
@@ -3661,10 +3855,7 @@ function onInit() {
                                             activeControllers.add(controller);
                                             let stop = false, started = performance.now();
                                             try {
-                                                const response = await fetch('https://www.scopus.com/gateway/author-profile-api/author', {
-                                                    method: 'POST', credentials: 'include', signal: controller.signal, headers: { 'Content-Type': 'application/json' },
-                                                    body: JSON.stringify({ query: 'query {\n' + batch.map((row, i) => `a${i}: author(id: "${row.id}") { ...F }`).join('\n') + '\n}\n' + coFragment })
-                                                });
+                                                const response = await fetchScopusGql('query {\n' + batch.map((row, i) => `a${i}: author(id: "${row.id}") { ...F }`).join('\n') + '\n}\n' + coFragment, null, controller.signal);
                                                 if ([401, 403, 429].includes(response.status)) {
                                                     stop = true;
                                                     detailMessage = response.status === 429 ? 'Rate limited; wait before retrying.' : 'Scopus access needs checking before retrying.';
@@ -3799,10 +3990,7 @@ function onInit() {
                                             for (let i = 0; i < coRows.length; i += 50) {
                                                 const batch = coRows.slice(i, i + 50);
                                                 try {
-                                                    const response = await fetch('https://www.scopus.com/gateway/author-profile-api/author', {
-                                                        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(35000),
-                                                        body: JSON.stringify({ query: 'query {\n' + batch.map((row, j) => `a${j}: author(id: "${row.id}") { profile { currentInstitution { id name country } } }`).join('\n') + '\n}' })
-                                                    });
+                                                    const response = await fetchBatchGql(batch, 'profile { currentInstitution { id name country } }', AbortSignal.timeout(35000));
                                                     if (!response.ok) throw new Error('HTTP ' + response.status);
                                                     const data = (await response.json())?.data || {};
                                                     batch.forEach((row, j) => { row.liteInst = data['a' + j]?.profile?.currentInstitution || null; showLiteCountry(row); });
@@ -4095,8 +4283,10 @@ function onInit() {
                     const $shade = $('<div class="blockUI blockOverlay" id="csv-shade" style="z-index:1000;border:none;margin:0;padding:0;width:100%;height:100%;top:0;left:0;background-color:#000;opacity:0.6;position:fixed;"></div>');
                     const $close = $('<input type="button" value="Close" style="margin:10px;padding:5px 20px;cursor:pointer;">');
                     const $textarea = $('<textarea id="csv_content" readonly rows="30" style="width:90%;"></textarea>').val(csvContent);
-                    const $popup = $('<div class="blockUI blockMsg blockPage" id="csv-popup" style="z-index:1011;position:fixed;padding:0 0 12px;margin:0;width:50%;top:12%;left:25%;max-height:76vh;text-align:center;color:#000;border:3px solid #aaa;background-color:#fff;overflow-y:auto;"></div>')
-                        .append($close, '<br>', $textarea);
+                    const $popup = $('<div class="blockUI blockMsg blockPage" id="csv-popup"></div>').css({
+                        zIndex: 1011, position: 'fixed', padding: '0 0 12px', margin: 0, width: '50%', top: '12%', left: '25%',
+                        maxHeight: '76vh', textAlign: 'center', color: '#000', border: '3px solid #aaa', backgroundColor: '#fff', overflowY: 'auto'
+                    }).append($close, '<br>', $textarea);
                     $close.add($shade).on('click', () => { $shade.remove(); $popup.remove(); });
                     $("body").append($shade, $popup);
 
@@ -4491,6 +4681,7 @@ function skMailtoUrl(emails, subject, body) {
 function skMailsdbUrl(email) { return 'https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=' + encodeURIComponent(email); }
 
 function skDecodeResourceText(name) {
+    if (name === 'customCSS') return SK_CUSTOM_CSS;
     const text = typeof GM_getResourceText === 'function' ? GM_getResourceText(name) : '';
     if (text) return text;
     try {
@@ -5076,5 +5267,123 @@ var SK_SectionCandidatesMap = {
     'E4': ['antoniad@lpthe.jussieu.fr','t.fokas@damtp.cam.ac.uk','grigo@unt.edu','gts@physics.uoc.gr','tarasov@theory.sinp.msu.ru','polyanin@ipmnet.ru','michael.s.zhdanov@gmail.com','ratiu@sjtu.edu.cn','yazad@phys.uni-sofia.bg','vdodonov@fis.unb.br'],
     'E5': ['luca.passalacqua@uniroma1.it','youri.kabanov@univ-fcomte.fr','yaozhong@ualberta.ca','li.xun@polyu.edu.hk','g.peters@hw.ac.uk','wim.schoutens@kuleuven.be']
 };
+
+var SK_CUSTOM_CSS = String.raw`
+#topmenu>ul:has(.sk-susy-tool){align-items:center}#topmenu .sk-susy-tool{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;white-space:nowrap}#topmenu .sk-susy-tool>a{padding:0 6px!important;font-size:13px;line-height:28px}
+#topmenu>ul>li:has(.susy-global-search-li){flex:1 1 0%;min-width:0}#topmenu .susy-global-search-li,#topmenu .susy-global-search-li .gs-root,#topmenu .susy-global-search-li input{min-width:0}#SusyModifier_Journal_Easy{width:100px;max-width:100px;height:28px;margin:0;
+    padding:0 18px 0 6px;font-size:12px}#leftcol.sk-susy-sidebar .menu li{padding-left:15px;font-size:13px;line-height:26px}@media(max-width:1200px){#topmenu>ul:has(.sk-susy-tool){padding-left:8px!important;padding-right:8px!important}#topmenu>ul:has(.sk-susy-tool)>li>a{
+        padding-left:6px!important;padding-right:6px!important;font-size:12px}#SusyModifier_Journal_Easy{width:96px;max-width:96px}}:where(.sk-old-icons) #leftcol .menu{gap:0!important}:where(.sk-old-icons) #leftcol .menu li{text-align:left!important;
+    justify-content:flex-start!important;position:relative!important;padding:2px 0 2px 15px!important;font-size:13px!important;line-height:20px!important;border-bottom:1px solid rgb(204,204,204)!important}:where(.sk-old-icons) #maincol .user_box_item,
+:where(.sk-old-icons) #maincol .user_box{font-size:13px!important;}:where(.sk-old-icons) #leftcol .menu li:not([class])::before{background-color:rgb(79,86,113);content:"";height:6px;width:6px;position:absolute;left:4px;top:9px;z-index:1}
+:where(.sk-old-icons) #leftcol .menu-hr{display:none!important;}:where(.sk-old-icons) :is(.light_green_theme #leftcol .menu li:not([class]))::before{background-color:rgb(76,142,101)!important;}:where(.sk-old-icons) :is(.light_green_theme #leftcol .menu li){
+    border-bottom:1px solid rgb(197,222,208)!important;}:where(.sk-old-icons) :is(.light_green_theme #leftcol .menu li:not(.active) a:not(.active)){color:rgb(46,57,36)!important;}:where(.sk-old-icons) #topmenu ul{padding:3px 0!important;}:where(.sk-old-icons) #topmenu ul a{
+    padding:0 0.6rem!important;}:where(.sk-old-icons) .ms-edit:before,:where(.sk-old-icons) .ms-note:before,:where(.sk-old-icons) .ms-note-add:before,:where(.sk-old-icons) .ms-mail:before{content:'';display:inline-block;height:16px;width:16px;position:relative;top:-2px;
+    background-size:contain}:where(.sk-old-icons) .ms-edit:before{background:var(--sk-icon-pencil) no-repeat center center;}:where(.sk-old-icons) .ms-note:before{background:var(--sk-icon-note) no-repeat center center;}:where(.sk-old-icons) .ms-note-add:before{
+    background:var(--sk-icon-note_add) no-repeat center center;}:where(.sk-old-icons) .ms-mail:before{background:var(--sk-icon-mail) no-repeat center center;}html.sk-mailsdb{background:#f5f6f8}html.sk-mailsdb body{box-sizing:border-box;max-width:1600px;margin:0 auto;
+    padding:20px;color:#303943;line-height:1.55}html.sk-mailsdb #d1,html.sk-mailsdb #d2,html.sk-mailsdb #d3,html.sk-mailsdb .search-all-info{padding:16px 20px;background:#fff;border:1px solid #dce2e8;border-radius:6px;overflow-x:auto}html.sk-mailsdb table{width:100%;
+    border-collapse:collapse}html.sk-mailsdb .editor-invitation-history-table th,html.sk-mailsdb .editor-invitation-history-table td,html.sk-mailsdb #d3 th,html.sk-mailsdb #d3 td{padding:6px 8px;border-bottom:1px solid #e5e9ee;font-size:13px;vertical-align:top}
+:where(.sk-mailsdb) .colorgray{color:gray!important}:where(.sk-mailsdb) .bgcoloref{background:#efefef!important}html.sk-mailsdb #user-info .user-info-section{margin-bottom:16px}:where(.sk-mailsdb) #user-info span.email{font-weight:400;color:#103247}
+:where(.sk-mailsdb) #user-info span.number{font-weight:400;color:#123}html.sk-mailsdb #user-info a{color:#225b8d}html.sk-mailsdb #user-info a:visited{color:#6d5a81}:where(.sk-mailsdb) #user-info a:hover{color:#47566d}html.sk-mailsdb #user-info table{width:100%;
+    margin:10px 0 16px;background:#fff;border:1px solid #dce2e8;font-size:13px}html.sk-mailsdb #user-info table tr th,html.sk-mailsdb #user-info table tr td{border:1px solid #dce2e8;padding:6px 8px}html.sk-mailsdb #user-info table tr th{text-align:left;background:#f0f3f6;
+    color:#45505c;font-weight:600}:where(.sk-mailsdb) #user-info table tr td{background:#fefefe}:where(.sk-mailsdb) #user-info table tr td span.msid{color:#4e6c88;font-weight:400}:where(.sk-mailsdb) #user-info table tr td.title{width:50%}
+:where(.sk-mailsdb) #user-info table tr td.journal{width:10%;text-align:center}:where(.sk-mailsdb) #user-info table tr td.status{width:10%;text-align:center}:where(.sk-mailsdb) #user-info table tr td.submission-date{width:10%;text-align:center}
+:where(.sk-mailsdb) #user-info table tr td.invoice-info{width:10%;text-align:center}:where(.sk-mailsdb) #user-info table tr td.invoice-payment-info{width:10%;text-align:center}html.sk-mailsdb #d2 h2{margin:0 0 16px;font-size:20px;font-weight:600}html.sk-mailsdb .scroll-icon{
+    display:block;margin:6px 0;text-align:center;color:#748296;cursor:pointer;font-size:12px;text-decoration:none}html.sk-mailsdb #Box{margin-top:20px;padding-top:14px;border-top:1px solid #dce2e8}html.sk-mailsdb #Box h3{margin:0 0 12px;font-size:16px;font-weight:600}
+html.sk-mailsdb #Box p{overflow-wrap:anywhere}html.sk-mailsdb #Box hr{display:none}html.sk-mailsdb .search-all-info .table{min-width:900px}html.sk-mailsdb .search-all-info .table th,html.sk-mailsdb .search-all-info .table td{padding:10px 12px;text-align:left;
+    vertical-align:top}html.sk-mailsdb #sk-mailsdb-mail{box-sizing:border-box;position:fixed;inset:0;width:min(1600px,94vw);height:92vh;max-width:none;max-height:none;margin:auto;padding:0;border:1px solid #cbd3dd;border-radius:6px;background:#fff;color:#303943;
+    overflow:hidden}html.sk-mailsdb #sk-mailsdb-mail[open]{display:flex;flex-direction:column}html.sk-mailsdb #sk-mailsdb-mail::backdrop{background:rgba(25,35,45,.45)}html.sk-mailsdb #sk-mailsdb-mail-toolbar{display:flex;align-items:center;gap:16px;padding:10px 16px;
+    background:#f7f8fa;border-bottom:1px solid #dce2e8;flex-shrink:0}html.sk-mailsdb #sk-mailsdb-mail-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;font-weight:600}html.sk-mailsdb #sk-mailsdb-mail button{width:28px;
+    height:28px;padding:0;border:0;border-radius:4px;background:transparent;color:#45505c;font-size:24px;line-height:1;cursor:pointer}html.sk-mailsdb #sk-mailsdb-mail button:hover{background:#e6ebf1}html.sk-mailsdb #sk-mailsdb-mail iframe{display:block;flex:1;min-height:0;
+    width:100%;border:0;background:#fff}:where(#ms) #ms-kinds label,:where(#ms) #ms-fav label{margin-right:10px}#ms .chosen-results{max-height:65vh}#ms .chosen-choices input{border:0;outline:0;background:none;box-shadow:none}#ms #options>label{display:inline-block;
+    width:34px}:where(#ms) #ms-status{display:inline-block;margin:16px 10px 10px}:where(#ms) #saved_search_list,:where(#ms) #ms-results{overflow:auto}#ms table{color:inherit;font:inherit}:where(#ms) #ms-form .actionButtons{margin-right:8px;user-select:none;
+    transition:transform .08s,filter .12s}:where(#ms) #ms-form .actionButtons:hover{filter:brightness(1.06)}:where(#ms) #ms-form .actionButtons:active{transform:translateY(1px);filter:brightness(.92)}:where(#ms) #ms-form .actionButtons.ms-clicked{
+    animation:sk-ms-pulse .22s ease-out}:where(#ms) .ms-loading{margin:10px 0;color:#666}@keyframes sk-ms-pulse{50%{transform:scale(.96);filter:brightness(.9)}}#sk-subject-overlay,#sk-subject-overlay *,.sk-scopus-card,.sk-scopus-card *,#sk-coa-overlay,#sk-coa-overlay *,
+#sk-coa-publications,#sk-coa-publications *,#sk-inst-history,#sk-inst-history *{box-sizing:border-box}.sk-scopus-card{border:1px solid #c6d5eb;border-radius:10px;padding:14px;margin:14px 0;background:#fff;color:#202124;font-size:15px;line-height:1.45}.sk-scopus-toolbar{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.sk-scopus-toolbar strong{margin-right:auto;font-size:18px;color:#1558d6;font-weight:700;line-height:1.3}.sk-scopus-heading strong{margin-right:0}.sk-scopus-heading .sk-pub-types{margin-left:auto;
+    text-align:right}button.sk-scopus-btn,.sk-scopus-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;min-width:0;min-height:0;margin:0;border:1px solid #1a73e8;border-radius:6px;padding:6px 10px;background:#1a73e8;color:#fff;cursor:pointer;
+    font:inherit;font-size:14px;font-weight:600;line-height:1.25;white-space:nowrap;box-shadow:none;text-transform:none}button.sk-scopus-btn:hover,.sk-scopus-btn:hover{background:#1558d6;color:#fff;border-color:#1558d6;text-decoration:none}button.sk-scopus-btn:disabled,
+.sk-scopus-btn:disabled{opacity:.6;cursor:default}button.sk-scopus-icon,a.sk-scopus-icon,.sk-scopus-icon{appearance:none;display:inline-flex;align-items:center;justify-content:center;min-width:0;min-height:0;margin:0;border:0;padding:0 3px;background:none;color:#1a73e8;
+    font-size:20px;line-height:1.2;cursor:pointer;text-decoration:none;box-shadow:none}button.sk-scopus-icon:hover,a.sk-scopus-icon:hover,.sk-scopus-icon:hover{background:none;color:#d93025;text-decoration:none}.sk-scopus-note{font-size:13px;color:#444;line-height:1.5}
+#sk-coauthors-section .sk-scopus-icon{font-size:13px!important;width:18px;height:18px;padding:0!important;line-height:1!important;flex-shrink:0}.sk-scopus-years{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.sk-scopus-year{min-width:68px;padding:7px 10px;
+    border-radius:8px;background:#e8f0fe;text-align:center}.sk-scopus-year span{display:block;font-size:13px;color:#333;line-height:1.3}.sk-scopus-year a,.sk-scopus-year b{display:block;font-size:22px;font-weight:700;color:#1a73e8;line-height:1.35;text-decoration:none}
+.sk-scopus-year a:hover{color:#d93025;text-decoration:none}.sk-scopus-year-current{background:#fff0da}.sk-scopus-year-current a,.sk-scopus-year-current b{color:#c65b00}.sk-scopus-bars{display:grid;gap:12px;margin-top:14px}.sk-scopus-bar-label{display:flex;
+    justify-content:space-between;gap:10px;margin-bottom:5px;font-size:14px}.sk-scopus-bar-label span{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical}.sk-scopus-bar-label b{flex-shrink:0;font-weight:700;color:#1558d6}
+.sk-scopus-bar-track{height:8px;border-radius:4px;background:#dfe9f7;overflow:hidden}.sk-scopus-bar-fill{height:100%;border-radius:4px;background:#1a73e8}.sk-scopus-bars [data-zone="1"] .sk-scopus-bar-fill{background:#15803d}
+.sk-scopus-bars [data-zone="2"] .sk-scopus-bar-fill{background:#c2410c}.sk-scopus-bars [data-zone="3"] .sk-scopus-bar-fill{background:#b91c1c}.sk-scopus-distribution{display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:12px;min-height:0}
+.sk-scopus-distribution>div{min-width:0;overflow:auto;padding:12px;border-radius:8px;background:#f0f6ff;border-left:4px solid #1a73e8}.sk-scopus-distribution>div>strong{font-size:17px;color:#1558d6}.sk-scopus-distribution>div:nth-child(2){background:#f6efff;
+    border-left-color:#a142f4}.sk-scopus-distribution>div:nth-child(2)>strong,.sk-scopus-distribution>div:nth-child(2) b{color:#7b1fa2}.sk-scopus-scroll{overflow:auto;min-width:0;min-height:0;border:1px solid #c6d5eb;border-radius:7px}.sk-scopus-table{
+    border-collapse:separate;border-spacing:0;width:100%;margin:0;background:#fff;font-size:15px;text-align:left;color:#202124}.sk-scopus-table th,.sk-scopus-table td{padding:7px 8px;border:0;border-bottom:1px solid #dce5f2;vertical-align:top;line-height:1.5;text-align:left}
+.sk-scopus-table th{position:sticky;top:0;z-index:1;background:#1a73e8;color:#fff;font-weight:600;white-space:nowrap}.sk-scopus-table td{background:#fff}.sk-scopus-table th:first-child{width:42px}#sk-publications-section .sk-scopus-table th,
+#sk-publications-section .sk-scopus-table td{padding:5px 8px;line-height:1.35}#sk-publications-section .sk-scopus-table th.sk-pub-sort{padding:0;user-select:none}#sk-publications-section .sk-scopus-table th.sk-pub-year-head{width:68px;text-align:center}
+#sk-publications-section .sk-scopus-table th.sk-pub-cited-head{width:76px;text-align:right}#sk-publications-section .sk-pub-sort button{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;width:100%;min-width:0;min-height:0;margin:0;
+    padding:5px 8px;border:0;border-radius:0;background:transparent;color:inherit;font:inherit;line-height:inherit;white-space:nowrap;cursor:pointer;box-shadow:none;text-transform:none}#sk-publications-section .sk-pub-cited-head button{justify-content:flex-end}
+#sk-publications-section .sk-pub-sort button:hover{background:#1558d6}#sk-publications-section .sk-pub-sort button:focus-visible{outline:2px solid currentColor;outline-offset:-3px}#sk-publications-section .sk-pub-sort-arrow{display:inline-block;width:1em;font-size:12px;
+    line-height:1;text-align:center}#sk-publications-section [aria-sort=none] .sk-pub-sort-arrow{opacity:.55}.sk-scopus-table tbody tr:nth-child(even) td{background:#f4f8ff}.sk-scopus-table tbody tr:hover td{background:#e8f0fe}.sk-scopus-table a{color:#1a0dab;
+    text-decoration:none}.sk-scopus-table a:hover{text-decoration:underline}#sk-coa-overlay{position:fixed;inset:0;background:rgba(25,38,52,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:12px}#sk-coa-popup{box-sizing:border-box;width:94vw;
+    height:90vh;display:flex;flex-direction:column;gap:10px;background:#fff;color:#202124;font-size:14px;border-radius:12px;padding:14px;box-shadow:0 12px 48px #152c4940}#sk-coa-popup:not(.sk-coa-detailed){width:min(520px,94vw);height:min(76vh,680px)}
+#sk-coa-popup>.sk-scopus-toolbar{margin:0;flex-wrap:wrap;flex-shrink:0}#sk-coa-popup>.sk-scopus-toolbar .sk-scopus-note{max-width:36vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#sk-coa-body{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;flex:1;
+    min-height:0}#sk-coa-popup.sk-coa-detailed #sk-coa-body{grid-template-columns:minmax(0,1fr) clamp(240px,20vw,320px)}#sk-coa-popup:not(.sk-coa-detailed) .sk-scopus-distribution{display:none}#sk-coa-popup .sk-scopus-table{table-layout:fixed;font-size:14px}
+#sk-coa-popup.sk-coa-detailed .sk-scopus-table{min-width:1050px}#sk-coa-popup .sk-scopus-table th,#sk-coa-popup .sk-scopus-table td{padding:4px 6px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#sk-coa-popup .sk-scopus-number{text-align:center}
+#sk-coa-popup td.sk-scopus-number{color:#1558d6;font-weight:600}#sk-coa-popup td.sk-coa-output{color:#000;font-weight:400}#sk-coa-popup td.sk-coa-country{font-weight:700}#sk-coa-publications{position:fixed;inset:0;z-index:10001;background:#19263480;display:flex;
+    align-items:center;justify-content:center;padding:20px}#sk-coa-publications>section{box-sizing:border-box;width:min(1100px,90vw);max-height:85vh;display:flex;flex-direction:column;gap:10px;overflow:hidden;background:#fff;border-radius:12px;padding:18px;color:#202124;
+    font-size:15px;box-shadow:0 12px 48px #152c4940}#sk-coa-publications>section>.sk-scopus-toolbar{margin:0;flex-shrink:0}#sk-coa-publications .sk-coa-pub-body{flex:1;min-height:0;overflow:auto}#sk-coa-publications .sk-scopus-table th:last-child,
+#sk-coa-publications .sk-scopus-table td:last-child{width:72px;text-align:right}#sk-coa-compact{max-height:min(60vh,560px);border:0;border-radius:0}#sk-coa-compact .sk-scopus-table{table-layout:fixed;font-size:14px}#sk-coa-compact .sk-scopus-table td{padding:3px 4px;
+    border:0;background:transparent;line-height:1.4;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#sk-coa-compact .sk-scopus-table tr:hover td{background:#f4f7fb}#sk-coa-compact .sk-scopus-table td:nth-child(2){width:40%}
+#sk-coa-compact .sk-scopus-table td:nth-child(3){width:40px;text-align:right;color:#5f6368}.sk-zone-tag{display:inline-block;max-width:100%;padding:0 6px;border-radius:4px;font-size:13px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis}:is(.sk-zone-tag,
+#sk-coa-popup td)[data-zone="1"]{background:#dcfce7;color:#15803d}:is(.sk-zone-tag,#sk-coa-popup td)[data-zone="2"]{background:#ffedd5;color:#c2410c}:is(.sk-zone-tag,#sk-coa-popup td)[data-zone="3"]{background:#fee2e2;color:#b91c1c}#sk-coa-popup td:first-child{color:#1558d6;
+    font-weight:700}#sk-coa-popup tr.sk-coa-pending td{color:#9aa0a6}#sk-coa-popup tr.sk-coa-in td{animation:sk-coa-in .35s ease-out}@keyframes sk-coa-in{from{opacity:0}}@keyframes sk-scopus-spin{to{transform:rotate(360deg)}}.sk-scopus-spinner{display:inline-block;
+    width:10px;height:10px;border:2px solid #1a73e8;border-right-color:transparent;border-radius:50%;vertical-align:-1px;margin-right:6px;animation:sk-scopus-spin .8s linear infinite}button .sk-scopus-spinner{border-color:currentColor;border-right-color:transparent}
+@media(max-width:900px){#sk-coa-popup.sk-coa-detailed #sk-coa-body{grid-template-columns:minmax(0,1fr) 210px;gap:8px}}.sk-hl-geo,.sk-hl-math{padding:0 3px;border-radius:3px;color:#202124}.sk-hl-geo{background:Aquamarine}.sk-hl-math{background:Wheat}.sk-pub-year{
+    text-align:center!important;font-weight:600;color:#475569;white-space:nowrap}.sk-pub-cited{text-align:right!important;font-weight:700;color:#1a73e8;white-space:nowrap}.sk-pub-meta{font-size:13px;color:#5f6368;margin-top:2px;line-height:1.35}.sk-pub-meta a{
+    color:#64748b!important}.sk-pub-kw{font-size:13px;color:#0f766e;margin-top:2px;line-height:1.35}.sk-pub-oa{display:inline-block;padding:0 5px;margin-left:6px;border-radius:4px;font-size:12px;font-weight:700;background:#fff7ed;color:#c2410c;border:1px solid #fdba74;
+    vertical-align:1px}#sk-sources-section>summary{font-size:18px;font-weight:700;color:#1558d6;cursor:pointer;user-select:none}#sk-sources-section[open]>summary{margin-bottom:10px}#sk-sources-section table{width:100%;margin:0;border-collapse:collapse;font-size:15px;
+    color:#202124}#sk-sources-section th,#sk-sources-section td{padding:4px 6px;border:0;line-height:1.4;vertical-align:top}#sk-sources-section th{border-bottom:2px solid #c6d5eb;color:#202124;font-weight:600;text-align:left}#sk-sources-section th:last-child{width:46px;
+    text-align:right}#sk-sources-section tbody tr{border-bottom:1px solid #dce5f2}#sk-sources-section td:last-child{text-align:right;font-weight:600;color:#1a73e8;white-space:nowrap}#sk-sources-section tr.sk-sources-total{border-top:2px solid #e0e0e0;border-bottom:0;
+    background:#f5f5f5;font-weight:600}#sk-sources-section tr.sk-sources-total td:last-child{color:#202124}#sk-sources-section a{color:#1a0dab;text-decoration:none}#sk-sources-section a:hover{text-decoration:underline}#sk-inst-history{margin:6px 0 4px;font-size:15px;
+    color:#334155}#sk-inst-history>summary{cursor:pointer;color:#1558d6;font-weight:400;user-select:none}.sk-inst-hist-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.sk-inst-hist-list .sk-scopus-note{width:100%;font-size:14px}.sk-inst-hist-chip{padding:1px 8px;
+    border-radius:5px;border:1px solid #d5dfe9;background:#fff;font-size:14px;line-height:1.5}html.sk-scopus-lite #contentWrapper{max-width:none}#sk-lite-banner{padding:3px 12px;background:#fef9ec;border-bottom:1px solid #f0e2be;color:#7a5a18;font:12px/1.4 elsevier-sans,
+    ElsevierSans,arial,helvetica,sans-serif;text-align:center}#sk-lite-bar,#sk-lite-page{box-sizing:border-box;max-width:1600px;margin:0 auto;padding-inline:2rem;font-family:elsevier-sans,ElsevierSans,arial,helvetica,sans-serif;
+    font-variant-numeric:lining-nums proportional-nums}#sk-lite-bar{display:flex;justify-content:flex-end;padding-top:.5rem;font-size:.875rem;color:#505050}#sk-lite-bar label{display:inline-flex;align-items:center;gap:.375rem;margin:0;font-weight:400;cursor:pointer}
+#sk-lite-bar input{appearance:auto;position:static;opacity:1;width:15px;height:15px;margin:0;accent-color:#0056d6;cursor:pointer}#sk-lite-page{padding-bottom:3rem;color:#2e2e2e;font-size:1rem;line-height:1.5}.sk-lite-search{display:flex;flex-wrap:wrap;gap:8px;
+    align-items:center;margin:10px 0 12px}.sk-lite-search input{box-sizing:border-box;height:38px;padding:6px 12px;border:1px solid #b9c8dc;border-radius:6px;background:#fff;color:#202124;font:inherit;font-size:14px}.sk-lite-search .sk-scopus-btn{height:38px;
+    padding-inline:16px}.sk-lite-search button.sk-lite-swap{appearance:none;border:0;background:none;padding:0 4px;font-size:15px;line-height:1;opacity:.45;cursor:pointer;transition:opacity .15s}.sk-lite-search button.sk-lite-swap:hover{opacity:.9;background:none}
+.sk-lite-search input[name="name"]{flex:0 1 250px}.sk-lite-search input[name="affil"]{flex:1 1 220px}.sk-lite-tag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:4px;background:#e8f0fe;color:#1558d6;font-size:12px;font-weight:600;vertical-align:middle}
+.sk-lite-tag-ok{background:#dcfce7;color:#15803d}.sk-lite-email{color:#1a73e8;cursor:pointer;border-bottom:1px dashed #1a73e8;overflow-wrap:anywhere}.sk-lite-header h1{margin:.5rem 0 0;font-size:2rem;line-height:2.5rem;font-weight:400;color:#505050;overflow-wrap:anywhere}
+.sk-lite-affil{margin-top:.5rem;font-size:1rem;line-height:1.5rem}.sk-lite-ids{display:flex;flex-wrap:wrap;gap:.25rem;margin:.5rem 0 .25rem;padding:0;list-style:none;font-size:1rem;line-height:1.5rem}.sk-lite-ids li{display:inline-flex;gap:.25rem}
+.sk-lite-ids li:not(:first-child)::before{content:"\2022"}.sk-lite-header a{color:#0056d6;text-decoration:none}.sk-lite-header a:hover{text-decoration:underline}.sk-lite-metrics{display:flex;flex-wrap:wrap;column-gap:1.5rem;row-gap:2rem;margin:1.5rem 0 2rem}
+.sk-lite-metrics div{display:flex;flex-direction:column-reverse;padding-left:1rem;border-left:.125rem solid #2e2e2e}.sk-lite-metrics dt{font-size:.875rem;line-height:1.375rem;font-weight:400;color:#2e2e2e}.sk-lite-metrics dd{margin:0;font-size:1.5rem;line-height:2rem;
+    font-weight:400;color:#2e2e2e}#sk-lite-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(320px,1fr);gap:2rem;align-items:start}#sk-lite-side{min-width:0;padding-top:16px}@media(max-width:900px){#sk-lite-cols{grid-template-columns:minmax(0,1fr)}}
+#sk-subject-overlay{margin:14px 0 16px;padding:14px 18px;border:1px solid #dce4ec;border-radius:12px;background:#fff;color:#172943;font-size:15px;line-height:1.4;font-variant-numeric:lining-nums tabular-nums}.sk-rp-head{display:flex;flex-wrap:wrap;align-items:baseline;
+    gap:4px 18px;margin-bottom:10px;color:#53667b;font-size:14px}.sk-rp-head strong{margin-right:auto;font-size:18px;color:#1558d6}.sk-rp-head b,.sk-rp-head a{color:#172943;font-weight:600}.sk-rp-cols{display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:14px 20px;align-items:start}.sk-rp-panel{min-width:0}.sk-rp-list{list-style:none;margin:0;padding:0}#sk-subject-overlay .sk-rp-list li{display:grid;
+    grid-template-columns:minmax(0,1.6fr) minmax(40px,1fr) 46px 58px;align-items:center;gap:8px;margin:0;padding:4px 6px;border-bottom:1px solid #eef2f6;line-height:1.35;list-style:none}#sk-subject-overlay .sk-rp-topics li{grid-template-columns:minmax(0,1fr) 52px 60px}
+#sk-subject-overlay .sk-rp-list li>:first-child{justify-self:start;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}#sk-subject-overlay .sk-rp-list li>:not(:first-child){text-align:right}#sk-subject-overlay .sk-rp-list li.sk-rp-labels{
+    padding-block:6px 3px;border-bottom-color:#dce4ec;color:#6b7c8f;font-size:13px;font-weight:600;cursor:help}#sk-subject-overlay .sk-rp-list li.sk-rp-labels>:first-child{color:#172943;font-size:16px;font-weight:700}
+#sk-subject-overlay .sk-rp-panel:not(.sk-rp-topics) li.sk-rp-labels>:first-child{grid-column:span 2}.sk-rp-list li:not(.sk-rp-labels):hover{background:#f6f9fb}#sk-subject-overlay .sk-rp-list li:not(.sk-rp-labels){height:29px}.sk-rp-list a{color:inherit;text-decoration:none;
+    border:0}.sk-rp-list a:hover{color:#1558d6;text-decoration:underline}.sk-rp-bar{height:5px;border-radius:3px;background:#e8eff4;overflow:hidden}.sk-rp-bar i{display:block;height:100%;border-radius:inherit;background:#9db8d6}.sk-rp-math{font-weight:700}
+#sk-subject-overlay :is([data-subject],[data-zone]){color:var(--sk-subject-color,#475569);background:var(--sk-subject-bg,#f1f5f9);border-radius:4px}#sk-subject-overlay :is([data-subject=MATH],[data-subject=COMP],[data-subject=DECI]){--sk-subject-color:#3a2917;
+    --sk-subject-bg:#f5ece1}#sk-subject-overlay :is([data-subject=ENGI],[data-subject=PHYS],[data-subject=ENER]){--sk-subject-color:#2563eb;--sk-subject-bg:#eaf1ff}#sk-subject-overlay :is([data-subject=CHEM],[data-subject=CENG],[data-subject=MATE]){
+    --sk-subject-color:#9333ea;--sk-subject-bg:#f4eaff}#sk-subject-overlay :is([data-subject=AGRI],[data-subject=EART],[data-subject=ENVI]){--sk-subject-color:#047857;--sk-subject-bg:#dcfce7}#sk-subject-overlay :is([data-subject=BIOC],[data-subject=MEDI],[data-subject=IMMU],
+[data-subject=NEUR],[data-subject=NURS],[data-subject=HEAL],[data-subject=PHAR],[data-subject=DENT],[data-subject=VETE]){--sk-subject-color:#be185d;--sk-subject-bg:#fce7f3}#sk-subject-overlay :is([data-subject=BUSI],[data-subject=ECON]){--sk-subject-color:#c2410c;
+    --sk-subject-bg:#ffedd5}#sk-subject-overlay :is([data-subject=ARTS],[data-subject=SOCI],[data-subject=PSYC]){--sk-subject-color:#0e7490;--sk-subject-bg:#cffafe}#sk-subject-overlay [data-zone="1"]{--sk-subject-color:#15803d;--sk-subject-bg:#dcfce7}
+#sk-subject-overlay [data-zone="2"]{--sk-subject-color:#c2410c;--sk-subject-bg:#ffedd5}#sk-subject-overlay [data-zone="3"]{--sk-subject-color:#b91c1c;--sk-subject-bg:#fee2e2}#sk-subject-overlay :is([data-subject],[data-zone]) .sk-rp-bar{background:#ffffffb3}
+#sk-subject-overlay :is([data-subject],[data-zone]) .sk-rp-bar i{background:var(--sk-subject-color,#64748b)}.sk-rp-fwci{justify-self:end;min-width:44px;padding:0 5px;border-radius:5px;background:#eef2f6;color:#314359;font-size:13px;text-align:center!important}
+.sk-rp-fwci.sk-rp-high{background:#e4f3eb;color:#146047}#sk-subject-overlay:not(.sk-rp-open) .sk-rp-extra{display:none}button.sk-rp-more,.sk-rp-more{appearance:none;display:block;min-width:0;min-height:0;margin:8px auto 0;padding:2px 6px;border:0;background:none;
+    color:#1558d6;font:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:none;text-transform:none}button.sk-rp-more:hover,.sk-rp-more:hover{background:none;text-decoration:underline}:where(.sk-work-login),:where(.sk-work-login) *{box-sizing:border-box}
+body:where(.sk-work-login){margin:0;min-height:100%;background:#f3f6f8;color:#26343d;font-family:Arial,"Microsoft YaHei",sans-serif;padding:42px 18px}.sk-work-page{max-width:820px;margin:auto}.sk-work-head{margin-bottom:22px}.sk-work-head h1{margin:0;color:#244a63;
+    font-size:28px}.sk-work-head p{margin:7px 0 0;color:#6b7881;font-size:14px}.sk-work-card{overflow:hidden;background:#fff;border:1px solid #e0e6ea;border-radius:12px;box-shadow:0 8px 28px rgba(42,62,74,.09)}.sk-work-summary{display:flex;align-items:center;gap:12px;
+    padding:16px 20px;background:#f8fafb;border-bottom:1px solid #eee}.sk-work-badge{min-width:72px;padding:5px 10px;color:#26b;background:#e7f0ff;border-radius:20px;font-size:12px;font-weight:bold;text-align:center}.sk-work-summary-text{color:#52616b;font-size:14px}
+.sk-work-row{display:grid;grid-template-columns:18px minmax(135px,1fr) minmax(210px,1.5fr) 58px;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid #edf1f3;font-size:14px}.sk-work-dot{width:10px;height:10px;border-radius:50%;background:#3b82e6;
+    box-shadow:0 0 0 4px #e8f1ff}.sk-work-name{font-weight:600}.sk-work-state{color:#2769b7}.sk-work-open{padding:5px 8px;color:#405562;background:#fff;border:1px solid #b8c4cc;border-radius:6px;text-align:center;text-decoration:none}.sk-work-open:hover{color:#245e86;
+    background:#f3f8fb}.sk-work-row[data-state="ok"] .sk-work-dot{background:#22a060;box-shadow:none}.sk-work-row[data-state="ok"] .sk-work-state{color:#16804b;font-weight:600}.sk-work-row[data-state="login"] .sk-work-dot,.sk-work-row[data-state="unknown"] .sk-work-dot,
+.sk-work-row[data-state="manual"] .sk-work-dot{background:#e59622;box-shadow:none}.sk-work-row[data-state="login"] .sk-work-state,.sk-work-row[data-state="unknown"] .sk-work-state,.sk-work-row[data-state="manual"] .sk-work-state{color:#ad6700}.sk-work-microsoft{
+    margin:14px 20px 0;padding:10px 12px;color:#805900;background:#fff6dc;border-radius:7px;font-size:13px}.sk-work-microsoft[hidden]{display:none}.sk-work-actions{padding:18px 20px 20px}.sk-work-start{width:100%;padding:12px;color:#fff;background:#2f709b;border:0;
+    border-radius:8px;font-size:15px;font-weight:bold;cursor:pointer}.sk-work-start:disabled{background:#a0adb5;cursor:default}.sk-work-extra-actions{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.sk-work-btn{display:block;
+    width:100%;padding:10px 12px;color:#2f709b;background:#f0f6fa;border:1px solid #c4d7e5;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s ease;text-align:center;text-decoration:none}.sk-work-btn:hover:not(.sk-work-btn-placeholder){
+    background:#2f709b;color:#fff;border-color:#2f709b}.sk-work-btn-placeholder{opacity:0.5;cursor:default;background:#f8fafb;border-style:dashed}@media(max-width:620px){body:where(.sk-work-login){padding:24px 12px}.sk-work-row{grid-template-columns:14px 1fr 54px;gap:9px;
+        padding:13px 15px}.sk-work-state{grid-column:2/4}}.sk-lite-tag-paper{background:#fef3c7;color:#92400e}#sk-lite-results th,#sk-lite-results td{white-space:nowrap}
+#sk-lite-results td:last-child{width:30%;max-width:0;overflow:hidden;text-overflow:ellipsis}.sk-lite-search-root>:not(#sk-lite-bar):not(#sk-lite-page){display:none!important}.sk-lite-search input[name="co"]{flex:0 1 180px;min-width:0}
+.sk-lite-search input[name="extra"]{flex:0 1 300px;min-width:0}
+`;
 
 var { icon_mrs, icon_magnifier, icon_pencil, icon_mail, icon_note, icon_note_add, icon_arrow, icon_book, icon_plus, icon_users, icon_webs, icon_scopus, icon_retractiondatabase, icon_researchgate } = JSON.parse(skDecodeResourceText('icons') || '{}');
