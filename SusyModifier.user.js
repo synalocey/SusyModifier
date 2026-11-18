@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.11.16
+// @version       6.11.18
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -42,7 +42,6 @@
 // @require       https://gcore.jsdelivr.net/npm/tooltipster@4.2.8/dist/js/tooltipster.bundle.min.js
 // @require       https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/js/chosen.jquery.min.js
 // @require       https://gcore.jsdelivr.net/gh/sizzlemctwizzle/GM_config@master/gm_config.min.js
-// @require       https://gcore.jsdelivr.net/gh/synalocey/SusyModifier@master/Scholar-screening.user.js?v=6.11.11
 // @require       https://mrs.mdpi.com/bundles/mdpimrs/js/html5_scripts/zingchart-html5-min.js?v=6.10.20
 // @require       https://gcore.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js?v=6.10.20
 // @resource      chosenCSS             https://gcore.jsdelivr.net/gh/JJJ/chosen@master/dist/css/chosen.min.css?v=6.10.20
@@ -112,6 +111,19 @@ const SK_COUNTRY_ZONES = new Map([
 
 (function () {
     'use strict';
+    const mdpiVersionCookie = { url: 'https://www.mdpi.com/', name: 'version' };
+    let mdpiVersionWrite, templateHeightObserver;
+    async function readMdpiVersion(node, pendingWrite) {
+        node.checked = false; node.indeterminate = true; node.title = '';
+        try {
+            await pendingWrite; const cookies = await GM.cookie.list(mdpiVersionCookie);
+            node.checked = cookies[0]?.value === 'old'; node.indeterminate = false;
+        } catch (err) { node.title = '无法读取 MDPI 版本 Cookie。\n' + (err?.message ?? err); }
+    }
+    async function refreshMdpiVersion() {
+        const node = GM_config.fields.MDPI_Old_Web.node; if (!node || node.disabled) return;
+        node.disabled = true; await readMdpiVersion(node, mdpiVersionWrite); node.disabled = false;
+    }
     if (window.top === window) {
         GM_registerMenuCommand('🔐 Login Hub', function(){GM_openInTab('https://www.mdpi.com/?susymodifier-login', { active: true });});
         GM_registerMenuCommand('🗑️ Reset Scopus', async function () {
@@ -132,11 +144,11 @@ const SK_COUNTRY_ZONES = new Map([
     }
     GM_config.init({
         'id': 'SusyModifierConfig',
-        'title': 'Settings of SusyModifier v' + GM_info.script.version,
+        'title': GM_config.create('div', { className: 'sk_settings_title' }, GM_config.create('h1', { textContent: 'Settings of SusyModifier' }), GM_config.create('span', { textContent: 'v' + GM_info.script.version })),
         'fields': {
             'Manuscriptnote': { 'section': [GM_config.create('Function Modification'), 'Manuscript Pages'], 'label': 'Manuscript Note紧凑', 'labelPos': 'right', 'type': 'checkbox', 'default': true },
             'Assign_Assistant': { 'label': '派稿助手', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
-            'ManuscriptFunc': { 'label': '申请优惠券和发推广信', 'labelPos': 'right', 'type': 'checkbox', 'default': true },
+            'ManuscriptFunc': { 'section': [], 'label': '申请优惠券和发推广信', 'labelPos': 'right', 'type': 'checkbox', 'default': true },
             'Template_Linkedin': {
                 'label': 'LinkedIn推广信模板', 'type': 'textarea', 'default':
                 `Dear Authors,\n\nHope this email finds you well. Your manuscript %m_id% is promoted by the Mathematics "%m_section%" Section LinkedIn account. Welcome to like, share, send and comment on it.\n\n`
@@ -202,7 +214,7 @@ const SK_COUNTRY_ZONES = new Map([
                  'Conference Inquiry', 'Slide', 'Some Tips', 'Review Paper Invitation', 'Happy Thanksgiving Day', 'Merry Christmas', 'FP Reminder One Month Before The Deadline Template 1', 'FP Reminder One Month Before The Deadline Template 2',
                  'Extend The Deadline', 'Editorial – SI Closed', 'Book Online', 'Check Abstract', 'Monthly Report', 'IF Increased', 'Journal Awards', 'First Publication']
             },
-            'Report_Notes': { 'label': '', 'labelPos': 'left', 'type': 'text', 'default': "月报" },
+            'Report_Notes': { 'label': 'GE Contact Note', 'labelPos': 'left', 'type': 'text', 'default': "月报" },
             'Report_TemplateS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex](?<=\\] ).*" },
             'Report_TemplateS2': {
                 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () {\n let $si_name = $('div.cell.small-12.medium-6.large-2:contains("Special Issue Title")').next().text().trim();\n`
@@ -321,7 +333,7 @@ const SK_COUNTRY_ZONES = new Map([
                 + 'Please note that you will be offered a XX% discount on the Article Processing Charge by the guest editors if your paper is accepted for publication. To take advantage of the discount, we strongly encourage you to submit your'
                 + ' manuscript by the deadline if possible.\n\nWe look forward to receiving your submission and thank you for your interest in our special issue.\n\nKind regards,'
             },
-            'Interface_combine': { 'label': 'Topic Manuscripts整合SI', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
+            'Interface_combine': { 'section': [], 'label': 'Topic Manuscripts整合SI', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'Topic_TemplateS1': { 'label': 'Replace Subject From', 'labelPos': 'left', 'type': 'textarea', 'default': "[Regex]^.*" },
             'Topic_TemplateS2': {
                 'label': 'To', 'labelPos': 'left', 'type': 'textarea', 'default': `function () { let $topic_name= $('div.cell.small-12.medium-6.large-2:contains("Topic Name")').next().text().trim(); return \`[MDPI Topics] Monthly Report `
@@ -337,33 +349,48 @@ const SK_COUNTRY_ZONES = new Map([
                 + `Special Issue. If there are any missing papers, please let me know.\n\n%pp_list%\n\nMay you continue to explore the unknown and lead the forefront of academia. Wishing you continuous breakthroughs and inspiration in your scholarly `
                 + `endeavors!\n--\nBest regards,\n\`;\n}`
             },
-            'CRM_VisitingType': { 'section': [, 'CRM Pages'], 'label': 'Visiting Invitation Type', 'type': 'select', 'labelPos': 'left', 'options': ['', 'Online', 'Offline'], 'default': '' },
             'Interface_SME': {
-                'section': [GM_config.create('Interface Modification')], 'label': 'I am SME ', 'type': 'select', 'labelPos': 'left', 'options':
+                'section': [GM_config.create('Interface Modification')], 'label': 'SME Section', 'type': 'select', 'labelPos': 'left', 'options':
                 ['', 'A: Algebra and Logic', 'B: Geometry and Topology', 'C: Mathematical Analysis', 'C1: Difference and Differential Equations', 'C2: Dynamical Systems', 'C3: Real Analysis', 'C4: Complex Analysis', 'D: Statistics and Operations Research',
                  'D1: Probability and Statistics', 'D2: Operations Research and Fuzzy Decision Making', 'E: Applied Mathematics', 'E1: Mathematics and Computer Science', 'E2: Control Theory and Mechanics', 'E3: Mathematical Biology', 'E4: Mathematical Physics',
                  'E5: Financial Mathematics'], 'default': ''
             },
-            'Journal': { 'label': 'of Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics', 'Games', 'Geometry', 'Mathematics', 'MCB', 'Risks', 'IJT', 'Telecom', 'None'], 'default': 'Mathematics' },
+            'Journal': { 'label': 'Journal', 'type': 'select', 'labelPos': 'left', 'options': ['Analytics', 'Games', 'Geometry', 'Mathematics', 'MCB', 'Risks', 'IJT', 'Telecom', 'None'], 'default': 'Mathematics' },
             'Easy_Journal': { 'label': '置顶期刊列表', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
-            'Susy_Theme': { 'label': 'Change Susy Theme', 'type': 'button', 'click': function () { window.location.href = "https://susy.mdpi.com/user/settings" } },
+            'CRM_VisitingType': { 'label': 'Visiting Invitation Type (CRM)', 'type': 'select', 'labelPos': 'left', 'options': ['', 'Online', 'Offline'], 'default': '' },
             'Interface_sidebar': { 'section': [], 'label': 'Susy 左侧边栏按钮', 'labelPos': 'right', 'type': 'checkbox', 'default': true },
             'Old_Icon': { 'label': '使用旧图标', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
+            'MDPI_Old_Web': { 'label': '使用旧版 MDPI 网页', 'labelPos': 'right', 'type': 'checkbox', 'default': false, 'save': false },
             'Regular_Color': { 'label': '橙色标记 Regular', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'Maths_J': { 'label': 'Scopus标记Maths期刊', 'labelPos': 'right', 'type': 'checkbox', 'default': true },
+            'Susy_Theme': { 'label': 'Change Susy Theme', 'type': 'button', 'click': function () { window.location.href = "https://susy.mdpi.com/user/settings" } },
             'Hidden_Func': { 'section': [], 'label': 'Experimental (!Caution)', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'Remind_Dinner': { 'label': '提醒点餐', 'labelPos': 'right', 'type': 'checkbox', 'default': false },
             'My_Account_Only': { 'label': 'Use My Account Only:', 'labelPos': 'left', 'type': 'text', 'default': "" },
             'GE_Check_SI_ID': { 'label': 'SI ID:', 'labelPos': 'left', 'type': 'text', 'default': "342143" },
         },
         'events': {
-            'save': function () { if ($("#SusyModifierConfig").length > 0) { location.reload() }; },
-            'open': function () {
-                var f_settings = $("#SusyModifierConfig").contents();
+            'save': function () { Promise.resolve(mdpiVersionWrite).finally(function () { if ($("#SusyModifierConfig").length > 0) location.reload(); }); },
+            'reset': refreshMdpiVersion,
+            'close': function () { templateHeightObserver?.disconnect(); templateHeightObserver = null; },
+            'open': function (doc, _, frame) {
+                const f_settings = $(doc); skLayoutSettings(frame, f_settings); templateHeightObserver = skSyncTemplateHeights(doc);
+                f_settings.find('select').on('mouseenter focus change', function () { this.title = this.selectedOptions[0]?.text || ''; });
                 f_settings.find("textarea[id^='SusyModifierConfig_field_']").each(function () {
                     let fieldName = this.id.replace("SusyModifierConfig_field_", "");
                     f_settings.find("#SusyModifierConfig_" + fieldName + "_field_label").after('<button type="button" class="sk_field_reset" title="Reset this field to default" aria-label="Reset this field to default">↺</button>')
                         .next(".sk_field_reset").on("click", function (e) { e.preventDefault(); e.stopPropagation(); GM_config.fields[fieldName].reset(); });
+                });
+                refreshMdpiVersion();
+                GM_config.fields.MDPI_Old_Web.node.addEventListener('change', function () {
+                    const node = this, value = node.checked ? 'old' : 'new'; node.disabled = true;
+                    mdpiVersionWrite = (async function () {
+                        try {
+                            if (location.hostname === 'www.mdpi.com') window.stop();
+                            await GM.cookie.set({ ...mdpiVersionCookie, value, domain: '.mdpi.com', path: '/', httpOnly: true, expirationDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60 });
+                        } catch (err) { alert('切换 MDPI 版本失败。\n' + (err?.message ?? err) + '\n请检查 Tampermonkey 的 Cookie 访问设置（需设为 All）。'); }
+                        await readMdpiVersion(node); node.disabled = false;
+                    })();
                 });
                 GM_config.fields.Hidden_Func.node.addEventListener('change', function () { //Experimental警告
                     if (f_settings.find("#SusyModifierConfig_field_Hidden_Func")[0].checked) {
@@ -375,61 +402,153 @@ const SK_COUNTRY_ZONES = new Map([
                         alert('It is recommended to set the browser zoom to 90%.')
                     }
                 });
-                //隐藏推广信模板
-                if (!GM_config.get('ManuscriptFunc')) { f_settings.find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").hide() }
-                GM_config.fields.ManuscriptFunc.node.addEventListener('change', function () {
-                    if (f_settings.find("#SusyModifierConfig_field_ManuscriptFunc")[0].checked) { f_settings.find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").show(); }
-                    else { f_settings.find("#SusyModifierConfig_Template_Linkedin_var, #SusyModifierConfig_Template_Paper_var").hide() }
-                });
-                //隐藏 PP 和 Topic Template
-                f_settings.find("#SusyModifierConfig_PP_TemplateB2_var").after('<div id="c_br2"></div>')
-                if (!GM_config.get('PP_Template')) { f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").hide() }
-                if (!GM_config.get('Interface_combine')) { f_settings.find("#SusyModifierConfig_Topic_TemplateS1_var,#SusyModifierConfig_Topic_TemplateS2_var,#SusyModifierConfig_Topic_TemplateB1_var,#SusyModifierConfig_Topic_TemplateB2_var").hide() }
-                GM_config.fields.PP_Template.node.addEventListener('change', function () {
-                    if (f_settings.find("#SusyModifierConfig_field_PP_Template")[0].checked) {
-                        f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").show()
-                    }
-                    else { f_settings.find("#SusyModifierConfig_PP_TemplateS1_var,#SusyModifierConfig_PP_TemplateS2_var,#SusyModifierConfig_PP_TemplateB1_var,#SusyModifierConfig_PP_TemplateB2_var,#c_br2").hide() }
-                });
-                GM_config.fields.Interface_combine.node.addEventListener('change', function () {
-                    if (f_settings.find("#SusyModifierConfig_field_Interface_combine")[0].checked) {
-                        f_settings.find("#SusyModifierConfig_Topic_TemplateS1_var,#SusyModifierConfig_Topic_TemplateS2_var,#SusyModifierConfig_Topic_TemplateB1_var,#SusyModifierConfig_Topic_TemplateB2_var").show()
-                    }
-                    else { f_settings.find("#SusyModifierConfig_Topic_TemplateS1_var,#SusyModifierConfig_Topic_TemplateS2_var,#SusyModifierConfig_Topic_TemplateB1_var,#SusyModifierConfig_Topic_TemplateB2_var").hide() }
-                });
-                //隐藏Section
-                if (GM_config.get('Journal') != "Mathematics") { f_settings.find("#SusyModifierConfig_field_Interface_SME").hide(); }
-                GM_config.fields.Journal.node.addEventListener('change', function () {
-                    if (f_settings.find("#SusyModifierConfig_field_Journal").val() == "Mathematics") {
-                        f_settings.find("#SusyModifierConfig_field_Interface_SME").show()
-                    }
-                    else { f_settings.find("#SusyModifierConfig_field_Interface_SME").hide() }
-                });
                 // 显示今天首次访问时间 ☀
                 let storedData = GM_getValue("firstVisitData", ""), todayStr = skLocalDate();
                 if (storedData && storedData.startsWith(todayStr + "|")) {
-                    let firstVisitTime = storedData.split("|")[1];
-                    f_settings.find("#SusyModifierConfig_header").after(`<div id="sk_first_visit" style="text-align:center;color:#666;font-size:13px;margin:-5px 0 5px;cursor:pointer;" title="点击查看系统开机时间命令">☀ 今日首次访问: ${firstVisitTime}</div>`);
-                    f_settings.find("#sk_first_visit").on("click", function () {
-                        prompt("在 PowerShell 中运行以下命令查看系统开机时间：", "Get-WinEvent -FilterHashtable @{LogName='System'; Id=1; ProviderName='Microsoft-Windows-Kernel-General'} -MaxEvents 5 -ErrorAction SilentlyContinue | Select-Object TimeCreated");
-                    });
+                    $('<button id="sk_first_visit" type="button" title="点击查看系统开机时间命令">').text('☀︎ 今日首次访问 ' + storedData.split("|")[1]).appendTo(f_settings.find("#SusyModifierConfig_header"))
+                        .on("click", function () {
+                            prompt("在 PowerShell 中运行以下命令查看系统开机时间：", "Get-WinEvent -FilterHashtable @{LogName='System'; Id=1; ProviderName='Microsoft-Windows-Kernel-General'} -MaxEvents 5 -ErrorAction SilentlyContinue | Select-Object TimeCreated");
+                        });
                 }
             },
             'init': onInit,
         },
-        'css': `#SusyModifierConfig{background-color:#D6EDD9} textarea{font-size:12px;width:160px} .config_var{padding: 5px 10px;display:inline-block;vertical-align:top;} select{width:170px} #SusyModifierConfig_section_1{min-height:70px}
-        #SusyModifierConfig_section_0,#SusyModifierConfig_section_2,#SusyModifierConfig_section_3{min-height:40px} #SusyModifierConfig_Interface_sidebar_field_label,#SusyModifierConfig_Manuscriptnote_field_label,#SusyModifierConfig_SInote_field_label,
-        #SusyModifierConfig_SIpages_field_label,#SusyModifierConfig_section_8{display:inline-grid;grid-template-columns:repeat(5, auto);
-        #SusyModifierConfig_Regular_Color_field_label,#SusyModifierConfig_LinkShort_field_label,#SusyModifierConfig_Cfp_checker_field_label,#SusyModifierConfig_Assign_Assistant_field_label,#SusyModifierConfig_ManuscriptFunc_field_label,#SusyModifierConfig_field_Report_Notes,
-        #SusyModifierConfig_Old_Icon_field_label,#SusyModifierConfig_Hidden_Func_field_label{width:140px;display:inline-block;} #SusyModifierConfig_PP_Template_field_label,
-        #SusyModifierConfig_Interface_combine_field_label{width:145px;display:inline-block;} #SusyModifierConfig_GE_TemplateID_field_label,#SusyModifierConfig_GE_ReminderID_field_label,#SusyModifierConfig_GE_CancelID_field_label,#SusyModifierConfig_EB_TemplateID_field_label,
-        #SusyModifierConfig_EB_ReminderID_field_label,#SusyModifierConfig_field_Report_TemplateID,#SusyModifierConfig_CRM_VisitingType_field_label{display:block;} #SusyModifierConfig_Report_Notes_var{padding-top:0;}
-        grid-template-rows:auto auto;} #SusyModifierConfig_Report_TemplateID_var{grid-row:1;grid-column:1;} #SusyModifierConfig_Report_Notes_var{grid-row:2;grid-column:1;} #SusyModifierConfig_Report_TemplateID_var{padding-bottom:0;}
-        #SusyModifierConfig_Report_TemplateS1_var,#SusyModifierConfig_Report_TemplateS2_var, #SusyModifierConfig_Report_TemplateB1_var,#SusyModifierConfig_Report_TemplateB2_var{grid-row:1/3} #SusyModifierConfig_CfP_TemplateID_field_label,
-        #SusyModifierConfig_field_CfP_TemplateID,#SusyModifierConfig_CfP_ReminderID_field_label,#SusyModifierConfig_field_CfP_ReminderID{display:block;} #SusyModifierConfig_field_Journal{width:auto} .sk_field_reset:focus{outline:1px dotted #666}
-        .sk_field_reset{border:0;border-radius:3px;background:transparent;color:#777;font-size:14px;line-height:16px;margin-left:2px;padding:0 4px;cursor:pointer;vertical-align:middle}.sk_field_reset:hover{background:#BEDBC2;color:#333}`
+        'css': `
+        html{height:100%}
+        #SusyModifierConfig{--sk-ink:#20342a;--sk-muted:#53685c;--sk-green:#2b6046;--sk-line:#dce6de;--sk-input:#b8cabc;--sk-gutter:clamp(14px,2vw,30px);--sk-panel:clamp(12px,1.4vw,18px)}
+        #SusyModifierConfig{height:100%;margin:0;overflow:hidden;background:#f1f6ef;color:var(--sk-ink);color-scheme:light;font:14px/1.45 system-ui,"Segoe UI","Microsoft YaHei",sans-serif}
+        #SusyModifierConfig *{box-sizing:border-box;font-family:inherit}
+        #SusyModifierConfig_wrapper{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100%}
+        #SusyModifierConfig .config_header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px 16px;padding:15px var(--sk-gutter);background:#fcfefb;border-bottom:1px solid var(--sk-line);text-align:left}
+        .sk_settings_title{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 12px;min-width:0}
+        .sk_settings_title h1{margin:0;font-size:clamp(20px,2.2vw,25px);font-weight:700;line-height:1.2;letter-spacing:-.025em;overflow-wrap:anywhere}
+        .sk_settings_title span,#sk_first_visit{font-size:12px;font-weight:500;color:var(--sk-muted)}
+        #sk_first_visit{padding:4px 8px;border:0;border-radius:5px;background:transparent;cursor:pointer}
+        #sk_first_visit:hover,.sk_field_reset:hover{background:#eaf3eb;color:var(--sk-green)}
+        .sk_settings_content{overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scroll-padding-block:12px;padding:16px var(--sk-gutter) 24px}
+        .sk_settings_group+.sk_settings_group{margin-top:20px}
+        #SusyModifierConfig .section_header{margin:0 0 10px;padding-left:9px;border:0;border-left:3px solid #78a88a;background:none;color:var(--sk-green);font-size:15px;font-weight:700;text-align:left}
+        .sk_settings_panel{background:#fcfefc;border:1px solid var(--sk-line);border-radius:10px}
+        .sk_settings_panel+.sk_settings_panel{margin-top:12px}
+        #SusyModifierConfig .section_desc{margin:0;padding:10px var(--sk-panel) 0;border:0;background:none;color:var(--sk-ink);font-size:14px;font-weight:700;text-align:left}
+        #SusyModifierConfig .section_header_holder{margin:0;padding:10px var(--sk-panel);min-width:0}
+        .sk_settings_panel>.section_header_holder+.section_header_holder{border-top:1px solid var(--sk-line)}
+        .sk_settings_options{display:flex;flex-wrap:wrap;align-items:center;gap:5px 20px}
+        #SusyModifierConfig .section_header_holder.sk_settings_template_row{padding-block:7px}
+        .sk_settings_template_row:last-child{border-radius:0 0 9px 9px}
+        .sk_settings_template_row:has(.sk_settings_template_toggle[aria-expanded="true"]){background:#f3f8f2}
+        .config_var.sk_settings_template_summary{display:grid;grid-template-columns:minmax(0,13rem) minmax(0,1fr) auto;align-items:center;gap:5px 12px}
+        .config_var.sk_settings_template_summary:has(>input[type="checkbox"]){display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:7px}
+        .sk_settings_template_summary .field_label{justify-self:start}
+        .sk_settings_template_toggle{display:inline-flex;align-items:center;gap:8px;justify-self:end;min-height:30px;padding:0 8px;border:0;border-radius:5px;background:transparent;color:var(--sk-green);font:inherit;font-size:13px;white-space:nowrap;cursor:pointer}
+        .sk_settings_template_toggle:hover{background:#eaf3eb}
+        .sk_settings_template_toggle::after{content:"";width:5px;height:5px;margin-bottom:3px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
+        .sk_settings_template_toggle[aria-expanded="true"]::after{margin:3px 0 0;transform:rotate(225deg)}
+        .sk_settings_template_fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) repeat(2,minmax(0,1.18fr));gap:8px 12px;align-items:start;margin-top:7px;padding:8px 0 3px;border-top:1px solid var(--sk-line)}
+        .sk_settings_promotion_fields{--sk-editor-height:141px;grid-template-columns:repeat(2,minmax(0,1fr))}
+        #SusyModifierConfig_Report_Notes_var{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px}
+        #SusyModifierConfig_field_Report_Notes{width:12rem}
+        #SusyModifierConfig .config_var{margin:0;min-width:0;max-width:100%}
+        #SusyModifierConfig .field_label{margin:0;color:var(--sk-ink);font-size:13px;line-height:1.35;font-weight:600;cursor:pointer;overflow-wrap:anywhere}
+        .config_var:has(>textarea){display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 6px;align-items:center}
+        .config_var:has(>select){display:grid;gap:5px}
+        #SusyModifierConfig .sk_settings_template_fields .config_var:has(>textarea) .field_label{color:var(--sk-muted);font-size:12.5px}
+        .sk_settings_options .config_var:has(>select,>input[type="text"]){display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
+        .config_var:has(>input[type="checkbox"]){display:flex;align-items:center;gap:7px}
+        .config_var:has(>input[type="checkbox"]) .field_label{display:flex;align-items:center;min-height:28px}
+        .config_var:has(>input[type="hidden"]),.sk_settings_template_fields[hidden]{display:none}
+        .sk_settings_options:not(:has(#SusyModifierConfig_field_Journal option[value="Mathematics"]:checked))>#SusyModifierConfig_Interface_SME_var{display:none}
+        input[type="checkbox"]{flex:none;width:16px;height:16px;margin:0;accent-color:var(--sk-green);cursor:pointer}
+        :is(select,input[type="text"],textarea){width:100%;min-width:0;max-width:100%;border:1px solid var(--sk-input);border-radius:6px;background:#fff;color:var(--sk-ink);font:inherit}
+        :is(select,input[type="text"]){height:32px;padding:0 8px;font-size:13px}
+        select{text-overflow:ellipsis}.sk_settings_options :is(select,input[type="text"]){width:auto;max-width:min(100%,18em)}
+        #SusyModifierConfig_field_Interface_SME{width:18em}#SusyModifierConfig_field_GE_Check_SI_ID{width:8em}
+        #SusyModifierConfig textarea{grid-column:1/-1;height:var(--sk-editor-height,103px);min-height:65px;padding:5px 8px;resize:vertical;font:12px/19px ui-monospace,Consolas,"Microsoft YaHei",monospace}
+        :is(select,input,textarea,button,a):focus-visible{outline:2px solid #39795a;outline-offset:2px}
+        #SusyModifierConfig :is(.saveclose_buttons,input[type="button"]){margin:0;padding:0 14px;min-height:34px;border:1px solid var(--sk-input);border-radius:6px;background:#fff;color:var(--sk-ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+        #SusyModifierConfig :is(.saveclose_buttons,input[type="button"]):hover{background:#edf4ee}
+        .sk_settings_options:has(>#SusyModifierConfig_Susy_Theme_var){column-gap:clamp(12px,1.75vw,20px)}
+        #SusyModifierConfig #SusyModifierConfig_Susy_Theme_var{margin-inline-start:auto}
+        #SusyModifierConfig #SusyModifierConfig_field_Susy_Theme{background:#dceee1;border-color:#9cbea6;color:#224e38;font-weight:700}
+        #SusyModifierConfig #SusyModifierConfig_field_Susy_Theme:hover{background:#cde6d5;border-color:#86ad92}
+        #SusyModifierConfig_buttons_holder{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;padding:9px var(--sk-gutter);border-top:1px solid var(--sk-line);background:#fcfefb}
+        #SusyModifierConfig .saveclose_buttons{min-width:72px}
+        #SusyModifierConfig #SusyModifierConfig_saveBtn{min-width:82px;background:var(--sk-green);border-color:var(--sk-green);color:#fff}
+        #SusyModifierConfig #SusyModifierConfig_saveBtn:hover{background:#234e3a}
+        .reset_holder{margin-inline-end:auto}#SusyModifierConfig .reset{color:var(--sk-muted);font-size:12px;text-underline-offset:3px}
+        .sk_field_reset{display:grid;place-items:center;width:24px;height:24px;padding:0;border:0;border-radius:4px;background:transparent;color:var(--sk-muted);font-size:16px;line-height:1;cursor:pointer}
+        @media(max-width:740px){.sk_settings_template_fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        @media(max-width:620px){
+            .config_var.sk_settings_template_summary:has(>select){grid-template-columns:minmax(0,1fr) auto;column-gap:6px}
+            .sk_settings_template_summary select{grid-column:1/-1;grid-row:2}
+            .sk_settings_template_summary:has(>select)>.sk_settings_template_toggle{grid-column:2;grid-row:1}
+        }
+        @media(max-width:600px){.sk_settings_promotion_fields{grid-template-columns:minmax(0,1fr)}}
+        @media(max-width:420px){.sk_settings_template_fields{grid-template-columns:minmax(0,1fr)}#sk_first_visit{padding-left:0}}
+        @media(pointer:coarse){#SusyModifierConfig button.saveclose_buttons{min-height:40px}}
+        `
     });
 })();
+
+function skLayoutSettings(frame, settings) {
+    const wrapper = settings.find('#SusyModifierConfig_wrapper'), header = wrapper.children('.config_header'), sections = wrapper.children('.section_header_holder');
+    $(frame).attr('title', header.find('h1').text()).css({
+        width: 'min(1520px, calc(100vw - clamp(20px, 5vw, 72px)))', height: 'min(1040px, calc(100vh - clamp(20px, 6vh, 72px)))',
+        maxWidth: 'none', maxHeight: 'none', boxSizing: 'border-box', inset: '0', margin: 'auto', background: '#f1f6ef',
+        border: '1px solid #c6d5ca', borderRadius: '12px', boxShadow: '0 16px 56px rgba(22,42,32,.23), 0 0 0 100vmax rgba(22,42,32,.22)'
+    });
+    if (CSS.supports('height', '100dvh')) frame.style.height = 'min(1040px, calc(100dvh - clamp(20px, 6dvh, 72px)))';
+
+    const content = $('<main class="sk_settings_content">').insertAfter(header); let group, panel, openTemplate;
+    sections.each(function () {
+        const row = $(this), heading = row.children('.section_header'), subheading = row.children('.section_desc'), editors = row.children('.config_var').has('textarea');
+        if (heading.length) {
+            group = $('<section class="sk_settings_group">').attr('aria-labelledby', heading.attr('id')).appendTo(content); heading.attr({ role: 'heading', 'aria-level': '2' }).appendTo(group);
+        }
+        if (heading.length || subheading.length) panel = $('<div class="sk_settings_panel">').appendTo(group);
+        subheading.attr({ role: 'heading', 'aria-level': '3' }).appendTo(panel); row.appendTo(panel);
+        if (editors.length) {
+            const template = row.children('.config_var').has('select, input[type="checkbox"]');
+            const promotion = template.is('#SusyModifierConfig_ManuscriptFunc_var');
+            const editLabel = promotion ? '🛠️ 编辑模板' : '编辑替换规则', closeLabel = promotion ? '🛠️ 收起模板' : '收起替换规则';
+            const fieldsId = this.id + '_editors', toggleId = this.id + '_toggle';
+            const fields = $('<div class="sk_settings_template_fields" hidden>').attr('id', fieldsId).append(editors, row.children('#SusyModifierConfig_Report_Notes_var')).appendTo(row); fields.toggleClass('sk_settings_promotion_fields', promotion);
+            const toggle = $('<button type="button" class="sk_settings_template_toggle" aria-expanded="false">').text(editLabel)
+                .attr({ id: toggleId, 'aria-controls': fieldsId, 'aria-labelledby': template.children('.field_label').attr('id') + ' ' + toggleId }).appendTo(template.addClass('sk_settings_template_summary'));
+            row.addClass('sk_settings_template_row');
+            const setExpanded = expanded => { fields.prop('hidden', !expanded); toggle.attr('aria-expanded', String(expanded)).text(expanded ? closeLabel : editLabel); };
+            toggle.on('click', function () {
+                const expanded = fields.prop('hidden'); openTemplate?.(false);
+                openTemplate = expanded ? setExpanded : null; openTemplate?.(true);
+                if (expanded) this.scrollIntoView({ block: 'nearest' });
+            });
+        } else row.addClass('sk_settings_options');
+    });
+
+    const actions = wrapper.children('#SusyModifierConfig_buttons_holder'); actions.children('.reset_holder').prependTo(actions); actions.children('#SusyModifierConfig_saveBtn').appendTo(actions);
+}
+
+function skSyncTemplateHeights(doc) {
+    const view = doc.defaultView, groupHeights = new WeakMap(); if (!view.ResizeObserver) return;
+    const observer = new view.ResizeObserver(entries => {
+        const resized = new Map();
+        for (const { target } of entries) {
+            const fields = target.closest('.sk_settings_template_fields'), height = target.offsetHeight;
+            if (height && height !== groupHeights.get(fields)) resized.set(fields, target);
+        }
+        if (!resized.size) return;
+        view.requestAnimationFrame(() => {
+            for (const [fields, source] of resized) {
+                const height = source.offsetHeight; if (!height || height === groupHeights.get(fields)) continue;
+                groupHeights.set(fields, height);
+                const editors = [...fields.querySelectorAll('textarea')].filter(editor => editor.offsetHeight !== height);
+                editors.forEach(editor => { editor.style.height = height + 'px'; });
+            }
+        });
+    });
+    for (const editor of doc.querySelectorAll('.sk_settings_template_fields textarea')) observer.observe(editor, { box: 'border-box' });
+    return observer;
+}
 
 function skLocalDate(date = new Date()) {
     return `${String(date.getFullYear()).padStart(4, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -2297,16 +2416,20 @@ function onInit() {
 
                 var si_id = String(GM_config.get('GE_Check_SI_ID') || "342143").trim();
                 susycheck = "https://susy.mdpi.com/user/guest_editor/check?email=" + encodeURIComponent(mailsdb_email) + "&special_issue_id=" + encodeURIComponent(si_id);
-                GM_xmlhttpRequest({
-                    method: 'GET',
-                    url: susycheck,
-                    onload: function (responseDetails) {
-                        var $jQueryObject = $($.parseHTML(responseDetails.responseText.replace(/data-load-url="\/user/g, 'data-load-url="//susy.mdpi.com/user')));
-                        $("#d1").html($jQueryObject);
-                        $("#d1 .table-show-hide-btn").on("click", function (event) { event.preventDefault(); let rows = $(this).closest("table").find(".show-hide-tr").toggle(); $(this).text(rows.is(":visible") ? "Show less" : "Show more"); });
-                        $("[data-title='Blocked Info']").attr("href", "//susy.mdpi.com" + $("[data-title='Blocked Info']").attr("data-uri"));
+                (async function () {
+                    for (let n = 0; n < 8; n++) {
+                        let wait = skSusyCooldown('ge', 2300) + (n ? 400 : 0);
+                        if (wait > 0) await new Promise(r => setTimeout(r, wait));
+                        let res = await skGMFetchGet(susycheck, 30000), txt = res?.responseText?.trim() || '';
+                        if (res?.status === 200 && txt && !/Operation too frequently/i.test(txt)) {
+                            $("#d1").html($($.parseHTML(txt.replace(/data-load-url="\/user/g, 'data-load-url="//susy.mdpi.com/user'))));
+                            $("#d1 .table-show-hide-btn").on("click", function (event) { event.preventDefault(); let rows = $(this).closest("table").find(".show-hide-tr").toggle(); $(this).text(rows.is(":visible") ? "Show less" : "Show more"); });
+                            $("[data-title='Blocked Info']").attr("href", "//susy.mdpi.com" + $("[data-title='Blocked Info']").attr("data-uri"));
+                            return;
+                        }
                     }
-                });
+                    $("#d1").text("Unable to load invitation record. Please refresh.");
+                })();
             }
         } catch (error) { }
     }
@@ -2314,18 +2437,22 @@ function onInit() {
     //Always: Reviewer checking样式⚙️
     if (window.location.href.indexOf("reviewer/checking/") > -1) {
         try {
-            let Reviewer_ID = $(".morphNotes").attr("data-load-url").match(/morph_notes\/(\d+)/)[1];
-            GM_xmlhttpRequest({
-                method: 'GET',
-                url: "/list/reviewer/invitations-history/" + Reviewer_ID,
-                onload: function (responseDetails) {
-                    $("body").append(responseDetails.responseText.replace(/href="\//g, "href=\"//susy.mdpi.com/"));
-                }
-            });
-            let reviewerEmail = new URLSearchParams(window.location.search).get('email') || '';
-            $(".morphNotes").first().before(' ', skIconLink('https://scholar.google.com/scholar?hl=en&q=' + encodeURIComponent(reviewerEmail),
-                'https://www.google.com/favicon.ico', {}, { style: 'vertical-align: middle;', width: 20, height: 20 }), ' ');
-            $("a:contains('see more')").attr('href', $("a:contains('see more')").attr('data-uri'));
+            if (/Operation too frequently/i.test(document.body?.innerText)) {
+                setTimeout(() => location.reload(), Math.max(1200, skSusyCooldown('reviewer', 1200)));
+            } else {
+                let Reviewer_ID = $(".morphNotes").attr("data-load-url").match(/morph_notes\/(\d+)/)[1];
+                GM_xmlhttpRequest({
+                    method: 'GET',
+                    url: "/list/reviewer/invitations-history/" + Reviewer_ID,
+                    onload: function (responseDetails) {
+                        $("body").append(responseDetails.responseText.replace(/href="\//g, "href=\"//susy.mdpi.com/"));
+                    }
+                });
+                let reviewerEmail = new URLSearchParams(window.location.search).get('email') || '';
+                $(".morphNotes").first().before(' ', skIconLink('https://scholar.google.com/scholar?hl=en&q=' + encodeURIComponent(reviewerEmail),
+                    'https://www.google.com/favicon.ico', {}, { style: 'vertical-align: middle;', width: 20, height: 20 }), ' ');
+                $("a:contains('see more')").attr('href', $("a:contains('see more')").attr('data-uri'));
+            }
         } catch (error) { }
     }
 
@@ -4460,18 +4587,18 @@ function onInit() {
                             var iframeDoc = this.contentDocument || this.contentWindow.document;
                             var cemail = tasks[i].email;
                             $(iframeDoc).find('#form_email').val(cemail);
-                            $(iframeDoc).find('#nextBtn').trigger('click');
+                            setTimeout(() => $(iframeDoc).find('#nextBtn').trigger('click'), skSusyCooldown('reviewer', 1200));
                             waitForKeyElements('#specialBackBtn', process, true, '#processFrame');
                             function process() {
                                 if ($(iframeDoc).find('#keepRviewer').length > 0) {
                                     $(iframeDoc).find('#keepRviewer').trigger('click');
-                                    setTimeout(waitForKeyElements('#nextBtn:visible', function () {
+                                    setTimeout(() => waitForKeyElements('#nextBtn:visible', function () {
                                         $('#inputArea').val($('#inputArea').val().replace(cemail, "✅" + cemail));
-                                        setTimeout(loadNextURL, 1000);
-                                    }, true, '#processFrame'), 1000)
+                                        setTimeout(loadNextURL, 1200);
+                                    }, true, '#processFrame'), 1000);
                                 } else {
                                     $('#inputArea').val($('#inputArea').val().replace(cemail, "❌" + cemail));
-                                    setTimeout(loadNextURL, 100);
+                                    setTimeout(loadNextURL, 1200);
                                 }
                             }
                             $('#processFrame').off('load');
@@ -4638,39 +4765,14 @@ function onInit() {
         }, false);
     }
 
-    if (window.location.href.indexOf("crm.mdpi.cn/conference/") + window.location.href.indexOf("crm.mdpi.cn/scholar_visits/") + window.location.href.indexOf("crm.mdpi.cn/sponsorship/") + window.location.href.indexOf("crm.mdpi.cn/email/") > -4 && GM_config.get('Hidden_Func')) {
+    if (window.location.href.indexOf("crm.mdpi.cn/conference/") + window.location.href.indexOf("crm.mdpi.cn/sponsorship/") > -2 && GM_config.get('Hidden_Func')) {
         try {
             waitForKeyElements('button[label="Accept"]:visible:last', function(acceptBtn) {
-                function doAccept() {
-                    acceptBtn.trigger('click');
-                    waitForKeyElements('button:contains("OK"):visible', function($okBtn) {
-                        $okBtn.first().trigger('click');
-                        setTimeout(function() { location.reload(); }, 1500);
-                    }, 10000);
-                }
-                if ($("input[id^='rc_select_']").length > 0){
-                    const $inputs = $("input[id^='rc_select_']");
-                    let index = 0;
-                    function processNextInput() {
-                        if (index >= $inputs.length) {
-                            alert('Please check meeting report.');
-                            return;
-                        }
-                        const input = $inputs[index];
-                        index++;
-                        input.focus();
-                        const arrowDownEvent = new KeyboardEvent('keydown', {bubbles: true, cancelable: true, key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, which: 40});
-                        input.dispatchEvent(arrowDownEvent);
-
-                        waitForKeyElements('.ant-select-item-option[title="Qualified"]:visible', function($option) {
-                            $option[0].click();
-                            setTimeout(processNextInput, 1500);
-                        }, true);
-                    }
-                    processNextInput();
-                } else {
-                    doAccept();
-                }
+                acceptBtn.trigger('click');
+                waitForKeyElements('button:contains("OK"):visible', function($okBtn) {
+                    $okBtn.first().trigger('click');
+                    setTimeout(function() { location.reload(); }, 1500);
+                }, 10000);
             }, true);
         } catch (error) { }
     }
@@ -4742,6 +4844,11 @@ function waitForText(element, text, callback, freq) {
 
 
 function skGMFetchGet(url, timeout = 0) { return new Promise(resolve => { GM_xmlhttpRequest({ method: "GET", url: url, timeout, onload: resolve, onerror: resolve, ontimeout: resolve, onabort: resolve }); }) };
+function skSusyCooldown(name, ms) {
+    const key = 'skSusyCooldown_' + name, now = Date.now(), saved = Number(GM_getValue(key, 0)) || 0;
+    const next = saved > now && saved - now < 300000 ? saved : now;
+    GM_setValue(key, next + ms); return next - now;
+}
 function skStringToRegex(str) { if (str.startsWith("[Regex]")) { return RegExp(str.substring(7), "g"); } else { return str } };
 function skStringToFunction(str) { if (str.indexOf("function ") == 0) { let funcTest = new Function('return ' + str); return funcTest(); } else { return str } };
 function skSidebarSize() {
@@ -4991,11 +5098,10 @@ function skAddReviewers() {
                 }
                 const emailPattern = /\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/g;
                 while ((emailArray = emailPattern.exec(line)) !== null) {
-                    if (add_id.startsWith("https://")) { // 如果 add_id 是网址，则以这种方式构建 URL 并打开
-                        GM_openInTab(add_id + "?finder2_reviewer_email=" + emailArray[0], true);
-                    } else { // 如果 add_id 是字母数字-数字模式，则以原有方式构建 URL 并打开
-                        GM_openInTab(window.location.origin + "/build/img/design/susy-logo.png?term=" + add_id + "&finder2_reviewer_email=" + emailArray[0], true);
-                    }
+                    const targetUrl = add_id.startsWith("https://")
+                        ? add_id + "?finder2_reviewer_email=" + emailArray[0]
+                        : window.location.origin + "/build/img/design/susy-logo.png?term=" + add_id + "&finder2_reviewer_email=" + emailArray[0];
+                    setTimeout(() => GM_openInTab(targetUrl, true), skSusyCooldown('reviewer', 1500));
                 }
             });
         });
@@ -5392,3 +5498,327 @@ body:where(.sk-work-login){margin:0;min-height:100%;background:#f3f6f8;color:#26
 `;
 
 var { icon_mrs, icon_magnifier, icon_pencil, icon_mail, icon_note, icon_note_add, icon_arrow, icon_book, icon_plus, icon_users, icon_webs, icon_scopus, icon_retractiondatabase, icon_researchgate } = JSON.parse(skDecodeResourceText('icons') || '{}');
+
+// --- Embedded SuSy Scholar Screener (minified; edit Scholar-screening.user.js) ---
+!function(){"use strict";if("undefined"!=typeof window&&window.top!==window)return;if("undefined"!=typeof window&&!globalThis.__GE_SCREEN_TEST__&&!GM_getValue("isUserNameMatch",!1))return
+;const e="undefined"!=typeof jQuery?jQuery:globalThis.jQuery,t="susy_ge_screener_",n="susy_ge_scopus_bridge_",i="ge_screen_request",s="ge_screen_channel",r="GE_Check_SI_ID",a="342143",o=Number.POSITIVE_INFINITY,c="[工作中] Scopus Scholar Screening — 请勿关闭",
+l=Object.freeze({
+AGRI:"Agricultural and Biological Sciences",ARTS:"Arts and Humanities",BIOC:"Biochemistry, Genetics and Molecular Biology",BUSI:"Business, Management and Accounting",CENG:"Chemical Engineering",CHEM:"Chemistry",COMP:"Computer Science",
+DECI:"Decision Sciences",DENT:"Dentistry",EART:"Earth and Planetary Sciences",ECON:"Economics, Econometrics and Finance",ENER:"Energy",ENGI:"Engineering",ENVI:"Environmental Science",HEAL:"Health Professions",IMMU:"Immunology and Microbiology",
+MATE:"Materials Science",MATH:"Mathematics",MEDI:"Medicine",MULT:"Multidisciplinary",NEUR:"Neuroscience",NURS:"Nursing",PHAR:"Pharmacology, Toxicology and Pharmaceutics",PHYS:"Physics and Astronomy",PSYC:"Psychology",SOCI:"Social Sciences",
+VETE:"Veterinary"}),u=Object.freeze({email:"Scopus（通过邮箱匹配）",orcid:"Scopus（通过 ORCID 匹配）","name-affil":"Scopus（通过姓名+机构匹配）",susy:"Scopus（来自 SuSy 链接）"}),d={yes:"✓",no:"✕","not-applicable":"∅",pending:"…"
+},m=/[A-Z0-9](?:[A-Z0-9.!#$%&'*+/=?^_`{|}~-]*[A-Z0-9])?@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi,p=Object.freeze({queryMode:"scopus",minimumHIndex:8,subjectName:"Mathematics",maximumSubjectRank:5,
+maximumRejectionRate:50,minimumSubmissionsPastYear:3,minimumReviewAcceptRate:30,minimumDecisionsPastYear:3,inactivePubYears:3,inactiveInviteLimit:5,mailLookbackDays:180
+}),f=Object.freeze(["Guest Editor","Topic Editor","Editorial Board Member","Section Board Member","Topical Advisory Panel Member","Section Editor","Academic Editor","Associate Editor","Editor-in-Chief"]),g=Object.freeze({eligible:{label:"合适",
+suitable:!0},scopus:{label:"基础通过",suitable:null},unsuitable:{label:"不合适",suitable:!1},review:{label:"待复核",suitable:null}}),h={channelId:"",requestKey:"",readyKey:"",workerHandle:null,readyPromise:null,requests:new Map,pending:new Map,
+cleanupRegistered:!1};function b(e,t=0){const n=Number(e);return Number.isFinite(n)?n:t}function y(e,t,n,i){const s=Number(e);return Number.isFinite(s)?Math.min(n,Math.max(t,s)):i}function w(e){return Array.from(new Set(e.filter(Boolean)))}
+function v(e){return String(e||"").replace(/\u00a0/g," ").replace(/\s+/g," ").trim()}function S(e){return w((String(e||"").match(m)||[]).map(e=>e.toLowerCase()))}function I(e,t){const n=S(e)[0]||"",i=S(t)[0]||"";if(!n||!i)return!1
+;if(n===i)return!0;const[s,r]=n.split("@"),[a,o]=i.split("@"),c=s.replace(/\+.*/,"").replace(/[^a-z0-9]/g,""),l=a.replace(/\+.*/,"").replace(/[^a-z0-9]/g,"");return(r===o||r.endsWith(`.${o}`)||o.endsWith(`.${r}`))&&c.length>=3&&c===l}
+function x(e){const t=/^(?:prof|professor|dr|doctor|mr|mrs|ms|miss|sir|jr|sr|phd|md)$/;return v(e).normalize("NFKD").replace(/\p{M}/gu,"").toLowerCase().replace(/[’']/g,"").replace(/[^\p{L}\p{N}]+/gu," ").split(" ").filter(e=>e&&!t.test(e))}
+function $(e,t){const n=x(e),i=x(t);if(!n.length||!i.length)return!1;if(n.join(" ")===i.join(" "))return!0;const[s,r]=n.length<=i.length?[n,i]:[i,n];if(s.length<2)return!1;const a=new Set;return s.every(e=>{
+const t=r.findIndex((t,n)=>!a.has(n)&&(e===t||1===e.length&&t.startsWith(e)||1===t.length&&e.startsWith(t)));return!(t<0||(a.add(t),0))})}function k(e){const t=v(e).replace(/This link is disabled\.?/gi,"").replace(/^Info\s+/i,"").trim()
+;if(!t)return""
+;const n=t.replace(/^\d+\s*/,"").split(/[,;，；]/).map(e=>v(e.replace(/\b\d{4,6}\b/g,""))).filter(Boolean),i=/\b(university|univ\.?|universit\S*|institute|inst\.?|academy|polytechnic|politecnico|hochschule|college|hospital|cnrs|inria|csic|infn|cern|egyetem)\b/i,
+s=/\b(department|dept\.?|school of|faculty of|college of|laboratory|key lab|division|ministry|group|program)\b/i
+;return n.find(e=>i.test(e)&&!s.test(e))||n.find(e=>i.test(e))||(1===n.length?n[0]:"")}function R(e){return[...e].sort((e,t)=>b(t.hIndex,-1)-b(e.hIndex,-1)||b(t.documentCount,-1)-b(e.documentCount,-1))[0]||null}function C(e){
+return v(e).toLowerCase()}const j=Object.freeze({jan:0,january:0,feb:1,february:1,mar:2,march:2,apr:3,april:3,may:4,jun:5,june:5,jul:6,july:6,aug:7,august:7,sep:8,sept:8,september:8,oct:9,october:9,nov:10,november:10,dec:11,december:11})
+;function M(e){const t=v(e),n=t.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);if(n){const e=new Date(Number(n[1]),Number(n[2])-1,Number(n[3]));return Number.isNaN(e.getTime())?null:e}const i=t.match(/\b(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})\b/)
+;if(!i)return null;const s=j[i[2].toLowerCase()];if(!Number.isInteger(s))return null;const r=new Date(Number(i[3]),s,Number(i[1]));return Number.isNaN(r.getTime())?null:r}function P(e,t=new Date){const n=e instanceof Date?e:M(e);if(!n)return!1
+;const i=new Date(t.getTime());i.setHours(0,0,0,0),i.setFullYear(i.getFullYear()-1);const s=new Date(t.getTime());return s.setHours(23,59,59,999),n>=i&&n<=s}function E(e){
+const t=(new DOMParser).parseFromString(String(e||""),"text/html"),n=v(t.title),i=t.body?.innerText||t.body?.textContent||"";if(/sign in|log in|login/i.test(n)&&/password/i.test(i))throw new Error("登录状态已失效。");return t}function A(e){
+return(e.body?.innerText||e.body?.textContent||"").replace(/\u00a0/g," ")}function N(e){return v(e?.innerText||e?.textContent||"")}function _(t){return e("table",t).get().map(t=>e("tr",t).get().map(t=>e("th,td",t).get().map(N)))}function G(e,t){
+for(const n of e){const e=n.findIndex(e=>t.every(t=>e.some(e=>v(e).toLowerCase()===t.toLowerCase())));if(e>=0)return{headers:n[e],rows:n.slice(e+1).filter(e=>e.some(Boolean))}}return{headers:[],rows:[]}}function Y(t){
+for(const n of e("a[href]",t)){const e=String(n.href||"").match(/scopus\.com\/(?:authid\/detail\.uri\?[^#]*authorId=|pages\/authors\/)(\d+)/i);if(e)return e[1]}
+const n=A(t).match(/scopus\.com\/(?:authid\/detail\.uri\?[^\s]*authorId=|pages\/authors\/)(\d+)/i);return n?n[1]:null}function T(t){for(const n of e("a[href]",t)){
+const e=String(n.getAttribute("href")||n.href||"").match(/\/(?:reivewer\/managment|reviewer\/management)\/edit\/(\d+)/i);if(e)return e[1]}const n=e('[data-auto-load-url*="/list/reviewer/invitations-history/"]',t)[0]
+;return String(n?.getAttribute("data-auto-load-url")||"").match(/invitations-history\/(\d+)/i)?.[1]||null}function L(e){
+return w(String(e||"").split(/\r?\n/).flatMap(e=>f.filter(t=>new RegExp(`^\\s*(?:[-•]\\s*)?${t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}\\s+(?:of|for|in)\\s+\\S`,"i").test(e))))}function D(e){const t=String(e||"").toLowerCase()
+;return"grey"===t?"Gray":t?`${t[0].toUpperCase()}${t.slice(1)}`:""}function H(t,n=new Date){const i=E(t),s=A(i);if(!/Overview:/i.test(s))throw new Error("Info 页面异常")
+;const r=s.search(/Voucher Record|reviewer information:/i),a=v(r>=0?s.slice(0,r):s.slice(0,12e3)),o=v(e('[data-section="reviewer-profile"] b',i).first().text()||e('[data-section="editors"] b',i).first().text()||e('[data-section="account-info"] b',i).first().text()),
+c=a.match(/Overview:\s*\S+\s+(?:CRM\s+)?(.+?)\s*\([^)]*\)\s*(?:registered on (?:SUSY|SciProfiles)|is:|$)/i),l=new Map
+;e('[data-section="submitted-manuscripts"] table tr',i).each((t,n)=>{const i=e(".status",n)[0],s=e(".submission-date",n)[0];if(!i&&!s)return;const r=e(".msid",n).get().map(N).find(e=>e&&!/^Manuscript Summary$/i.test(e))||`sub-${t}`
+;l.has(r)||l.set(r,{status:N(i),date:s?.getAttribute("title")||N(s)})});const u=Array.from(l.values()),d=Array.from(s.matchAll(/submitted\s+(\d+)\s+manuscripts?/gi),e=>Number(e[1])).reduce((e,t)=>e+t,0),m=e('[data-section="editors"]',i)[0],p=[]
+;for(const t of m?e("table tr",m):[]){const n=e(".submission-date",t)[0];n&&p.push({id:N(e(".msid",t)[0]),date:n.getAttribute("title")||N(n)})}const g=m?A({body:m
+}):"",h=m?f.filter(e=>new RegExp(`\\bis:\\s*${e.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}\\s+(?:of|for|in)\\s+\\S`,"i").test(g)):[],y=w(e("[title]",i).get().filter(t=>!e(t).closest("#same-scholar-profile-info, .suspected-same-scholar-container").length).map(e=>D(String(
+e.getAttribute("title")||"").match(/\bEthics?\s+(Red|Orange|Yellow|Gray|Grey)\s+Card\b/i)?.[1]))),S=e('[data-section="reviewer-profile"] tr',i).get().find(t=>/^Affiliation$/i.test(N(e("th",t)[0]))),I=v(N(e("td",S)[0])).replace(/This link is disabled\.?/gi,""),x=a.match(
+/\b(\d{4}-\d{4}-\d{4}-\d{3}[\dX])\b/i)?.[1]||""
+;return{name:o||v(c?.[1]||""),affiliation:I,orcid:x,submitted:u.length||d,rejected:u.filter(e=>/^rejected\b/i.test(e.status)).length,submittedPastYear:u.filter(e=>!/\bwithdrawn\b/i.test(e.status)&&P(e.date,n)).length,
+reviewed:b(s.match(/reviewed\s+(\d+)\s+manuscripts?/i)?.[1]),decisionsPastYear:new Set(p.map((e,t)=>P(e.date,n)?v(e.id)||`row-${t}`:null).filter(Boolean)).size,scopusId:Y(i),reviewerId:T(i),ethicsCards:y,roles:h,roleHistory:h.length>0}}
+function V(t){const n=E(t),i=A(n),s=e('button,input[type="button"],input[type="submit"],a',n).get().filter(e=>{const t=String(e.getAttribute("style")||"").toLowerCase()
+;return!e.hasAttribute("hidden")&&"true"!==e.getAttribute("aria-hidden")&&!/display\s*:\s*none|visibility\s*:\s*hidden/.test(t)&&!/(^|\s)(hide|hidden|d-none)(\s|$)/i.test(String(e.className||""))
+}).map(e=>v(e.innerText||e.textContent||e.value||"")).filter(Boolean).some(e=>/^Proceed$/i.test(e)),r=/publishers\s+and\s+MEs\s+can\s+add\s+GEs/i.test(i)?"not-applicable":s?"yes":"no",a=_(n),o=G(a,["Special Issue","Status"]),c=o.headers.findIndex(e=>/^Status$/i.test(
+e)),l=o.rows.map(e=>({
+specialIssue:e[0]||"",journal:e[1]||"",status:c>=0?C(e[c]):"",cells:e})),u=G(a,["Role","Journal","Status"]),d=u.headers.findIndex(e=>/^Status$/i.test(e)),m=u.rows.map(e=>({role:e[0]||"",journal:e[1]||"",status:d>=0?C(e[d]):"",cells:e
+})),p=l.map(e=>e.status).filter(Boolean),g=v(i),h=v(g.match(/Name:\s*(.*?)\s*Title:/i)?.[1]||""),y=v(g.match(/Affiliation:\s*(.*?)\s*(?:Homepage:|H-index:|Scilit|Research keywords:|Notes:|----)/i)?.[1]||"").replace(/This link is disabled\.?/gi,"").replace(/^Info\s+/i,
+"").trim(),S=p.filter(e=>/^accepted\b/.test(e)).length,I=p.filter(e=>/^interested\b/.test(e)).length,x=p.filter(e=>/^declined\b/.test(e)).length,$=p.filter(e=>e&&"proposed"!==e).length,k=m.filter(e=>/^(?:online|active|completed|closed|expired|offline|resigned)\b/.test(
+C(e.status))&&e.journal&&f.some(t=>C(t)===C(e.role))),R=w(e("p,li,td,div",n).get().flatMap(e=>L(N(e)))),j=w([...R,...k.map(e=>e.role)])
+;if(!s&&!/E-?Mail:|Name:|not allowed to invite|Special Issue|publishers\s+and\s+MEs\s+can\s+add\s+GEs/i.test(i))throw new Error("GE 页面异常");return{hasProceed:s,proceedStatus:r,
+ethicsCards:w(e(".card-badge",n).get().filter(t=>!e(t).closest("#same-scholar-profile-info, .suspected-same-scholar-container").length).map(e=>D(String(e.className||"").match(/\bcard-(red|orange|yellow|gray|grey)\b/i)?.[1]))),name:h,
+affiliation:y,hIndex:b(g.match(/H-index:\s*(\d+)/i)?.[1],null),scopusId:Y(n),roleRows:k,roles:j,acceptedCount:S,interestedCount:I,declinedCount:x,attemptCount:$,roleHistory:j.length>0}}function O(e){const t=E(e),n=A(t)
+;if(!/Primary email:|Email:|reviewer/i.test(n))throw new Error("Reviewer 页面异常");return{reviewPastYear:b(n.match(/Number of review received in the past year:\s*(\d+)/i)?.[1]),scopusId:Y(t),reviewerId:T(t)}}function q(e,t=new Date){
+const n=G(_(E(e)),["Manuscript ID","Status","Added on"]);if(!n.headers.length)throw new Error("Reviewer 历史页面异常");const i=n.headers.findIndex(e=>/^Status$/i.test(e)),s=n.headers.findIndex(e=>/^Added on$/i.test(e)),r=n.rows.map(e=>({
+status:e[i]||"",addedOn:e[s]||""})).filter(e=>v(e.status)&&!/^Uninvited\b/i.test(v(e.status))),a=r.filter(e=>/^(?:Accepted|Review received|Report received)\b/i.test(v(e.status)));return{invitationCount:r.length,acceptedCount:a.length,
+declinedCount:r.filter(e=>/^Declined\b/i.test(v(e.status))).length,invitationPastYearCount:r.filter(e=>P(e.addedOn,t)).length,acceptedPastYearCount:a.filter(e=>P(M(e.status)||e.addedOn,t)).length}}function F(t){const n=E(t),i=A(n)
+;if(!/Summary of current results batch:|Search:/i.test(i))throw new Error("MailsDB 页面异常");const s=e("article",n)[0],r=A(s?{body:s}:n),a=i.match(/Summary of current results batch:\s*(\d+)/i),o=[]
+;for(const t of e("table tr",n))for(const n of e("td",t)){const e=N(n);/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}$/.test(e)&&o.push(e)}
+const c=Array.from(r.matchAll(/Submitted\s+(\d+)\s+papers?/gi),e=>Number(e[1])),l=Array.from(r.matchAll(/\b\d+\s+published,\s*(\d+)\s+rejected\b/gi),e=>Number(e[1])),u=Array.from(r.matchAll(/Invited\s+(\d+)\s+times to review\.\s*(\d+)\s+reviews?/gi)),d=e(
+"article .label",n).get().find(e=>/^Editor$/i.test(N(e)))
+;let m=d?.nextElementSibling||null;for(;m&&"DIV"!==m.tagName;)m=m.nextElementSibling;const p=m?e("li",m).get().map(N).filter(Boolean):[],f=w((m?p.length?p:[A({body:m})]:[r.match(/(?:^|\n)[ \t]*Editor[ \t]*\n+([\s\S]*)$/i)?.[1]||""]).flatMap(L))
+;return{recentMailCount:b(a?.[1]),latestMail:o[0]||null,authorSubmissions:c.reduce((e,t)=>e+t,0),authorRejected:l.reduce((e,t)=>e+t,0),reviewInvitations:u.reduce((e,t)=>e+Number(t[1]||0),0),reviewReports:u.reduce((e,t)=>e+Number(t[2]||0),0),
+roles:f,roleHistory:f.length>0}}function U(e,t=null){let n;try{n="string"==typeof e?JSON.parse(e):e}catch(e){throw new Error("Scopus API 未返回 JSON。")}if(!n||"object"!=typeof n||!n.authorId)throw new Error("Scopus API 数据不完整。")
+;if(t&&String(n.authorId)!==String(t)&&!n.matchSource)throw new Error("Scopus Author ID 不匹配。");const i=Array.isArray(n.publishedSubjectAreas)?n.publishedSubjectAreas.map(e=>({code:e.code||"",name:v(e.name||l[e.code]||""),
+count:Number.isFinite(Number(e.count??e.documentCount))?Number(e.count??e.documentCount):null
+})).filter(e=>e.name):[],s="number"==typeof n.hindex||"string"==typeof n.hindex&&""!==n.hindex.trim()?Number(n.hindex):NaN,r=Number.isSafeInteger(s)&&s>=0?s:null,a=w([...S(n.emailAddress),...S(n.email),...Array.isArray(n.emailAddresses)?n.emailAddresses.flatMap(S):[]])
+;return{authorId:String(n.authorId),hIndex:r,documentCount:b(n.documentCount,null),citationCount:b(n.citationCount,null),latestPubYear:b(n.latestPubYear,null),institution:v(n.institution||""),country:v(n.country||""),
+matchSource:n.matchSource||"",subjects:i,preferredName:v("string"==typeof n.preferredName?n.preferredName:n.preferredName?.full||""),emails:a}}function B(e){return Boolean(e&&e.ok&&e.data)}function z(e,t,n){if(!B(n))return{needsReview:!1,
+warning:""};const i=n.data;if("email"===i.matchSource||"orcid"===i.matchSource)return{needsReview:!1,warning:"",emailMatched:!0,nameMatched:!0,scopusEmails:i.emails||[],scopusName:i.preferredName||""}
+;const s=w(Array.isArray(i.emails)?i.emails.flatMap(S):[]),r=v(i.preferredName||""),a=w((Array.isArray(t)?t:[t]).map(v)),o=s.some(t=>I(e,t)),c=Boolean(r)&&a.some(e=>$(e,r));return o||c?{needsReview:!1,warning:"",emailMatched:o,nameMatched:c,
+scopusEmails:s,scopusName:r}:{needsReview:!0,warning:"Scopus 身份待核",emailMatched:o,nameMatched:c,scopusEmails:s,scopusName:r}}function K(...e){return Math.max(0,...e.map(e=>b(e)))}function W(e={},t={},n="full"){const i={
+minimumHIndex:y(t.minimumHIndex,0,500,p.minimumHIndex),subjectName:v(t.subjectName)||p.subjectName,maximumSubjectRank:y(t.maximumSubjectRank,1,50,p.maximumSubjectRank),maximumRejectionRate:y(t.maximumRejectionRate,0,100,p.maximumRejectionRate),
+minimumSubmissionsPastYear:y(t.minimumSubmissionsPastYear,1,500,p.minimumSubmissionsPastYear),minimumReviewAcceptRate:y(t.minimumReviewAcceptRate,0,100,p.minimumReviewAcceptRate),
+minimumDecisionsPastYear:y(t.minimumDecisionsPastYear,1,500,p.minimumDecisionsPastYear),inactivePubYears:y(t.inactivePubYears,1,30,p.inactivePubYears),inactiveInviteLimit:y(t.inactiveInviteLimit,0,1e3,p.inactiveInviteLimit),
+mailLookbackDays:y(t.mailLookbackDays,1,3650,p.mailLookbackDays)
+},s=B(e.info)?e.info.data:{},r=B(e.ge)?e.ge.data:{},a=B(e.reviewer)?e.reviewer.data:{},o=B(e.reviewerHistory)?e.reviewerHistory.data:{},c=B(e.mail)?e.mail.data:{},l=B(e.scopus)?e.scopus.data:{};let u="unknown"
+;"scopus"!==n&&(e.ge?.pending?u="pending":B(e.ge)&&(u=["yes","no","not-applicable"].includes(r.proceedStatus)?r.proceedStatus:r.hasProceed?"yes":"no"))
+;const d=B(e.info),m=B(e.mail),f=K(s.submitted,c.authorSubmissions),g=d||m?b(c.authorSubmissions)>b(s.submitted)?K(s.rejected,c.authorRejected):b(d?s.rejected:c.authorRejected):null,h=f>0&&null!==g?g/f:null,S=b(s.submittedPastYear),I=K(s.reviewed,c.reviewReports,
+o.acceptedCount),x=K(a.reviewPastYear,o.acceptedPastYearCount),$=!e.reviewerHistory?.pending&&"未找到 Reviewer ID"===e.reviewerHistory?.error,R=B(e.reviewerHistory)||$?K(o.invitationPastYearCount,x):null,C=R>0?x/R:null
+;let j=null;if(B(e.scopus)&&Array.isArray(l.subjects)&&l.subjects.length){const e=l.subjects.findIndex(e=>v(e?.name).toLowerCase()===i.subjectName.toLowerCase());j=e<0?1/0:e+1}
+const M=w([...s.roles||[],...r.roles||[],...c.roles||[]]),P=Boolean(s.roleHistory||r.roleHistory||c.roleHistory),E=b(s.decisionsPastYear),A=b(r.acceptedCount),N=b(r.attemptCount),_=Number.isInteger(l.latestPubYear)?l.latestPubYear:null,G=(new Date).getFullYear()
+;let Y=0;const T=[],L=[];"scopus"!==n&&(S>=i.minimumSubmissionsPastYear&&(Y+=1,T.push(`近1年投稿 ${S} 篇 +1`)),R>0&&100*x>R*i.minimumReviewAcceptRate&&(Y+=1,T.push(`近1年审稿 ${Math.round(100*C)}% +1`)),(P||A>0)&&(Y+=1,
+T.push(P?"有 MDPI 任职 +1":"曾接受 GE +1")),E>=i.minimumDecisionsPastYear&&(Y+=1,T.push(`近1年决定 ${E} 次 +1`)),B(e.scopus)&&(null!==_&&G-_>=i.inactivePubYears?(Y-=1,T.push(`近${i.inactivePubYears}年无发文 (${_}) -1`)):null===_&&0===l.documentCount&&(
+Y-=1,
+T.push("无 Scopus 发文 -1"))),N>i.inactiveInviteLimit&&!A&&L.push("GE 多次未接受"))
+;const D=w([...s.ethicsCards||[],...r.ethicsCards||[]]),H=l.institution||k(r.affiliation||s.affiliation)||v(r.affiliation||s.affiliation||""),V=l.country||"",O=Y>=3?"score-high":2===Y?"score-mid":1===Y?"score-low":Y<0?"score-neg":"score-zero",q={
+submissions:f,rejectedSubmissions:g,rejectionRate:h,submissionsPastYear:S,reviews:I,reviewInvitations:B(e.reviewerHistory)||m||$?K(o.invitationCount,c.reviewInvitations,I):null,reviewPastYear:x,reviewPastYearInvitations:R,reviewPastYearRate:C,
+decisions:E,recentMails:b(c.recentMailCount),latestMail:c.latestMail||null,attempts:N,accepted:A,interested:b(r.interestedCount),declined:b(r.declinedCount),roles:M,ethicsCards:D,institution:H,country:V,latestPubYear:_,score:"scopus"===n?null:Y,
+scoreCode:O,scoreReasons:T,notes:L,hIndex:Number.isFinite(l.hIndex)?l.hIndex:null,subjectName:i.subjectName,subjectRank:j,subjects:Array.isArray(l.subjects)?l.subjects.map(e=>e.name):[],subjectDetails:Array.isArray(l.subjects)?l.subjects:[],
+scopusMatchSource:l.matchSource||"",geProceed:"yes"===u||"no"!==u&&null,geProceedStatus:u,hardGateFailures:{proceed:"no"===u,ethicsCard:D.length>0,hIndex:Number.isFinite(l.hIndex)&&l.hIndex<i.minimumHIndex,
+subject:null!==j&&j>i.maximumSubjectRank,rejectionRate:f>0&&null!==g&&100*g>f*i.maximumRejectionRate}};return{config:i,metrics:q,info:s,ge:r,mail:c}}function Z(e,t=p,n=null){const{metrics:i}=W({info:n,scopus:e},t,"scopus");if(!B(e)){
+const t="找不到 Scopus 主页"===e?.error?"找不到 Scopus 主页":"Scopus 查询失败";return{code:"review",...g.review,reasons:[t],metrics:i}}const s=[];return i.hardGateFailures.ethicsCard&&s.push(`Ethics ${i.ethicsCards.join("/")} Card`),
+null===i.hIndex?s.push("缺 h-index"):i.hardGateFailures.hIndex&&s.push("h-index 低"),i.subjects.length?i.hardGateFailures.subject&&s.push("学科不符"):s.push("缺 Scopus 学科"),
+i.hardGateFailures.ethicsCard||i.hardGateFailures.hIndex||i.hardGateFailures.subject?{code:"unsuitable",...g.unsuitable,hardGateFailed:!0,reasons:s,metrics:i}:s.length?{code:"review",...g.review,reasons:s,metrics:i}:{code:"scopus",...g.scopus,
+reasons:[],metrics:i}}function J(e){return`${e.getFullYear()}-${String(e.getMonth()+1).padStart(2,"0")}-${String(e.getDate()).padStart(2,"0")}`}function Q(e,t,n=null,i=null){
+const s=encodeURIComponent(e),o=s.replace(/%40/gi,"@"),c=new Date,l=new Date(c.getTime());l.setDate(l.getDate()-t.mailLookbackDays);const u=encodeURIComponent("a5ce29b8b4917729fc1dc44abf2fc686");let d=a;try{
+const e="undefined"!=typeof GM_config&&"function"==typeof GM_config.get?GM_config.get(r):"function"==typeof GM_getValue?GM_getValue(r,a):"";d=String(e||a).trim()||a}catch(e){}return{info:`https://susy.mdpi.com/user/info?emails=${s}`,
+ge:`https://susy.mdpi.com/user/guest_editor/check?email=${s}&special_issue_id=${encodeURIComponent(d)}`,reviewer:`https://susy.mdpi.com/user/reviewer/checking/${u}?email=${s}`,
+reviewerHistory:i?`https://susy.mdpi.com/list/reviewer/invitations-history/${encodeURIComponent(i)}`:null,
+mail:`https://mailsdb.i.mdpi.com/reversion/search/emails?since_time=${t.mailLookbackDays}&start=${J(l)}&end=${J(c)}&fm=true&cc=false&to=false&m_type=&sort=desc&page=1&link=false&bcc=false&search_content=${s}`,
+infoLink:`https://mailsdb.i.mdpi.com/reversion/search/emails?fm=true&cc=true&to=true&m_type=&sort=desc&link=true&bcc=true&search_content=${o}`,scopus:n?`https://www.scopus.com/api/authors/${encodeURIComponent(n)}`:null,
+scopusProfile:n?`https://www.scopus.com/authid/detail.uri?authorId=${encodeURIComponent(n)}`:null}}async function X(e,t=e=>e(),n="",i=0){for(let s=0;s<6;s+=1){s>0&&await new Promise(e=>setTimeout(e,1500));const r=await t(async()=>{
+if(n&&"function"==typeof GM_getValue&&"function"==typeof GM_setValue)try{const e=`skSusyCooldown_${n}`,t=Date.now(),s=Number(GM_getValue(e,0))||0,r=s>t&&s-t<3e5?s:t;GM_setValue(e,r+i),r>t&&await new Promise(e=>setTimeout(e,r-t))}catch(e){}
+const t=new AbortController,s=setTimeout(()=>t.abort(),45e3);try{const n=await fetch(e,{method:"GET",credentials:"include",cache:"no-store",headers:{Accept:"text/html,application/xhtml+xml"},signal:t.signal})
+;if(!n.ok)throw new Error(`HTTP ${n.status}`);if(/\/login|\/signin/i.test(n.url))throw new Error("登录状态已失效");return{text:await n.text(),status:n.status,finalUrl:n.url}}catch(e){if("AbortError"===e?.name)throw new Error("查询超时");throw e}finally{
+clearTimeout(s)}});if(r.text.trim()&&!/Operation too frequently/i.test(r.text))return r}throw new Error("请求过于频繁，请稍后重试")}function ee(){
+return globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`}function te(){if(!h.channelId){h.channelId=ee(),h.requestKey=`${n}${h.channelId}_requests`,
+h.readyKey=`${n}${h.channelId}_ready`;try{"function"==typeof GM_deleteValue&&GM_deleteValue(h.requestKey)}catch(e){}try{"function"==typeof GM_deleteValue&&GM_deleteValue(h.readyKey)}catch(e){}
+"undefined"==typeof window||"function"!=typeof window.addEventListener||h.cleanupRegistered||(h.cleanupRegistered=!0,window.addEventListener("pagehide",()=>{ie(new Error("Scholar screening 页面已关闭")),se()},{once:!0}))}}function ne(){
+if("function"!=typeof GM_setValue)throw new Error("Tampermonkey 共享存储权限不可用");GM_setValue(h.requestKey,Array.from(h.requests.values()))}function ie(e){for(const t of Array.from(h.pending.values()))t(e)}function se(){if(h.pending.size)return!1
+;const e=h.workerHandle,t=h.requestKey,n=h.readyKey;h.workerHandle=null,h.readyPromise=null,h.requests.clear(),h.channelId="",h.requestKey="",h.readyKey="";try{t&&"function"==typeof GM_deleteValue&&GM_deleteValue(t)}catch(e){}try{
+n&&"function"==typeof GM_deleteValue&&GM_deleteValue(n)}catch(e){}try{e&&!e.closed&&"function"==typeof e.close&&e.close()}catch(e){}return!0}function re(){const e=new URLSearchParams(location.search);if("worker"===e.get(i)&&e.get(s))return{
+isWorker:!0,channelId:e.get(s)};const t=new URLSearchParams(String(location.hash||"").replace(/^#/,""));return"worker"===t.get(i)&&t.get(s)?{isWorker:!0,channelId:t.get(s)}:{isWorker:!1,channelId:""}}function ae(){
+if(h.readyPromise)return h.readyPromise
+;if("function"!=typeof GM_openInTab||"function"!=typeof GM_addValueChangeListener||"function"!=typeof GM_removeValueChangeListener||"function"!=typeof GM_setValue)return Promise.reject(new Error("Tampermonkey 后台标签页桥接权限不可用"));te();let e=null
+;const t=new Promise((t,n)=>{let r=null,a=null,o=!1;function c(e,t){if(!o){if(o=!0,a&&clearTimeout(a),null!==r)try{GM_removeValueChangeListener(r)}catch(e){}e(t)}}function l(t){if(e&&h.workerHandle===e){h.workerHandle=null;try{
+e.closed||"function"!=typeof e.close||e.close()}catch(e){}}c(n,t)}try{r=GM_addValueChangeListener(h.readyKey,(e,n,i)=>{let s=i;if("string"==typeof i)try{s=JSON.parse(i)}catch(e){return}
+s&&s.channelId===h.channelId&&(!1!==s.ok?c(t,s):l(new Error(s.error||"Scopus Worker 启动失败")))});const o=new URLSearchParams;o.set(i,"worker"),o.set(s,h.channelId);const u=`https://www.scopus.com/pages/home?${o.toString()}#${o.toString()}`
+;e=GM_openInTab(u,{active:!1,setParent:!0}),h.workerHandle=e,e&&"object"==typeof e&&(e.onclose=()=>{if(h.workerHandle!==e)return;h.workerHandle=null,h.readyPromise=null;try{"function"==typeof GM_deleteValue&&GM_deleteValue(h.readyKey)}catch(e){}
+const t=new Error("Scopus Worker 已关闭");c(n,t),ie(t)}),a=setTimeout(()=>l(new Error("Scopus Worker 启动超时")),3e4)}catch(e){l(e)}});return h.readyPromise=t,t.catch(()=>{h.readyPromise===t&&(h.readyPromise=null)}),t}function oe(e,t=45e3){
+const i="object"==typeof e&&null!==e?{email:v(e.email||"").toLowerCase(),orcid:v(e.orcid||""),names:w((Array.isArray(e.names)?e.names:[e.name]).map(v)),affiliation:v(e.affiliation||""),
+susyScopusId:/^\d+$/.test(String(e.susyScopusId||""))?String(e.susyScopusId):"",skipNameFallback:Boolean(e.skipNameFallback)}:{email:"",orcid:"",names:[],affiliation:"",susyScopusId:/^\d+$/.test(String(e||""))?String(e):""}
+;return i.email||i.orcid||i.names.length||i.susyScopusId?(te(),new Promise((e,s)=>{
+if("function"!=typeof GM_addValueChangeListener||"function"!=typeof GM_removeValueChangeListener||"function"!=typeof GM_setValue)return void s(new Error("Tampermonkey 后台标签页桥接权限不可用"));const r=ee(),a=`${n}${h.channelId}_response_${r}`
+;let o=null,c=null,l=!1,u=!1;function d(e,t){l||(l=!0,function(){if(c&&clearTimeout(c),null!==o)try{GM_removeValueChangeListener(o)}catch(e){}try{"function"==typeof GM_deleteValue&&GM_deleteValue(a)}catch(e){}if(h.pending.delete(r),
+u&&h.requests.delete(r))try{ne()}catch(e){}}(),e(t))}try{try{"function"==typeof GM_deleteValue&&GM_deleteValue(a)}catch(e){}o=GM_addValueChangeListener(a,(t,n,i)=>{let a=i;if("string"==typeof i)try{a=JSON.parse(i)}catch(e){return}
+a&&a.requestId===r&&(a.ok&&"string"==typeof a.payload?d(e,{text:a.payload,status:200,finalUrl:`https://www.scopus.com/authid/detail.uri?authorId=${encodeURIComponent(a.authorId||"")}`,method:"same-origin-persistent-worker"
+}):d(s,new Error(a.error||"Scopus Worker 未返回数据")))}),h.pending.set(r,e=>d(s,e)),c=setTimeout(()=>d(s,new Error("Scopus Worker 查询超时")),t),ae().then(()=>{if(!l){h.requests.set(r,{requestId:r,query:i,authorId:i.susyScopusId,responseKey:a,
+expiresAt:Date.now()+t}),u=!0;try{ne()}catch(e){d(s,e)}}}).catch(e=>d(s,e))}catch(e){d(s,e)}})):Promise.reject(new Error("找不到 Scopus 主页"))}async function ce(e){if("object"==typeof e&&null!==e)return oe(e)
+;const t=String(e||"").match(/\/api\/authors\/(\d+)/i)?.[1];if(!t)throw new Error("找不到 Scopus 主页");return oe(t)}function le(e){return v(e?.message||e||"未知错误").slice(0,220)}async function ue(e,t){try{const n=await e;return{ok:!0,data:t(n.text),
+status:n.status,finalUrl:n.finalUrl}}catch(e){return{ok:!1,data:null,error:le(e)}}}function de(e,n){try{return"function"==typeof GM_getValue?GM_getValue(`${t}${e}`,n):n}catch(e){return n}}function me(e,t="",n=""){
+const i=document.createElement(e);return t&&(i.className=t),""!==n&&(i.textContent=n),i}function pe(e,t){for(const n of t.filter(Boolean))e.appendChild(me("div","ges-line",n))}function fe(e,t,n,i=""){if(!n)return;const s=me("a","ges-link",t)
+;s.href=n,s.target="_blank",s.rel="noopener noreferrer",i&&(s.title=i),e.appendChild(s)}function ge(e,t){const n="scopus"===t.mode,i=t.progress||{},s=t.pending||n||"eligible"!==t.decision.code?"":` ${t.decision.scoreCode||""}`
+;e.className=t.pending?"ges-row pending":n?"ges-row":`ges-row ${t.decision.code}${s}`,t.scopusIdentity?.needsReview&&e.classList.add("ges-identity-review"),e.replaceChildren();const r=t.decision.metrics,a=me("td")
+;!t.pending&&n||a.appendChild(me("span",`ges-badge ${t.decision.code}`,t.decision.label));const o=me("td");if(n)o.textContent="—";else{
+const e=Boolean(i.activity||i.history||i.scopus),n=t.decision.score??r.score??0,s=t.decision.scoreCode||r.scoreCode||"score-zero";o.appendChild(me("span",`ges-badge ${s}`,`${n} 分${e?"…":""}`))}const c=me("td")
+;t.name&&(c.appendChild(me("strong","",t.name)),c.appendChild(me("br")));const l=me("span","ges-email",t.email),m=me("span","ges-copy-tip");if(l.title="点击复制",l.addEventListener("click",()=>{const e=globalThis.navigator?.clipboard,n=(e,t)=>{
+m.textContent=e,m.style.color=t,setTimeout(()=>{m.textContent=""},1500)};if(e&&"function"==typeof e.writeText)try{Promise.resolve(e.writeText(t.email)).then(()=>n("✓","#1e8e3e")).catch(()=>n("复制失败","#d93025"))}catch(e){n("复制失败","#d93025")
+}else n("复制失败","#d93025")}),c.append(l,m),r.institution||r.country){const e=me("div","ges-affil");if(r.institution){const t=me("span","",r.institution),n="function"==typeof skGetUniv?skGetUniv(r.institution):null
+;n?.color&&(t.style.backgroundColor=n.color,"#111111"===n.color&&(t.style.color="#fff")),e.appendChild(t)}if(r.country){r.institution&&e.append(" · ")
+;const t="undefined"!=typeof SK_COUNTRY_ZONES&&SK_COUNTRY_ZONES?.get?SK_COUNTRY_ZONES.get(r.country):null;e.appendChild(me("span",t?`ges-country z${t}`:"",r.country))}c.appendChild(e)}const p=me("div","ges-links");fe(p,"Info",t.urls.infoLink),
+"scopus"!==t.mode&&(fe(p,"Reviewer",t.urls.reviewer),fe(p,"Mail",t.urls.mail)),fe(p,"Scopus",t.urls.scopusProfile,u[r.scopusMatchSource]||""),c.appendChild(p)
+;const f=me("td"),g=r.geProceedStatus||(null===r.geProceed?"unknown":r.geProceed?"yes":"no"),h=`Proceed: ${d[g]||"?"}`,b=r.latestPubYear?` · ${r.latestPubYear}`:"",y="h-index: "+(null===r.hIndex?i.scopus?"…":"?":`${r.hIndex}${b}${i.scopus?"…":""}`),
+w=r.subjectRank===1/0?"∞":r.subjectRank,v=`${r.subjectName}: #${null===w?i.scopus?"…":"?":`${w}${i.scopus?"…":""}`}`,S=[[y,r.hardGateFailures?.hIndex,null===r.hIndex],[v,r.hardGateFailures?.subject,null===r.subjectRank]]
+;n||S.unshift([h,r.hardGateFailures?.proceed,"unknown"===g]);for(const[e,t,n]of S)f.appendChild(me("div","ges-line"+(t?" ges-fail":n?" ges-unknown":""),e));const I=me("td","ges-subjects")
+;r.subjects.length?pe(I,(r.subjectDetails?.length?r.subjectDetails:r.subjects.map(e=>({name:e}))).slice(0,5).map((e,t)=>`#${t+1} ${e.name}${e.count>0?` (${e.count})`:""}`)):I.textContent=i.scopus?"…":"—";const x=me("td")
+;if("scopus"===t.mode)x.textContent="—";else{
+const e=Boolean(i.activity),t=e?"…":"",n=null===r.rejectedSubmissions?e?"…":"?":`${r.submissions>0?Math.round(100*r.rejectionRate):0}% (${r.rejectedSubmissions}/${r.submissions})${t}`,s=null===r.reviewPastYearInvitations?e?"…":`? (${r.reviewPastYear}/?)`:
+`${r.reviewPastYearInvitations>0?Math.round(100*r.reviewPastYearRate):0}% (${r.reviewPastYear}/${r.reviewPastYearInvitations})${t}`,a=me("div","ges-line"+(r.hardGateFailures?.rejectionRate?" ges-fail":""),
+`近1年投稿 ${r.submissionsPastYear}${t} · 总拒稿率: ${n}`)
+;x.appendChild(a),pe(x,[`近1年审稿同意率: ${s}`,`近1年决定 ${r.decisions}${t}`,`来信 ${r.recentMails}${t}${r.latestMail?` · ${r.latestMail}`:""}`])}const $=me("td");if("scopus"===t.mode)$.textContent="—";else{const e=Boolean(i.history),t=e?"…":""
+;pe($,[`GE Invited ${r.attempts}${t} 次`,`accepted ${r.accepted}${t} · interested ${r.interested}${t} · declined ${r.declined}${t}`,r.roles.length?`任职：${r.roles.join(" / ")}${t}`:e?"任职：…":"任职：无"])}const k=me("td")
+;if(t.scopusIdentity?.warning&&k.appendChild(me("div","ges-line ges-identity-warning",t.scopusIdentity.warning)),t.pending||!n){
+for(const e of t.decision.gateReasons||[])k.appendChild(me("div","ges-line "+(t.decision.hardGateFailed?"ges-reason-fail":"ges-reason-review"),e))
+;for(const e of t.decision.scoreReasons||[])k.appendChild(me("div","ges-line "+(/-\d+$/.test(e)?"ges-reason-minus":"ges-reason-plus"),e));pe(k,r.notes||(t.decision.gateReasons||t.decision.scoreReasons?[]:t.decision.reasons))
+}else r.ethicsCards?.length&&k.appendChild(me("div","ges-line ges-reason-fail",`Ethics ${r.ethicsCards.join("/")} Card`));e.append(a,o,c,f,I,x,$,k)}function he(e=1/0,t=1/0,n=1e3){if(e===1/0&&t===1/0)return e=>Promise.resolve().then(e)
+;const i=Math.max(1,Math.floor(b(e,1))),s=t===1/0?1/0:Math.max(1,Math.floor(b(t,1))),r=Math.max(1,Math.floor(b(n,1e3))),a=[],o=[];let c=0,l=null;function u(){null!==l&&(clearTimeout(l),l=null);const e=Date.now()
+;for(;o.length&&o[0]<=e-r;)o.shift();for(;a.length&&c<i&&o.length<s;){const e=a.shift();o.push(Date.now()),c+=1,Promise.resolve().then(e.task).then(e.resolve,e.reject).finally(()=>{c-=1,u()})}
+a.length&&c<i&&o.length>=s&&(l=setTimeout(u,Math.max(1,o[0]+r-Date.now())))}return e=>new Promise((t,n)=>{a.push({task:e,resolve:t,reject:n}),u()})}function be(n){if(e("#ges-panel").length)return
+;e("#ges-style").length||e('<style id="ges-style">').text("#ges-panel{margin-top:1.25rem;color:inherit}#ges-panel *{box-sizing:border-box}.ges-field label{display:block;font-weight:650;margin-bottom:.32rem}.ges-field input,.ges-field texta"+
+"rea,#ges-mode{width:100%;border:1px solid #aeb7c2;border-radius:5px;padding:.5rem .6rem;background:#fff;color:#17212b}.ges-field textarea{min-height:5.5rem;resize:vertical;font-fam"+
+"ily:ui-monospace,SFMono-Regular,Consolas,monospace;line-height:1.4}.ges-params{margin-top:.7rem}.ges-params summary{cursor:pointer;font-weight:650}.ges-param-grid{display:grid;grid"+
+"-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.7rem;margin-top:.6rem}.ges-actions{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-top:1rem}#ges-mode{wid"+
+"th:9.5rem !important;min-width:9.5rem;height:2rem !important;padding:.25rem .6rem !important;line-height:1.25rem !important}.ges-btn{appearance:none;border:1px solid #8c98a5;border"+
+"-radius:5px;padding:.52rem .85rem;background:#fff;color:#23303d;cursor:pointer;font-weight:650}.ges-btn:hover{background:#f0f4f7}.ges-btn.primary{background:#087f5b;border-color:#0"+
+"87f5b;color:#fff}.ges-btn.primary:hover{background:#066b4c}.ges-btn.danger{border-color:#c43d4b;color:#a51f2e}.ges-btn:disabled{opacity:.48;cursor:not-allowed}.ges-status{min-heigh"+
+"t:1.35rem;color:#495663;font-size:.86rem;margin-left:.25rem}.ges-progress{width:100%;height:.45rem;border-radius:999px;background:#e5e9ee;overflow:hidden;margin-top:.7rem}.ges-prog"+
+"ress>span{display:block;height:100%;width:0;background:#087f5b;transition:width .2s ease}.ges-summary{display:flex;gap:.55rem;flex-wrap:wrap;margin:1rem 0 .65rem}.ges-chip{border:1"+
+"px solid #d4dae1;border-radius:999px;padding:.28rem .6rem;font-size:.8rem;background:#fff}.ges-table-wrap{width:100%;overflow:auto;border:1px solid #d5dbe2;border-radius:7px}.ges-t"+
+"able{width:100%;min-width:78rem;table-layout:fixed;border-collapse:collapse;background:#fff;color:#202a34}.ges-table th{position:sticky;top:0;z-index:1;background:#eef2f5;color:#33"+
+"404d;text-align:left;font-size:.78rem}.ges-table th,.ges-table td{border-bottom:1px solid #e2e6ea;padding:.65rem .7rem;vertical-align:top}.ges-table td{font-size:.82rem;line-height"+
+":1.4}.ges-table th:nth-child(1){width:4.6rem}.ges-table th:nth-child(2){width:4.2rem}.ges-table th:nth-child(3){width:11.5rem}.ges-table th:nth-child(4){width:9rem}.ges-table th:nt"+
+"h-child(5){width:12.8rem}.ges-table th:nth-child(6){width:13.9rem}.ges-table th:nth-child(7){width:13.2rem}.ges-table th:nth-child(8){width:8.8rem}.ges-row.review{background:#fffaf"+
+"0}.ges-row.eligible.score-high{background:#eefaf4}.ges-row.eligible.score-mid{background:#f6fcf8}.ges-row.ges-identity-review{background:#fffaf0}.ges-badge{display:inline-block;bor"+
+"der-radius:999px;padding:.25rem .6rem;color:#fff;font-size:.78rem;font-weight:750;white-space:nowrap}.ges-badge.eligible{background:#2b8a3e}.ges-badge.score-high{background:#087f5b"+
+"}.ges-badge.score-mid{background:#2b8a3e}.ges-badge.score-low{background:#1971c2}.ges-badge.score-zero{background:#64748b}.ges-badge.score-neg{background:#9f1239}.ges-badge.scopus{"+
+"background:#3568a8}.ges-badge.unsuitable{background:#c92a2a}.ges-badge.review{background:#9c6500}.ges-badge.pending{background:#94a3b8}.ges-reason-fail{color:#a40e21;font-weight:70"+
+"0}.ges-reason-review{color:#8a4b08;font-weight:650}.ges-reason-plus{color:#087f5b;font-weight:650}.ges-reason-minus{color:#b42318;font-weight:650}.ges-affil{margin-top:.24rem;font-"+
+"size:.76rem;color:#475569;line-height:1.35;overflow-wrap:anywhere}.ges-country.z1{background:#dcfce7;color:#15803d}.ges-country.z2{background:#ffedd5;color:#c2410c}.ges-country.z3{"+
+"background:#fee2e2;color:#b91c1c}.ges-row.pending{background:#f7f9fb}.ges-email{display:inline-block;overflow-wrap:anywhere;color:#1a73e8;margin-top:.14rem;line-height:1.1;cursor:p"+
+"ointer;border-bottom:1px dashed #1a73e8}.ges-email:hover{color:#1557b0}.ges-copy-tip{color:#888;margin-left:.35rem;font-size:.76rem;font-weight:normal;white-space:nowrap}.ges-subje"+
+"cts{overflow:hidden}.ges-subjects .ges-line{overflow:hidden;white-space:nowrap;text-overflow:clip}.ges-links{display:flex;gap:.42rem;flex-wrap:wrap;margin-top:.38rem}.ges-link{font"+
+"-size:.74rem;text-decoration:underline}.ges-line+.ges-line{margin-top:.18rem}.ges-fail{color:#a40e21;background:#ffe4e8;border-left:3px solid #c81e32;border-radius:3px;padding:.12r"+
+"em .35rem;font-weight:750}.ges-unknown{color:#7a5b16;background:#fff5d6;border-left:3px solid #a77c20;border-radius:3px;padding:.12rem .35rem;font-weight:750}.ges-identity-warning{"+
+"color:#8a4b08;background:#fff1cc;border-left:3px solid #b36b00;border-radius:3px;padding:.18rem .35rem;font-weight:750}.ges-loading td{color:#687481;font-style:italic}").appendTo(document.head)
+;const i=e('<fieldset id="ges-panel">').html('<legend>GE Invitation Screening</legend><div class="ges-field"><label for="ges-emails">邮箱</label><textarea id="ges-emails" spellcheck="false" placeholder="scholar1@university.e'+
+'du"></textarea></div><details class="ges-params"><summary>参数</summary><div class="ges-param-grid"><div class="ges-field"><label for="ges-min-h">最低 h-index</label><input id='+
+'"ges-min-h" type="number" min="0" max="500"></div><div class="ges-field"><label for="ges-subject">Scopus 学科</label><input id="ges-subject" type="text" placeholder="Mathematics"'+
+'></div><div class="ges-field"><label for="ges-subject-rank">学科排名前</label><input id="ges-subject-rank" type="number" min="1" max="50"></div><div class="ges-field"><label f'+
+'or="ges-max-reject-rate">最高拒稿率 (%)</label><input id="ges-max-reject-rate" type="number" min="0" max="100"></div><div class="ges-field"><label for="ges-min-sub-year">近1'+
+'年投稿加分 (≥篇)</label><input id="ges-min-sub-year" type="number" min="1" max="500"></div><div class="ges-field"><label for="ges-min-rev-rate">近1年审稿接收率 (&gt;'+
+'%)</label><input id="ges-min-rev-rate" type="number" min="0" max="100"></div><div class="ges-field"><label for="ges-min-decisions">近1年编辑决定 (≥次)</label><input id="ge'+
+'s-min-decisions" type="number" min="1" max="500"></div><div class="ges-field"><label for="ges-inactive-pub-years">近几年无发文减分 (年)</label><input id="ges-inactive-pub-'+
+'years" type="number" min="1" max="30"></div><div class="ges-field"><label for="ges-invite-limit">不活跃 GE 上限</label><input id="ges-invite-limit" type="number" min="0" max="'+
+'1000"></div><div class="ges-field"><label for="ges-mail-days">邮件天数</label><input id="ges-mail-days" type="number" min="1" max="3650"></div></div></details><div class="ges-a'+
+'ctions"><select id="ges-mode" aria-label="查询范围"><option value="" selected disabled>选择查询范围</option><option value="scopus">Only H-index</option><option value="ful'+
+'l">Full record</option></select><button type="button" class="ges-btn primary" id="ges-start">开始筛选</button><button type="button" class="ges-btn danger" id="ges-stop" disable'+
+'d>停止</button><button type="button" class="ges-btn" id="ges-export" disabled>导出 CSV</button><span class="ges-status" id="ges-status" role="status" aria-live="polite">待输'+
+'入</span></div><div class="ges-progress" aria-hidden="true"><span id="ges-progress-bar"></span></div><div class="ges-summary" id="ges-summary"></div><div class="ges-table-wrap"><t'+
+'able class="ges-table"><thead><tr><th>硬性</th><th>评分</th><th>候选人</th><th>硬门槛</th><th>Scopus Subject Areas</th><th>MDPI 活动</th><th>GE Invitation / 任职</th>'+
+'<th>原因</th></tr></thead><tbody id="ges-results"><tr class="ges-loading"><td colspan="8">尚未筛选</td></tr></tbody></table></div>').insertAfter(n),s={
+minimumHIndex:de("minimumHIndex",p.minimumHIndex),subjectName:de("subjectName",p.subjectName),maximumSubjectRank:de("maximumSubjectRank",de("maximumMathRank",p.maximumSubjectRank)),
+maximumRejectionRate:de("maximumRejectionRate",p.maximumRejectionRate),minimumSubmissionsPastYear:de("minimumSubmissionsPastYear",p.minimumSubmissionsPastYear),minimumReviewAcceptRate:de("minimumReviewAcceptRate",p.minimumReviewAcceptRate),
+minimumDecisionsPastYear:de("minimumDecisionsPastYear",p.minimumDecisionsPastYear),inactivePubYears:de("inactivePubYears",p.inactivePubYears),inactiveInviteLimit:de("inactiveInviteLimit",p.inactiveInviteLimit),
+mailLookbackDays:de("mailLookbackDays",p.mailLookbackDays)};for(const[e,t]of Object.entries({"#ges-mode":"","#ges-min-h":s.minimumHIndex,"#ges-subject":s.subjectName,"#ges-subject-rank":s.maximumSubjectRank,
+"#ges-max-reject-rate":s.maximumRejectionRate,"#ges-min-sub-year":s.minimumSubmissionsPastYear,"#ges-min-rev-rate":s.minimumReviewAcceptRate,"#ges-min-decisions":s.minimumDecisionsPastYear,"#ges-inactive-pub-years":s.inactivePubYears,
+"#ges-invite-limit":s.inactiveInviteLimit,"#ges-mail-days":s.mailLookbackDays}))i.find(e).val(t);const r={running:!1,cancelRequested:!1,results:[],resultByEmail:new Map,rowByEmail:new Map,completed:0,total:0
+},a=i.find("#ges-start"),c=i.find("#ges-stop"),l=i.find("#ges-export"),u=i.find("#ges-status"),f=i.find("#ges-progress-bar"),h=i.find("#ges-results"),b=i.find("#ges-summary"),w=i.find("#ges-emails");function S(e=""){
+const t=r.total?Math.round(r.completed/r.total*100):0;f.css("width",`${t}%`),u.text(e||(r.running?`处理中：${r.completed}/${r.total}`:`已完成：${r.completed}/${r.total}`))}function I(){b.empty();const e={},t=new Map;for(const n of r.results){
+if("scopus"===n.mode)continue;const{code:i,score:s}=n.decision;e[i]=(e[i]||0)+1,Number.isInteger(s)&&t.set(s,(t.get(s)||0)+1)}for(const t of["eligible","unsuitable","review"])e[t]&&b.append(me("span","ges-chip",`${g[t].label} ${e[t]}`))
+;for(const e of Array.from(t.keys()).sort((e,t)=>t-e))b.append(me("span","ges-chip",`${e} 分 ${t.get(e)}`))}a.on("click",async function(){if(r.running)return;const e={queryMode:i.find("#ges-mode").val()||"",
+minimumHIndex:y(i.find("#ges-min-h").val(),0,500,p.minimumHIndex),subjectName:v(i.find("#ges-subject").val())||p.subjectName,maximumSubjectRank:y(i.find("#ges-subject-rank").val(),1,50,p.maximumSubjectRank),
+maximumRejectionRate:y(i.find("#ges-max-reject-rate").val(),0,100,p.maximumRejectionRate),minimumSubmissionsPastYear:y(i.find("#ges-min-sub-year").val(),1,500,p.minimumSubmissionsPastYear),
+minimumReviewAcceptRate:y(i.find("#ges-min-rev-rate").val(),0,100,p.minimumReviewAcceptRate),minimumDecisionsPastYear:y(i.find("#ges-min-decisions").val(),1,500,p.minimumDecisionsPastYear),
+inactivePubYears:y(i.find("#ges-inactive-pub-years").val(),1,30,p.inactivePubYears),inactiveInviteLimit:y(i.find("#ges-invite-limit").val(),0,1e3,p.inactiveInviteLimit),mailLookbackDays:y(i.find("#ges-mail-days").val(),1,3650,p.mailLookbackDays)
+};if(!e.queryMode)return u.text("请选择 Only H-index 或 Full record。"),void i.find("#ges-mode").trigger("focus");const n=function(e){const t=new Set,n=[];for(const i of String(e||"").match(m)||[]){const e=i.toLowerCase();t.has(e)||(t.add(e),
+n.push(e))}return{valid:n,ordered:n.map(e=>({value:e}))}}(w.val());if(!n.valid.length)return u.text("请至少输入一个邮箱。"),void w.trigger("focus")
+;for(const n of["minimumHIndex","subjectName","maximumSubjectRank","maximumRejectionRate","minimumSubmissionsPastYear","minimumReviewAcceptRate","minimumDecisionsPastYear","inactivePubYears","inactiveInviteLimit","mailLookbackDays"])try{
+"function"==typeof GM_setValue&&GM_setValue(`${t}${n}`,e[n])}catch(e){}r.running=!0,ae().catch(()=>{}),r.cancelRequested=!1,r.results=[],r.resultByEmail.clear(),r.rowByEmail.clear(),r.completed=0,r.total=n.valid.length,h.empty(),b.empty(),
+a.add(l).prop("disabled",!0),c.prop("disabled",!1);for(const e of n.ordered){const t=me("tr","ges-loading"),n=me("td","",`正在查询 ${e.value} …`);n.colSpan=8,t.appendChild(n),h.append(t),r.rowByEmail.set(e.value,t)}I(),
+S(`开始查询：${r.completed}/${r.total}`);const s={mdpi:he(o),ge:he(1,1,2300),reviewer:he(1,1,1200),scopus:he(15,15)};await Promise.all(n.valid.map(async t=>{if(r.cancelRequested)return;let n;try{n=await async function(e,t,n={},i=null){
+const s=n.mdpi||(e=>Promise.resolve().then(e)),r=n.ge||s,a=n.reviewer||s,o=n.scopus||(e=>Promise.resolve().then(e)),c="scopus"===t.queryMode?"scopus":"full",l="scopus"===c?["info","scopus"]:["info","ge","reviewer","mail","reviewerHistory","scopus"],u=Object.fromEntries(
+l.map(e=>[e,{
+ok:!1,data:null,pending:!0}]));let d=Q(e,t);function m(){const n=u.scopus?.data?.authorId||u.ge?.data?.scopusId||u.info?.data?.scopusId||u.reviewer?.data?.scopusId||null,i=u.info?.data?.reviewerId||u.reviewer?.data?.reviewerId||null;d=Q(e,t,n,i)
+}function p(n,s){if(u[n]=s,m(),"function"==typeof i){const n=l.filter(e=>u[e]?.pending),s=l.length-n.length,{metrics:r,info:a,ge:o}=W(u,t,c),m=B(u.scopus)?u.scopus.data:{};try{i({email:e,mode:c,sources:u,urls:d,pending:!0,
+name:o.name||a.name||m.preferredName||"",progress:{completed:s,total:l.length,pendingKeys:n,scopus:Boolean(u.scopus?.pending),activity:["info","reviewer","reviewerHistory","mail"].some(e=>u[e]?.pending),
+history:["info","ge","mail"].some(e=>u[e]?.pending)},decision:{code:"pending",label:`查询中 ${s}/${l.length}`,score:r.score,scoreCode:r.scoreCode,scoreReasons:r.scoreReasons,gateReasons:[],reasons:[...r.scoreReasons||[],...r.notes||[]],metrics:r},
+scopusIdentity:z(e,[o.name,a.name],u.scopus)})}catch(e){}}return s}const f=(e,t)=>Promise.resolve(t).then(t=>p(e,t)),h=f("info",ue(X(d.info,s),H));if("scopus"===t.queryMode){const n=await h,i={email:e,orcid:n.data?.orcid||"",
+names:[n.data?.name],affiliation:n.data?.affiliation||"",susyScopusId:n.data?.scopusId||""},s=await f("scopus",ue(o(()=>ce(i)),e=>U(e)));m();const r=z(e,[n.data?.name],s);return{email:e,name:n.data?.name||s.data?.preferredName||"",mode:"scopus",
+sources:{info:n,scopus:s},urls:d,decision:Z(s,t,n),scopusIdentity:r}}const b=f("ge",ue(X(d.ge,r,"ge",2300),V)),y=f("reviewer",ue(X(d.reviewer,a,"reviewer",1200),O)),w=f("mail",ue(s(()=>function(e,t="text/html,application/xhtml+xml"){
+return new Promise((n,i)=>{const s={method:"GET",url:e,timeout:45e3,anonymous:!1,withCredentials:!0,headers:{Accept:t},onload(t){const s=Number(t.status||0)
+;s<200||s>=300?i(new Error(`HTTP ${s||"unknown"}`)):/\/login|\/signin/i.test(t.finalUrl||"")?i(new Error("登录状态已失效")):n({text:t.responseText,status:s,finalUrl:t.finalUrl||e,method:"gm-xmlhttp-request"})},ontimeout(){i(new Error("查询超时"))},
+onerror(){i(new Error("网络请求失败或被浏览器拦截"))}};try{
+"function"==typeof GM_xmlhttpRequest?GM_xmlhttpRequest(s):globalThis.GM?.xmlHttpRequest?Promise.resolve(globalThis.GM.xmlHttpRequest(s)).then(s.onload).catch(s.onerror):i(new Error("Tampermonkey 跨域请求权限不可用"))}catch(e){i(e)}})
+}(d.mail)),F)),S=(async()=>{const t=await h,n=(n=null,i=null,s=!1)=>({email:e,orcid:t.data?.orcid||"",names:[n?.name,t.data?.name],affiliation:n?.affiliation||t.data?.affiliation||"",susyScopusId:n?.scopusId||t.data?.scopusId||i?.scopusId||"",
+skipNameFallback:s}),i=n(null,null,!t.data?.scopusId),s=await ue(o(()=>ce(i)),e=>U(e));if(s.ok||"找不到 Scopus 主页"!==s.error)return p("scopus",s);const[r,a]=await Promise.all([b,y]),c=n(r.data,a.data,!1)
+;return Boolean(i.skipNameFallback||c.susyScopusId&&c.susyScopusId!==i.susyScopusId||r.data?.name&&v(r.data.name)!==v(t.data?.name)||r.data?.affiliation&&v(r.data.affiliation)!==v(t.data?.affiliation))?p("scopus",await ue(o(()=>ce(c)),e=>U(e))):p("scopus",s)
+})(),I=(async()=>{const n=await h;let i=n.data?.reviewerId||null;if(i||(i=(await y).data?.reviewerId||null),!i)return p("reviewerHistory",{ok:!1,data:null,error:"未找到 Reviewer ID"});const r=Q(e,t,null,i).reviewerHistory
+;return f("reviewerHistory",ue(X(r,s),q))})(),[x,$,k,R,C,j]=await Promise.all([h,b,y,w,S,I]),M=function(e,t={}){const n=e.sources||{},{metrics:i}=W(n,t),s=[],r=[];B(n.ge)?i.hardGateFailures.proceed&&s.push("无 Proceed"):r.push("GE 查询失败"),
+i.hardGateFailures.ethicsCard&&s.push(`Ethics ${i.ethicsCards.join("/")} Card`),B(n.scopus)?(null===i.hIndex?r.push("缺 h-index"):i.hardGateFailures.hIndex&&s.push("h-index 低"),
+i.subjects.length?i.hardGateFailures.subject&&s.push("学科不符"):r.push("缺 Scopus 学科")):r.push("找不到 Scopus 主页"===n.scopus?.error?"找不到 Scopus 主页":"Scopus 查询失败"),i.hardGateFailures.rejectionRate&&s.push("拒稿率高")
+;const a=s.length?"unsuitable":r.length?"review":"eligible",o=s.length?s:r;return{code:a,...g[a],hardGateFailed:s.length>0,score:i.score,scoreCode:i.scoreCode,scoreLabel:`${i.score} 分`,gateReasons:o,scoreReasons:i.scoreReasons,
+reasons:[...o,...i.scoreReasons,...i.notes],metrics:i}}({email:e,sources:u},t),P=$.data?.name||x.data?.name||C.data?.preferredName||"",E=z(e,[$.data?.name,x.data?.name],C);return{email:e,name:P,mode:"full",sources:u,urls:d,decision:M,
+scopusIdentity:E}}(t,e,s,e=>{ge(r.rowByEmail.get(t),e)})}catch(i){n={email:t,name:"",mode:e.queryMode,sources:{},urls:{},decision:{code:"review",...g.review,label:"查询失败",reasons:["查询失败"],metrics:W({},e,e.queryMode).metrics}}}
+r.resultByEmail.set(t,n),r.results=Array.from(r.resultByEmail.values()),ge(r.rowByEmail.get(t),n),r.completed+=1,I(),S()})),r.results=n.ordered.map(e=>r.resultByEmail.get(e.value)).filter(Boolean),I(),r.running=!1,se(),a.prop("disabled",!1),
+c.prop("disabled",!0),l.prop("disabled",0===r.results.length),r.cancelRequested?S(`已停止 ${r.completed}/${r.total}`):S(`完成 ${r.completed}/${r.total}`)}),c.on("click",()=>{r.cancelRequested=!0,c.prop("disabled",!0),u.text("停止中")}),
+l.on("click",()=>function(e){
+const t=`\ufeff${[["Email","Name","Institution","Country","Mode","Verdict","Score","Proceed","h-index","Latest Pub Year","Subject","Subject Rank","Subject Areas","Submissions","Submissions Past Year","Rejected Submissions","Rejection Rate","Reviews Accepted",
+"Review Invitations","Reviews Past Year Accepted","Review Invitations Past Year","Review Acceptance Rate Past Year","Editorial Decisions Past Year","Recent Mails","Latest Mail","GE Invitations","GE Accepted","GE Interested","GE Declined","Roles","Reason"],...e.map(({
+email:e,name:t,mode:n,decision:i,scopusIdentity:s})=>{
+const r=i.metrics
+;return[e,t,r.institution||"",r.country||"","scopus"===n?"scopus":"full","scopus"===n?"":i.label,"scopus"===n?"":i.score??"","scopus"===n?"":d[r.geProceedStatus||(null===r.geProceed?"unknown":r.geProceed?"yes":"no")]||"?",r.hIndex??"",r.latestPubYear??"",r.subjectName,
+r.subjectRank===1/0?"∞":r.subjectRank??"",r.subjects.join(" | "),r.submissions,r.submissionsPastYear??0,r.rejectedSubmissions??"",null!==r.rejectionRate&&void 0!==r.rejectionRate?`${Math.round(100*r.rejectionRate)}%`:"",r.reviews,r.reviewInvitations??"",
+r.reviewPastYear,r.reviewPastYearInvitations??"",null!==r.reviewPastYearRate&&void 0!==r.reviewPastYearRate?`${Math.round(100*r.reviewPastYearRate)}%`:"",r.decisions,r.recentMails,r.latestMail||"",r.attempts,r.accepted,r.interested,r.declined,r.roles.join(" | "),
+[s?.warning,..."scopus"===n?[]:i.reasons].filter(Boolean).join(" | ")]
+})].map(e=>e.map(e=>{const t=String(e??"");return/[",\r\n]/.test(t)?`"${t.replace(/"/g,'""')}"`:t}).join(",")).join("\r\n")}`,n=document.createElement("a");n.href=URL.createObjectURL(new Blob([t],{type:"text/csv;charset=utf-8"})),
+n.download=`ge-screening-${J(new Date)}.csv`,n.click(),setTimeout(()=>URL.revokeObjectURL(n.href),1e3)}(r.results)),i.on("keydown",e=>{"Enter"===e.key&&e.target instanceof HTMLInputElement&&e.preventDefault()})}function ye(){
+if(!(Boolean(globalThis.__GE_SCREEN_TEST__)||"susy.mdpi.com"===location.hostname&&"/user/settings"===location.pathname&&"#G"===location.hash))return void e("#ges-panel").remove();if(e("#ges-panel").length)return
+;e("#left-menu-main-container").remove();let t=e("#ges-anchor")[0];if(t)return void be(t);const n=e("fieldset").filter((t,n)=>/Change Susy Theme/i.test(N(e("legend",n)[0])||N(n).slice(0,100)))[0]
+;n&&(t=e('<span id="ges-anchor" hidden>').insertBefore(n)[0],e(n).remove(),be(t))}const we="undefined"!=typeof window&&"www.scopus.com"===location.hostname&&re().isWorker;try{if(we)!function(){const{isWorker:e,channelId:t}=re()
+;if(!e||!t||!/^[a-z0-9-]{20,100}$/i.test(t))return;const i=`${n}${t}_requests`,s=`${n}${t}_ready`,r=`${n}${t}_response_`,a=new Set,o=function(){let e="正在连接 Scholar Screening…",t=null,n=null;function i(){document.title!==c&&(document.title=c)}
+function s(){i();const s=document.body||document.documentElement;if(!s)return;let r=document.getElementById("susy-ge-scopus-worker-notice");if(r)t=r.querySelector("#susy-ge-scopus-worker-status");else{r=document.createElement("div"),
+r.id="susy-ge-scopus-worker-notice",
+r.setAttribute("role","status"),r.style.cssText="position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:24px;background:#f4f7fa;color:#1f2933;font-family:Segoe UI,Microsoft YaHei,"+
+"sans-serif;"
+;const e=document.createElement("div");e.style.cssText="width:min(560px,100%);padding:30px 32px;border:1px solid #cbd5df;border-radius:12px;background:#fff;box-shadow:0 12px 36px rgba(15,23,42,.16);text-align:center;"
+;const n=document.createElement("div");n.textContent="Scopus 数据查询正在运行",n.style.cssText="font-size:22px;font-weight:700;margin-bottom:12px;",t=document.createElement("div"),t.id="susy-ge-scopus-worker-status",
+t.style.cssText="font-size:16px;font-weight:600;color:#0b6b53;margin-bottom:14px;";const i=document.createElement("div");
+i.textContent="这是 Scholar Screening 自动创建的专用工作页。请勿关闭；任务完成后会自动关闭。您手动打开的其他 Scopus 页面不会受影响。",
+i.style.cssText="font-size:14px;line-height:1.65;color:#52606d;",e.append(n,t,i),r.appendChild(e),s.appendChild(r)}t&&(t.textContent=e),!n&&document.head&&"function"==typeof MutationObserver&&(n=new MutationObserver(i),n.observe(document.head,{
+childList:!0,subtree:!0,characterData:!0}))}return s(),"loading"===document.readyState&&document.addEventListener("DOMContentLoaded",s,{once:!0}),window.addEventListener("pagehide",()=>n?.disconnect(),{once:!0}),t=>{e=t,s()}}();let u=0
+;function d(e,t){"function"==typeof GM_setValue&&(GM_setValue(e,t),setTimeout(()=>{try{"function"==typeof GM_deleteValue&&GM_deleteValue(e)}catch(e){}},6e4))}async function m(e,t={}){const n=await fetch(e,{credentials:"include",cache:"no-store",
+signal:AbortSignal.timeout(2e4),...t,headers:{Accept:"application/json",...t.headers||{}}});if(401===n.status||403===n.status||/\/login|\/signin/i.test(n.url))throw new Error("Scopus 登录状态已失效");if(!n.ok)throw new Error(`HTTP ${n.status}`)
+;return n.json()}const p=new Map,f=new Map;let g=null;function h(e,t){if(!e?.profile)return null
+;const n=e.profile,i=e.metrics||{},s=(Array.isArray(e.publications)?e.publications:[]).map(e=>Number(e?.pubYear)).filter(e=>Number.isInteger(e)&&e>1900),r="number"==typeof i.hindex||"string"==typeof i.hindex&&""!==i.hindex.trim()?Number(i.hindex):NaN,a=n.emailAddress&&
+"null"!==n.emailAddress?v(n.emailAddress).toLowerCase():"",o=String(e.id||t),c=[...n.subjectAreas||[]].sort((e,t)=>b(t.documentCount)-b(e.documentCount)).map(e=>({
+code:e.code||"",name:l[e.code]||v(e.code),count:b(e.documentCount)})).filter(e=>e.name);return{authorId:o,preferredName:v(n.preferredName||""),emailAddress:a,emails:S(a),orcId:v(n.orcId||""),institution:v(n.currentInstitution?.name||""),
+country:v(n.currentInstitution?.country||""),hIndex:Number.isSafeInteger(r)&&r>=0?r:null,documentCount:b(i.documentCount,0),citationCount:b(i.citationCount,0),latestPubYear:s.length?Math.max(...s):null,subjects:c}}async function y(){g=null
+;const e=Array.from(f.entries());f.clear();for(let t=0;t<e.length;t+=40){const n=e.slice(t,t+40),i=n.map(([e])=>e);try{
+const e=`query {\n${i.map((e,t)=>`a${t}: author(id: "${e}") { id profile { preferredName emailAddress orcId currentInstitution { name country } subjectAreas { code documentCount } } metrics { hindex documentCount citationCount } publications { pubYear } }`).join(
+"\n")}\n}`,t=await m("https://www.scopus.com/gateway/author-profile-api/author",{
+method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:e})}),s=t?.data||{};n.forEach(([e,t],n)=>{const i=h(s[`a${n}`],e);p.set(e,i),i?.authorId&&p.set(i.authorId,i);for(const e of t)e.resolve(i)})}catch(e){
+for(const[,t]of n)for(const n of t)n.reject(e)}}}async function C(e){const t=w((e||[]).map(e=>String(e||"").trim()).filter(e=>/^\d+$/.test(e))).slice(0,20);if(!t.length)return[]
+;const n=await Promise.all(t.map(e=>p.has(e)?Promise.resolve(p.get(e)):new Promise((t,n)=>{f.has(e)||f.set(e,[]),f.get(e).push({resolve:t,reject:n}),f.size>=40?(null!==g&&clearTimeout(g),y()):null===g&&(g=setTimeout(y,60))}))),i=new Map
+;for(const e of n)e?.authorId&&!i.has(e.authorId)&&i.set(e.authorId,e);return Array.from(i.values())}async function j(e,t=15){
+const n=encodeURIComponent(e),i=await m(`https://www.scopus.com/api/documents/search/preview?query=${n}&itemcount=${t}&offset=0&sort=plf-f&allauthors=true`).catch(e=>{if(/登录状态已失效/.test(e?.message))throw e;return null})
+;return Array.isArray(i?.items)?i.items:[]}async function M(e,t,n=""){if(!e)return[];const i=await m("https://www.scopus.com/gateway/author-search-api/authors/search",{method:"POST",headers:{"Content-Type":"application/json"},
+body:JSON.stringify({authorLastName:e,authorFirstName:t,...n?{affiliation:n}:{},itemCount:15,offset:0,sort:{fieldName:"count",sortOrder:"DESC"}})}).catch(e=>{if(/登录状态已失效/.test(e?.message))throw e;return null})
+;return Array.isArray(i?.items)?i.items:[]}async function P(e){const{requestId:t,query:n,authorId:i,responseKey:s}=e;u+=1,o(`正在查询 Scopus 数据（${u} 项）…`);try{const e=await async function(e){
+const t=v(e?.email||"").toLowerCase(),n=v(e?.orcid||""),i=w((Array.isArray(e?.names)?e.names:[e?.name]).map(v)),s=v(e?.affiliation||""),r=/^\d+$/.test(String(e?.susyScopusId||""))?String(e.susyScopusId):"",a=e=>`"${String(e||"").replace(/"/g,"")}"`
+;if(t||n){const[e,s]=await Promise.all([t?j(`ALL(${a(t)})`,15):[],n?m(`https://www.scopus.com/gateway/author-search-api/authors/orcid/${encodeURIComponent(n)}`).then(e=>e?.items||[]).catch(()=>[]):[]]),r=new Map
+;for(const t of e)for(const e of t?.authors||[]){const t=String(e?.authorId||"");/^\d+$/.test(t)&&r.set(t,(r.get(t)||0)+1)}
+const o=s.map(e=>String(e?.identifier||"")).filter(e=>/^\d+$/.test(e)),c=Array.from(r.entries()).sort((e,t)=>t[1]-e[1]).map(([e])=>e),l=w([...o,...c]).slice(0,20);if(l.length){
+const s=await C(l),a=s.filter(e=>t&&I(t,e.emailAddress)||n&&e.orcId&&e.orcId.toUpperCase()===n.toUpperCase()||o.includes(e.authorId));if(a.length){
+const e=R(a),i=!I(t,e.emailAddress)&&(o.includes(e.authorId)||n&&e.orcId.toUpperCase()===n.toUpperCase());return{...e,matchSource:i?"orcid":"email"}}
+const c=s.filter(e=>r.has(e.authorId)&&(i.length>0&&i.some(t=>$(t,e.preferredName))||!i.length&&function(e,t){const n=(S(e)[0]||"").split("@")[0]?.replace(/\+.*/,"").toLowerCase()||"",i=x(t).filter(e=>e.length>=4)
+;return n.length>=4&&i.some(e=>n.includes(e))}(t,e.preferredName)));if(c.length)return{...R(c),matchSource:"email"};if(!i.length&&e.length>=2&&s.length>1){const t=s.filter(t=>r.get(t.authorId)===e.length);if(t.length>0&&t.length<s.length)return{
+...R(t),matchSource:"email"}}}}let o=null;if(r){const[e]=await C([r]);if(e){const n=t&&I(t,e.emailAddress),s=i.length>0&&i.some(t=>$(t,e.preferredName));if(!i.length||n||s)return{...e,matchSource:"susy"};o={...e,matchSource:"susy"}}}
+const c=i[0]||"";if(!e?.skipNameFallback&&c){const{last:e,first:n}=function(e){const t=v(e).replace(/^(?:(?:prof|professor|dr|doctor|mr|mrs|ms|miss)\.?\s+)+/i,"").trim();if(!t)return{last:"",first:""};if(t.includes(",")){
+const[e,...n]=t.split(",");return{last:v(e),first:v(n.join(" "))}}const n=t.split(" ");if(1===n.length)return{last:n[0],first:""}
+;const i=n.length>2&&/^(?:van|von|de|del|della|di|da|dos|das|du|le|la|el|al|bin|ibn|st\.?)$/i.test(n[n.length-2])?n.length-2:n.length-1;return{last:n.slice(i).join(" "),first:n.slice(0,i).join(" ")}}(c),r=k(s);if(e){
+const s=n[0]||"",o=s?`(AUTHOR-NAME(${a(`${e}, ${n}`)}) OR AUTHOR-NAME(${a(`${e}, ${s}*`)}))`:`AUTHLASTNAME(${a(e)})`,[c,l,u]=await Promise.all([r?M(e,n,r):[],r?j(`${o} AND AFFIL(${a(r)})`,15):[],M(e,n)]),d=new Set;for(const e of c){
+const t=[e?.preferredFamilyName,e?.preferredFirstName].filter(Boolean).join(", ");t&&!i.some(e=>$(e,t))||d.add(String(e.identifier||""))}for(const e of l)for(const t of e?.authors||[]){
+const e=t?.preferredName?.full||[t?.preferredName?.last,t?.preferredName?.first].filter(Boolean).join(", ");e&&i.some(t=>$(t,e))&&d.add(String(t.authorId||""))}const m=u.filter(e=>{
+const t=[e?.preferredFamilyName,e?.preferredFirstName].filter(Boolean).join(", ");return!t||i.some(e=>$(e,t))}).map(e=>String(e.identifier||"")),p=w([...d,...m]).filter(e=>/^\d+$/.test(e)).slice(0,15);if(p.length){
+const e=(await C(p)).filter(e=>i.some(t=>$(t,e.preferredName)));if(e.length){const n=e=>(t&&I(t,e.emailAddress)?200:0)+(t&&function(e,t){const n=(S(e)[0]||"").split("@")[1]||"",i=(S(t)[0]||"").split("@")[1]||""
+;return!(!n||!i||/^(gmail|163|126|qq|sina|sohu|yeah|foxmail|outlook|hotmail|live|msn|yahoo|icloud|me|protonmail|proton|aol|mail|yandex|gmx|web|naver|hanmail|daum)\./i.test(n))&&(n===i||n.endsWith(`.${i}`)||i.endsWith(`.${n}`))
+}(t,e.emailAddress)?60:0)+(d.has(e.authorId)||r&&function(e,t){
+const n=/^(?:of|the|and|for|in|at|de|la|du|des|del|di|da|von|fur|fuer|und|et|university|universidad|universidade|universitatea|universit\S*|institute|department|dept|school|faculty|college|egyetem|academy)$/i,i=e=>x(e).filter(e=>e.length>=3&&!n.test(e)),s=i(e),r=i(t)
+;return!(!s.length||!r.length)&&s.some(e=>r.some(t=>e===t||e.length>=5&&t.startsWith(e)||t.length>=5&&e.startsWith(t)))}(r,e.institution)?50:0)+(i.some(t=>x(t).join(" ")===x(e.preferredName).join(" "))?20:0),s=Math.max(...e.map(n))
+;if(s>=50||!r&&1===e.length)return{...R(e.filter(e=>n(e)===s)),matchSource:"name-affil"}}}}}if(o)return o;throw new Error("找不到 Scopus 主页")}(n||{susyScopusId:i});d(s,{requestId:t,authorId:String(e.authorId),ok:!0,payload:JSON.stringify({
+authorId:e.authorId,hindex:e.hIndex,documentCount:e.documentCount,citationCount:e.citationCount,latestPubYear:e.latestPubYear,institution:e.institution,country:e.country,matchSource:e.matchSource,preferredName:{full:e.preferredName},
+publishedSubjectAreas:e.subjects,emailAddresses:e.emails}),completedAt:(new Date).toISOString()})}catch(e){d(s,{requestId:t,authorId:String(i||""),ok:!1,error:le(e),completedAt:(new Date).toISOString()})}finally{u-=1,
+o(u>0?`正在查询 Scopus 数据（${u} 项）…`:"查询已响应，正在等待原页面完成…")}}function E(e){let t=e;if("string"==typeof e)try{t=JSON.parse(e)}catch(e){return}if(Array.isArray(t))for(const e of t){
+const t=String(e?.requestId||""),n=String(e?.responseKey||""),i=Boolean(e?.query||/^\d+$/.test(String(e?.authorId||"")));!t||a.has(t)||!i||n!==`${r}${t}`||Number(e.expiresAt)&&Number(e.expiresAt)<=Date.now()||(a.add(t),P(e))}}try{
+if("function"!=typeof GM_getValue||"function"!=typeof GM_setValue||"function"!=typeof GM_addValueChangeListener)throw new Error("Tampermonkey 共享存储权限不可用");GM_addValueChangeListener(i,(e,t,n)=>E(n)),E(GM_getValue(i,[])),GM_setValue(s,{channelId:t,
+ok:!0,workerId:ee(),readyAt:(new Date).toISOString()}),o("已连接，正在等待查询任务…")}catch(e){o("工作页启动失败，请返回 Scholar Screening 页面查看提示。"),"function"==typeof GM_setValue&&GM_setValue(s,{channelId:t,ok:!1,error:le(e)})}
+}();else if("undefined"!=typeof window&&"undefined"!=typeof document&&("susy.mdpi.com"===location.hostname||globalThis.__GE_SCREEN_TEST__)){const t=()=>{"loading"===document.readyState?document.addEventListener("DOMContentLoaded",ye,{once:!0
+}):ye()};"susy.mdpi.com"===location.hostname&&e(window).on("hashchange",t),t()}}catch(e){console.error("[SuSy GE Invitation Screener] Initialization failed.",e)}}();
