@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Susy Modifier
-// @version       6.11.18
+// @version       6.11.19
 // @namespace     https://github.com/synalocey/SusyModifier
 // @description   Susy Modifier
 // @author        SKDAY
@@ -3537,7 +3537,7 @@ function onInit() {
                                 }`;
                                 return fetchScopusGql(query, { id: authorId }, AbortSignal.timeout(20000)).then(r => r.ok ? r.json() : { httpStatus: r.status }).then(j => {
                                     // 记录失败原因：整个请求被拒（HTTP 状态）与 SciVal 主题服务报错（GraphQL errors）分开提示。
-                                    const topicError = j?.errors?.find(e => /topic/i.test(e.message));
+                                    const topicError = j?.errors?.find(e => /topic/i.test(e.message) || e.path?.some(p => /topic/i.test(p)));
                                     const topicsError = j?.httpStatus ? 'HTTP ' + j.httpStatus : topicError ? 'SciVal: ' + topicError.message + (topicError.extensions?.httpStatus ? ' (' + topicError.extensions.httpStatus + ')' : '') : '';
                                     return { ...j?.data?.author, topicsFailed: !j?.data?.author || !!topicError, topicsError };
                                 }).catch(error => ({ topicsFailed: true, topicsError: error.name === 'TimeoutError' ? 'timed out' : error.message }));
@@ -3545,6 +3545,7 @@ function onInit() {
 
                             async function fetchAuthorSearchDocsMeta(expectedCount) {
                                 const metaByEid = new Map(), metaByTitle = new Map(), countries = [];
+                                let countriesError = '';
                                 const normTitle = s => String(s || '').toLowerCase().replace(/[^a-z0-9\u00c0-\u024f]+/g, ' ').trim();
                                 const parsePage = html => {
                                     const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -3566,16 +3567,23 @@ function onInit() {
                                 try {
                                     const baseSearchUrl = 'https://www.scopus.com/results/results.uri?sort=plf-f&src=s&sot=a&sdt=a&s=AU-ID%28' + encodeURIComponent(authorId) + '%29&origin=AuthorEval&resultsPerPage=200';
                                     const firstRes = await fetch(baseSearchUrl, { credentials: 'include', signal: AbortSignal.timeout(20000) });
-                                    if (firstRes.ok) {
+                                    if (!firstRes.ok) {
+                                        countriesError = 'HTTP ' + firstRes.status;
+                                    } else if (firstRes.url && !/\/results\/results\.uri\b/.test(firstRes.url)) {
+                                        countriesError = 'Scopus search unavailable';
+                                    } else {
                                         const firstCount = parsePage(await firstRes.text());
+                                        if (Number(expectedCount) > 0 && !firstCount && !countries.length) countriesError = 'Scopus search failed';
                                         const targetPages = Math.min(3, Math.ceil((Number(expectedCount) || firstCount) / 200));
                                         for (let p = 2; p <= targetPages && firstCount === 200; p++) {
                                             const nextRes = await fetch(baseSearchUrl + '&offset=' + ((p - 1) * 200 + 1), { credentials: 'include', signal: AbortSignal.timeout(20000) });
                                             if (!nextRes.ok || parsePage(await nextRes.text()) < 200) break;
                                         }
                                     }
-                                } catch (_) { }
-                                return { metaByEid, metaByTitle, normTitle, countries };
+                                } catch (error) {
+                                    countriesError = error.name === 'TimeoutError' ? 'timed out' : error.message;
+                                }
+                                return { metaByEid, metaByTitle, normTitle, countries, countriesError };
                             }
 
                             function triggerLoad() {
@@ -3588,21 +3596,19 @@ function onInit() {
                                 waitForKeyElements('[class*="AuthorHeader-module"]:contains("Scopus Preview")', el => { el.remove(); }, false);
 
                                 const gqlPromise = fetchMainAuthorGraphql();
-                                fetch(hirschPageUrl, { credentials: 'include', signal: AbortSignal.timeout(20000) }).then(r => {
+                                // 从初始页面 HTML 解析内嵌的 JSON（包含 source / subject area 数据）；各路请求均自带兜底，部分失败时仍正常渲染其余列。
+                                const docPromise = fetch(hirschPageUrl, { credentials: 'include', signal: AbortSignal.timeout(20000) }).then(async r => {
                                     if (!r.ok) throw new Error('HTTP ' + r.status);
-                                    return r.text();
-                                }).then(html => {
-                                    // 从初始页面 HTML 解析内嵌的 JSON（包含 source / subject area 数据）
-                                    let docData = {};
-                                    try {
-                                        const pageDoc = new DOMParser().parseFromString(html, 'text/html');
-                                        const jsonPre = pageDoc.getElementById('getAuthEvalJsonData');
-                                        if (jsonPre) { docData = JSON.parse(jsonPre.textContent); }
-                                    } catch (e) { /* ignore parse errors */ }
-                                    // GraphQL 与检索页请求自带兜底，不会 reject。
-                                    return Promise.all([postData('hIndex').catch(() => ({})), postData('CoAuthors').catch(() => ({})), gqlPromise, fetchAuthorSearchDocsMeta(docData.docCount)])
-                                        .then(([hData, coData, gqlAuthor, searchMeta]) => [hData, coData, docData, gqlAuthor, searchMeta]);
-                                }).then(([hData, coData, docData, gqlAuthor, searchMeta]) => {
+                                    if (r.url && !/\/hirsch\/author\.uri\b/.test(r.url)) throw new Error('Scopus analysis unavailable');
+                                    const jsonPre = new DOMParser().parseFromString(await r.text(), 'text/html').getElementById('getAuthEvalJsonData');
+                                    if (!jsonPre) throw new Error('invalid response');
+                                    return { docData: JSON.parse(jsonPre.textContent), docDataError: '' };
+                                }).catch(error => ({ docData: {}, docDataError: error.name === 'TimeoutError' ? 'timed out' : error.message }));
+
+                                docPromise.then(({ docData, docDataError }) =>
+                                    Promise.all([postData('hIndex').catch(() => ({})), postData('CoAuthors').catch(() => ({})), gqlPromise, fetchAuthorSearchDocsMeta(docData.docCount ?? authorProfile?.documentCount)])
+                                        .then(([hData, coData, gqlAuthor, searchMeta]) => [hData, coData, docData, docDataError, gqlAuthor, searchMeta])
+                                ).then(([hData, coData, docData, docDataError, gqlAuthor, searchMeta]) => {
                                     seeAllBtn.hide();
                                     seeCoBtn.hide();
                                     $('#sk-hirsch-content, #sk-subject-overlay, #sk-inst-history, #sk-coauthors-section, #sk-sources-section').remove();
@@ -3637,56 +3643,55 @@ function onInit() {
                                             $('<summary></summary>').text('Affiliation history (' + shownInst.length + ')' + (variants.length ? ' · Name variants (' + variants.length + ')' : '')), list));
                                     }
 
-                                    // ── Research profile：学科占比 + 合作国家 + SciVal 主题，各默认显示前 6 行（Mathematics 始终可见），一个按钮同时展开 ──
-                                    const docTotal = Number(docData.docCount ?? docData.totalDataForSourceData?.noOfDocuments);
+                                    // ── Research profile：学科占比 + 合作国家 + SciVal 主题，3 列固定保留，各默认显示前 6 行（Mathematics 始终可见），一个按钮同时展开 ──
+                                    const docTotal = Number(docData.docCount ?? docData.totalDataForSourceData?.noOfDocuments ?? authorProfile?.documentCount);
                                     const subjectAreas = [...(docData.documentSubjectAreaViewBeans || [])].sort((a, b) => b.noOfDocuments - a.noOfDocuments);
                                     const topics = [...(gqlAuthor?.topicDetails?.topics || [])].sort((a, b) => b.authorDocumentCount - a.authorDocumentCount || b.authorFwci - a.authorFwci);
                                     const range = gqlAuthor?.topicDetails?.topicsRange;
                                     const rpHead = $('<div class="sk-rp-head"></div>').append($('<strong>Research profile</strong>'));
                                     [['Grants', gqlAuthor?.funding?.awardedGrantsCount], ['Preprints', gqlAuthor?.preprints?.preprintCount]].forEach(([label, n]) => { if (n > 0) rpHead.append($('<span></span>').text(label + ' ').append($('<b></b>').text(n))); });
-                                    if (subjectAreas.length || topics.length || searchMeta.countries.length || rpHead.children().length > 1 || gqlAuthor.topicsFailed) {
-                                        const cells = values => values.map(v => v?.jquery ? v : $('<span></span>').text(v));
-                                        // 表头行兼作面板标题，说明放在表头提示中。
-                                        const rpPanel = (labels, note, rows, limit = 6) => {
-                                            rows.forEach((li, i) => li.toggleClass('sk-rp-extra', i >= limit && !li.hasClass('sk-rp-math')));
-                                            return $('<section class="sk-rp-panel"></section>').append($('<ul class="sk-rp-list"></ul>').append($('<li class="sk-rp-labels"></li>').attr('title', note || null).append(cells(labels)), rows));
-                                        };
-                                        // 名称 | 占比条（本面板最大值为满格）| 论文数 | 占总论文比例（学科、国家共用）。
-                                        const shareRow = (label, n, max, url, math = false) => {
-                                            const name = $(url ? '<a target="_blank" rel="noopener"></a>' : '<span></span>').attr({ href: url || null, title: label }).text((math ? '★ ' : '') + label);
-                                            return $('<li></li>').toggleClass('sk-rp-math', math).append(cells([name, $('<span class="sk-rp-bar"></span>').append($('<i></i>').css('width', (max > 0 ? n / max * 100 : 0) + '%')),
-                                                n, docTotal > 0 ? Math.min(100, n / docTotal * 100).toFixed(1) + '%' : '']));
-                                        };
-                                        const subjectMax = Math.max(0, ...subjectAreas.map(s => Number(s.noOfDocuments) || 0));
-                                        const subjectRows = subjectAreas.map(s => shareRow(s.displayName, Number(s.noOfDocuments) || 0, subjectMax, s.url, s.code === 'MATH' || /^Mathematics$/i.test(s.displayName))
-                                            .attr('data-subject', s.code || (/^Mathematics$/i.test(s.displayName) ? 'MATH' : 'MULT')));
-                                        const countryMax = Math.max(0, ...searchMeta.countries.map(c => c.count));
-                                        const countryRows = searchMeta.countries.map(c => {
-                                            const zone = SK_COUNTRY_ZONES.get(c.name);
-                                            return shareRow(c.name, c.count, countryMax).attr({ 'data-zone': zone || null, title: zone ? 'MDPI discount zone ' + ['I', 'II', 'III'][zone - 1] : null });
-                                        });
-                                        const topicRows = topics.map(t => {
-                                            const fwci = t.authorFwci == null ? NaN : Number(t.authorFwci);
-                                            return $('<li></li>').attr('title', 'Topic world FWCI: ' + Number(t.topicFwci || 0).toFixed(2)).append(cells([mark($('<span></span>').attr('title', t.topic || null).text(t.topic || '?')), t.authorDocumentCount,
-                                                $('<span class="sk-rp-fwci"></span>').toggleClass('sk-rp-high', fwci >= 1).text(Number.isFinite(fwci) ? fwci.toFixed(2) : '—')]));
-                                        });
-                                        const panels = [
-                                            subjectAreas.length && rpPanel(['Subject areas', 'Papers', 'Share'], (docTotal > 0 ? 'Share of ' + docTotal + ' publications. ' : '')
-                                                + 'A publication can belong to several subject areas, so shares may sum to more than 100%.', subjectRows),
-                                            countryRows.length && rpPanel(['Countries in published papers', 'Papers', 'Share'], 'Papers with an author affiliated there, from the Scopus search filter of this author\'s documents (top 10); '
-                                                + 'includes the author\'s own affiliation. Colours: MDPI discount zone I / II / III.', countryRows)
-                                        ].filter(Boolean);
-                                        const topicPanel = rpPanel(['SciVal topics', 'Papers', 'FWCI'], (range?.yearFrom ? range.yearFrom + '–' + range.yearTo + ' · ' : '') + 'FWCI 1.00 = world average', topicRows).addClass('sk-rp-topics');
-                                        if (!topics.length) topicPanel.append($('<div class="sk-scopus-note"></div>').text(gqlAuthor.topicsFailed
-                                            ? 'Scopus could not load topics' + (gqlAuthor.topicsError ? ' (' + gqlAuthor.topicsError + ')' : '') + '. Try again later.' : 'No topic data returned by Scopus.'));
-                                        // Lightweight 模式默认展开全部行，普通页面默认只显示前 6 行。
-                                        const rpBox = $('<div id="sk-subject-overlay"></div>').toggleClass('sk-rp-open', $('html').hasClass('sk-scopus-lite'))
-                                            .append(rpHead, $('<div class="sk-rp-cols"></div>').append(panels, topicPanel));
-                                        if (rpBox.find('.sk-rp-extra').length) rpBox.append($('<button type="button" class="sk-rp-more"></button>').text(rpBox.hasClass('sk-rp-open') ? 'Show less' : 'Show more').on('click', function () {
-                                            $(this).text(rpBox.toggleClass('sk-rp-open').hasClass('sk-rp-open') ? 'Show less' : 'Show more');
-                                        }));
-                                        h1node.parent().append(rpBox);
-                                    }
+                                    const cells = values => values.map(v => v?.jquery ? v : $('<span></span>').text(v));
+                                    // 表头行兼作面板标题，说明放在表头提示中；任一列读取失败或无数据时仍保留列框并在面板内提示。
+                                    const rpPanel = (labels, note, rows, emptyText, error, limit = 6) => {
+                                        rows.forEach((li, i) => li.toggleClass('sk-rp-extra', i >= limit && !li.hasClass('sk-rp-math')));
+                                        const tip = error ? 'Unable to load — data volume too large or restricted by Scopus' + (typeof error === 'string' ? ' (' + error + ').' : '.') : emptyText;
+                                        return $('<section class="sk-rp-panel"></section>').append(
+                                            $('<ul class="sk-rp-list"></ul>').append($('<li class="sk-rp-labels"></li>').attr('title', note || null).append(cells(labels)), rows),
+                                            !rows.length ? $('<div class="sk-scopus-note"></div>').toggleClass('sk-rp-error', !!error).text(tip) : ''
+                                        );
+                                    };
+                                    // 名称 | 占比条（本面板最大值为满格）| 论文数 | 占总论文比例（学科、国家共用）。
+                                    const shareRow = (label, n, max, url, math = false) => {
+                                        const name = $(url ? '<a target="_blank" rel="noopener"></a>' : '<span></span>').attr({ href: url || null, title: label }).text((math ? '★ ' : '') + label);
+                                        return $('<li></li>').toggleClass('sk-rp-math', math).append(cells([name, $('<span class="sk-rp-bar"></span>').append($('<i></i>').css('width', (max > 0 ? n / max * 100 : 0) + '%')),
+                                            n, docTotal > 0 ? Math.min(100, n / docTotal * 100).toFixed(1) + '%' : '']));
+                                    };
+                                    const subjectMax = Math.max(0, ...subjectAreas.map(s => Number(s.noOfDocuments) || 0));
+                                    const subjectRows = subjectAreas.map(s => shareRow(s.displayName, Number(s.noOfDocuments) || 0, subjectMax, s.url, s.code === 'MATH' || /^Mathematics$/i.test(s.displayName))
+                                        .attr('data-subject', s.code || (/^Mathematics$/i.test(s.displayName) ? 'MATH' : 'MULT')));
+                                    const countryMax = Math.max(0, ...searchMeta.countries.map(c => c.count));
+                                    const countryRows = searchMeta.countries.map(c => {
+                                        const zone = SK_COUNTRY_ZONES.get(c.name);
+                                        return shareRow(c.name, c.count, countryMax).attr({ 'data-zone': zone || null, title: zone ? 'MDPI discount zone ' + ['I', 'II', 'III'][zone - 1] : null });
+                                    });
+                                    const topicRows = topics.map(t => {
+                                        const fwci = t.authorFwci == null ? NaN : Number(t.authorFwci);
+                                        return $('<li></li>').attr('title', 'Topic world FWCI: ' + Number(t.topicFwci || 0).toFixed(2)).append(cells([mark($('<span></span>').attr('title', t.topic || null).text(t.topic || '?')), t.authorDocumentCount,
+                                            $('<span class="sk-rp-fwci"></span>').toggleClass('sk-rp-high', fwci >= 1).text(Number.isFinite(fwci) ? fwci.toFixed(2) : '—')]));
+                                    });
+                                    const panels = [
+                                        rpPanel(['Subject areas', 'Papers', 'Share'], (docTotal > 0 ? 'Share of ' + docTotal + ' publications. ' : '')
+                                            + 'A publication can belong to several subject areas, so shares may sum to more than 100%.', subjectRows, 'No subject area data returned by Scopus.', docDataError),
+                                        rpPanel(['Countries in published papers', 'Papers', 'Share'], 'Papers with an author affiliated there, from the Scopus search filter of this author\'s documents (top 10); '
+                                            + 'includes the author\'s own affiliation. Colours: MDPI discount zone I / II / III.', countryRows, 'No country data returned by Scopus.', searchMeta.countriesError),
+                                        rpPanel(['SciVal topics', 'Papers', 'FWCI'], (range?.yearFrom ? range.yearFrom + '–' + range.yearTo + ' · ' : '') + 'FWCI 1.00 = world average', topicRows,
+                                            'No topic data returned by Scopus.', gqlAuthor.topicsFailed && (gqlAuthor.topicsError || true)).addClass('sk-rp-topics')
+                                    ];
+                                    const rpBox = $('<div id="sk-subject-overlay"></div>').append(rpHead, $('<div class="sk-rp-cols"></div>').append(panels));
+                                    if (rpBox.find('.sk-rp-extra').length) rpBox.append($('<button type="button" class="sk-rp-more">Show more</button>').on('click', function () {
+                                        $(this).text(rpBox.toggleClass('sk-rp-open').hasClass('sk-rp-open') ? 'Show less' : 'Show more');
+                                    }));
+                                    h1node.parent().append(rpBox);
 
                                     const yearData = [...(docData.documentYearDataViewBeans || [])].sort((a, b) => Number(b.code || b.displayName) - Number(a.code || a.displayName));
                                     // 补齐已有年份之间的空档，保留最早、最晚年份的范围。
@@ -4137,8 +4142,10 @@ function onInit() {
                                     }
 
                                     if (!Array.isArray(hData.hirschGraphData) || !Array.isArray(coData.coAuthorsViewBeans)) {
-                                        loaded = false;
                                         content.append($('<div class="sk-scopus-note"></div>').text('Some publication or co-author data could not be loaded. ').append($('<button type="button" class="sk-scopus-btn">Retry missing analysis</button>').on('click', triggerLoad)));
+                                    }
+                                    if (!Array.isArray(hData.hirschGraphData) || !Array.isArray(coData.coAuthorsViewBeans) || docDataError || searchMeta.countriesError || gqlAuthor.topicsFailed) {
+                                        loaded = false;
                                         inlineLoadBtn.text('↻').css({ cursor: 'pointer', opacity: '1' }).off('click').on('click', triggerLoad);
                                     }
 
@@ -5466,7 +5473,8 @@ html.sk-mailsdb #Box p{overflow-wrap:anywhere}html.sk-mailsdb #Box hr{display:no
     font-weight:400;color:#2e2e2e}#sk-lite-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(320px,1fr);gap:2rem;align-items:start}#sk-lite-side{min-width:0;padding-top:16px}@media(max-width:900px){#sk-lite-cols{grid-template-columns:minmax(0,1fr)}}
 #sk-subject-overlay{margin:14px 0 16px;padding:14px 18px;border:1px solid #dce4ec;border-radius:12px;background:#fff;color:#172943;font-size:15px;line-height:1.4;font-variant-numeric:lining-nums tabular-nums}.sk-rp-head{display:flex;flex-wrap:wrap;align-items:baseline;
     gap:4px 18px;margin-bottom:10px;color:#53667b;font-size:14px}.sk-rp-head strong{margin-right:auto;font-size:18px;color:#1558d6}.sk-rp-head b,.sk-rp-head a{color:#172943;font-weight:600}.sk-rp-cols{display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:14px 20px;align-items:start}.sk-rp-panel{min-width:0}.sk-rp-list{list-style:none;margin:0;padding:0}#sk-subject-overlay .sk-rp-list li{display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 20px;align-items:start}@media(max-width:900px){.sk-rp-cols{grid-template-columns:minmax(0,1fr)}}.sk-rp-panel{min-width:0}.sk-rp-panel>.sk-scopus-note{padding:6px;color:#64748b}
+.sk-rp-panel>.sk-rp-error{color:#b91c1c}.sk-rp-list{list-style:none;margin:0;padding:0}#sk-subject-overlay .sk-rp-list li{display:grid;
     grid-template-columns:minmax(0,1.6fr) minmax(40px,1fr) 46px 58px;align-items:center;gap:8px;margin:0;padding:4px 6px;border-bottom:1px solid #eef2f6;line-height:1.35;list-style:none}#sk-subject-overlay .sk-rp-topics li{grid-template-columns:minmax(0,1fr) 52px 60px}
 #sk-subject-overlay .sk-rp-list li>:first-child{justify-self:start;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}#sk-subject-overlay .sk-rp-list li>:not(:first-child){text-align:right}#sk-subject-overlay .sk-rp-list li.sk-rp-labels{
     padding-block:6px 3px;border-bottom-color:#dce4ec;color:#6b7c8f;font-size:13px;font-weight:600;cursor:help}#sk-subject-overlay .sk-rp-list li.sk-rp-labels>:first-child{color:#172943;font-size:16px;font-weight:700}
